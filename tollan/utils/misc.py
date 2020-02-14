@@ -5,6 +5,7 @@ import sys
 import importlib
 from contextlib import ContextDecorator
 import os
+import itertools
 
 
 def touch_file(out_file):
@@ -14,23 +15,29 @@ def touch_file(out_file):
         os.utime(out_file, None)
 
 
-def getobj(name, default=None):
-    """Return python object specified by `name`.
+def object_from_spec(spec, *args):
+    """Return python object specified by `spec`.
 
-    `name` is specified as `a.b::c`.
+    `spec` is specified as `a.b:c`, where ':c' can be omitted, which is
+    equivalent to `a.b:b`
 
     """
+    sep = ':'
+    if sep not in spec:
+        spec = f"{spec}{sep}{spec.rsplit('.', 1)[-1]}"
+
     try:
-        module, func = name.split("::")
+        module, func = spec.split(sep, 1)
         module = importlib.import_module(module)
     except Exception:
-        pass
+        if not args:
+            raise
+        return args[0]  # return the default if specified
     else:
-        return getattr(module, func)
-    return default
+        return rgetattr(module, func)
 
 
-def getdict(obj, keys=None):
+def dict_from_object(obj, keys=None):
     """Return a dict composed from object's attributes.
 
     `keys` is used to specify what attributes to include in the created dict.
@@ -204,3 +211,64 @@ def patchit(obj, name, pass_patched=False):
         setattr(obj, name, new_func)
         return new_func
     return decorator
+
+
+def mapreduce(map_func, reduce_func, gen, *args, **kwargs):
+    """Return a map and reduce generator.
+
+    Parameters
+    ----------
+    map_func: callable
+        The map function.
+
+    reduce_func: callable
+        The reduce_function.
+
+    gen: generator or iterator
+        The inputs.
+
+    *args, **kwargs:
+        Passed to the `functools.reduce` function.
+
+    Returns
+    -------
+    generator:
+        The map-reduce generator.
+
+    """
+    return functools.reduce(reduce_func, map(map_func, gen), *args, **kwargs)
+
+
+def anysum(a, b):
+    """Return the sum of two objects."""
+    try:
+        return a + b
+    except TypeError:
+        return itertools.chain(a, b)
+
+
+def mapsum(map_func, gen, *args, **kwargs):
+    """Return a map and sum generator."""
+    return mapreduce(map_func, anysum, gen, *args, **kwargs)
+
+
+def ensure_prefix(s, p):
+    """Return a new string with prefix `p` if it does not."""
+    if s.startswith(p):
+        return s
+    return f"{p}{s}"
+
+
+def to_typed(s):
+    """Return a typed object from string `s` if possible."""
+    if not isinstance(s, str):
+        raise ValueError("input object has to be string.")
+    if '.' not in s:
+        try:
+            return int(s)
+        except ValueError:
+            pass
+    try:
+        return float(s)
+    except ValueError:
+        return s

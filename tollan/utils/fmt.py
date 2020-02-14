@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import inspect
+import yaml
 
 
 def pformat_paths(paths, sep='\n'):
@@ -86,3 +87,7 @@ def pformat_obj(m):
         for s, d in fmt_obj_attrs:
             result.append(f"    {{:{width}}}: {{}}".format(s, d))
     return '\n'.join(result)
+
+
+def pformat_yaml(obj):
+    return f"\n{yaml.dump(obj, default_flow_style=False)}"

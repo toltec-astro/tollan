@@ -23,5 +23,5 @@ class EnvRegistry(Registry):
         print(self)
 
 
-env = EnvRegistry.create()
+env_registry = EnvRegistry.create()
 """A global environment variable registry instance."""

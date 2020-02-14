@@ -38,11 +38,6 @@ presets = {
                 'class': 'logging.StreamHandler',
                 'formatter': 'short',
                 },
-            'logfile': {
-                'class': 'logging.FileHandler',
-                'filename': None,
-                'formatter': "standard",
-                }
             },
         'loggers': {
             '': {
@@ -93,7 +88,12 @@ def init_log(
     rupdate(config, {'loggers': {'': {'level': level}}})
     if file_ is not None:
         rupdate(config, {
-            'handlers': {'logfile': {'filename': file_}},
+            'handlers': {'logfile': {
+                    'class': 'logging.FileHandler',
+                    'formatter': "standard",
+                    'filename': file_
+                    },
+                },
             'loggers': {'': {'handlers': ['logfile', ]}},
             })
     if colored and console_color is None:
