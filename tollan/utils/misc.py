@@ -6,6 +6,12 @@ import importlib
 from contextlib import ContextDecorator
 import os
 import itertools
+import socket
+
+
+def get_hostname():
+    """Same as the shell command `hostname`"""
+    return socket.gethostname()
 
 
 def touch_file(out_file):

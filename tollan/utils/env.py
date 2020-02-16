@@ -2,6 +2,7 @@
 
 """This module defines some helpers for handling env vars."""
 
+import os
 from .registry import Registry
 
 
@@ -22,6 +23,17 @@ class EnvRegistry(Registry):
     def make_doc(self):
         print(self)
 
+    def get(self, label):
+        if label not in self:
+            self.logger.debug(f"env var {label} is not registered")
+        result = os.getenv(label, None)
+        if result is None or result == '':
+            if label in self:
+                msg = f"env var {label} ({self[label]}) is not set"
+            else:
+                msg = f"env var {label} is not set"
+            raise ValueError(msg)
+        return result
 
 env_registry = EnvRegistry.create()
 """A global environment variable registry instance."""
