@@ -4,6 +4,7 @@
 from collections import OrderedDict
 from .log import get_logger
 import wrapt
+import copy
 
 
 class RegistryMixin(object):
@@ -31,3 +32,6 @@ class Registry(wrapt.ObjectProxy, RegistryMixin):
     @classmethod
     def create(cls, container_cls=OrderedDict):
         return cls(container_cls())
+
+    def __copy__(self):
+        return Registry(copy.copy(self.__wrapped__))

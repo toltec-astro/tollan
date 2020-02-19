@@ -1,7 +1,10 @@
 #! /usr/bin/env python
 
 import inspect
-import yaml
+import pyaml
+
+
+pyaml.add_representer(None, lambda s, d: s.represent_str(str(d)))
 
 
 def pformat_paths(paths, sep='\n'):
@@ -90,4 +93,4 @@ def pformat_obj(m):
 
 
 def pformat_yaml(obj):
-    return f"\n{yaml.dump(obj, default_flow_style=False)}"
+    return f"\n{pyaml.dump(obj)}"

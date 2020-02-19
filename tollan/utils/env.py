@@ -4,6 +4,7 @@
 
 import os
 from .registry import Registry
+import pyaml
 
 
 class EnvRegistry(Registry):
@@ -23,10 +24,10 @@ class EnvRegistry(Registry):
     def make_doc(self):
         print(self)
 
-    def get(self, label):
+    def get(self, label, *args):
         if label not in self:
             self.logger.debug(f"env var {label} is not registered")
-        result = os.getenv(label, None)
+        result = os.getenv(label, *args)
         if result is None or result == '':
             if label in self:
                 msg = f"env var {label} ({self[label]}) is not set"
@@ -35,5 +36,9 @@ class EnvRegistry(Registry):
             raise ValueError(msg)
         return result
 
+
 env_registry = EnvRegistry.create()
 """A global environment variable registry instance."""
+
+
+pyaml.add_representer(EnvRegistry, lambda s, d: s.represent_dict(d))

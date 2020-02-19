@@ -7,6 +7,8 @@ from contextlib import ContextDecorator
 import os
 import itertools
 import socket
+import appdirs
+from pathlib import Path
 
 
 def get_hostname():
@@ -278,3 +280,7 @@ def to_typed(s):
         return float(s)
     except ValueError:
         return s
+
+
+def get_user_data_dir():
+    return Path(appdirs.user_data_dir('tollan', 'toltec'))
