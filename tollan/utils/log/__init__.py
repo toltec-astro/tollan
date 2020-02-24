@@ -50,6 +50,11 @@ presets = {
                 'level': 'WARNING',
                 'propagate': False
                 },
+            'numexpr': {
+                'handlers': ['default'],
+                'level': 'WARNING',
+                'propagate': False
+                },
             'root': {
                 'handlers': ['default'],
                 'level': 'ERROR',

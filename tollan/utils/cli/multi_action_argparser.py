@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import argparse
+import wrapt
 
 
 class RecursiveHelpAction(argparse._HelpAction):
@@ -39,25 +40,38 @@ class RecursiveHelpAction(argparse._HelpAction):
         parser.exit()
 
 
-def get_action_argparser(**kwargs):
-    parser = argparse.ArgumentParser(
-        add_help=False,
-        **kwargs
-        )
-    parser.add_argument(
-            '-h', '--help', action=RecursiveHelpAction,
-            help='show this (and more) help message and exit')
-    action_parser = parser.add_subparsers(
-            title="actions",
-            help="available actions")
+class MultiActionArgumentParser(wrapt.ObjectProxy):
+    """This class wraps the `argparse.ArgumentParser` so that it
+    allows defining subcommands with ease."""
 
-    def set_parser_action(parser):
-        def decorator(func):
-            parser.set_defaults(func=func)
-            return func
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('add_help', False)
+        self._self_parser = p = argparse.ArgumentParser(*args, **kwargs)
+        super().__init__(self._self_parser)
+
+        p.add_argument(
+            '-h', '--help', action=RecursiveHelpAction,
+            help='Show this (and more) help message and exit')
+        self._self_action_parser_group = self.add_subparsers(
+                title="actions",
+                help="Available actions"
+                )
+
+    def add_action_parser(self, *args, **kwargs):
+        p = self._self_action_parser_group.add_parser(*args, **kwargs)
+        # patch the action parser with method
+        p.parser_action = self.parser_action(p)
+        return p
+
+    @staticmethod
+    def parser_action(parser):
+        def decorator(action):
+            parser.set_defaults(func=action)
+            return action
         return decorator
 
-    def add_action_parser(*args, **kwargs):
-        return action_parser.add_parser(*args, **kwargs)
-
-    return parser, add_action_parser, set_parser_action
+    def bootstrap_actions(self, option):
+        if hasattr(option, 'func'):
+            option.func(option)
+        else:
+            self.print_help()
