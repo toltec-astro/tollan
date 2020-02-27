@@ -114,3 +114,22 @@ def pformat_obj(m):
 
 def pformat_yaml(obj):
     return f"\n{pyaml.dump(obj)}"
+
+
+def pformat_fancy_index(i):
+    if isinstance(i, slice):
+        if i.start is None:
+            start = ''
+        else:
+            start = i.start
+        if i.stop is None:
+            stop = ''
+        else:
+            stop = i.stop
+        result = f'[{start}:{stop}{{}}]'
+        if i.step is None or i.step == 1:
+            result = result.format('')
+        else:
+            result = result.format(f':{i.step}')
+        return result
+    return i

@@ -105,3 +105,48 @@ class UnboundedSliceChain(SliceChain):
 def resolve_slice(slice_, n):
     """Return a bounded slice given length `n`."""
     return slice(*slice_.indices(n))
+
+
+class XLoc(object):
+    """
+    This provides a interface similar to that of pandas `DataFrame.xloc`.
+
+    The wrapped function shall take an index or slice object and return the
+    sliced entity.
+
+    Additional arguments and keyword arguments can be passed through the
+    ``__call__`` method, however these will be invalidated as soon as
+    the ``__getitem__`` is called.
+
+    Parameters
+    ----------
+    func: callable
+        The function that implements the slice logic.
+    """
+
+    def __init__(self, func):
+        self._func = func
+        self._reset_extra_args()
+
+    def _reset_extra_args(self):
+        self._extra_args = tuple(), dict()
+
+    def _update_extra_args(self, args, kwargs):
+        args0, kwargs0 = self._extra_args
+        kwargs0.update(**kwargs)
+        self._extra_args = args0 + tuple(args), kwargs0
+
+    def _pop_extra_args(self):
+        args, kwargs = self._extra_args
+        self._reset_extra_args()
+        return args, kwargs
+
+    def __getitem__(self, *args):
+        ex_args, ex_kwargs = self._pop_extra_args()
+        return self._func(
+                *args, *ex_args, **ex_kwargs)
+
+    def __call__(self, *args, **kwargs):
+        """Store kwargs to be passed to the wrapped function."""
+        self._update_extra_args(args, kwargs)
+        return self

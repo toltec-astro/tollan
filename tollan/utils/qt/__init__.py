@@ -2,14 +2,11 @@
 from contextlib import contextmanager
 import sys
 import time
-from astropy import log
+import signal
+from PyQt5 import QtWidgets, QtCore
 
-try:
-    from PyQt5 import QtWidgets, QtCore
-except ModuleNotFoundError:
 
-    log.error("PyQt5 is required to run the GUI")
-    sys.exit(1)
+_app = None
 
 
 class QThreadTarget(QtCore.QObject):
@@ -37,16 +34,14 @@ class QThreadTarget(QtCore.QObject):
 
 def qt5app(args=None):
     if args and args[0] != sys.argv[0]:
-        args = sys.argv[:1] + args
-    app = QtWidgets.QApplication(args)
-    # Let the interpreter run each 500 ms, to process the SIGINT signal
-    # http://stackoverflow.com/questions/4938723
-    timer = QtCore.QTimer()
-    timer.start(500)
-    timer.timeout.connect(lambda: None)
-    # need to keep this pointer during the app run
-    app._keep_python_alive = timer
-    return app
+        args = list(sys.argv[:1] + args)
+    else:
+        args = list()
+    global _app
+    _app = QtWidgets.QApplication.instance()
+    if _app is None:
+        _app = QtWidgets.QApplication(args)
+    return _app
 
 
 @contextmanager
@@ -57,3 +52,27 @@ def slot_disconnected(signal, slot):
         pass
     yield
     signal.connect(slot)
+
+
+def setup_interrupt_handling():
+    """Setup handling of KeyboardInterrupt (Ctrl-C) for PyQt5."""
+    signal.signal(signal.SIGINT, _interrupt_handler)
+    _safe_timer(50, lambda: None)
+
+
+def _interrupt_handler(*args):
+    """Handle KeyboardInterrupt: quit application."""
+    QtWidgets.QApplication.quit()
+
+
+def _safe_timer(timeout, func, *args, **kwargs):
+    """
+    Create a timer that is safe against garbage collection and overlapping
+    calls. See: http://ralsina.me/weblog/posts/BB974.html
+    """
+    def timer_event():
+        try:
+            func(*args, **kwargs)
+        finally:
+            QtCore.QTimer.singleShot(timeout, timer_event)
+    QtCore.QTimer.singleShot(timeout, timer_event)
