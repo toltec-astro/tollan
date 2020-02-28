@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import re
 import copy
 
 
@@ -150,3 +151,34 @@ class XLoc(object):
         """Store kwargs to be passed to the wrapped function."""
         self._update_extra_args(args, kwargs)
         return self
+
+
+def parse_slice(slice_str):
+    """Return a slice object from string."""
+
+    re_slice = re.compile(
+        r'^(?P<start>[+-]?\d+)?(?P<is_slice>:)?'
+        r'(?P<stop>[+-]?\d+)?:?(?P<step>[+-]?\d+)?$'
+        )
+    m = re.match(re_slice, slice_str)
+    if not m:
+        return slice(None)
+    g = m.groupdict()
+
+    def get(key):
+        val = g.get(key, None)
+        if val is not None:
+            return int(val)
+        return val
+    start, stop, step = map(get, ("start", "stop", "step"))
+    is_slice = g.get('is_slice', None) is not None
+    if is_slice:
+        return slice(start, stop, step)
+    elif start is not None:
+        # return start
+        if start == -1:
+            end = None
+        else:
+            end = start + 1
+        return slice(start, end)
+    return slice(None)

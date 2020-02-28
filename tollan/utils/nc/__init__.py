@@ -3,6 +3,7 @@ import netCDF4
 import numpy as np
 from ..fmt import pformat_list
 from ..log import get_logger, logit
+import functools
 
 
 def ncstr(var):
@@ -11,17 +12,18 @@ def ncstr(var):
     return ''.join(s).strip()
 
 
+def _close(*args, nc=None):
+    logger = get_logger()
+    with logit(logger.debug, f"close {nc.filepath()}"):
+        nc.close()
+
+
 def ncopen(source):
     if isinstance(source, netCDF4.Dataset):
         return source, lambda *args: None
     else:
-        logger = get_logger()
-
-        def close_(*args):
-            with logit(logger.debug, f"close {source}"):
-                nc.close()
         nc = netCDF4.Dataset(str(source))
-        return nc, close_
+        return nc, functools.partial(_close, nc=nc)
 
 
 def ncinfo(source):
