@@ -1,8 +1,8 @@
 ********************
-tollan Documentation
+Tollan Documentation
 ********************
 
-This is the documentation for tollan.
+This is the documentation for Tollan.
 
 Reference/API
 =============
