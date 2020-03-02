@@ -1,5 +1,5 @@
 import functools
-import collections
+import collections.abc
 from types import ModuleType
 import sys
 import importlib
@@ -133,7 +133,7 @@ def rupdate(d, u):
     while stack:
         d, u = stack.pop(0)
         for k, v in u.items():
-            if not isinstance(v, collections.Mapping):
+            if not isinstance(v, collections.abc.Mapping):
                 # u[k] is not a dict, nothing to merge, so just set it,
                 # regardless if d[k] *was* a dict
                 d[k] = v
@@ -142,7 +142,7 @@ def rupdate(d, u):
                 # get d[k], defaulting to a dict, if it doesn't previously
                 # exist
                 dv = d.setdefault(k, {})
-                if not isinstance(dv, collections.Mapping):
+                if not isinstance(dv, collections.abc.Mapping):
                     # d[k] is not a dict, so just set it to u[k],
                     # overriding whatever it was
                     d[k] = v
