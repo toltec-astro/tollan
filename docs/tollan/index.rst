@@ -9,6 +9,8 @@ Reference/API
 
 .. automodapi:: tollan.utils
 
+.. automodapi:: tollan.utils.misc
+
 .. automodapi:: tollan.utils.registry
 
 .. automodapi:: tollan.utils.env

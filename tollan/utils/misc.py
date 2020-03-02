@@ -125,6 +125,10 @@ def rupdate(d, u):
     None
         Dict `d` is updated in place.
 
+    Notes
+    -----
+    See [1]_.
+
     .. [1] https://stackoverflow.com/a/52099238/1824372
 
     """
@@ -171,7 +175,13 @@ class hookit(ContextDecorator):
         self.func_hooked = getattr(obj, name)
 
     def set_post_func(self, func):
-        """Call `func` after the hooked function."""
+        """Call `func` after the hooked function.
+
+        Parameters
+        ----------
+        func: callable
+            The function to call after the hooked function.
+        """
 
         def hooked(obj):
             self.func_hooked(obj)

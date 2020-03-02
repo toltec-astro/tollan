@@ -160,8 +160,8 @@ def timeit(arg):
 class logit(ContextDecorator):
     """Decorator that logs the execution of the decorated item.
 
-    Prameters
-    ---------
+    Parameters
+    ----------
     log: callable
         The logging function to use.
 
