@@ -1,0 +1,6 @@
+rupdate
+=======
+
+.. currentmodule:: tollan.utils.misc
+
+.. autofunction:: rupdate

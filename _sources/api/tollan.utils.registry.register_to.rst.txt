@@ -1,0 +1,6 @@
+register_to
+===========
+
+.. currentmodule:: tollan.utils.registry
+
+.. autofunction:: register_to

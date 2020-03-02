@@ -1,0 +1,27 @@
+RegistryMixin
+=============
+
+.. currentmodule:: tollan.utils.registry
+
+.. autoclass:: RegistryMixin
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~RegistryMixin.logger
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~RegistryMixin.register
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: logger
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: register

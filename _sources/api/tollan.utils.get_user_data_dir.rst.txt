@@ -1,0 +1,6 @@
+get_user_data_dir
+=================
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: get_user_data_dir

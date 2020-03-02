@@ -1,0 +1,17 @@
+Registry
+========
+
+.. currentmodule:: tollan.utils.registry
+
+.. autoclass:: Registry
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~Registry.create
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: create

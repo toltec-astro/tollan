@@ -1,0 +1,6 @@
+get_logger
+==========
+
+.. currentmodule:: tollan.utils.log
+
+.. autofunction:: get_logger

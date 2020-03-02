@@ -1,0 +1,6 @@
+mapsum
+======
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: mapsum

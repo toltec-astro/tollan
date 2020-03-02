@@ -1,0 +1,7 @@
+logit
+=====
+
+.. currentmodule:: tollan.utils.log
+
+.. autoclass:: logit
+   :show-inheritance:

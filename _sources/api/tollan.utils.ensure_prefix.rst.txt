@@ -1,0 +1,6 @@
+ensure_prefix
+=============
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: ensure_prefix

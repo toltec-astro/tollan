@@ -1,0 +1,6 @@
+anysum
+======
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: anysum

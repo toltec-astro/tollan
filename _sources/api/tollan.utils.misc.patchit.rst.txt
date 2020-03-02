@@ -1,0 +1,6 @@
+patchit
+=======
+
+.. currentmodule:: tollan.utils.misc
+
+.. autofunction:: patchit

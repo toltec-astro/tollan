@@ -1,0 +1,6 @@
+pformat_paths
+=============
+
+.. currentmodule:: tollan.utils.fmt
+
+.. autofunction:: pformat_paths

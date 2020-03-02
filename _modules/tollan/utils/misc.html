@@ -1,0 +1,384 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>tollan.utils.misc &#8212; tollan v0.1.dev12+g0b0613d.d20200302</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../index.html">tollan v0.1.dev12+g0b0613d.d20200302</a>
+	 &#187;
+      </li>
+      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.misc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">collections.abc</span>
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">ModuleType</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ContextDecorator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">appdirs</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<div class="viewcode-block" id="get_hostname"><a class="viewcode-back" href="../../../api/tollan.utils.misc.get_hostname.html#tollan.utils.get_hostname">[docs]</a><span class="k">def</span> <span class="nf">get_hostname</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Same as the shell command `hostname`&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="touch_file"><a class="viewcode-back" href="../../../api/tollan.utils.touch_file.html#tollan.utils.touch_file">[docs]</a><span class="k">def</span> <span class="nf">touch_file</span><span class="p">(</span><span class="n">out_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Same as the shell command `touch`.&quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="object_from_spec"><a class="viewcode-back" href="../../../api/tollan.utils.object_from_spec.html#tollan.utils.object_from_spec">[docs]</a><span class="k">def</span> <span class="nf">object_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return python object specified by `spec`.</span>
+
+<span class="sd">    `spec` is specified as `a.b:c`, where &#39;:c&#39; can be omitted, which is</span>
+<span class="sd">    equivalent to `a.b:b`</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span>
+    <span class="k">if</span> <span class="n">sep</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
+        <span class="n">spec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{spec}{sep}</span><span class="s2">{spec.rsplit(&#39;.&#39;, 1)[-1]}&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">module</span><span class="p">,</span> <span class="n">func</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sep</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">return</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># return the default if specified</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rgetattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="dict_from_object"><a class="viewcode-back" href="../../../api/tollan.utils.misc.dict_from_object.html#tollan.utils.dict_from_object">[docs]</a><span class="k">def</span> <span class="nf">dict_from_object</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a dict composed from object&#39;s attributes.</span>
+
+<span class="sd">    `keys` is used to specify what attributes to include in the created dict.</span>
+<span class="sd">    If `keys` is None, the `__all__` list is used if present, otherwise use all</span>
+<span class="sd">    attributes that does not starts with ``_``. If `keys` is callable, it is</span>
+<span class="sd">    called with `obj` to get a list of keys.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    keys: list, callable, or None</span>
+<span class="sd">        Specify the attributes to include.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict:</span>
+<span class="sd">        A dict contains selected object&#39;s attribute names and values.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;__all__&#39;</span><span class="p">):</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">__all__</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">),</span> <span class="nb">dir</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="rreload"><a class="viewcode-back" href="../../../api/tollan.utils.rreload.html#tollan.utils.rreload">[docs]</a><span class="k">def</span> <span class="nf">rreload</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reload module recursively.</span>
+
+<span class="sd">    Different from the `importlib.reload`, this also reloads submodules</span>
+<span class="sd">    (modules with names prefixed by ``m.__name__``).</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="vm">__name__</span>  <span class="c1"># get the name that is used in sys.modules</span>
+    <span class="n">name_ext</span> <span class="o">=</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span>  <span class="c1"># support finding sub modules or packages</span>
+
+    <span class="k">def</span> <span class="nf">compare</span><span class="p">(</span><span class="n">loaded</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">loaded</span> <span class="o">==</span> <span class="n">name</span><span class="p">)</span> <span class="ow">or</span> <span class="n">loaded</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">name_ext</span><span class="p">)</span>
+
+    <span class="c1"># prevent changing iterable while iterating over it</span>
+    <span class="n">all_mods</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">)</span>
+    <span class="n">sub_mods</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">compare</span><span class="p">,</span> <span class="n">all_mods</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+            <span class="n">sub_mods</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">importlib</span><span class="o">.</span><span class="n">reload</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">pkg</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="rgetattr"><a class="viewcode-back" href="../../../api/tollan.utils.rgetattr.html#tollan.utils.rgetattr">[docs]</a><span class="k">def</span> <span class="nf">rgetattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get attribute recursively.</span>
+
+<span class="sd">    Nested attribute is specified as `a.b`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">_getattr</span><span class="p">,</span> <span class="p">[</span><span class="n">obj</span><span class="p">]</span> <span class="o">+</span> <span class="n">attr</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="rupdate"><a class="viewcode-back" href="../../../api/tollan.utils.rupdate.html#tollan.utils.rupdate">[docs]</a><span class="k">def</span> <span class="nf">rupdate</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">u</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Update dict recursively.</span>
+
+<span class="sd">    This will update `d` with items in `u` in a recursive fashion.</span>
+<span class="sd">    Keys in d will not be deleted if they are found in `u`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    d, u: dict</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">        Dict `d` is updated in place.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    See [1]_.</span>
+
+<span class="sd">    .. [1] https://stackoverflow.com/a/52099238/1824372</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">stack</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">u</span><span class="p">)]</span>
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">u</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
+                <span class="c1"># u[k] is not a dict, nothing to merge, so just set it,</span>
+                <span class="c1"># regardless if d[k] *was* a dict</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># note: u[k] is a dict</span>
+                <span class="c1"># get d[k], defaulting to a dict, if it doesn&#39;t previously</span>
+                <span class="c1"># exist</span>
+                <span class="n">dv</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="p">{})</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Mapping</span><span class="p">):</span>
+                    <span class="c1"># d[k] is not a dict, so just set it to u[k],</span>
+                    <span class="c1"># overriding whatever it was</span>
+                    <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># both d[k] and u[k] are dicts, push them on the stack</span>
+                    <span class="c1"># to merge</span>
+                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dv</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="hookit"><a class="viewcode-back" href="../../../api/tollan.utils.misc.hookit.html#tollan.utils.hookit">[docs]</a><span class="k">class</span> <span class="nc">hookit</span><span class="p">(</span><span class="n">ContextDecorator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A context manager that allow inject code to object&#39;s method.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    obj: object</span>
+<span class="sd">        The object to alter.</span>
+
+<span class="sd">    name: str</span>
+<span class="sd">        The name of the method to hook.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">func_hooked</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="hookit.set_post_func"><a class="viewcode-back" href="../../../api/tollan.utils.misc.hookit.html#tollan.utils.hookit.set_post_func">[docs]</a>    <span class="k">def</span> <span class="nf">set_post_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call `func` after the hooked function.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        func: callable</span>
+<span class="sd">            The function to call after the hooked function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">hooked</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func_hooked</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hooked</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func_hooked</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="patchit"><a class="viewcode-back" href="../../../api/tollan.utils.patchit.html#tollan.utils.patchit">[docs]</a><span class="k">def</span> <span class="nf">patchit</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">pass_patched</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a decorator that replace attribute with decorated</span>
+<span class="sd">    item.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    obj: object</span>
+<span class="sd">        The object to alter.</span>
+
+<span class="sd">    name: str</span>
+<span class="sd">        The name of the attribute to replace.</span>
+
+<span class="sd">    pass_patched: bool</span>
+<span class="sd">        If set to True, the original attribute will be passed to as</span>
+<span class="sd">        the first argument to the decorated function.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">patched_attr_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__patched_attr_</span><span class="si">{name}</span><span class="s1">&#39;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">patched_attr_name</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;attr </span><span class="si">{name}</span><span class="s2"> of obj </span><span class="si">{obj}</span><span class="s2"> is already patched&quot;</span><span class="p">)</span>
+    <span class="n">old_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pass_patched</span><span class="p">:</span>
+            <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+            <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">old_func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">new_func</span> <span class="o">=</span> <span class="n">wrapper</span>
+        <span class="n">new_func</span> <span class="o">=</span> <span class="n">func</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">patched_attr_name</span><span class="p">,</span> <span class="n">old_func</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">new_func</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_func</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<div class="viewcode-block" id="mapreduce"><a class="viewcode-back" href="../../../api/tollan.utils.misc.mapreduce.html#tollan.utils.mapreduce">[docs]</a><span class="k">def</span> <span class="nf">mapreduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">reduce_func</span><span class="p">,</span> <span class="n">gen</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a map and reduce generator.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    map_func: callable</span>
+<span class="sd">        The map function.</span>
+
+<span class="sd">    reduce_func: callable</span>
+<span class="sd">        The reduce_function.</span>
+
+<span class="sd">    gen: generator or iterator</span>
+<span class="sd">        The inputs.</span>
+
+<span class="sd">    *args, **kwargs:</span>
+<span class="sd">        Passed to the `functools.reduce` function.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    generator:</span>
+<span class="sd">        The map-reduce generator.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">reduce_func</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">gen</span><span class="p">),</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="anysum"><a class="viewcode-back" href="../../../api/tollan.utils.misc.anysum.html#tollan.utils.anysum">[docs]</a><span class="k">def</span> <span class="nf">anysum</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the sum of two objects.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span>
+    <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mapsum"><a class="viewcode-back" href="../../../api/tollan.utils.misc.mapsum.html#tollan.utils.mapsum">[docs]</a><span class="k">def</span> <span class="nf">mapsum</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">gen</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a map and sum generator.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">mapreduce</span><span class="p">(</span><span class="n">map_func</span><span class="p">,</span> <span class="n">anysum</span><span class="p">,</span> <span class="n">gen</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ensure_prefix"><a class="viewcode-back" href="../../../api/tollan.utils.misc.ensure_prefix.html#tollan.utils.ensure_prefix">[docs]</a><span class="k">def</span> <span class="nf">ensure_prefix</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a new string with prefix `p` if it does not.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">s</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{p}{s}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="to_typed"><a class="viewcode-back" href="../../../api/tollan.utils.to_typed.html#tollan.utils.to_typed">[docs]</a><span class="k">def</span> <span class="nf">to_typed</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a typed object from string `s` if possible.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input object has to be string.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s1">&#39;.&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="get_user_data_dir"><a class="viewcode-back" href="../../../api/tollan.utils.misc.get_user_data_dir.html#tollan.utils.get_user_data_dir">[docs]</a><span class="k">def</span> <span class="nf">get_user_data_dir</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">appdirs</span><span class="o">.</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s1">&#39;tollan&#39;</span><span class="p">,</span> <span class="s1">&#39;toltec&#39;</span><span class="p">))</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 2.4.3. &nbsp;
+    Last built 02 Mar 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

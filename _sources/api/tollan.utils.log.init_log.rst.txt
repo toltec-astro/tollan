@@ -1,0 +1,6 @@
+init_log
+========
+
+.. currentmodule:: tollan.utils.log
+
+.. autofunction:: init_log

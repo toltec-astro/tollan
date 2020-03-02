@@ -1,0 +1,6 @@
+pformat_list
+============
+
+.. currentmodule:: tollan.utils.fmt
+
+.. autofunction:: pformat_list

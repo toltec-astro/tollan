@@ -1,0 +1,6 @@
+pformat_obj
+===========
+
+.. currentmodule:: tollan.utils.fmt
+
+.. autofunction:: pformat_obj

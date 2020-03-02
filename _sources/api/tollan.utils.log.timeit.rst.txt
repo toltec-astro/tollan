@@ -1,0 +1,6 @@
+timeit
+======
+
+.. currentmodule:: tollan.utils.log
+
+.. autofunction:: timeit

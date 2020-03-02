@@ -1,0 +1,6 @@
+rgetattr
+========
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: rgetattr

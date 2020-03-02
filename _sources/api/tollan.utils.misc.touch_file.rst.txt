@@ -1,0 +1,6 @@
+touch_file
+==========
+
+.. currentmodule:: tollan.utils.misc
+
+.. autofunction:: touch_file

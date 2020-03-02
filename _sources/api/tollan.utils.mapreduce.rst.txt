@@ -1,0 +1,6 @@
+mapreduce
+=========
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: mapreduce
