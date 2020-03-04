@@ -1,19 +1,17 @@
 #! /usr/bin/env python
 from contextlib import contextmanager
 import sys
-import time
 import signal
 from PyQt5 import QtWidgets, QtCore
+import traceback
 
 
 _app = None
 
 
-class QThreadTarget(QtCore.QObject):
+class IntervalTarget(QtCore.QObject):
 
     finished = QtCore.pyqtSignal()
-
-    should_keep_running = True
 
     def __init__(self, interval, target=lambda: None):
         super().__init__()
@@ -22,14 +20,10 @@ class QThreadTarget(QtCore.QObject):
 
     @QtCore.pyqtSlot()
     def start(self):
-        while self.should_keep_running:
-            time.sleep(self._interval / 1e3)
+        while not QtCore.QThread.currentThread().isInterruptionRequested():
+            QtCore.QThread.msleep(self._interval)
             self._target()
         self.finished.emit()
-
-    @QtCore.pyqtSlot()
-    def stop(self):
-        self.should_keep_running = False
 
 
 def qt5app(args=None):
@@ -41,6 +35,8 @@ def qt5app(args=None):
     _app = QtWidgets.QApplication.instance()
     if _app is None:
         _app = QtWidgets.QApplication(args)
+    # setup_interrupt_handling()
+    sys.excepthook = traceback.print_exception
     return _app
 
 
