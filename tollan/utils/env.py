@@ -33,7 +33,10 @@ class EnvRegistry(Registry):
                 msg = f"env var {label} ({self[label]}) is not set"
             else:
                 msg = f"env var {label} is not set"
-            raise ValueError(msg)
+            if len(args) == 0:
+                raise ValueError(msg)
+            else:
+                self.logger.debug(msg)
         return result
 
 
