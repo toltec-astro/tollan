@@ -76,7 +76,11 @@ def run_stilts(cmd, *tbls):
     return exitcode
 
 
-def stilts_match1d(tbl1, tbl2, colname, radius, stilts_cmd=None):
+def stilts_match1d(
+        tbl1, tbl2, colname, radius,
+        stilts_cmd=None,
+        extra_args=None
+        ):
     if stilts_cmd is None:
         stilts_cmd = ensure_stilts()
     cmd = [
@@ -88,13 +92,15 @@ def stilts_match1d(tbl1, tbl2, colname, radius, stilts_cmd=None):
         f"values2='{colname}'",
         # "action=keep1",
         "out=$3", "ofmt=ascii"]
+    if extra_args is not None:
+        cmd.extend([a for a in extra_args])
 
     f = tempfile.NamedTemporaryFile()
 
     try:
         run_stilts(cmd, tbl1, tbl2, f.name)
     except Exception as e:
-        raise RuntimeError(f"failed run {''.join(cmd)}: {e}")
+        raise RuntimeError(f"failed run {' '.join(cmd)}: {e}")
     else:
         tbl = Table.read(f.name, format='ascii.commented_header')
         return tbl
