@@ -9,6 +9,7 @@ import itertools
 import socket
 import appdirs
 from pathlib import Path
+import urllib
 
 
 def get_hostname():
@@ -294,3 +295,29 @@ def to_typed(s):
 
 def get_user_data_dir():
     return Path(appdirs.user_data_dir('tollan', 'toltec'))
+
+
+# https://stackoverflow.com/a/57463161/1824372
+def file_uri_to_path(file_uri):
+    """
+    This function returns a pathlib.PurePath object for the supplied file URI.
+
+    Parameters
+    ----------
+    file_uri: str
+        The file URI.
+
+    Returns
+    -------
+    Path:
+        The path the URI refers to.
+    """
+    file_uri_parsed = urllib.parse.urlparse(file_uri)
+    if file_uri_parsed.scheme != 'file':
+        raise ValueError(f"not a file uri: {file_uri}")
+    file_uri_path_unquoted = urllib.parse.unquote(file_uri_parsed.path)
+    result = Path(file_uri_path_unquoted)
+    if not result.is_absolute():
+        raise ValueError(
+                f"invalid file uri {file_uri} : path {result} not absolute")
+    return result
