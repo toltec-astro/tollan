@@ -121,6 +121,13 @@ def get_logger(name=None):
     return logging.getLogger(name)
 
 
+def _format_time(time):
+    if time < 15:
+        return f"{time * 1e3:.0f}ms"
+    else:
+        return f"{human_time(time).strip()}"
+
+
 def timeit(arg):
     """Decorator that logs the execution time of the decorated item.
 
@@ -130,12 +137,6 @@ def timeit(arg):
         If `arg` type is `str`, a new decorator is returned which uses `arg`
         in the generated message in places of the name of the decorated object.
     """
-
-    def format_time(time):
-        if time < 15:
-            return f"{time * 1e3:.0f}ms"
-        else:
-            return f"{human_time(time).strip()}"
 
     if isinstance(arg, str):
         funcname = arg
@@ -149,12 +150,28 @@ def timeit(arg):
                 r = func(*args, **kwargs)
                 elapsed = time.time() - s
                 logger.debug("{} done in {}".format(
-                    funcname, format_time(elapsed)))
+                    funcname, _format_time(elapsed)))
                 return r
             return wrapper
         return decorator
     else:
         return timeit(arg.__name__)(arg)
+
+
+class Timer(object):
+    def __init__(self, msg):
+        self.msg = msg
+        self.logger = logging.getLogger("timeit")
+
+    def __enter__(self):
+        self.logger.debug("{} ...".format(self.msg))
+        self._start = time.time()
+
+    def __exit__(self, *args):
+        elapsed = time.time() - self._start
+        self.logger.debug(
+                "{} done in {}".format(
+                    self.msg, _format_time(elapsed)))
 
 
 class logit(ContextDecorator):
