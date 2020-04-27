@@ -19,6 +19,9 @@ from matplotlib.backends.backend_qt5agg import \
 from .qt import qt5app
 
 
+__all__ = ['save_or_show', ]
+
+
 class ScrollableMplWindow(QtWidgets.QMainWindow):
     def __init__(self, fig):
         super().__init__()

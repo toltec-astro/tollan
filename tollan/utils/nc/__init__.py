@@ -6,7 +6,11 @@ from ..log import get_logger, logit
 import functools
 
 
+__all__ = ['ncopen', 'ncinfo', 'NcNodeMapper']
+
+
 def ncstr(var):
+    """Return str from nc variable."""
     s = var[:].tolist()
     s = [c.decode('utf-8') for c in s if c is not None]
     return ''.join(s).strip()
@@ -19,6 +23,7 @@ def _close(*args, nc=None):
 
 
 def ncopen(source):
+    """Return an opened netCDF4 dataset a long with a close method."""
     if isinstance(source, netCDF4.Dataset):
         return source, lambda *args: None
     else:
@@ -27,6 +32,7 @@ def ncopen(source):
 
 
 def ncinfo(source):
+    """Return a pretty formatted string for netCDF4 dataset."""
 
     nc, close = ncopen(source)
 
@@ -83,6 +89,8 @@ def ncinfo(source):
 
 
 class NcNodeMapper(object):
+    """A adaptor class that accesses netCDF4 dataset with a custom name map."""
+
     def __init__(self, nc, map_):
         self.nc = nc
         self._ = map_

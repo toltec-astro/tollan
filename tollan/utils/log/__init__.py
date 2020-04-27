@@ -4,17 +4,15 @@ from contextlib import ContextDecorator
 import logging
 import logging.config
 import inspect
-import functools
 import time
-from astropy.utils.console import human_time
 import copy
 
+from astropy.utils.console import human_time
 from ..misc import rupdate
+from . import console_color
 
-try:
-    from . import console_color
-except ModuleNotFoundError:
-    console_color = None
+
+__all__ = ['init_log', 'get_logger', 'timeit', 'logit']
 
 
 presets = {
@@ -69,7 +67,7 @@ def init_log(
         preset='default',
         level='INFO',
         file_=None,
-        colored=console_color is not None,
+        colored=True,
         **kwargs):
     """Initialize logging with some sensible presets.
 
@@ -82,8 +80,7 @@ def init_log(
         If set, the log are saved in `file_`.
 
     colored: bool
-        If set to True, console messages will be colored (requires package
-        `click` to work).
+        If set to True, console messages will be colored.
 
     **kwargs:
         Update the preset with entries in this dict.
@@ -101,8 +98,6 @@ def init_log(
                 },
             'loggers': {'': {'handlers': ['logfile', ]}},
             })
-    if colored and console_color is None:
-        colored = False
     if colored:
         rupdate(config, console_color.config)
     rupdate(config, kwargs)
@@ -128,8 +123,8 @@ def _format_time(time):
         return f"{human_time(time).strip()}"
 
 
-def timeit(arg):
-    """Decorator that logs the execution time of the decorated item.
+class timeit(ContextDecorator):
+    """Context decorator that logs the execution time of the decorated item.
 
     Parameters
     ----------
@@ -138,27 +133,11 @@ def timeit(arg):
         in the generated message in places of the name of the decorated object.
     """
 
-    if isinstance(arg, str):
-        funcname = arg
+    def __new__(cls, arg):
+        if callable(arg):
+            return cls(arg.__name__)(arg)
+        return super().__new__(cls)
 
-        def decorator(func):
-            @functools.wraps(func)
-            def wrapper(*args, **kwargs):
-                logger = logging.getLogger("timeit")
-                logger.debug("{} ...".format(funcname))
-                s = time.time()
-                r = func(*args, **kwargs)
-                elapsed = time.time() - s
-                logger.debug("{} done in {}".format(
-                    funcname, _format_time(elapsed)))
-                return r
-            return wrapper
-        return decorator
-    else:
-        return timeit(arg.__name__)(arg)
-
-
-class Timer(object):
     def __init__(self, msg):
         self.msg = msg
         self.logger = logging.getLogger("timeit")

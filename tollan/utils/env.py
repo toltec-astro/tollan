@@ -1,42 +1,65 @@
 #! /usr/bin/env python
 
-"""This module defines some helpers for handling env vars."""
-
 import os
 from .registry import Registry
 import pyaml
 
 
+__all__ = ['EnvRegistry', 'env_registry']
+
+
 class EnvRegistry(Registry):
-    """A registry class that holds env vars with their short descriptions."""
+    """A registry class that helps work with env vars."""
 
-    def register(self, label, item):
-        if label in self:
-            if item != self[label]:
-                raise KeyError(
-                    f"label={label} exists in registry: {self[label]}")
-            else:
-                return
-        self[label] = item
-        self.logger.debug(
-                f"registered env \"{label}\": \"{item}\"")
+    _NODEFUALT = "__no_default__"
 
-    def make_doc(self):
-        print(self)
+    def _make_entry(self, name, desc, defval=_NODEFUALT):
+        return {'name': name, 'description': desc, 'default': defval}
 
-    def get(self, label, *args):
-        if label not in self:
-            self.logger.debug(f"env var {label} is not registered")
-        result = os.getenv(label, *args)
+    def register(self, name, desc, defval=_NODEFUALT):
+        """Register an environment variable.
+
+        Parameters
+        ----------
+        name: str
+            The name of the env var.
+        desc: str
+            The description of the env var.
+        defval: str, optional
+            The default value.
+        """
+        if name in self:
+            raise KeyError(
+                    f"env {name} exists in registry: {self[name]}"
+                    )
+            # if item != self[label]:
+            #     raise KeyError(
+            #         f"label={label} exists in registry: {self[label]}")
+            # else:
+            #     return
+        self[name] = self._make_entry(name, desc, defval)
+        if defval == self._NODEFUALT:
+            msg = f"registered env \"{name}\": \"{desc}\""
+        else:
+            msg += f' (default={defval})'
+        self.logger.debug(msg)
+
+    def get(self, name, *args):
+        """Return env var of given name."""
+        if name not in self:
+            self.logger.warn(f"env var {name} is not registered")
+            return os.getenv(name, *args)
+        # check default value
+        defval = self[name]['default']
+        if defval != self._NODEFUALT and len(args) == 0:
+            args = (defval, )
+        result = os.getenv(name, *args)
         if result is None or result == '':
-            if label in self:
-                msg = f"env var {label} ({self[label]}) is not set"
-            else:
-                msg = f"env var {label} is not set"
+            msg = f"env var {name} ({self[name]['description']}) is not set"
             if len(args) == 0:
                 raise ValueError(msg)
             else:
-                self.logger.debug(msg)
+                self.logger.debug(msg + f', use default {args[0]}')
         return result
 
 

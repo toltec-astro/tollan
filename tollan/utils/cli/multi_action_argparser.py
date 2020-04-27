@@ -4,6 +4,9 @@ import argparse
 import wrapt
 
 
+__all__ = ['MultiActionArgumentParser', ]
+
+
 class RecursiveHelpAction(argparse._HelpAction):
 
     @staticmethod

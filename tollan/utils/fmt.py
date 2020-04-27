@@ -6,7 +6,10 @@ import textwrap
 import numpy as np
 
 
-pyaml.add_representer(None, lambda s, d: s.represent_str(str(d)))
+__all__ = [
+        'pformat_paths', 'pformat_list', 'pformat_dict', 'pformat_obj',
+        'pformat_yaml', 'pformat_fancy_index'
+        ]
 
 
 def pformat_paths(paths, sep='\n'):
@@ -133,3 +136,6 @@ def pformat_fancy_index(i):
             result = result.format(f':{i.step}')
         return result
     return i
+
+
+pyaml.add_representer(None, lambda s, d: s.represent_str(str(d)))

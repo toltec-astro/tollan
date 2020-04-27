@@ -12,6 +12,9 @@ from pathlib import Path
 import urllib
 
 
+_excluded_from_all = set(globals().keys())
+
+
 def get_hostname():
     """Same as the shell command `hostname`"""
     return socket.gethostname()
@@ -294,6 +297,7 @@ def to_typed(s):
 
 
 def get_user_data_dir():
+    """Return the directory for saving user data."""
     return Path(appdirs.user_data_dir('tollan', 'toltec'))
 
 
@@ -321,3 +325,6 @@ def file_uri_to_path(file_uri):
         raise ValueError(
                 f"invalid file uri {file_uri} : path {result} not absolute")
     return result
+
+
+__all__ = list(set(globals().keys()).difference(_excluded_from_all))

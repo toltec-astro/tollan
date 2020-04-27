@@ -4,7 +4,11 @@ from .log import get_logger
 import numpy as np
 
 
+__all__ = ['flex_reshape', ]
+
+
 def flex_reshape(arr, shape):
+    """Reshape an array with possible trimming of extraneous items."""
     logger = get_logger()
     shape = list(shape)
     if -1 in shape:

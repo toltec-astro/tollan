@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 
-"""Click helpers."""
-
 import re
 import os
 import click
 from contextlib import contextmanager
+
+
+__all__ = ['varg_command', 'hook_ctx_make_context', 'ctx_no_recreate_obj']
+
 
 CONTEXT_SETTINGS = dict(
             help_option_names=('-h', '--help'),
@@ -45,6 +47,11 @@ class CommandAfterArgs(click.Command):
 
 
 def varg_command(cli, name, *others):
+    """Create positional argument that are of variable length.
+
+    The token ``^`` can be used to mark the end of the argument list.
+    """
+
     def decorator(func):
         r = click.argument(CommandAfterArgs.split_arg, nargs=-1)(func)
         for o in reversed(others):
@@ -91,8 +98,9 @@ def getctxroot(ctx):
 
 @contextmanager
 def hook_ctx_make_context(group):
-    # hook the make context function so that we can setup flag
-    # for reusing the objects
+    """A context manager that hook the make context function to reuse context
+    object."""
+
     _make_context = group.make_context
 
     def _make_context_hooked(*args, **kwargs):
@@ -107,4 +115,5 @@ def hook_ctx_make_context(group):
 
 
 def ctx_no_recreate_obj(ctx):
+    """Return True if context object should not be recreated."""
     return getattr(ctx, CTX_NO_RECREATE_OBJ, False)

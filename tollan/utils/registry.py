@@ -7,6 +7,9 @@ import wrapt
 import copy
 
 
+__all__ = ['register_to', 'Registry']
+
+
 class RegistryMixin(object):
     logger = get_logger()
 
@@ -20,6 +23,8 @@ class RegistryMixin(object):
 
 
 def register_to(registry, key):
+    """Register the decorated item with key."""
+
     def decorator(cls):
         registry.register(key(cls), cls)
         return cls

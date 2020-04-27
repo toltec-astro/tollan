@@ -16,6 +16,9 @@ from contextlib import ExitStack
 from astropy.table import Table
 
 
+__all__ = ['ensure_stilts', 'run_stilts', 'stilts_match1d']
+
+
 def ensure_stilts():
     logger = get_logger()
     extern_dir = get_wraps_dir()

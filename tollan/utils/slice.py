@@ -4,6 +4,13 @@ import re
 import copy
 
 
+__all__ = [
+        'BoundedSliceChain', 'UnboundedSliceChain',
+        'resolve_slice', 'XLoc',
+        'parse_slice',
+        ]
+
+
 class SliceChain(object):
     bounded = NotImplemented
 
@@ -89,7 +96,7 @@ class UnboundedSliceChain(SliceChain):
             _arr = _arr[s]
         return _arr
 
-    def bound_to(self, other, **kwargs):
+    def resolve(self, other, **kwargs):
         """Return a bounded slice chain by operating on `other`."""
         if not isinstance(other, BoundedSliceChain):
             result = BoundedSliceChain(other, **kwargs)

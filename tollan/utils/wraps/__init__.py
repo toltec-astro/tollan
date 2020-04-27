@@ -4,7 +4,11 @@ from .. import get_user_data_dir
 from ..log import get_logger, logit
 
 
+__all__ = ['get_wraps_dir', ]
+
+
 def get_wraps_dir():
+    """Return the directory for saving wrappers."""
     logger = get_logger()
     p = get_user_data_dir().joinpath('wraps')
     if not p.exists():
