@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.registry &#8212; tollan v0.1.dev12+g0b0613d.d20200302</title>
+    <title>tollan.utils.registry &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev12+g0b0613d.d20200302</a>
+	<a href="../../../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -71,19 +71,24 @@
 <span class="kn">import</span> <span class="nn">copy</span>
 
 
-<div class="viewcode-block" id="RegistryMixin"><a class="viewcode-back" href="../../../api/tollan.utils.registry.RegistryMixin.html#tollan.utils.registry.RegistryMixin">[docs]</a><span class="k">class</span> <span class="nc">RegistryMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;register_to&#39;</span><span class="p">,</span> <span class="s1">&#39;Registry&#39;</span><span class="p">]</span>
+
+
+<span class="k">class</span> <span class="nc">RegistryMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
 
-<div class="viewcode-block" id="RegistryMixin.register"><a class="viewcode-back" href="../../../api/tollan.utils.registry.RegistryMixin.html#tollan.utils.registry.RegistryMixin.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;label=</span><span class="si">{label}</span><span class="s2"> exists in registry: </span><span class="si">{self[label]}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="sa">f</span><span class="s2">&quot;label=</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> exists in registry: </span><span class="si">{</span><span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;registered </span><span class="si">{item}</span><span class="s2"> as </span><span class="se">\&quot;</span><span class="si">{label}</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+                <span class="sa">f</span><span class="s2">&quot;registered </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> as </span><span class="se">\&quot;</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="register_to"><a class="viewcode-back" href="../../../api/tollan.utils.registry.register_to.html#tollan.utils.registry.register_to">[docs]</a><span class="k">def</span> <span class="nf">register_to</span><span class="p">(</span><span class="n">registry</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Register the decorated item with key.&quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
         <span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span> <span class="bp">cls</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span>
@@ -117,8 +122,8 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 2.4.3. &nbsp;
-    Last built 02 Mar 2020. <br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 27 Apr 2020. <br/>
   </p>
 </footer>
   </body>

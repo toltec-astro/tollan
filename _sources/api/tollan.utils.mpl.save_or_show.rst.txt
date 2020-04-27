@@ -1,0 +1,6 @@
+save_or_show
+============
+
+.. currentmodule:: tollan.utils.mpl
+
+.. autofunction:: save_or_show

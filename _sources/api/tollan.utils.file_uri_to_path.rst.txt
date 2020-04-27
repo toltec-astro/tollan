@@ -1,0 +1,6 @@
+file_uri_to_path
+================
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: file_uri_to_path

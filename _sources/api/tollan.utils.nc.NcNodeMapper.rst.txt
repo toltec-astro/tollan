@@ -1,0 +1,27 @@
+NcNodeMapper
+============
+
+.. currentmodule:: tollan.utils.nc
+
+.. autoclass:: NcNodeMapper
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~NcNodeMapper.get
+      ~NcNodeMapper.getdim
+      ~NcNodeMapper.getscalar
+      ~NcNodeMapper.getstr
+      ~NcNodeMapper.getvar
+      ~NcNodeMapper.hasvar
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: get
+   .. automethod:: getdim
+   .. automethod:: getscalar
+   .. automethod:: getstr
+   .. automethod:: getvar
+   .. automethod:: hasvar

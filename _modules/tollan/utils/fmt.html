@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.fmt &#8212; tollan v0.1.dev12+g0b0613d.d20200302</title>
+    <title>tollan.utils.fmt &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev12+g0b0613d.d20200302</a>
+	<a href="../../../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -70,11 +70,14 @@
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
-<span class="n">pyaml</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)))</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;pformat_paths&#39;</span><span class="p">,</span> <span class="s1">&#39;pformat_list&#39;</span><span class="p">,</span> <span class="s1">&#39;pformat_dict&#39;</span><span class="p">,</span> <span class="s1">&#39;pformat_obj&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;pformat_yaml&#39;</span><span class="p">,</span> <span class="s1">&#39;pformat_fancy_index&#39;</span>
+        <span class="p">]</span>
 
 
 <div class="viewcode-block" id="pformat_paths"><a class="viewcode-back" href="../../../api/tollan.utils.fmt.pformat_paths.html#tollan.utils.fmt.pformat_paths">[docs]</a><span class="k">def</span> <span class="nf">pformat_paths</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{p!s}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">p</span><span class="si">!s}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pformat_list"><a class="viewcode-back" href="../../../api/tollan.utils.fmt.pformat_list.html#tollan.utils.fmt.pformat_list">[docs]</a><span class="k">def</span> <span class="nf">pformat_list</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">indent</span><span class="p">,</span> <span class="n">minw</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">max_cell_width</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="n">fancy</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
@@ -123,7 +126,7 @@
             <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">fmt_elem</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="kc">None</span><span class="p">),</span> <span class="n">l</span><span class="p">)))</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">flat</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">minw</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span>
-                <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">{fmt_elem(e)}&#39;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">l</span><span class="p">),</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="n">indent</span><span class="p">)</span>
+                <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="si">{</span><span class="n">fmt_elem</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">l</span><span class="p">),</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="n">indent</span><span class="p">)</span>
         <span class="c1"># fmt = &quot;{{:{}s}}{{}}&quot;.format(indent)</span>
         <span class="c1"># return &quot;\n{}&quot;.format(</span>
         <span class="c1">#         &#39;\n&#39;.join(fmt.format(&quot; &quot;, fmt_elem(e)) for e in l))</span>
@@ -160,9 +163,9 @@
             <span class="n">d</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
             <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isfunction</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
-                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{n}</span><span class="s2">{inspect.signature(a)}&quot;</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}{</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">a</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{n}</span><span class="s2">&quot;</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
         <span class="n">width</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">result</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">width</span>
@@ -172,12 +175,12 @@
 
         <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;  attrs:&quot;</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">fmt_obj_attrs</span><span class="p">:</span>
-            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    {{:</span><span class="si">{width}</span><span class="s2">}}: {{}}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="se">{{</span><span class="s2">:</span><span class="si">{</span><span class="n">width</span><span class="si">}</span><span class="se">}}</span><span class="s2">: </span><span class="se">{{}}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
     <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pformat_yaml"><a class="viewcode-back" href="../../../api/tollan.utils.fmt.pformat_yaml.html#tollan.utils.fmt.pformat_yaml">[docs]</a><span class="k">def</span> <span class="nf">pformat_yaml</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">{pyaml.dump(obj)}&quot;</span></div>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">pyaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
 
 
 <div class="viewcode-block" id="pformat_fancy_index"><a class="viewcode-back" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html#tollan.utils.fmt.pformat_fancy_index">[docs]</a><span class="k">def</span> <span class="nf">pformat_fancy_index</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
@@ -190,13 +193,16 @@
             <span class="n">stop</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stop</span> <span class="o">=</span> <span class="n">i</span><span class="o">.</span><span class="n">stop</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{start}</span><span class="s1">:</span><span class="si">{stop}</span><span class="s1">{{}}]&#39;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">start</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">stop</span><span class="si">}</span><span class="se">{{}}</span><span class="s1">]&#39;</span>
         <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">i</span><span class="o">.</span><span class="n">step</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;:</span><span class="si">{i.step}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;:</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">step</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">result</span>
     <span class="k">return</span> <span class="n">i</span></div>
+
+
+<span class="n">pyaml</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)))</span>
 </pre></div>
 
           </div>
@@ -215,8 +221,8 @@
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 2.4.3. &nbsp;
-    Last built 02 Mar 2020. <br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 27 Apr 2020. <br/>
   </p>
 </footer>
   </body>

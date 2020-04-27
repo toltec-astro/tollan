@@ -1,0 +1,6 @@
+get_wraps_dir
+=============
+
+.. currentmodule:: tollan.utils.wraps
+
+.. autofunction:: get_wraps_dir

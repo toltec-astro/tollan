@@ -1,6 +1,0 @@
-to_typed
-========
-
-.. currentmodule:: tollan.utils.misc
-
-.. autofunction:: to_typed

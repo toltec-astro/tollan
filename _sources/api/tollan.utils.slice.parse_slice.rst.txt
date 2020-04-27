@@ -1,0 +1,6 @@
+parse_slice
+===========
+
+.. currentmodule:: tollan.utils.slice
+
+.. autofunction:: parse_slice

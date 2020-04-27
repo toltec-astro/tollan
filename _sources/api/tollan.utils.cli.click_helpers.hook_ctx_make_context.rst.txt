@@ -1,0 +1,6 @@
+hook_ctx_make_context
+=====================
+
+.. currentmodule:: tollan.utils.cli.click_helpers
+
+.. autofunction:: hook_ctx_make_context

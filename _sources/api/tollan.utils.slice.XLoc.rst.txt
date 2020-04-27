@@ -1,0 +1,17 @@
+XLoc
+====
+
+.. currentmodule:: tollan.utils.slice
+
+.. autoclass:: XLoc
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~XLoc.__call__
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: __call__

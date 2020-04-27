@@ -1,0 +1,6 @@
+ncinfo
+======
+
+.. currentmodule:: tollan.utils.nc
+
+.. autofunction:: ncinfo

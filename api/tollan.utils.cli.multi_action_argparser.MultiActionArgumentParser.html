@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>MultiActionArgumentParser &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="EnvRegistry" href="tollan.utils.env.EnvRegistry.html" />
+    <link rel="prev" title="ctx_no_recreate_obj" href="tollan.utils.cli.click_helpers.ctx_no_recreate_obj.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="tollan.utils.env.EnvRegistry.html" title="EnvRegistry">
+	  next &raquo;
+	</a>
+      </li>
+      <li class="right">
+	<a href="tollan.utils.cli.click_helpers.ctx_no_recreate_obj.html" title="ctx_no_recreate_obj">
+	  &laquo; previous
+	</a>
+	 |
+      </li>
+      <li>
+	<a href="../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	 &#187;
+      </li>
+      
+      <li>MultiActionArgumentParser</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="multiactionargumentparser">
+<h1>MultiActionArgumentParser<a class="headerlink" href="#multiactionargumentparser" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser">
+<em class="property">class </em><code class="sig-prename descclassname">tollan.utils.cli.multi_action_argparser.</code><code class="sig-name descname">MultiActionArgumentParser</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/cli/multi_action_argparser.html#MultiActionArgumentParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectProxy</span></code></p>
+<p>This class wraps the <a class="reference external" href="https://docs.python.org/3/library/argparse.html#argparse.ArgumentParser" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code></a> so that it
+allows defining subcommands with ease.</p>
+<p class="rubric">Methods Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.add_action_parser" title="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.add_action_parser"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_action_parser</span></code></a>(self, \*args, \*\*kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.bootstrap_actions" title="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.bootstrap_actions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bootstrap_actions</span></code></a>(self, option)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.parser_action" title="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.parser_action"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parser_action</span></code></a>(parser)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="py method">
+<dt id="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.add_action_parser">
+<code class="sig-name descname">add_action_parser</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">\*args</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/cli/multi_action_argparser.html#MultiActionArgumentParser.add_action_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.add_action_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.bootstrap_actions">
+<code class="sig-name descname">bootstrap_actions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">option</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/cli/multi_action_argparser.html#MultiActionArgumentParser.bootstrap_actions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.bootstrap_actions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.parser_action">
+<em class="property">static </em><code class="sig-name descname">parser_action</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/cli/multi_action_argparser.html#MultiActionArgumentParser.parser_action"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.parser_action" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">MultiActionArgumentParser</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/api/tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.rst.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 27 Apr 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

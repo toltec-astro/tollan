@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tollan.utils.cli.click_helpers &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	 &#187;
+      </li>
+      <li><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.cli.click_helpers</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">click</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;varg_command&#39;</span><span class="p">,</span> <span class="s1">&#39;hook_ctx_make_context&#39;</span><span class="p">,</span> <span class="s1">&#39;ctx_no_recreate_obj&#39;</span><span class="p">]</span>
+
+
+<span class="n">CONTEXT_SETTINGS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">help_option_names</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;-h&#39;</span><span class="p">,</span> <span class="s1">&#39;--help&#39;</span><span class="p">),</span>
+            <span class="p">)</span>
+<span class="n">OPTION_SETTINGS</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">allow_from_autoenv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">show_envvar</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+<span class="n">CTX_NO_RECREATE_OBJ</span> <span class="o">=</span> <span class="s1">&#39;_ctx_no_recreate_obj&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">OptionalArgumentGroup</span><span class="p">(</span><span class="n">click</span><span class="o">.</span><span class="n">Command</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">commands</span><span class="p">:</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">CommandAfterArgs</span><span class="p">(</span><span class="n">click</span><span class="o">.</span><span class="n">Command</span><span class="p">):</span>
+
+    <span class="n">split_arg</span> <span class="o">=</span> <span class="s1">&#39;args&#39;</span>
+    <span class="n">split_token</span> <span class="o">=</span> <span class="s1">&#39;^&#39;</span>
+
+    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">parsed_args</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_arg</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">params</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_arg</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">split_token</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">split_arg</span><span class="p">]):</span>
+            <span class="n">isplit</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">split_token</span><span class="p">)</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][:</span><span class="n">isplit</span><span class="p">]</span>
+            <span class="n">rest</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">][</span><span class="n">isplit</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:])</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">args</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">rest</span>
+            <span class="n">parsed_args</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">args</span>
+        <span class="k">return</span> <span class="n">parsed_args</span>
+
+
+<div class="viewcode-block" id="varg_command"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.click_helpers.varg_command.html#tollan.utils.cli.click_helpers.varg_command">[docs]</a><span class="k">def</span> <span class="nf">varg_command</span><span class="p">(</span><span class="n">cli</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create positional argument that are of variable length.</span>
+
+<span class="sd">    The token ``^`` can be used to mark the end of the argument list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">click</span><span class="o">.</span><span class="n">argument</span><span class="p">(</span><span class="n">CommandAfterArgs</span><span class="o">.</span><span class="n">split_arg</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">others</span><span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">o</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cli</span><span class="o">.</span><span class="n">command</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span>
+                <span class="bp">cls</span><span class="o">=</span><span class="n">CommandAfterArgs</span><span class="p">,</span>
+                <span class="n">context_settings</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;ignore_unknown_options&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+                <span class="p">)(</span><span class="n">r</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<span class="k">def</span> <span class="nf">split_option_arg</span><span class="p">(</span><span class="n">arg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[,;]+&#39;</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">split_paths</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">vs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">vs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;[:;,]+&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">paths</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">click</span><span class="o">.</span><span class="n">BadParameter</span><span class="p">(</span><span class="s1">&#39;invalid argument&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">resolve_path</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">param</span><span class="p">,</span> <span class="n">ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">click</span><span class="o">.</span><span class="n">BadParameter</span><span class="p">(</span><span class="s1">&#39;invalid argument&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">getctxroot</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">while</span> <span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">return</span> <span class="n">parent</span>
+
+
+<div class="viewcode-block" id="hook_ctx_make_context"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.click_helpers.hook_ctx_make_context.html#tollan.utils.cli.click_helpers.hook_ctx_make_context">[docs]</a><span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">hook_ctx_make_context</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A context manager that hook the make context function to reuse context</span>
+<span class="sd">    object.&quot;&quot;&quot;</span>
+
+    <span class="n">_make_context</span> <span class="o">=</span> <span class="n">group</span><span class="o">.</span><span class="n">make_context</span>
+
+    <span class="k">def</span> <span class="nf">_make_context_hooked</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">_make_context</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">CTX_NO_RECREATE_OBJ</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ctx</span>
+    <span class="n">group</span><span class="o">.</span><span class="n">make_context</span> <span class="o">=</span> <span class="n">_make_context_hooked</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">group</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">group</span><span class="o">.</span><span class="n">make_context</span> <span class="o">=</span> <span class="n">_make_context</span></div>
+
+
+<div class="viewcode-block" id="ctx_no_recreate_obj"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.click_helpers.ctx_no_recreate_obj.html#tollan.utils.cli.click_helpers.ctx_no_recreate_obj">[docs]</a><span class="k">def</span> <span class="nf">ctx_no_recreate_obj</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return True if context object should not be recreated.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">CTX_NO_RECREATE_OBJ</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 27 Apr 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

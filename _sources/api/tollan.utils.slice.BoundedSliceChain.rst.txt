@@ -1,0 +1,29 @@
+BoundedSliceChain
+=================
+
+.. currentmodule:: tollan.utils.slice
+
+.. autoclass:: BoundedSliceChain
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~BoundedSliceChain.bounded
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~BoundedSliceChain.apply
+      ~BoundedSliceChain.to_slice
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: bounded
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: apply
+   .. automethod:: to_slice

@@ -1,0 +1,6 @@
+varg_command
+============
+
+.. currentmodule:: tollan.utils.cli.click_helpers
+
+.. autofunction:: varg_command

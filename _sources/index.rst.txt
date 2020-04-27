@@ -1,11 +1,46 @@
-Documentation
+####################
+Tollan Documentation
+####################
+
+The `tollan` package includes various utility routines that are shared
+across the python packages developed for the TolTEC project.
+
+
+=============
+Reference/API
 =============
 
-This is the documentation for tollan.
+.. automodapi:: tollan
 
-Tollan is a shared utility package for softwares of the TolTEC project.
+.. automodapi:: tollan.utils
 
-.. toctree::
-  :maxdepth: 2
+.. automodapi:: tollan.utils.cli.click_helpers
 
-  tollan/index.rst
+.. automodapi:: tollan.utils.cli.multi_action_argparser
+
+.. automodapi:: tollan.utils.env
+
+.. automodapi:: tollan.utils.fmt
+
+.. automodapi:: tollan.utils.log
+
+.. automodapi:: tollan.utils.mpl
+
+.. automodapi:: tollan.utils.nc
+
+.. automodapi:: tollan.utils.np
+
+.. automodapi:: tollan.utils.registry
+
+.. automodapi:: tollan.utils.slice
+
+.. automodapi:: tollan.utils.wraps
+
+
+=====
+Index
+=====
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

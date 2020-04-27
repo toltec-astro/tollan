@@ -1,0 +1,6 @@
+ncopen
+======
+
+.. currentmodule:: tollan.utils.nc
+
+.. autofunction:: ncopen

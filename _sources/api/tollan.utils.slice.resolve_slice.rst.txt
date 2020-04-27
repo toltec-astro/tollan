@@ -1,0 +1,6 @@
+resolve_slice
+=============
+
+.. currentmodule:: tollan.utils.slice
+
+.. autofunction:: resolve_slice

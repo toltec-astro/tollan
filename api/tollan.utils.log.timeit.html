@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
-    <title>timeit &#8212; tollan v0.1.dev12+g0b0613d.d20200302</title>
+    <title>timeit &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
     <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="logit" href="tollan.utils.log.logit.html" />
-    <link rel="prev" title="init_log" href="tollan.utils.log.init_log.html" />
+    <link rel="prev" title="get_logger" href="tollan.utils.log.get_logger.html" />
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
 
   </head><body>
@@ -53,16 +53,15 @@
 	</a>
       </li>
       <li class="right">
-	<a href="tollan.utils.log.init_log.html" title="init_log">
+	<a href="tollan.utils.log.get_logger.html" title="get_logger">
 	  &laquo; previous
 	</a>
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev12+g0b0613d.d20200302</a>
+	<a href="../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
 	 &#187;
       </li>
-      <li><a href="../tollan/index.html" accesskey="U">Tollan Documentation</a> &#187;</li>
       
       <li>timeit</li> 
     </ul>
@@ -76,10 +75,11 @@
             
   <div class="section" id="timeit">
 <h1>timeit<a class="headerlink" href="#timeit" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
+<dl class="py class">
 <dt id="tollan.utils.log.timeit">
-<code class="sig-prename descclassname">tollan.utils.log.</code><code class="sig-name descname">timeit</code><span class="sig-paren">(</span><em class="sig-param">arg</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/log.html#timeit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.log.timeit" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decorator that logs the execution time of the decorated item.</p>
+<em class="property">class </em><code class="sig-prename descclassname">tollan.utils.log.</code><code class="sig-name descname">timeit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/log.html#timeit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.log.timeit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.ContextDecorator" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">contextlib.ContextDecorator</span></code></a></p>
+<p>Context decorator that logs the execution time of the decorated item.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
@@ -115,8 +115,8 @@ in the generated message in places of the name of the decorated object.</p>
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 2.4.3. &nbsp;
-    Last built 02 Mar 2020. <br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 27 Apr 2020. <br/>
   </p>
 </footer>
   </body>

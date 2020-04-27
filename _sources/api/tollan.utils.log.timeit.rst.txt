@@ -3,4 +3,5 @@ timeit
 
 .. currentmodule:: tollan.utils.log
 
-.. autofunction:: timeit
+.. autoclass:: timeit
+   :show-inheritance:

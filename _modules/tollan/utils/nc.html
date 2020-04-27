@@ -1,0 +1,220 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tollan.utils.nc &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	 &#187;
+      </li>
+      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.nc</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+<span class="kn">import</span> <span class="nn">netCDF4</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">..fmt</span> <span class="kn">import</span> <span class="n">pformat_list</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">logit</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ncopen&#39;</span><span class="p">,</span> <span class="s1">&#39;ncinfo&#39;</span><span class="p">,</span> <span class="s1">&#39;NcNodeMapper&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">ncstr</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return str from nc variable.&quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">var</span><span class="p">[:]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">nc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">logit</span><span class="p">(</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;close </span><span class="si">{</span><span class="n">nc</span><span class="o">.</span><span class="n">filepath</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+        <span class="n">nc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="ncopen"><a class="viewcode-back" href="../../../api/tollan.utils.nc.ncopen.html#tollan.utils.nc.ncopen">[docs]</a><span class="k">def</span> <span class="nf">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return an opened netCDF4 dataset a long with a close method.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">source</span><span class="p">,</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nc</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">nc</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_close</span><span class="p">,</span> <span class="n">nc</span><span class="o">=</span><span class="n">nc</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ncinfo"><a class="viewcode-back" href="../../../api/tollan.utils.nc.ncinfo.html#tollan.utils.nc.ncinfo">[docs]</a><span class="k">def</span> <span class="nf">ncinfo</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a pretty formatted string for netCDF4 dataset.&quot;&quot;&quot;</span>
+
+    <span class="n">nc</span><span class="p">,</span> <span class="n">close</span> <span class="o">=</span> <span class="n">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">fmt_var</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">var</span><span class="o">.</span><span class="n">dimensions</span> <span class="ow">or</span> <span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;|S1&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span>
+                <span class="n">var</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">var</span><span class="p">[:]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;|S1&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">ncstr</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+                <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{:g}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">dimensions</span><span class="p">))</span>
+
+    <span class="n">attnames</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nc</span><span class="o">.</span><span class="n">getncattr</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">ncattrs</span><span class="p">()]</span>
+    <span class="n">dimnames</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">dimname</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="n">dimname</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">dimname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+    <span class="n">varnames</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span>
+            <span class="n">varname</span><span class="p">,</span>
+            <span class="n">fmt_var</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">]),</span>
+            <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">],</span> <span class="s2">&quot;long_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">varname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="p">]</span>
+    <span class="n">grpnames</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="n">grpname</span><span class="p">,</span> <span class="p">)</span> <span class="k">for</span> <span class="n">grpname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+    <span class="k">if</span> <span class="n">nc</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0.path}</span><span class="s2">: [</span><span class="si">{0.data_model}</span><span class="s2">, </span><span class="si">{0.disk_format}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nc</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;{{</span>
+<span class="s2">  file: </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">  </span><span class="si">{head}</span><span class="s2"></span>
+<span class="s2">    atts: </span><span class="si">{atts}</span><span class="s2"></span>
+<span class="s2">    dims: </span><span class="si">{dims}</span><span class="s2"></span>
+<span class="s2">    vars: </span><span class="si">{vars_}</span><span class="s2"></span>
+<span class="s2">    grps: </span><span class="si">{grps}</span><span class="s2"></span>
+<span class="s2">  }}&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">nc</span><span class="o">.</span><span class="n">filepath</span><span class="p">(),</span>
+        <span class="n">head</span><span class="o">=</span><span class="n">head</span><span class="p">,</span>
+        <span class="n">atts</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">attnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="n">dims</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">dimnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="n">vars_</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">varnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="n">grps</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">grpnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">info</span></div>
+
+
+<div class="viewcode-block" id="NcNodeMapper"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper">[docs]</a><span class="k">class</span> <span class="nc">NcNodeMapper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A adaptor class that accesses netCDF4 dataset with a custom name map.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nc</span><span class="p">,</span> <span class="n">map_</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nc</span> <span class="o">=</span> <span class="n">nc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_</span> <span class="o">=</span> <span class="n">map_</span>
+
+<div class="viewcode-block" id="NcNodeMapper.hasvar"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.hasvar">[docs]</a>    <span class="k">def</span> <span class="nf">hasvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ks</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NcNodeMapper.getvar"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getvar">[docs]</a>    <span class="k">def</span> <span class="nf">getvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span></div>
+
+<div class="viewcode-block" id="NcNodeMapper.getdim"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getdim">[docs]</a>    <span class="k">def</span> <span class="nf">getdim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">size</span></div>
+
+<div class="viewcode-block" id="NcNodeMapper.getscalar"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getscalar">[docs]</a>    <span class="k">def</span> <span class="nf">getscalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asscalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">)[:])</span></div>
+
+<div class="viewcode-block" id="NcNodeMapper.getstr"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getstr">[docs]</a>    <span class="k">def</span> <span class="nf">getstr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ncstr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_</span>
+
+<div class="viewcode-block" id="NcNodeMapper.get"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasvar</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">dimensions</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;|S1&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span>
+                    <span class="n">v</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">[:]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;|S1&quot;</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">ncstr</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asscalar</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">v</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getdim</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 27 Apr 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

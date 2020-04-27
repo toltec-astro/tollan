@@ -1,0 +1,19 @@
+UnboundedSliceChain
+===================
+
+.. currentmodule:: tollan.utils.slice
+
+.. autoclass:: UnboundedSliceChain
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~UnboundedSliceChain.apply
+      ~UnboundedSliceChain.resolve
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: apply
+   .. automethod:: resolve
