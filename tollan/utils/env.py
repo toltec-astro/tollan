@@ -38,9 +38,8 @@ class EnvRegistry(Registry):
             # else:
             #     return
         self[name] = self._make_entry(name, desc, defval)
-        if defval == self._NODEFUALT:
-            msg = f"registered env \"{name}\": \"{desc}\""
-        else:
+        msg = f"registered env \"{name}\": \"{desc}\""
+        if not defval == self._NODEFUALT:
             msg += f' (default={defval})'
         self.logger.debug(msg)
 
