@@ -53,8 +53,11 @@ class EnvRegistry(Registry):
         if defval != self._NODEFUALT and len(args) == 0:
             args = (defval, )
         result = os.getenv(name, *args)
-        if result is None or result == '':
+        if result == '':
+            result = None
+        if result is None:
             msg = f"env var {name} ({self[name]['description']}) is not set"
+
             if len(args) == 0:
                 raise ValueError(msg)
             else:
