@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from .. import get_user_data_dir
+from ..sys import get_user_data_dir
 from ..log import get_logger, logit
 
 

@@ -4,10 +4,7 @@ from types import ModuleType
 import sys
 import importlib
 from contextlib import ContextDecorator
-import os
 import itertools
-import socket
-import appdirs
 from pathlib import Path
 import urllib
 
@@ -15,69 +12,28 @@ import urllib
 _excluded_from_all = set(globals().keys())
 
 
-def get_hostname():
-    """Same as the shell command `hostname`"""
-    return socket.gethostname()
+def getobj(name, *args):
+    """Return python object specified by `name`.
 
-
-def touch_file(out_file):
-    """Same as the shell command `touch`."""
-
-    with open(out_file, 'a'):
-        os.utime(out_file, None)
-
-
-def object_from_spec(spec, *args):
-    """Return python object specified by `spec`.
-
-    `spec` is specified as `a.b:c`, where ':c' can be omitted, which is
-    equivalent to `a.b:b`
+    `name` shall be of form ``a.b[:c[.d]]`` where ``a.b`` specifies
+    the module and the optional ``:c.d`` specifies member attribute.
 
     """
+    if not isinstance(name, str):
+        raise ValueError("name must be a string.")
     sep = ':'
-    if sep not in spec:
-        spec = f"{spec}{sep}{spec.rsplit('.', 1)[-1]}"
-
+    if sep not in name:
+        name = f"{name}:"
+    module, attr = name.split(sep, 1)
     try:
-        module, func = spec.split(sep, 1)
         module = importlib.import_module(module)
     except Exception:
         if not args:
             raise
         return args[0]  # return the default if specified
-    else:
-        return rgetattr(module, func)
-
-
-def dict_from_object(obj, keys=None):
-    """Return a dict composed from object's attributes.
-
-    `keys` is used to specify what attributes to include in the created dict.
-    If `keys` is None, the `__all__` list is used if present, otherwise use all
-    attributes that does not starts with ``_``. If `keys` is callable, it is
-    called with `obj` to get a list of keys.
-
-    Parameters
-    ----------
-    keys: list, callable, or None
-        Specify the attributes to include.
-
-    Returns
-    -------
-    dict:
-        A dict contains selected object's attribute names and values.
-
-    """
-    if keys is None:
-        if hasattr(obj, '__all__'):
-            keys = obj.__all__
-        else:
-            keys = filter(lambda k: not k.startswith('_'), dir(obj))
-    else:
-        if callable(keys):
-            keys = keys(obj)
-
-    return {k: getattr(obj, k) for k in keys}
+    if attr == '':
+        return module
+    return rgetattr(module, attr)
 
 
 def rreload(m: ModuleType):
@@ -121,7 +77,7 @@ def rupdate(d, u):
 
     Parameters
     ----------
-    d, u: dict
+    d, u : dict
 
 
     Returns
@@ -165,10 +121,10 @@ class hookit(ContextDecorator):
 
     Parameters
     ----------
-    obj: object
+    obj : object
         The object to alter.
 
-    name: str
+    name : str
         The name of the method to hook.
 
     """
@@ -183,7 +139,7 @@ class hookit(ContextDecorator):
 
         Parameters
         ----------
-        func: callable
+        func : callable
             The function to call after the hooked function.
         """
 
@@ -205,13 +161,13 @@ def patchit(obj, name, pass_patched=False):
 
     Parameters
     ----------
-    obj: object
+    obj : object
         The object to alter.
 
-    name: str
+    name : str
         The name of the attribute to replace.
 
-    pass_patched: bool
+    pass_patched : bool
         If set to True, the original attribute will be passed to as
         the first argument to the decorated function.
 
@@ -240,21 +196,21 @@ def mapreduce(map_func, reduce_func, gen, *args, **kwargs):
 
     Parameters
     ----------
-    map_func: callable
+    map_func : callable
         The map function.
 
-    reduce_func: callable
+    reduce_func : callable
         The reduce_function.
 
-    gen: generator or iterator
+    gen : generator or iterator
         The inputs.
 
-    *args, **kwargs:
+    *args, **kwargs
         Passed to the `functools.reduce` function.
 
     Returns
     -------
-    generator:
+    generator
         The map-reduce generator.
 
     """
@@ -296,11 +252,6 @@ def to_typed(s):
         return s
 
 
-def get_user_data_dir():
-    """Return the directory for saving user data."""
-    return Path(appdirs.user_data_dir('tollan', 'toltec'))
-
-
 # https://stackoverflow.com/a/57463161/1824372
 def file_uri_to_path(file_uri):
     """
@@ -308,13 +259,14 @@ def file_uri_to_path(file_uri):
 
     Parameters
     ----------
-    file_uri: str
+    file_uri : str
         The file URI.
 
     Returns
     -------
-    Path:
+    Path
         The path the URI refers to.
+
     """
     file_uri_parsed = urllib.parse.urlparse(file_uri)
     if file_uri_parsed.scheme != 'file':

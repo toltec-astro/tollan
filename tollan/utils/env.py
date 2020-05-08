@@ -61,7 +61,8 @@ class EnvRegistry(Registry):
             if len(args) == 0:
                 raise ValueError(msg)
             else:
-                self.logger.debug(msg + f', use default {args[0]}')
+                result = args[0]
+                self.logger.debug(msg + f', use default {result}')
         return result
 
 

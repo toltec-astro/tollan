@@ -55,6 +55,9 @@ highlight_language = 'python3'
 # major.minor, call `check_sphinx_version("x.y.z")` here.
 # check_sphinx_version("1.2.1")
 
+intersphinx_mapping['sqlalchemy'] = (
+        'https://docs.sqlalchemy.org/en/13/', None)
+
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 exclude_patterns.append('_templates')
