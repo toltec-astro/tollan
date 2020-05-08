@@ -1,0 +1,7 @@
+utcnow
+======
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autoclass:: utcnow
+   :show-inheritance:

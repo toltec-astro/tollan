@@ -1,0 +1,6 @@
+object_from_dict
+================
+
+.. currentmodule:: tollan.utils.namespace
+
+.. autofunction:: object_from_dict

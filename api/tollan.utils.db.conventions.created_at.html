@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>dict_from_object &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <title>created_at &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
     <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -19,8 +19,8 @@
     <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="ensure_prefix" href="tollan.utils.ensure_prefix.html" />
-    <link rel="prev" title="anysum" href="tollan.utils.anysum.html" />
+    <link rel="next" title="client_info" href="tollan.utils.db.conventions.client_info.html" />
+    <link rel="prev" title="label" href="tollan.utils.db.conventions.label.html" />
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
 
   </head><body>
@@ -48,22 +48,22 @@
     <h3>Navigation</h3>
     <ul>
       <li class="right">
-	<a href="tollan.utils.ensure_prefix.html" title="ensure_prefix">
+	<a href="tollan.utils.db.conventions.client_info.html" title="client_info">
 	  next &raquo;
 	</a>
       </li>
       <li class="right">
-	<a href="tollan.utils.anysum.html" title="anysum">
+	<a href="tollan.utils.db.conventions.label.html" title="label">
 	  &laquo; previous
 	</a>
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	<a href="../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
 	 &#187;
       </li>
       
-      <li>dict_from_object</li> 
+      <li>created_at</li> 
     </ul>
 </div>
   
@@ -73,31 +73,12 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="dict-from-object">
-<h1>dict_from_object<a class="headerlink" href="#dict-from-object" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="created-at">
+<h1>created_at<a class="headerlink" href="#created-at" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
-<dt id="tollan.utils.dict_from_object">
-<code class="sig-prename descclassname">tollan.utils.</code><code class="sig-name descname">dict_from_object</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em>, <em class="sig-param"><span class="n">keys</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/misc.html#dict_from_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.dict_from_object" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a dict composed from object’s attributes.</p>
-<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">keys</span></code> is used to specify what attributes to include in the created dict.
-If <code class="xref py py-obj docutils literal notranslate"><span class="pre">keys</span></code> is None, the <code class="xref py py-obj docutils literal notranslate"><span class="pre">__all__</span></code> list is used if present, otherwise use all
-attributes that does not starts with <code class="docutils literal notranslate"><span class="pre">_</span></code>. If <code class="xref py py-obj docutils literal notranslate"><span class="pre">keys</span></code> is callable, it is
-called with <code class="xref py py-obj docutils literal notranslate"><span class="pre">obj</span></code> to get a list of keys.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>keys: list, callable, or None</strong></dt><dd><p>Specify the attributes to include.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict:</dt><dd><p>A dict contains selected object’s attribute names and values.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
+<dt id="tollan.utils.db.conventions.created_at">
+<code class="sig-prename descclassname">tollan.utils.db.conventions.</code><code class="sig-name descname">created_at</code><span class="sig-paren">(</span><em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/db/conventions.html#created_at"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.db.conventions.created_at" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 </div>
 
@@ -108,7 +89,7 @@ called with <code class="xref py py-obj docutils literal notranslate"><span clas
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 <ul>
-<li><a class="reference internal" href="#">dict_from_object</a></li>
+<li><a class="reference internal" href="#">created_at</a></li>
 </ul>
 
 
@@ -118,13 +99,13 @@ called with <code class="xref py py-obj docutils literal notranslate"><span clas
     </div>
 <footer class="footer">
   <p class="pull-right">
-    <a href="../_sources/api/tollan.utils.dict_from_object.rst.txt"
+    <a href="../_sources/api/tollan.utils.db.conventions.created_at.rst.txt"
        rel="nofollow">Page Source</a> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 27 Apr 2020. <br/>
+    Last built 08 May 2020. <br/>
   </p>
 </footer>
   </body>

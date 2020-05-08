@@ -1,6 +1,0 @@
-get_hostname
-============
-
-.. currentmodule:: tollan.utils
-
-.. autofunction:: get_hostname

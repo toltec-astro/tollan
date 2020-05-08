@@ -1,0 +1,6 @@
+NamespaceNotFoundError
+======================
+
+.. currentmodule:: tollan.utils.namespace
+
+.. autoexception:: NamespaceNotFoundError

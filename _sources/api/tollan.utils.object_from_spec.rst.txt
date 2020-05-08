@@ -1,6 +1,0 @@
-object_from_spec
-================
-
-.. currentmodule:: tollan.utils
-
-.. autofunction:: object_from_spec

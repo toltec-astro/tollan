@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>object_from_dict &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="dict_from_object" href="tollan.utils.namespace.dict_from_object.html" />
+    <link rel="prev" title="save_or_show" href="tollan.utils.mpl.save_or_show.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="tollan.utils.namespace.dict_from_object.html" title="dict_from_object">
+	  next &raquo;
+	</a>
+      </li>
+      <li class="right">
+	<a href="tollan.utils.mpl.save_or_show.html" title="save_or_show">
+	  &laquo; previous
+	</a>
+	 |
+      </li>
+      <li>
+	<a href="../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
+	 &#187;
+      </li>
+      
+      <li>object_from_dict</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="object-from-dict">
+<h1>object_from_dict<a class="headerlink" href="#object-from-dict" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt id="tollan.utils.namespace.object_from_dict">
+<code class="sig-prename descclassname">tollan.utils.namespace.</code><code class="sig-name descname">object_from_dict</code><span class="sig-paren">(</span><em class="sig-param">d</em>, <em class="sig-param">_namespace_from_dict_op=&lt;function copy at 0x10f59a0e0&gt;</em>, <em class="sig-param">_namespace_from_dict_schema=None</em>, <em class="sig-param">_namespace_type_key='__class__'</em>, <em class="sig-param">_namespace_check_type=None</em>, <em class="sig-param">_namespace_default_type=None</em>, <em class="sig-param">\*\*kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/namespace.html#object_from_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.namespace.object_from_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a <a class="reference internal" href="tollan.utils.namespace.Namespace.html#tollan.utils.namespace.Namespace" title="tollan.utils.namespace.Namespace"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Namespace</span></code></a> object from dict.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>_namespace_from_dict_op</strong><span class="classifier">callable</span></dt><dd><p>If set, this is applied to the input dict <code class="xref py py-obj docutils literal notranslate"><span class="pre">d</span></code> before the <code class="xref py py-obj docutils literal notranslate"><span class="pre">kwargs</span></code> get
+merged to it. Default is “copy”.</p>
+</dd>
+<dt><strong>_namespace_from_dict_schema</strong><span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Schema</span></code> or None</span></dt><dd><p>If set, it is used to filter the dict before instantiate the instance.</p>
+</dd>
+<dt><strong>_namespace_type_key</strong><span class="classifier">str</span></dt><dd><p>This is passed to <a class="reference internal" href="tollan.utils.getobj.html#tollan.utils.getobj" title="tollan.utils.getobj"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getobj</span></code></a> to get the type of the object
+to be constructed. <a class="reference internal" href="tollan.utils.namespace.NamespaceNotFoundError.html#tollan.utils.namespace.NamespaceNotFoundError" title="tollan.utils.namespace.NamespaceNotFoundError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NamespaceNotFoundError</span></code></a> is
+raised if no valid namespace type is found.</p>
+</dd>
+<dt><strong>_namespace_check_type</strong><span class="classifier">callable or None</span></dt><dd><p>If set, it is evaluated with the found namespace type for validation.
+<a class="reference internal" href="tollan.utils.namespace.NamespaceTypeError.html#tollan.utils.namespace.NamespaceTypeError" title="tollan.utils.namespace.NamespaceTypeError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NamespaceTypeError</span></code></a> is raised if the
+validation fails.</p>
+</dd>
+<dt><strong>_namespace_default_type</strong><span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NamespaceMixin</span></code> subclass.</span></dt><dd><p>If set, this is assumed when the namespace type cannot be inferred
+from <code class="xref py py-obj docutils literal notranslate"><span class="pre">_namespace_type_key</span></code>.</p>
+</dd>
+<dt><strong>**kwargs</strong></dt><dd><p>Additional keyword arguments that get updated to the dict.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">object_from_dict</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/api/tollan.utils.namespace.object_from_dict.rst.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 08 May 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

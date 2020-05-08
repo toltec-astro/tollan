@@ -1,0 +1,6 @@
+pg_utcnow
+=========
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: pg_utcnow

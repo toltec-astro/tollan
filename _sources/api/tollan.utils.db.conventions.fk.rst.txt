@@ -1,0 +1,6 @@
+fk
+==
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: fk

@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tollan.utils.db.conventions &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <link rel="stylesheet" href="../../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
+	 &#187;
+      </li>
+      <li><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.db.conventions</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+
+<span class="sd">&quot;&quot;&quot;This module defines a set of helpers for defining database with</span>
+<span class="sd">some column naming conventions.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">Table</span><span class="p">,</span>
+        <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.sql</span> <span class="kn">import</span> <span class="n">expression</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.ext.compiler</span> <span class="kn">import</span> <span class="n">compiles</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_utils</span> <span class="kn">import</span> <span class="n">TimezoneType</span>
+<span class="kn">import</span> <span class="nn">tzlocal</span>
+<span class="kn">from</span> <span class="nn">..sys</span> <span class="kn">import</span> <span class="n">get_hostname</span>
+
+
+<span class="n">_excluded_from_all</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+
+<div class="viewcode-block" id="utcnow"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.utcnow.html#tollan.utils.db.conventions.utcnow">[docs]</a><span class="k">class</span> <span class="nc">utcnow</span><span class="p">(</span><span class="n">expression</span><span class="o">.</span><span class="n">FunctionElement</span><span class="p">):</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">DateTime</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="pg_utcnow"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.pg_utcnow.html#tollan.utils.db.conventions.pg_utcnow">[docs]</a><span class="nd">@compiles</span><span class="p">(</span><span class="n">utcnow</span><span class="p">,</span> <span class="s1">&#39;postgresql&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">pg_utcnow</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;TIMEZONE(&#39;utc&#39;, CURRENT_TIMESTAMP)&quot;</span></div>
+
+
+<div class="viewcode-block" id="ms_utcnow"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.ms_utcnow.html#tollan.utils.db.conventions.ms_utcnow">[docs]</a><span class="nd">@compiles</span><span class="p">(</span><span class="n">utcnow</span><span class="p">,</span> <span class="s1">&#39;mssql&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">ms_utcnow</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">&quot;GETUTCDATE()&quot;</span></div>
+
+
+<div class="viewcode-block" id="default_sql_utcnow"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.default_sql_utcnow.html#tollan.utils.db.conventions.default_sql_utcnow">[docs]</a><span class="nd">@compiles</span><span class="p">(</span><span class="n">utcnow</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">default_sql_utcnow</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s1">&#39;CURRENT_TIMESTAMP&#39;</span></div>
+
+
+<div class="viewcode-block" id="fk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.fk.html#tollan.utils.db.conventions.fk">[docs]</a><span class="k">def</span> <span class="nf">fk</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">_pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span>
+        <span class="n">ForeignKey</span><span class="p">(</span>
+           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">.pk&quot;</span><span class="p">,</span> <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">),</span>
+        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pfk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.pfk.html#tollan.utils.db.conventions.pfk">[docs]</a><span class="k">def</span> <span class="nf">pfk</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">_pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span>
+        <span class="n">ForeignKey</span><span class="p">(</span>
+           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">.pk&quot;</span><span class="p">,</span> <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.pk.html#tollan.utils.db.conventions.pk">[docs]</a><span class="k">def</span> <span class="nf">pk</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="label"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.label.html#tollan.utils.db.conventions.label">[docs]</a><span class="k">def</span> <span class="nf">label</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="created_at"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.created_at.html#tollan.utils.db.conventions.created_at">[docs]</a><span class="k">def</span> <span class="nf">created_at</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="n">utcnow</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="updated_at"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.updated_at.html#tollan.utils.db.conventions.updated_at">[docs]</a><span class="k">def</span> <span class="nf">updated_at</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="s1">&#39;updated_at&#39;</span><span class="p">,</span>
+            <span class="n">DateTime</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="n">utcnow</span><span class="p">(),</span> <span class="n">onupdate</span><span class="o">=</span><span class="n">utcnow</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="client_info"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info.html#tollan.utils.db.conventions.client_info">[docs]</a><span class="k">def</span> <span class="nf">client_info</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">fk</span><span class="p">(</span><span class="s1">&#39;client_info&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="client_info_tbl"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info_tbl.html#tollan.utils.db.conventions.client_info_tbl">[docs]</a><span class="k">def</span> <span class="nf">client_info_tbl</span><span class="p">(</span><span class="n">db</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Table</span><span class="p">(</span>
+            <span class="s1">&#39;client_info&#39;</span><span class="p">,</span>
+            <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+            <span class="n">pk</span><span class="p">(),</span>
+            <span class="n">Column</span><span class="p">(</span>
+                <span class="s1">&#39;hostname&#39;</span><span class="p">,</span>
+                <span class="n">String</span><span class="p">,</span>
+                <span class="n">default</span><span class="o">=</span><span class="n">get_hostname</span><span class="p">(),</span>
+                <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">sqlite_on_conflict_unique</span><span class="o">=</span><span class="s1">&#39;REPLACE&#39;</span>
+                <span class="p">),</span>
+            <span class="n">Column</span><span class="p">(</span>
+                <span class="s1">&#39;tz&#39;</span><span class="p">,</span>
+                <span class="n">TimezoneType</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s1">&#39;pytz&#39;</span><span class="p">),</span>
+                <span class="n">default</span><span class="o">=</span><span class="n">tzlocal</span><span class="o">.</span><span class="n">get_localzone</span><span class="p">()</span>
+                <span class="p">),</span>
+            <span class="n">created_at</span><span class="p">(),</span>
+            <span class="n">updated_at</span><span class="p">(),</span>
+            <span class="p">)</span></div>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">_excluded_from_all</span><span class="p">))</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 08 May 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

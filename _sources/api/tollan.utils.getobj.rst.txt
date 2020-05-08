@@ -1,0 +1,6 @@
+getobj
+======
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: getobj

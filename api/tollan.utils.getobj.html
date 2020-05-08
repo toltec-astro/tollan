@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>object_from_spec &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <title>getobj &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
     <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -19,8 +19,8 @@
     <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="patchit" href="tollan.utils.patchit.html" />
-    <link rel="prev" title="mapsum" href="tollan.utils.mapsum.html" />
+    <link rel="next" title="mapreduce" href="tollan.utils.mapreduce.html" />
+    <link rel="prev" title="file_uri_to_path" href="tollan.utils.file_uri_to_path.html" />
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
 
   </head><body>
@@ -48,22 +48,22 @@
     <h3>Navigation</h3>
     <ul>
       <li class="right">
-	<a href="tollan.utils.patchit.html" title="patchit">
+	<a href="tollan.utils.mapreduce.html" title="mapreduce">
 	  next &raquo;
 	</a>
       </li>
       <li class="right">
-	<a href="tollan.utils.mapsum.html" title="mapsum">
+	<a href="tollan.utils.file_uri_to_path.html" title="file_uri_to_path">
 	  &laquo; previous
 	</a>
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	<a href="../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
 	 &#187;
       </li>
       
-      <li>object_from_spec</li> 
+      <li>getobj</li> 
     </ul>
 </div>
   
@@ -73,14 +73,14 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="object-from-spec">
-<h1>object_from_spec<a class="headerlink" href="#object-from-spec" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="getobj">
+<h1>getobj<a class="headerlink" href="#getobj" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
-<dt id="tollan.utils.object_from_spec">
-<code class="sig-prename descclassname">tollan.utils.</code><code class="sig-name descname">object_from_spec</code><span class="sig-paren">(</span><em class="sig-param">spec</em>, <em class="sig-param">\*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/misc.html#object_from_spec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.object_from_spec" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return python object specified by <code class="xref py py-obj docutils literal notranslate"><span class="pre">spec</span></code>.</p>
-<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">spec</span></code> is specified as <code class="xref py py-obj docutils literal notranslate"><span class="pre">a.b:c</span></code>, where ‘:c’ can be omitted, which is
-equivalent to <code class="xref py py-obj docutils literal notranslate"><span class="pre">a.b:b</span></code></p>
+<dt id="tollan.utils.getobj">
+<code class="sig-prename descclassname">tollan.utils.</code><code class="sig-name descname">getobj</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">\*args</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/misc.html#getobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.getobj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return python object specified by <code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code>.</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code> shall be of form <code class="docutils literal notranslate"><span class="pre">a.b[:c[.d]]</span></code> where <code class="docutils literal notranslate"><span class="pre">a.b</span></code> specifies
+the module and the optional <code class="docutils literal notranslate"><span class="pre">:c.d</span></code> specifies member attribute.</p>
 </dd></dl>
 
 </div>
@@ -92,7 +92,7 @@ equivalent to <code class="xref py py-obj docutils literal notranslate"><span cl
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 <ul>
-<li><a class="reference internal" href="#">object_from_spec</a></li>
+<li><a class="reference internal" href="#">getobj</a></li>
 </ul>
 
 
@@ -102,13 +102,13 @@ equivalent to <code class="xref py py-obj docutils literal notranslate"><span cl
     </div>
 <footer class="footer">
   <p class="pull-right">
-    <a href="../_sources/api/tollan.utils.object_from_spec.rst.txt"
+    <a href="../_sources/api/tollan.utils.getobj.rst.txt"
        rel="nofollow">Page Source</a> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 27 Apr 2020. <br/>
+    Last built 08 May 2020. <br/>
   </p>
 </footer>
   </body>

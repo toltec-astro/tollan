@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>mapreduce &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <title>mapreduce &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
     <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
@@ -20,7 +20,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="mapsum" href="tollan.utils.mapsum.html" />
-    <link rel="prev" title="get_user_data_dir" href="tollan.utils.get_user_data_dir.html" />
+    <link rel="prev" title="getobj" href="tollan.utils.getobj.html" />
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
 
   </head><body>
@@ -53,13 +53,13 @@
 	</a>
       </li>
       <li class="right">
-	<a href="tollan.utils.get_user_data_dir.html" title="get_user_data_dir">
+	<a href="tollan.utils.getobj.html" title="getobj">
 	  &laquo; previous
 	</a>
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	<a href="../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
 	 &#187;
       </li>
       
@@ -82,19 +82,19 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl class="simple">
-<dt><strong>map_func: callable</strong></dt><dd><p>The map function.</p>
+<dt><strong>map_func</strong><span class="classifier">callable</span></dt><dd><p>The map function.</p>
 </dd>
-<dt><strong>reduce_func: callable</strong></dt><dd><p>The reduce_function.</p>
+<dt><strong>reduce_func</strong><span class="classifier">callable</span></dt><dd><p>The reduce_function.</p>
 </dd>
-<dt><strong>gen: generator or iterator</strong></dt><dd><p>The inputs.</p>
+<dt><strong>gen</strong><span class="classifier">generator or iterator</span></dt><dd><p>The inputs.</p>
 </dd>
-<dt><strong>*args, **kwargs:</strong></dt><dd><p>Passed to the <a class="reference external" href="https://docs.python.org/3/library/functools.html#functools.reduce" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">functools.reduce</span></code></a> function.</p>
+<dt><strong>*args, **kwargs</strong></dt><dd><p>Passed to the <a class="reference external" href="https://docs.python.org/3/library/functools.html#functools.reduce" title="(in Python v3.8)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">functools.reduce</span></code></a> function.</p>
 </dd>
 </dl>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><dl class="simple">
-<dt>generator:</dt><dd><p>The map-reduce generator.</p>
+<dt>generator</dt><dd><p>The map-reduce generator.</p>
 </dd>
 </dl>
 </dd>
@@ -126,7 +126,7 @@
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 27 Apr 2020. <br/>
+    Last built 08 May 2020. <br/>
   </p>
 </footer>
   </body>

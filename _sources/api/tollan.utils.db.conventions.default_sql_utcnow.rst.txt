@@ -1,0 +1,6 @@
+default_sql_utcnow
+==================
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: default_sql_utcnow

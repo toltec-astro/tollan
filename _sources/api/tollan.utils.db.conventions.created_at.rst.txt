@@ -1,0 +1,6 @@
+created_at
+==========
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: created_at

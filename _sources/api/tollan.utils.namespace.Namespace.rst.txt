@@ -1,0 +1,7 @@
+Namespace
+=========
+
+.. currentmodule:: tollan.utils.namespace
+
+.. autoclass:: Namespace
+   :show-inheritance:

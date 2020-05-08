@@ -1,0 +1,6 @@
+label
+=====
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: label

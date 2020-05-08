@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.misc &#8212; tollan v0.1.dev20+g0aea364.d20200427</title>
+    <title>tollan.utils.misc &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev20+g0aea364.d20200427</a>
+	<a href="../../../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -68,10 +68,7 @@
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ContextDecorator</span>
-<span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">import</span> <span class="nn">socket</span>
-<span class="kn">import</span> <span class="nn">appdirs</span>
 <span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">import</span> <span class="nn">urllib</span>
 
@@ -79,69 +76,28 @@
 <span class="n">_excluded_from_all</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 
 
-<div class="viewcode-block" id="get_hostname"><a class="viewcode-back" href="../../../api/tollan.utils.get_hostname.html#tollan.utils.get_hostname">[docs]</a><span class="k">def</span> <span class="nf">get_hostname</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Same as the shell command `hostname`&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span></div>
+<div class="viewcode-block" id="getobj"><a class="viewcode-back" href="../../../api/tollan.utils.getobj.html#tollan.utils.getobj">[docs]</a><span class="k">def</span> <span class="nf">getobj</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return python object specified by `name`.</span>
 
-
-<div class="viewcode-block" id="touch_file"><a class="viewcode-back" href="../../../api/tollan.utils.touch_file.html#tollan.utils.touch_file">[docs]</a><span class="k">def</span> <span class="nf">touch_file</span><span class="p">(</span><span class="n">out_file</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Same as the shell command `touch`.&quot;&quot;&quot;</span>
-
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">):</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="object_from_spec"><a class="viewcode-back" href="../../../api/tollan.utils.object_from_spec.html#tollan.utils.object_from_spec">[docs]</a><span class="k">def</span> <span class="nf">object_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return python object specified by `spec`.</span>
-
-<span class="sd">    `spec` is specified as `a.b:c`, where &#39;:c&#39; can be omitted, which is</span>
-<span class="sd">    equivalent to `a.b:b`</span>
+<span class="sd">    `name` shall be of form ``a.b[:c[.d]]`` where ``a.b`` specifies</span>
+<span class="sd">    the module and the optional ``:c.d`` specifies member attribute.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;name must be a string.&quot;</span><span class="p">)</span>
     <span class="n">sep</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span>
-    <span class="k">if</span> <span class="n">sep</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
-        <span class="n">spec</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">spec</span><span class="si">}{</span><span class="n">sep</span><span class="si">}{</span><span class="n">spec</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-
+    <span class="k">if</span> <span class="n">sep</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">:&quot;</span>
+    <span class="n">module</span><span class="p">,</span> <span class="n">attr</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sep</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">module</span><span class="p">,</span> <span class="n">func</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sep</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
             <span class="k">raise</span>
         <span class="k">return</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># return the default if specified</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">rgetattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="dict_from_object"><a class="viewcode-back" href="../../../api/tollan.utils.dict_from_object.html#tollan.utils.dict_from_object">[docs]</a><span class="k">def</span> <span class="nf">dict_from_object</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return a dict composed from object&#39;s attributes.</span>
-
-<span class="sd">    `keys` is used to specify what attributes to include in the created dict.</span>
-<span class="sd">    If `keys` is None, the `__all__` list is used if present, otherwise use all</span>
-<span class="sd">    attributes that does not starts with ``_``. If `keys` is callable, it is</span>
-<span class="sd">    called with `obj` to get a list of keys.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    keys: list, callable, or None</span>
-<span class="sd">        Specify the attributes to include.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    dict:</span>
-<span class="sd">        A dict contains selected object&#39;s attribute names and values.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s1">&#39;__all__&#39;</span><span class="p">):</span>
-            <span class="n">keys</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">__all__</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">keys</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">),</span> <span class="nb">dir</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
-            <span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span></div>
+    <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">module</span>
+    <span class="k">return</span> <span class="n">rgetattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="rreload"><a class="viewcode-back" href="../../../api/tollan.utils.rreload.html#tollan.utils.rreload">[docs]</a><span class="k">def</span> <span class="nf">rreload</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">):</span>
@@ -185,7 +141,7 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    d, u: dict</span>
+<span class="sd">    d, u : dict</span>
 
 
 <span class="sd">    Returns</span>
@@ -229,10 +185,10 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    obj: object</span>
+<span class="sd">    obj : object</span>
 <span class="sd">        The object to alter.</span>
 
-<span class="sd">    name: str</span>
+<span class="sd">    name : str</span>
 <span class="sd">        The name of the method to hook.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -247,7 +203,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        func: callable</span>
+<span class="sd">        func : callable</span>
 <span class="sd">            The function to call after the hooked function.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
@@ -269,13 +225,13 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    obj: object</span>
+<span class="sd">    obj : object</span>
 <span class="sd">        The object to alter.</span>
 
-<span class="sd">    name: str</span>
+<span class="sd">    name : str</span>
 <span class="sd">        The name of the attribute to replace.</span>
 
-<span class="sd">    pass_patched: bool</span>
+<span class="sd">    pass_patched : bool</span>
 <span class="sd">        If set to True, the original attribute will be passed to as</span>
 <span class="sd">        the first argument to the decorated function.</span>
 
@@ -304,21 +260,21 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    map_func: callable</span>
+<span class="sd">    map_func : callable</span>
 <span class="sd">        The map function.</span>
 
-<span class="sd">    reduce_func: callable</span>
+<span class="sd">    reduce_func : callable</span>
 <span class="sd">        The reduce_function.</span>
 
-<span class="sd">    gen: generator or iterator</span>
+<span class="sd">    gen : generator or iterator</span>
 <span class="sd">        The inputs.</span>
 
-<span class="sd">    *args, **kwargs:</span>
+<span class="sd">    *args, **kwargs</span>
 <span class="sd">        Passed to the `functools.reduce` function.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    generator:</span>
+<span class="sd">    generator</span>
 <span class="sd">        The map-reduce generator.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -360,11 +316,6 @@
         <span class="k">return</span> <span class="n">s</span></div>
 
 
-<div class="viewcode-block" id="get_user_data_dir"><a class="viewcode-back" href="../../../api/tollan.utils.get_user_data_dir.html#tollan.utils.get_user_data_dir">[docs]</a><span class="k">def</span> <span class="nf">get_user_data_dir</span><span class="p">():</span>
-    <span class="sd">&quot;&quot;&quot;Return the directory for saving user data.&quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">appdirs</span><span class="o">.</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s1">&#39;tollan&#39;</span><span class="p">,</span> <span class="s1">&#39;toltec&#39;</span><span class="p">))</span></div>
-
-
 <span class="c1"># https://stackoverflow.com/a/57463161/1824372</span>
 <div class="viewcode-block" id="file_uri_to_path"><a class="viewcode-back" href="../../../api/tollan.utils.file_uri_to_path.html#tollan.utils.file_uri_to_path">[docs]</a><span class="k">def</span> <span class="nf">file_uri_to_path</span><span class="p">(</span><span class="n">file_uri</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -372,13 +323,14 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    file_uri: str</span>
+<span class="sd">    file_uri : str</span>
 <span class="sd">        The file URI.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    Path:</span>
+<span class="sd">    Path</span>
 <span class="sd">        The path the URI refers to.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">file_uri_parsed</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">file_uri</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">file_uri_parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">!=</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
@@ -411,7 +363,7 @@
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 27 Apr 2020. <br/>
+    Last built 08 May 2020. <br/>
   </p>
 </footer>
   </body>

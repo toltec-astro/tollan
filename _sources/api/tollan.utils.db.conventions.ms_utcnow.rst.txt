@@ -1,0 +1,6 @@
+ms_utcnow
+=========
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: ms_utcnow

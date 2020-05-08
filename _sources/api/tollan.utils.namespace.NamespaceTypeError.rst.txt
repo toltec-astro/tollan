@@ -1,0 +1,6 @@
+NamespaceTypeError
+==================
+
+.. currentmodule:: tollan.utils.namespace
+
+.. autoexception:: NamespaceTypeError

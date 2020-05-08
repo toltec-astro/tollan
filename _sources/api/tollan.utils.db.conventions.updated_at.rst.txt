@@ -1,0 +1,6 @@
+updated_at
+==========
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: updated_at

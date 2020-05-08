@@ -18,6 +18,8 @@ Reference/API
 
 .. automodapi:: tollan.utils.cli.multi_action_argparser
 
+.. automodapi:: tollan.utils.db.conventions
+
 .. automodapi:: tollan.utils.env
 
 .. automodapi:: tollan.utils.fmt
@@ -25,6 +27,8 @@ Reference/API
 .. automodapi:: tollan.utils.log
 
 .. automodapi:: tollan.utils.mpl
+
+.. automodapi:: tollan.utils.namespace
 
 .. automodapi:: tollan.utils.nc
 

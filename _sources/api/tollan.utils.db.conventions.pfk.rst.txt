@@ -1,0 +1,6 @@
+pfk
+===
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: pfk

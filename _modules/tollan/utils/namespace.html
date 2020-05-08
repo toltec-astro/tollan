@@ -1,0 +1,362 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>tollan.utils.namespace &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
+	 &#187;
+      </li>
+      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.namespace</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+
+<span class="kn">from</span> <span class="nn">types</span> <span class="kn">import</span> <span class="n">SimpleNamespace</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">rupdate</span><span class="p">,</span> <span class="n">getobj</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">copy</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s1">&#39;NamespaceNotFoundError&#39;</span><span class="p">,</span> <span class="s1">&#39;NamespaceTypeError&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;Namespace&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;object_from_dict&#39;</span><span class="p">,</span> <span class="s1">&#39;dict_from_object&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="NamespaceNotFoundError"><a class="viewcode-back" href="../../../api/tollan.utils.namespace.NamespaceNotFoundError.html#tollan.utils.namespace.NamespaceNotFoundError">[docs]</a><span class="k">class</span> <span class="nc">NamespaceNotFoundError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="NamespaceTypeError"><a class="viewcode-back" href="../../../api/tollan.utils.namespace.NamespaceTypeError.html#tollan.utils.namespace.NamespaceTypeError">[docs]</a><span class="k">class</span> <span class="nc">NamespaceTypeError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<span class="k">class</span> <span class="nc">NamespaceMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A mixin class that allows converting object to and from dict.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_namespace_to_dict_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">)</span>
+
+    <span class="n">_namespace_to_dict_schema</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_namespace_from_dict_op</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">copy</span><span class="p">)</span>
+
+    <span class="n">_namespace_from_dict_schema</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">_namespace_type_key</span> <span class="o">=</span> <span class="s1">&#39;__class__&#39;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_namespace_check_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ns_type</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="n">ns_type</span>
+
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the attributes dict.</span>
+
+<span class="sd">        This is different from `~tollan.utils.namespace.dict_from_object` in</span>
+<span class="sd">        that it uses the class attributes as the defaults, thus could behave</span>
+<span class="sd">        differently if called from subclasses.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            The class attribute settings may be overriden by the content of</span>
+<span class="sd">            `kwargs`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            keyword arguments passed to</span>
+<span class="sd">            `~tollan.utils.namespace.dict_from_object`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">dict_from_object</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">keys_attr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">schema_attr</span><span class="o">=</span><span class="s1">&#39;_namespace_to_dict_schema&#39;</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Construct a `~tollan.utils.namespace.Namespace` instance from dict.</span>
+
+<span class="sd">        This is different from `~tollan.utils.namespace.object_from_dict` in</span>
+<span class="sd">        that it uses the class attributes as the defaults, thus could behave</span>
+<span class="sd">        differently if called from subclasses.</span>
+
+<span class="sd">        .. note::</span>
+
+<span class="sd">            The class attribute settings may be overriden by the content of</span>
+<span class="sd">            `d` and `kwargs`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *args</span>
+<span class="sd">            A list of dicts.</span>
+<span class="sd">        **kwargs</span>
+<span class="sd">            Additional keyword arguments that get updated to the dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">object_from_dict</span><span class="p">(</span>
+                <span class="n">d</span><span class="p">,</span>
+                <span class="n">_namespace_from_dict_op</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_namespace_from_dict_op</span><span class="p">,</span>
+                <span class="n">_namespace_from_dict_schema</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_namespace_from_dict_schema</span><span class="p">,</span>
+                <span class="n">_namespace_type_key</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_namespace_type_key</span><span class="p">,</span>
+                <span class="n">_namespace_check_type</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_namespace_check_type</span><span class="p">,</span>
+                <span class="n">_namespace_default_type</span><span class="o">=</span><span class="bp">cls</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Namespace"><a class="viewcode-back" href="../../../api/tollan.utils.namespace.Namespace.html#tollan.utils.namespace.Namespace">[docs]</a><span class="k">class</span> <span class="nc">Namespace</span><span class="p">(</span><span class="n">NamespaceMixin</span><span class="p">,</span> <span class="n">SimpleNamespace</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A convenient class that manages a set of attributes.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="dict_from_object"><a class="viewcode-back" href="../../../api/tollan.utils.namespace.dict_from_object.html#tollan.utils.namespace.dict_from_object">[docs]</a><span class="k">def</span> <span class="nf">dict_from_object</span><span class="p">(</span>
+        <span class="n">obj</span><span class="p">,</span>
+        <span class="n">keys_attr</span><span class="o">=</span><span class="s1">&#39;__all__&#39;</span><span class="p">,</span>
+        <span class="n">schema_attr</span><span class="o">=</span><span class="s1">&#39;_namespace_to_dict_schema&#39;</span><span class="p">,</span>
+        <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">keys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">to_dict_op</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a dict composed from object&#39;s attributes.</span>
+
+<span class="sd">    All attributes are filtered by and in the order of `keys_attr`,</span>
+<span class="sd">    `schema_attr`, `schema`, and `keys`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    keys_attr : str or None</span>
+<span class="sd">        The attribute name that contains a list of attributes to keep as keys.</span>
+
+<span class="sd">    schema_attr : str or None</span>
+<span class="sd">        The attribute name that specifies a schema to filter the attributes.</span>
+
+<span class="sd">    schema : `~schema.Schema` or None</span>
+<span class="sd">        The schema to filter the attributes.</span>
+
+<span class="sd">    keys : list of str</span>
+<span class="sd">        A list of attribuate names to keep as keys.</span>
+
+<span class="sd">    to_dict_op : callable or None</span>
+<span class="sd">        The operator to create the raw dict from obj. If None, the `dir` based</span>
+<span class="sd">        dict is returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># these are keys that should not care by users.</span>
+    <span class="n">ignored_keys</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;__builtins__&#39;</span><span class="p">,</span> <span class="s1">&#39;__cached__&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;__loader__&#39;</span><span class="p">,</span> <span class="s1">&#39;__spec__&#39;</span><span class="p">,</span>
+            <span class="p">]</span>
+    <span class="k">if</span> <span class="n">to_dict_op</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">to_dict_op</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignored_keys</span><span class="p">}</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">to_dict_op</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="c1"># get from keys_attr</span>
+    <span class="n">ks</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">keys_attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">keys_attr</span><span class="p">):</span>
+        <span class="n">ks</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">keys_attr</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">}</span>
+    <span class="c1"># look for schema from schema and schema attr</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">schema_attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="c1"># finally select the keys</span>
+    <span class="k">if</span> <span class="n">keys</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+<div class="viewcode-block" id="object_from_dict"><a class="viewcode-back" href="../../../api/tollan.utils.namespace.object_from_dict.html#tollan.utils.namespace.object_from_dict">[docs]</a><span class="k">def</span> <span class="nf">object_from_dict</span><span class="p">(</span>
+        <span class="n">d</span><span class="p">,</span>
+        <span class="n">_namespace_from_dict_op</span><span class="o">=</span><span class="n">NamespaceMixin</span><span class="o">.</span><span class="n">_namespace_from_dict_op</span><span class="p">,</span>
+        <span class="n">_namespace_from_dict_schema</span><span class="o">=</span><span class="n">NamespaceMixin</span><span class="o">.</span><span class="n">_namespace_from_dict_schema</span><span class="p">,</span>
+        <span class="n">_namespace_type_key</span><span class="o">=</span><span class="n">NamespaceMixin</span><span class="o">.</span><span class="n">_namespace_type_key</span><span class="p">,</span>
+        <span class="n">_namespace_check_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_namespace_default_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Construct a `~tollan.utils.namespace.Namespace` object from dict.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _namespace_from_dict_op : callable</span>
+<span class="sd">        If set, this is applied to the input dict `d` before the `kwargs` get</span>
+<span class="sd">        merged to it. Default is &quot;copy&quot;.</span>
+<span class="sd">    _namespace_from_dict_schema : `~schema.Schema` or None</span>
+<span class="sd">        If set, it is used to filter the dict before instantiate the instance.</span>
+<span class="sd">    _namespace_type_key : str</span>
+<span class="sd">        This is passed to `~tollan.utils.getobj` to get the type of the object</span>
+<span class="sd">        to be constructed. `~tollan.utils.namespace.NamespaceNotFoundError` is</span>
+<span class="sd">        raised if no valid namespace type is found.</span>
+<span class="sd">    _namespace_check_type : callable or None</span>
+<span class="sd">        If set, it is evaluated with the found namespace type for validation.</span>
+<span class="sd">        `~tollan.utils.namespace.NamespaceTypeError` is raised if the</span>
+<span class="sd">        validation fails.</span>
+<span class="sd">    _namespace_default_type : `NamespaceMixin` subclass.</span>
+<span class="sd">        If set, this is assumed when the namespace type cannot be inferred</span>
+<span class="sd">        from `_namespace_type_key`.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Additional keyword arguments that get updated to the dict.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># the below merges the kwargs to d</span>
+    <span class="c1"># notes that we also add some of the _namespace_*  kwargs</span>
+    <span class="c1"># so that these get stored into the created object.</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">_prepare_dict</span><span class="p">(</span>
+            <span class="n">d</span><span class="p">,</span>
+            <span class="n">_namespace_from_dict_op</span><span class="o">=</span><span class="n">_namespace_from_dict_op</span><span class="p">,</span>
+            <span class="n">_namespace_from_dict_schema</span><span class="o">=</span><span class="n">_namespace_from_dict_schema</span><span class="p">,</span>
+            <span class="n">_namespace_type_key</span><span class="o">=</span><span class="n">_namespace_type_key</span><span class="p">,</span>
+            <span class="n">_namespace_check_type</span><span class="o">=</span><span class="n">_namespace_check_type</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="c1"># this has to go before the schema validation</span>
+    <span class="c1"># in case the type key get pruned.</span>
+    <span class="c1"># type_key and check_type is already in d</span>
+    <span class="n">ns_type</span> <span class="o">=</span> <span class="n">_get_namespace_type</span><span class="p">(</span>
+            <span class="n">d</span><span class="p">,</span> <span class="n">_namespace_default_type</span><span class="o">=</span><span class="n">_namespace_default_type</span><span class="p">)</span>
+    <span class="c1"># apply the schema</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_namespace_from_dict_schema&#39;</span><span class="p">,</span> <span class="n">_namespace_from_dict_schema</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># use the found type schema if no schema is set.</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="n">ns_type</span><span class="o">.</span><span class="n">_namespace_from_dict_schema</span>
+    <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">schema</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ns_type</span><span class="p">(</span><span class="o">**</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_prepare_dict</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">_namespace_from_dict_op</span><span class="o">=</span><span class="n">copy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a dict composed from `d` and `kwargs`.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The keyword argument `_namespace_from_dict_op` is is only used</span>
+<span class="sd">        when &quot;_namespace_from_dict_op&quot; is not defined in `d`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _namespace_from_dict_op : callable</span>
+<span class="sd">        The function to apply to `d` before merging.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_namespace_from_dict_op</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="s1">&#39;_namespace_from_dict_op&#39;</span><span class="p">,</span> <span class="n">_namespace_from_dict_op</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">_namespace_from_dict_op</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">rupdate</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+
+<span class="k">def</span> <span class="nf">_get_namespace_type</span><span class="p">(</span>
+        <span class="n">d</span><span class="p">,</span>
+        <span class="n">_namespace_type_key</span><span class="o">=</span><span class="s1">&#39;__class__&#39;</span><span class="p">,</span>
+        <span class="n">_namespace_check_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">_namespace_default_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the namespace type to use.</span>
+
+<span class="sd">    .. note::</span>
+<span class="sd">        The keyword argument `_namespace_default_type` is only used</span>
+<span class="sd">        when &quot;_namespace_type_key&quot; is not defined in `d`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    _namespace_type_key : str</span>
+<span class="sd">        This is passed to `~tollan.utils.getobj` to get the type of the object</span>
+<span class="sd">        to be constructed. `~tollan.utils.namespace.NamespaceNotFoundError` is</span>
+<span class="sd">        raised if no valid namespace type is found.</span>
+<span class="sd">    _namespace_check_type : callable or None</span>
+<span class="sd">        If set, it is evaluated with the found namespace type for validation.</span>
+<span class="sd">        `~tollan.utils.namespace.NamespaceTypeError` is raised if the</span>
+<span class="sd">        validation fails.</span>
+<span class="sd">    _namespace_default_type : `NamespaceMixin` subclass.</span>
+<span class="sd">        If set, this is assumed when the namespace type cannot be inferred</span>
+<span class="sd">        from `_namespace_type_key`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">type_key</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_namespace_type_key&#39;</span><span class="p">,</span> <span class="n">_namespace_type_key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">type_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">d</span> <span class="ow">and</span> <span class="n">_namespace_default_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NamespaceNotFoundError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;unable to get namespace type: missing type_key </span><span class="si">{</span><span class="n">type_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">ns_type</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">type_key</span><span class="p">,</span> <span class="n">_namespace_default_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ns_type</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ns_type</span> <span class="o">=</span> <span class="n">getobj</span><span class="p">(</span><span class="n">ns_type</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">NamespaceNotFoundError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;unable to import namespace type </span><span class="si">{</span><span class="n">ns_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">check_type</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_namespace_check_type&#39;</span><span class="p">,</span> <span class="n">_namespace_check_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">check_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">check_type</span><span class="p">(</span><span class="n">ns_type</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="n">NamespaceTypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid namespace type </span><span class="si">{</span><span class="n">ns_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">ns_type</span><span class="p">,</span> <span class="n">NamespaceMixin</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NamespaceNotFoundError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;(sub-) class of NamespaceMixin expected, got </span><span class="si">{</span><span class="n">ns_type</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ns_type</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 08 May 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>
