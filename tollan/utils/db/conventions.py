@@ -4,13 +4,13 @@
 some column naming conventions."""
 
 from sqlalchemy import (
-        Table,
-        Column, Integer, String, ForeignKey, DateTime)
+        Column, Integer, String, ForeignKey, DateTime, Text)
 from sqlalchemy.sql import expression
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy_utils import TimezoneType
 import tzlocal
 from ..sys import get_hostname
+# from sqlalchemy.sql.expression import Insert
 
 
 _excluded_from_all = set(globals().keys())
@@ -35,64 +35,118 @@ def default_sql_utcnow(element, compiler, **kw):
     return 'CURRENT_TIMESTAMP'
 
 
-def fk(other):
-    return Column(
-        f'{other}_pk', Integer,
-        ForeignKey(
-           f"{other}.pk", onupdate="cascade", ondelete="cascade"),
-        nullable=False)
+# @compiles(Insert, 'postgresql')
+# def ignore_duplicates(insert, compiler, **kw):
+#     s = compiler.visit_insert(insert, **kw)
+#     ignore = insert.kwargs.get('postgresql_ignore_duplicates', False)
+#     return s if not ignore else s + ' ON CONFLICT DO NOTHING'
+# Insert.argument_for('postgresql', 'ignore_duplicates', None)
 
 
-def pfk(other):
+def fk(other, name=None, **kwargs):
+    if name is None:
+        name = f'{other}_pk'
+    kwargs.setdefault('comment', f'The {other} primary key.')
+    kwargs.setdefault('nullable', False)
     return Column(
-        f'{other}_pk', Integer,
+        name, Integer,
         ForeignKey(
-           f"{other}.pk", onupdate="cascade", ondelete="cascade"),
-        primary_key=True)
+           f"{other}.pk", onupdate="cascade", ondelete="cascade",
+           ),
+        **kwargs
+        )
+
+
+def pfk(other, name=None, **kwargs):
+    if name is None:
+        name = f'{other}_pk'
+    kwargs.setdefault('comment', f'The shared primary key from {other}.')
+    return Column(
+        name, Integer,
+        ForeignKey(
+           f"{other}.pk", onupdate="cascade", ondelete="cascade",
+           ),
+        primary_key=True, **kwargs)
 
 
 def pk(**kwargs):
-    return Column('pk', Integer, primary_key=True, **kwargs)
+    kwargs.setdefault('comment', 'The primary key.')
+    return Column(
+            'pk', Integer, primary_key=True,
+            **kwargs)
+
+
+def name(**kwargs):
+    return Column(
+            'name', String(128),
+            comment=f'The name.',
+            **kwargs)
 
 
 def label(**kwargs):
-    return Column('label', String, **kwargs)
+    return Column(
+            'label', String(128),
+            unique=True,
+            sqlite_on_conflict_unique='REPLACE',
+            comment=f'The short descriptive label.',
+            **kwargs)
+
+
+def desc(**kwargs):
+    return Column(
+            'desc', Text,
+            comment=f'The long description.',
+            **kwargs)
 
 
 def created_at(**kwargs):
-    return Column('created_at', DateTime, server_default=utcnow(), **kwargs)
+    return Column(
+            'created_at', DateTime,
+            server_default=utcnow(),
+            comment=f'The datetime of creation.',
+            **kwargs)
 
 
 def updated_at(**kwargs):
     return Column(
             'updated_at',
-            DateTime, server_default=utcnow(), onupdate=utcnow())
+            DateTime, server_default=utcnow(),
+            comment=f'The datetime of last modification.',
+            onupdate=utcnow())
 
 
-def client_info(**kwargs):
-    return fk('client_info')
+CLIENT_INFO_TABLE_NAME = 'client_info'
 
 
-def client_info_tbl(db):
-    return Table(
-            'client_info',
-            db.metadata,
+def client_info_table():
+    t = {
+        'name': CLIENT_INFO_TABLE_NAME,
+        'desc': 'The client info.',
+        'columns': [
             pk(),
             Column(
                 'hostname',
-                String,
+                String(128),
                 default=get_hostname(),
                 unique=True,
-                sqlite_on_conflict_unique='REPLACE'
+                sqlite_on_conflict_unique='REPLACE',
+                comment=f'The client hostname.'
                 ),
             Column(
                 'tz',
                 TimezoneType(backend='pytz'),
-                default=tzlocal.get_localzone()
+                default=tzlocal.get_localzone(),
+                comment=f'The client time zone.'
                 ),
             created_at(),
             updated_at(),
-            )
+            ]
+        }
+    return t
+
+
+def client_info_fk(**kwargs):
+    return fk(CLIENT_INFO_TABLE_NAME)
 
 
 __all__ = list(set(globals().keys()).difference(_excluded_from_all))

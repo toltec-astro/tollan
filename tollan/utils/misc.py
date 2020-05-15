@@ -7,6 +7,7 @@ from contextlib import ContextDecorator
 import itertools
 from pathlib import Path
 import urllib
+from collections import OrderedDict
 
 
 _excluded_from_all = set(globals().keys())
@@ -114,6 +115,26 @@ def rupdate(d, u):
                     # both d[k] and u[k] are dicts, push them on the stack
                     # to merge
                     stack.append((dv, v))
+
+
+def odict_from_list(lst, key):
+    """Return an ordered dict from list.
+
+    Parameters
+    ----------
+    key : str or callable
+        The key to use. If str, the items in list shall be dict that
+        contains key `key`. If callable, it shall return the key
+        when called with each item.
+
+    Returns
+    -------
+    OrderedDict
+        The ordered dict constructed from the list.
+    """
+    return OrderedDict([
+        (key(v) if callable(key) else v[key], v)
+        for v in lst])
 
 
 class hookit(ContextDecorator):

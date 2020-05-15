@@ -43,15 +43,36 @@ class RecursiveHelpAction(argparse._HelpAction):
         parser.exit()
 
 
+class _SubParsersAction(argparse._SubParsersAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        # this is to fix that '--' is picked up as action.
+        if values[0] == '--':
+            values = values[1:]
+        super().__call__(
+                parser, namespace, values, option_string=option_string)
+
+
+class ArgumentParser(argparse.ArgumentParser):
+
+    def _check_value(self, action, value):
+        # this is to by-pass the validation of '--'
+        # converted value must be one of the choices (if specified)
+        if action.nargs == argparse.PARSER and value == '--':
+            return
+        super()._check_value(action, value)
+
+
 class MultiActionArgumentParser(wrapt.ObjectProxy):
     """This class wraps the `argparse.ArgumentParser` so that it
     allows defining subcommands with ease."""
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('add_help', False)
-        self._self_parser = p = argparse.ArgumentParser(*args, **kwargs)
+        self._self_parser = p = ArgumentParser(*args, **kwargs)
         super().__init__(self._self_parser)
 
+        p.register('action', 'parsers', _SubParsersAction)
         p.add_argument(
             '-h', '--help', action=RecursiveHelpAction,
             help='Show this (and more) help message and exit')
