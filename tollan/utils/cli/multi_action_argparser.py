@@ -75,17 +75,29 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
         p.register('action', 'parsers', _SubParsersAction)
         p.add_argument(
             '-h', '--help', action=RecursiveHelpAction,
-            help='Show this (and more) help message and exit')
+            help='Show the full help message and exit.')
         self._self_action_parser_group = self.add_subparsers(
                 title="actions",
-                help="Available actions"
+                help="Available actions."
                 )
 
     def add_action_parser(self, *args, **kwargs):
-        p = self._self_action_parser_group.add_parser(*args, **kwargs)
+        p = self._self_action_parser_group.add_parser(
+                add_help=False,
+                *args, **kwargs)
+        p.add_argument(
+                '-h', '--help', action='help', default=argparse.SUPPRESS,
+                help='Show help for this subcommand and exit.')
         # patch the action parser with method
         p.parser_action = self.parser_action(p)
         return p
+
+    def register_action_parser(self, *args, **kwargs):
+
+        def decorator(func):
+            act = self.add_action_parser(*args, **kwargs)
+            func(act)
+        return decorator
 
     @staticmethod
     def parser_action(parser):

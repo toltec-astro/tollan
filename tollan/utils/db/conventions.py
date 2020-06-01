@@ -115,6 +115,7 @@ def updated_at(**kwargs):
             onupdate=utcnow())
 
 
+# Some useful utility tables
 CLIENT_INFO_TABLE_NAME = 'client_info'
 
 
@@ -147,6 +148,35 @@ def client_info_table():
 
 def client_info_fk(**kwargs):
     return fk(CLIENT_INFO_TABLE_NAME)
+
+
+def client_info_model(Base):
+
+    class ClientInfo(Base):
+
+        __tablename__ = CLIENT_INFO_TABLE_NAME
+
+        def __repr__(self):
+            return f'{self.__class__.__name__}(hostname={self.hostname})'
+
+    return ClientInfo
+
+
+TABLE_INFO_TABLE_NAME = '_table_info'
+
+
+def table_info_table():
+    t = {
+        'name': TABLE_INFO_TABLE_NAME,
+        'desc': 'The table info.',
+        'columns': [
+            pk(),
+            name(unique=True),
+            desc(),
+            ],
+        'data': []
+        }
+    return t
 
 
 __all__ = list(set(globals().keys()).difference(_excluded_from_all))
