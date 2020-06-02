@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.db.conventions &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <title>tollan.utils.db.conventions &#8212; tollan v0.1.dev27+g859367b.d20200601</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -46,10 +46,11 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
+	<a href="../../../../index.html">tollan v0.1.dev27+g859367b.d20200601</a>
 	 &#187;
       </li>
-      <li><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li>
+      <li><a href="../../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../db.html" accesskey="U">tollan.utils.db</a> &#187;</li>
       
        
     </ul>
@@ -68,13 +69,13 @@
 <span class="sd">some column naming conventions.&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="p">(</span>
-        <span class="n">Table</span><span class="p">,</span>
-        <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">)</span>
+        <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">Text</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sqlalchemy.sql</span> <span class="kn">import</span> <span class="n">expression</span>
 <span class="kn">from</span> <span class="nn">sqlalchemy.ext.compiler</span> <span class="kn">import</span> <span class="n">compiles</span>
 <span class="kn">from</span> <span class="nn">sqlalchemy_utils</span> <span class="kn">import</span> <span class="n">TimezoneType</span>
 <span class="kn">import</span> <span class="nn">tzlocal</span>
 <span class="kn">from</span> <span class="nn">..sys</span> <span class="kn">import</span> <span class="n">get_hostname</span>
+<span class="c1"># from sqlalchemy.sql.expression import Insert</span>
 
 
 <span class="n">_excluded_from_all</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -99,64 +100,148 @@
     <span class="k">return</span> <span class="s1">&#39;CURRENT_TIMESTAMP&#39;</span></div>
 
 
-<div class="viewcode-block" id="fk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.fk.html#tollan.utils.db.conventions.fk">[docs]</a><span class="k">def</span> <span class="nf">fk</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">_pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span>
-        <span class="n">ForeignKey</span><span class="p">(</span>
-           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">.pk&quot;</span><span class="p">,</span> <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">),</span>
-        <span class="n">nullable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+<span class="c1"># @compiles(Insert, &#39;postgresql&#39;)</span>
+<span class="c1"># def ignore_duplicates(insert, compiler, **kw):</span>
+<span class="c1">#     s = compiler.visit_insert(insert, **kw)</span>
+<span class="c1">#     ignore = insert.kwargs.get(&#39;postgresql_ignore_duplicates&#39;, False)</span>
+<span class="c1">#     return s if not ignore else s + &#39; ON CONFLICT DO NOTHING&#39;</span>
+<span class="c1"># Insert.argument_for(&#39;postgresql&#39;, &#39;ignore_duplicates&#39;, None)</span>
 
 
-<div class="viewcode-block" id="pfk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.pfk.html#tollan.utils.db.conventions.pfk">[docs]</a><span class="k">def</span> <span class="nf">pfk</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+<div class="viewcode-block" id="fk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.fk.html#tollan.utils.db.conventions.fk">[docs]</a><span class="k">def</span> <span class="nf">fk</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">_pk&#39;</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;comment&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;The </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1"> primary key.&#39;</span><span class="p">)</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;nullable&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">_pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span>
         <span class="n">ForeignKey</span><span class="p">(</span>
-           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">.pk&quot;</span><span class="p">,</span> <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">),</span>
-        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">.pk&quot;</span><span class="p">,</span> <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span>
+           <span class="p">),</span>
+        <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="pfk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.pfk.html#tollan.utils.db.conventions.pfk">[docs]</a><span class="k">def</span> <span class="nf">pfk</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">_pk&#39;</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;comment&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;The shared primary key from </span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span>
+        <span class="n">ForeignKey</span><span class="p">(</span>
+           <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">other</span><span class="si">}</span><span class="s2">.pk&quot;</span><span class="p">,</span> <span class="n">onupdate</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span> <span class="n">ondelete</span><span class="o">=</span><span class="s2">&quot;cascade&quot;</span><span class="p">,</span>
+           <span class="p">),</span>
+        <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="pk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.pk.html#tollan.utils.db.conventions.pk">[docs]</a><span class="k">def</span> <span class="nf">pk</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;comment&#39;</span><span class="p">,</span> <span class="s1">&#39;The primary key.&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="s1">&#39;pk&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="name"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.name.html#tollan.utils.db.conventions.name">[docs]</a><span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">128</span><span class="p">),</span>
+            <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The name.&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="label"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.label.html#tollan.utils.db.conventions.label">[docs]</a><span class="k">def</span> <span class="nf">label</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="s1">&#39;label&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">128</span><span class="p">),</span>
+            <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">sqlite_on_conflict_unique</span><span class="o">=</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The short descriptive label.&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="desc"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.desc.html#tollan.utils.db.conventions.desc">[docs]</a><span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="s1">&#39;desc&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="p">,</span>
+            <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The long description.&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="created_at"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.created_at.html#tollan.utils.db.conventions.created_at">[docs]</a><span class="k">def</span> <span class="nf">created_at</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="n">utcnow</span><span class="p">(),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
+            <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span>
+            <span class="n">server_default</span><span class="o">=</span><span class="n">utcnow</span><span class="p">(),</span>
+            <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The datetime of creation.&#39;</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="updated_at"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.updated_at.html#tollan.utils.db.conventions.updated_at">[docs]</a><span class="k">def</span> <span class="nf">updated_at</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">Column</span><span class="p">(</span>
             <span class="s1">&#39;updated_at&#39;</span><span class="p">,</span>
-            <span class="n">DateTime</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="n">utcnow</span><span class="p">(),</span> <span class="n">onupdate</span><span class="o">=</span><span class="n">utcnow</span><span class="p">())</span></div>
+            <span class="n">DateTime</span><span class="p">,</span> <span class="n">server_default</span><span class="o">=</span><span class="n">utcnow</span><span class="p">(),</span>
+            <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The datetime of last modification.&#39;</span><span class="p">,</span>
+            <span class="n">onupdate</span><span class="o">=</span><span class="n">utcnow</span><span class="p">())</span></div>
 
 
-<div class="viewcode-block" id="client_info"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info.html#tollan.utils.db.conventions.client_info">[docs]</a><span class="k">def</span> <span class="nf">client_info</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">fk</span><span class="p">(</span><span class="s1">&#39;client_info&#39;</span><span class="p">)</span></div>
+<span class="c1"># Some useful utility tables</span>
+<span class="n">CLIENT_INFO_TABLE_NAME</span> <span class="o">=</span> <span class="s1">&#39;client_info&#39;</span>
 
 
-<div class="viewcode-block" id="client_info_tbl"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info_tbl.html#tollan.utils.db.conventions.client_info_tbl">[docs]</a><span class="k">def</span> <span class="nf">client_info_tbl</span><span class="p">(</span><span class="n">db</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">Table</span><span class="p">(</span>
-            <span class="s1">&#39;client_info&#39;</span><span class="p">,</span>
-            <span class="n">db</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span>
+<div class="viewcode-block" id="client_info_table"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info_table.html#tollan.utils.db.conventions.client_info_table">[docs]</a><span class="k">def</span> <span class="nf">client_info_table</span><span class="p">():</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">CLIENT_INFO_TABLE_NAME</span><span class="p">,</span>
+        <span class="s1">&#39;desc&#39;</span><span class="p">:</span> <span class="s1">&#39;The client info.&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;columns&#39;</span><span class="p">:</span> <span class="p">[</span>
             <span class="n">pk</span><span class="p">(),</span>
             <span class="n">Column</span><span class="p">(</span>
                 <span class="s1">&#39;hostname&#39;</span><span class="p">,</span>
-                <span class="n">String</span><span class="p">,</span>
+                <span class="n">String</span><span class="p">(</span><span class="mi">128</span><span class="p">),</span>
                 <span class="n">default</span><span class="o">=</span><span class="n">get_hostname</span><span class="p">(),</span>
                 <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                <span class="n">sqlite_on_conflict_unique</span><span class="o">=</span><span class="s1">&#39;REPLACE&#39;</span>
+                <span class="n">sqlite_on_conflict_unique</span><span class="o">=</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">,</span>
+                <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The client hostname.&#39;</span>
                 <span class="p">),</span>
             <span class="n">Column</span><span class="p">(</span>
                 <span class="s1">&#39;tz&#39;</span><span class="p">,</span>
                 <span class="n">TimezoneType</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s1">&#39;pytz&#39;</span><span class="p">),</span>
-                <span class="n">default</span><span class="o">=</span><span class="n">tzlocal</span><span class="o">.</span><span class="n">get_localzone</span><span class="p">()</span>
+                <span class="n">default</span><span class="o">=</span><span class="n">tzlocal</span><span class="o">.</span><span class="n">get_localzone</span><span class="p">(),</span>
+                <span class="n">comment</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;The client time zone.&#39;</span>
                 <span class="p">),</span>
             <span class="n">created_at</span><span class="p">(),</span>
             <span class="n">updated_at</span><span class="p">(),</span>
-            <span class="p">)</span></div>
+            <span class="p">]</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="client_info_fk"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info_fk.html#tollan.utils.db.conventions.client_info_fk">[docs]</a><span class="k">def</span> <span class="nf">client_info_fk</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">fk</span><span class="p">(</span><span class="n">CLIENT_INFO_TABLE_NAME</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="client_info_model"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.client_info_model.html#tollan.utils.db.conventions.client_info_model">[docs]</a><span class="k">def</span> <span class="nf">client_info_model</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+
+    <span class="k">class</span> <span class="nc">ClientInfo</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+
+        <span class="n">__tablename__</span> <span class="o">=</span> <span class="n">CLIENT_INFO_TABLE_NAME</span>
+
+        <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(hostname=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hostname</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+    <span class="k">return</span> <span class="n">ClientInfo</span></div>
+
+
+<span class="n">TABLE_INFO_TABLE_NAME</span> <span class="o">=</span> <span class="s1">&#39;_table_info&#39;</span>
+
+
+<div class="viewcode-block" id="table_info_table"><a class="viewcode-back" href="../../../../api/tollan.utils.db.conventions.table_info_table.html#tollan.utils.db.conventions.table_info_table">[docs]</a><span class="k">def</span> <span class="nf">table_info_table</span><span class="p">():</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">TABLE_INFO_TABLE_NAME</span><span class="p">,</span>
+        <span class="s1">&#39;desc&#39;</span><span class="p">:</span> <span class="s1">&#39;The table info.&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;columns&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">pk</span><span class="p">(),</span>
+            <span class="n">name</span><span class="p">(</span><span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">desc</span><span class="p">(),</span>
+            <span class="p">],</span>
+        <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">[]</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">t</span></div>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">_excluded_from_all</span><span class="p">))</span>
@@ -179,7 +264,7 @@
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 08 May 2020. <br/>
+    Last built 02 Jun 2020. <br/>
   </p>
 </footer>
   </body>

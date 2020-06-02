@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Tollan Documentation &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <title>Tollan Documentation &#8212; tollan v0.1.dev27+g859367b.d20200601</title>
     <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -52,7 +52,7 @@
 	</a>
       </li>
       <li>
-	<a href="#">tollan v0.1.dev23+g09320dd.d20200508</a>
+	<a href="#">tollan v0.1.dev27+g859367b.d20200601</a>
 	 &#187;
       </li>
       
@@ -103,19 +103,22 @@ across the python packages developed for the TolTEC project.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.mapsum.html#tollan.utils.mapsum" title="tollan.utils.mapsum"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mapsum</span></code></a>(map_func, gen, \*args, \*\*kwargs)</p></td>
 <td><p>Return a map and sum generator.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.patchit.html#tollan.utils.patchit" title="tollan.utils.patchit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">patchit</span></code></a>(obj, name[, pass_patched])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.odict_from_list.html#tollan.utils.odict_from_list" title="tollan.utils.odict_from_list"><code class="xref py py-obj docutils literal notranslate"><span class="pre">odict_from_list</span></code></a>(lst, key)</p></td>
+<td><p>Return an ordered dict from list.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.patchit.html#tollan.utils.patchit" title="tollan.utils.patchit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">patchit</span></code></a>(obj, name[, pass_patched])</p></td>
 <td><p>Return a decorator that replace attribute with decorated item.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.rgetattr.html#tollan.utils.rgetattr" title="tollan.utils.rgetattr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rgetattr</span></code></a>(obj, attr, \*args)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.rgetattr.html#tollan.utils.rgetattr" title="tollan.utils.rgetattr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rgetattr</span></code></a>(obj, attr, \*args)</p></td>
 <td><p>Get attribute recursively.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.rreload.html#tollan.utils.rreload" title="tollan.utils.rreload"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rreload</span></code></a>(m)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.rreload.html#tollan.utils.rreload" title="tollan.utils.rreload"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rreload</span></code></a>(m)</p></td>
 <td><p>Reload module recursively.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.rupdate.html#tollan.utils.rupdate" title="tollan.utils.rupdate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rupdate</span></code></a>(d, u)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.rupdate.html#tollan.utils.rupdate" title="tollan.utils.rupdate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rupdate</span></code></a>(d, u)</p></td>
 <td><p>Update dict recursively.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.to_typed.html#tollan.utils.to_typed" title="tollan.utils.to_typed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_typed</span></code></a>(s)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.to_typed.html#tollan.utils.to_typed" title="tollan.utils.to_typed"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_typed</span></code></a>(s)</p></td>
 <td><p>Return a typed object from string <code class="xref py py-obj docutils literal notranslate"><span class="pre">s</span></code> if possible.</p></td>
 </tr>
 </tbody>
@@ -137,7 +140,7 @@ across the python packages developed for the TolTEC project.</p>
 </div>
 <div class="section" id="class-inheritance-diagram">
 <h4>Class Inheritance Diagram<a class="headerlink" href="#class-inheritance-diagram" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-a093aa1d55eb954cb6184c330d2e5593de54236c.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="_images/inheritance-a68e00d9c5e5f669382747cb362350da0a5faca1.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.misc.hookit</p></object></div>
 </div>
 </div>
@@ -182,35 +185,87 @@ across the python packages developed for the TolTEC project.</p>
 </div>
 <div class="section" id="id3">
 <h4>Class Inheritance Diagram<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-cd6ae22a6bddfd2a4eec7a1c10a8b7dc7cde9bc7.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="graphviz"><object data="_images/inheritance-8a26f489a93a389eb51ddd4b981051b21e1ae678.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser</p></object></div>
 </div>
 </div>
-<div class="section" id="module-tollan.utils.db.conventions">
-<span id="tollan-utils-db-conventions-module"></span><h3>tollan.utils.db.conventions Module<a class="headerlink" href="#module-tollan.utils.db.conventions" title="Permalink to this headline">¶</a></h3>
-<p>This module defines a set of helpers for defining database with
-some column naming conventions.</p>
+<div class="section" id="module-tollan.utils.db">
+<span id="tollan-utils-db-package"></span><h3>tollan.utils.db Package<a class="headerlink" href="#module-tollan.utils.db" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="id4">
-<h4>Functions<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<h4>Classes<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.fk.html#tollan.utils.db.conventions.fk" title="tollan.utils.db.conventions.fk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fk</span></code></a>(other)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.TableDef.html#tollan.utils.db.TableDef" title="tollan.utils.db.TableDef"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TableDef</span></code></a></p></td>
+<td><p>A class that holds definitions to a table.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.TableDefList.html#tollan.utils.db.TableDefList" title="tollan.utils.db.TableDefList"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TableDefList</span></code></a>(table_defs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB" title="tollan.utils.db.SqlaDB"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SqlaDB</span></code></a></p></td>
+<td><p>A class that provide access to database related entities similar to that of <a class="reference external" href="https://flask-sqlalchemy.palletsprojects.com/en/2.x/api/#flask_sqlalchemy.SQLAlchemy" title="(in Flask-SQLAlchemy v2.x)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">flask_sqlalchemy.SQLAlchemy</span></code></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="id5">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-56ea5c580ad17a4f298bb2fec27751267a0744c1.svg" type="image/svg+xml" class="inheritance graphviz">
+<p class="warning">Inheritance diagram of tollan.utils.db.TableDef, tollan.utils.db.TableDefList, tollan.utils.db.SqlaDB</p></object></div>
+</div>
+</div>
+<div class="section" id="module-tollan.utils.db.conventions">
+<span id="tollan-utils-db-conventions-module"></span><h3>tollan.utils.db.conventions Module<a class="headerlink" href="#module-tollan.utils.db.conventions" title="Permalink to this headline">¶</a></h3>
+<p>This module defines a set of helpers for defining database with
+some column naming conventions.</p>
+<div class="section" id="id6">
+<h4>Functions<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.desc.html#tollan.utils.db.conventions.desc" title="tollan.utils.db.conventions.desc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">desc</span></code></a>(\*\*kwargs)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.pk.html#tollan.utils.db.conventions.pk" title="tollan.utils.db.conventions.pk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pk</span></code></a>(\*\*kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.client_info_tbl.html#tollan.utils.db.conventions.client_info_tbl" title="tollan.utils.db.conventions.client_info_tbl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">client_info_tbl</span></code></a>(db)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.name.html#tollan.utils.db.conventions.name" title="tollan.utils.db.conventions.name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></a>(\*\*kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.pfk.html#tollan.utils.db.conventions.pfk" title="tollan.utils.db.conventions.pfk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pfk</span></code></a>(other)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.fk.html#tollan.utils.db.conventions.fk" title="tollan.utils.db.conventions.fk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fk</span></code></a>(other[, name])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.updated_at.html#tollan.utils.db.conventions.updated_at" title="tollan.utils.db.conventions.updated_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">updated_at</span></code></a>(\*\*kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.client_info_table.html#tollan.utils.db.conventions.client_info_table" title="tollan.utils.db.conventions.client_info_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">client_info_table</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.default_sql_utcnow.html#tollan.utils.db.conventions.default_sql_utcnow" title="tollan.utils.db.conventions.default_sql_utcnow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_sql_utcnow</span></code></a>(element, compiler, \*\*kw)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.client_info_model.html#tollan.utils.db.conventions.client_info_model" title="tollan.utils.db.conventions.client_info_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">client_info_model</span></code></a>(Base)</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.ms_utcnow.html#tollan.utils.db.conventions.ms_utcnow" title="tollan.utils.db.conventions.ms_utcnow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ms_utcnow</span></code></a>(element, compiler, \*\*kw)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.created_at.html#tollan.utils.db.conventions.created_at" title="tollan.utils.db.conventions.created_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">created_at</span></code></a>(\*\*kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.pfk.html#tollan.utils.db.conventions.pfk" title="tollan.utils.db.conventions.pfk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pfk</span></code></a>(other[, name])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.client_info_fk.html#tollan.utils.db.conventions.client_info_fk" title="tollan.utils.db.conventions.client_info_fk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">client_info_fk</span></code></a>(\*\*kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.table_info_table.html#tollan.utils.db.conventions.table_info_table" title="tollan.utils.db.conventions.table_info_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">table_info_table</span></code></a>()</p></td>
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.pg_utcnow.html#tollan.utils.db.conventions.pg_utcnow" title="tollan.utils.db.conventions.pg_utcnow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pg_utcnow</span></code></a>(element, compiler, \*\*kw)</p></td>
@@ -219,23 +274,11 @@ some column naming conventions.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.label.html#tollan.utils.db.conventions.label" title="tollan.utils.db.conventions.label"><code class="xref py py-obj docutils literal notranslate"><span class="pre">label</span></code></a>(\*\*kwargs)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.created_at.html#tollan.utils.db.conventions.created_at" title="tollan.utils.db.conventions.created_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">created_at</span></code></a>(\*\*kwargs)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.client_info.html#tollan.utils.db.conventions.client_info" title="tollan.utils.db.conventions.client_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">client_info</span></code></a>(\*\*kwargs)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.updated_at.html#tollan.utils.db.conventions.updated_at" title="tollan.utils.db.conventions.updated_at"><code class="xref py py-obj docutils literal notranslate"><span class="pre">updated_at</span></code></a>(\*\*kwargs)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="api/tollan.utils.db.conventions.default_sql_utcnow.html#tollan.utils.db.conventions.default_sql_utcnow" title="tollan.utils.db.conventions.default_sql_utcnow"><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_sql_utcnow</span></code></a>(element, compiler, \*\*kw)</p></td>
-<td><p></p></td>
-</tr>
 </tbody>
 </table>
 </div>
-<div class="section" id="id5">
-<h4>Classes<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id7">
+<h4>Classes<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -248,16 +291,16 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id6">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-cec51f2ee860a0984c02e67c77d6562e3eb801f5.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id8">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-7e1feb853300d7a2b6e351e1c1c165afb4725f76.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.db.conventions.utcnow</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.env">
 <span id="tollan-utils-env-module"></span><h3>tollan.utils.env Module<a class="headerlink" href="#module-tollan.utils.env" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id7">
-<h4>Classes<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id9">
+<h4>Classes<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -270,16 +313,16 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id8">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-6654a0e97918deb757a5eb539bda9db67a518968.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id10">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-be2550de611cae0bf028e6badcac706ea062a9f3.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.env.EnvRegistry</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.fmt">
 <span id="tollan-utils-fmt-module"></span><h3>tollan.utils.fmt Module<a class="headerlink" href="#module-tollan.utils.fmt" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id9">
-<h4>Functions<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id11">
+<h4>Functions<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -310,8 +353,8 @@ some column naming conventions.</p>
 </div>
 <div class="section" id="module-tollan.utils.log">
 <span id="tollan-utils-log-package"></span><h3>tollan.utils.log Package<a class="headerlink" href="#module-tollan.utils.log" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id10">
-<h4>Functions<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id12">
+<h4>Functions<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -327,8 +370,8 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id11">
-<h4>Classes<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id13">
+<h4>Classes<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -344,17 +387,17 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id12">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-ed50904fd38e511cfd37cf2135f1ffbbe314c74d.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id14">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-fc04496d05c2c442b42e95334bc34482bfa321d0.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.log.timeit, tollan.utils.log.logit</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.mpl">
 <span id="tollan-utils-mpl-module"></span><h3>tollan.utils.mpl Module<a class="headerlink" href="#module-tollan.utils.mpl" title="Permalink to this headline">¶</a></h3>
 <p>Some matplotlib helpers.</p>
-<div class="section" id="id13">
-<h4>Functions<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id15">
+<h4>Functions<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -370,8 +413,8 @@ some column naming conventions.</p>
 </div>
 <div class="section" id="module-tollan.utils.namespace">
 <span id="tollan-utils-namespace-module"></span><h3>tollan.utils.namespace Module<a class="headerlink" href="#module-tollan.utils.namespace" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id14">
-<h4>Functions<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id16">
+<h4>Functions<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -387,8 +430,8 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id15">
-<h4>Classes<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id17">
+<h4>Classes<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -407,16 +450,16 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id16">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-dd4e7aa7816f9d8182790247c823314b13a8e251.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id18">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-9f435186062cb83132c2990fd7bd16d718ea08f6.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.namespace.NamespaceNotFoundError, tollan.utils.namespace.NamespaceTypeError, tollan.utils.namespace.Namespace</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.nc">
 <span id="tollan-utils-nc-package"></span><h3>tollan.utils.nc Package<a class="headerlink" href="#module-tollan.utils.nc" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id17">
-<h4>Functions<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id19">
+<h4>Functions<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -432,8 +475,8 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id18">
-<h4>Classes<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id20">
+<h4>Classes<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -446,16 +489,16 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id19">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-a9d033c9afe4ad7cf9f17e95ee8e3e60561e3004.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id21">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-e22f3cf19eab723703eb9eeb58ca4f6f34e51975.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.nc.NcNodeMapper</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.np">
 <span id="tollan-utils-np-module"></span><h3>tollan.utils.np Module<a class="headerlink" href="#module-tollan.utils.np" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id20">
-<h4>Functions<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id22">
+<h4>Functions<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -471,8 +514,8 @@ some column naming conventions.</p>
 </div>
 <div class="section" id="module-tollan.utils.registry">
 <span id="tollan-utils-registry-module"></span><h3>tollan.utils.registry Module<a class="headerlink" href="#module-tollan.utils.registry" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id21">
-<h4>Functions<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id23">
+<h4>Functions<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -485,8 +528,8 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id22">
-<h4>Classes<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id24">
+<h4>Classes<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -499,16 +542,16 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id23">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-a58330d392b7aee39d0944eafc04e65141104bd1.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id25">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-116320d5fc3471984c870a9c43767262bd7ab77d.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.registry.Registry</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.slice">
 <span id="tollan-utils-slice-module"></span><h3>tollan.utils.slice Module<a class="headerlink" href="#module-tollan.utils.slice" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id24">
-<h4>Functions<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id26">
+<h4>Functions<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -524,8 +567,8 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id25">
-<h4>Classes<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id27">
+<h4>Classes<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -544,16 +587,16 @@ some column naming conventions.</p>
 </tbody>
 </table>
 </div>
-<div class="section" id="id26">
-<h4>Class Inheritance Diagram<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
-<div class="graphviz"><object data="_images/inheritance-a5057ec582db66aa0e60e7e85325345b8595bb40.svg" type="image/svg+xml" class="inheritance graphviz">
+<div class="section" id="id28">
+<h4>Class Inheritance Diagram<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h4>
+<div class="graphviz"><object data="_images/inheritance-45683650413306adcaee5a23ead27b32901f6755.svg" type="image/svg+xml" class="inheritance graphviz">
 <p class="warning">Inheritance diagram of tollan.utils.slice.BoundedSliceChain, tollan.utils.slice.UnboundedSliceChain, tollan.utils.slice.XLoc</p></object></div>
 </div>
 </div>
 <div class="section" id="module-tollan.utils.wraps">
 <span id="tollan-utils-wraps-package"></span><h3>tollan.utils.wraps Package<a class="headerlink" href="#module-tollan.utils.wraps" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id27">
-<h4>Functions<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id29">
+<h4>Functions<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h4>
 <table class="longtable docutils align-default">
 <colgroup>
 <col style="width: 10%" />
@@ -603,61 +646,66 @@ some column naming conventions.</p>
 <li><a class="reference internal" href="#id3">Class Inheritance Diagram</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-tollan.utils.db.conventions">tollan.utils.db.conventions Module</a><ul>
-<li><a class="reference internal" href="#id4">Functions</a></li>
-<li><a class="reference internal" href="#id5">Classes</a></li>
-<li><a class="reference internal" href="#id6">Class Inheritance Diagram</a></li>
+<li><a class="reference internal" href="#module-tollan.utils.db">tollan.utils.db Package</a><ul>
+<li><a class="reference internal" href="#id4">Classes</a></li>
+<li><a class="reference internal" href="#id5">Class Inheritance Diagram</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-tollan.utils.env">tollan.utils.env Module</a><ul>
+<li><a class="reference internal" href="#module-tollan.utils.db.conventions">tollan.utils.db.conventions Module</a><ul>
+<li><a class="reference internal" href="#id6">Functions</a></li>
 <li><a class="reference internal" href="#id7">Classes</a></li>
 <li><a class="reference internal" href="#id8">Class Inheritance Diagram</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#module-tollan.utils.env">tollan.utils.env Module</a><ul>
+<li><a class="reference internal" href="#id9">Classes</a></li>
+<li><a class="reference internal" href="#id10">Class Inheritance Diagram</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-tollan.utils.fmt">tollan.utils.fmt Module</a><ul>
-<li><a class="reference internal" href="#id9">Functions</a></li>
+<li><a class="reference internal" href="#id11">Functions</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.log">tollan.utils.log Package</a><ul>
-<li><a class="reference internal" href="#id10">Functions</a></li>
-<li><a class="reference internal" href="#id11">Classes</a></li>
-<li><a class="reference internal" href="#id12">Class Inheritance Diagram</a></li>
+<li><a class="reference internal" href="#id12">Functions</a></li>
+<li><a class="reference internal" href="#id13">Classes</a></li>
+<li><a class="reference internal" href="#id14">Class Inheritance Diagram</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.mpl">tollan.utils.mpl Module</a><ul>
-<li><a class="reference internal" href="#id13">Functions</a></li>
+<li><a class="reference internal" href="#id15">Functions</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.namespace">tollan.utils.namespace Module</a><ul>
-<li><a class="reference internal" href="#id14">Functions</a></li>
-<li><a class="reference internal" href="#id15">Classes</a></li>
-<li><a class="reference internal" href="#id16">Class Inheritance Diagram</a></li>
+<li><a class="reference internal" href="#id16">Functions</a></li>
+<li><a class="reference internal" href="#id17">Classes</a></li>
+<li><a class="reference internal" href="#id18">Class Inheritance Diagram</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.nc">tollan.utils.nc Package</a><ul>
-<li><a class="reference internal" href="#id17">Functions</a></li>
-<li><a class="reference internal" href="#id18">Classes</a></li>
-<li><a class="reference internal" href="#id19">Class Inheritance Diagram</a></li>
+<li><a class="reference internal" href="#id19">Functions</a></li>
+<li><a class="reference internal" href="#id20">Classes</a></li>
+<li><a class="reference internal" href="#id21">Class Inheritance Diagram</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.np">tollan.utils.np Module</a><ul>
-<li><a class="reference internal" href="#id20">Functions</a></li>
+<li><a class="reference internal" href="#id22">Functions</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.registry">tollan.utils.registry Module</a><ul>
-<li><a class="reference internal" href="#id21">Functions</a></li>
-<li><a class="reference internal" href="#id22">Classes</a></li>
-<li><a class="reference internal" href="#id23">Class Inheritance Diagram</a></li>
+<li><a class="reference internal" href="#id23">Functions</a></li>
+<li><a class="reference internal" href="#id24">Classes</a></li>
+<li><a class="reference internal" href="#id25">Class Inheritance Diagram</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.slice">tollan.utils.slice Module</a><ul>
-<li><a class="reference internal" href="#id24">Functions</a></li>
-<li><a class="reference internal" href="#id25">Classes</a></li>
-<li><a class="reference internal" href="#id26">Class Inheritance Diagram</a></li>
+<li><a class="reference internal" href="#id26">Functions</a></li>
+<li><a class="reference internal" href="#id27">Classes</a></li>
+<li><a class="reference internal" href="#id28">Class Inheritance Diagram</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-tollan.utils.wraps">tollan.utils.wraps Package</a><ul>
-<li><a class="reference internal" href="#id27">Functions</a></li>
+<li><a class="reference internal" href="#id29">Functions</a></li>
 </ul>
 </li>
 </ul>
@@ -680,7 +728,7 @@ some column naming conventions.</p>
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 08 May 2020. <br/>
+    Last built 02 Jun 2020. <br/>
   </p>
 </footer>
   </body>

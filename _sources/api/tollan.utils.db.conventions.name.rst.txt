@@ -1,0 +1,6 @@
+name
+====
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: name

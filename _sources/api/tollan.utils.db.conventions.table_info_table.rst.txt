@@ -1,0 +1,6 @@
+table_info_table
+================
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: table_info_table

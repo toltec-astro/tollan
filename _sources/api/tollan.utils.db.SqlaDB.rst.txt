@@ -1,0 +1,31 @@
+SqlaDB
+======
+
+.. currentmodule:: tollan.utils.db
+
+.. autoclass:: SqlaDB
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~SqlaDB.tables
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~SqlaDB.from_flask_sqla
+      ~SqlaDB.from_uri
+      ~SqlaDB.reflect_tables
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: tables
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: from_flask_sqla
+   .. automethod:: from_uri
+   .. automethod:: reflect_tables

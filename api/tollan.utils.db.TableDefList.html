@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TableDefList &#8212; tollan v0.1.dev27+g859367b.d20200601</title>
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="SqlaDB" href="tollan.utils.db.SqlaDB.html" />
+    <link rel="prev" title="TableDef" href="tollan.utils.db.TableDef.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="tollan.utils.db.SqlaDB.html" title="SqlaDB">
+	  next &raquo;
+	</a>
+      </li>
+      <li class="right">
+	<a href="tollan.utils.db.TableDef.html" title="TableDef">
+	  &laquo; previous
+	</a>
+	 |
+      </li>
+      <li>
+	<a href="../index.html">tollan v0.1.dev27+g859367b.d20200601</a>
+	 &#187;
+      </li>
+      
+      <li>TableDefList</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tabledeflist">
+<h1>TableDefList<a class="headerlink" href="#tabledeflist" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="tollan.utils.db.TableDefList">
+<em class="property">class </em><code class="sig-prename descclassname">tollan.utils.db.</code><code class="sig-name descname">TableDefList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">table_defs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/db.html#TableDefList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.db.TableDefList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ObjectProxy</span></code></p>
+<p class="rubric">Methods Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.db.TableDefList.init_db" title="tollan.utils.db.TableDefList.init_db"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_db</span></code></a>(self, db)</p></td>
+<td><p>Setup tables defined in this <code class="xref py py-obj docutils literal notranslate"><span class="pre">TableDefList</span></code> in <code class="xref py py-obj docutils literal notranslate"><span class="pre">db</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="py method">
+<dt id="tollan.utils.db.TableDefList.init_db">
+<code class="sig-name descname">init_db</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">db</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/db.html#TableDefList.init_db"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.db.TableDefList.init_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup tables defined in this <code class="xref py py-obj docutils literal notranslate"><span class="pre">TableDefList</span></code> in <code class="xref py py-obj docutils literal notranslate"><span class="pre">db</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="xref py py-meth docutils literal notranslate"><span class="pre">db.metadata.create_all()</span></code> is not called.</p>
+</div>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>db</strong><span class="classifier"><a class="reference internal" href="tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB" title="tollan.utils.db.SqlaDB"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SqlaDB</span></code></a> or <a class="reference external" href="https://flask-sqlalchemy.palletsprojects.com/en/2.x/api/#flask_sqlalchemy.SQLAlchemy" title="(in Flask-SQLAlchemy v2.x)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SQLAlchemy</span></code></a></span></dt><dd><p>The db instance to which this table is added.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">TableDefList</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/api/tollan.utils.db.TableDefList.rst.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2020, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
+    Last built 02 Jun 2020. <br/>
+  </p>
+</footer>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+TableDefList
+============
+
+.. currentmodule:: tollan.utils.db
+
+.. autoclass:: TableDefList
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~TableDefList.init_db
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: init_db

@@ -13,9 +13,11 @@ MultiActionArgumentParser
       ~MultiActionArgumentParser.add_action_parser
       ~MultiActionArgumentParser.bootstrap_actions
       ~MultiActionArgumentParser.parser_action
+      ~MultiActionArgumentParser.register_action_parser
 
    .. rubric:: Methods Documentation
 
    .. automethod:: add_action_parser
    .. automethod:: bootstrap_actions
    .. automethod:: parser_action
+   .. automethod:: register_action_parser

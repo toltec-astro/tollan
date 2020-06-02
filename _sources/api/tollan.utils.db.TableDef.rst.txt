@@ -1,0 +1,17 @@
+TableDef
+========
+
+.. currentmodule:: tollan.utils.db
+
+.. autoclass:: TableDef
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~TableDef.init_table
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: init_table

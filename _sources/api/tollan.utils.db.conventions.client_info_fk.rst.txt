@@ -1,0 +1,6 @@
+client_info_fk
+==============
+
+.. currentmodule:: tollan.utils.db.conventions
+
+.. autofunction:: client_info_fk

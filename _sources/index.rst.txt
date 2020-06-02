@@ -18,6 +18,8 @@ Reference/API
 
 .. automodapi:: tollan.utils.cli.multi_action_argparser
 
+.. automodapi:: tollan.utils.db
+
 .. automodapi:: tollan.utils.db.conventions
 
 .. automodapi:: tollan.utils.env

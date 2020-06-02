@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.cli.multi_action_argparser &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <title>tollan.utils.cli.multi_action_argparser &#8212; tollan v0.1.dev27+g859367b.d20200601</title>
     <link rel="stylesheet" href="../../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../../index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
+	<a href="../../../../index.html">tollan v0.1.dev27+g859367b.d20200601</a>
 	 &#187;
       </li>
       <li><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -107,28 +107,61 @@
         <span class="n">parser</span><span class="o">.</span><span class="n">exit</span><span class="p">()</span>
 
 
+<span class="k">class</span> <span class="nc">_SubParsersAction</span><span class="p">(</span><span class="n">argparse</span><span class="o">.</span><span class="n">_SubParsersAction</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">option_string</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># this is to fix that &#39;--&#39; is picked up as action.</span>
+        <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;--&#39;</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span>
+                <span class="n">parser</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">option_string</span><span class="o">=</span><span class="n">option_string</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ArgumentParser</span><span class="p">(</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_check_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="c1"># this is to by-pass the validation of &#39;--&#39;</span>
+        <span class="c1"># converted value must be one of the choices (if specified)</span>
+        <span class="k">if</span> <span class="n">action</span><span class="o">.</span><span class="n">nargs</span> <span class="o">==</span> <span class="n">argparse</span><span class="o">.</span><span class="n">PARSER</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">==</span> <span class="s1">&#39;--&#39;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_check_value</span><span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="MultiActionArgumentParser"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser">[docs]</a><span class="k">class</span> <span class="nc">MultiActionArgumentParser</span><span class="p">(</span><span class="n">wrapt</span><span class="o">.</span><span class="n">ObjectProxy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;This class wraps the `argparse.ArgumentParser` so that it</span>
 <span class="sd">    allows defining subcommands with ease.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;add_help&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_self_parser</span> <span class="o">=</span> <span class="n">p</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_self_parser</span> <span class="o">=</span> <span class="n">p</span> <span class="o">=</span> <span class="n">ArgumentParser</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_self_parser</span><span class="p">)</span>
 
+        <span class="n">p</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;action&#39;</span><span class="p">,</span> <span class="s1">&#39;parsers&#39;</span><span class="p">,</span> <span class="n">_SubParsersAction</span><span class="p">)</span>
         <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
             <span class="s1">&#39;-h&#39;</span><span class="p">,</span> <span class="s1">&#39;--help&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">RecursiveHelpAction</span><span class="p">,</span>
-            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Show this (and more) help message and exit&#39;</span><span class="p">)</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Show the full help message and exit.&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_self_action_parser_group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span>
                 <span class="n">title</span><span class="o">=</span><span class="s2">&quot;actions&quot;</span><span class="p">,</span>
-                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Available actions&quot;</span>
+                <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Available actions.&quot;</span>
                 <span class="p">)</span>
 
 <div class="viewcode-block" id="MultiActionArgumentParser.add_action_parser"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.add_action_parser">[docs]</a>    <span class="k">def</span> <span class="nf">add_action_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_self_action_parser_group</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_self_action_parser_group</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+                <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                <span class="s1">&#39;-h&#39;</span><span class="p">,</span> <span class="s1">&#39;--help&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;help&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">SUPPRESS</span><span class="p">,</span>
+                <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Show help for this subcommand and exit.&#39;</span><span class="p">)</span>
         <span class="c1"># patch the action parser with method</span>
         <span class="n">p</span><span class="o">.</span><span class="n">parser_action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser_action</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="MultiActionArgumentParser.register_action_parser"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.register_action_parser">[docs]</a>    <span class="k">def</span> <span class="nf">register_action_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="n">act</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_action_parser</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">decorator</span></div>
 
 <div class="viewcode-block" id="MultiActionArgumentParser.parser_action"><a class="viewcode-back" href="../../../../api/tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.parser_action">[docs]</a>    <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">parser_action</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
@@ -161,7 +194,7 @@
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 08 May 2020. <br/>
+    Last built 02 Jun 2020. <br/>
   </p>
 </footer>
   </body>

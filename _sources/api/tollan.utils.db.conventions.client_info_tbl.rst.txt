@@ -1,6 +1,0 @@
-client_info_tbl
-===============
-
-.. currentmodule:: tollan.utils.db.conventions
-
-.. autofunction:: client_info_tbl

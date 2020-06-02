@@ -5,7 +5,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Index &#8212; tollan v0.1.dev23+g09320dd.d20200508</title>
+    <title>Index &#8212; tollan v0.1.dev27+g859367b.d20200601</title>
     <link rel="stylesheet" href="_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css" />
@@ -47,7 +47,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="index.html">tollan v0.1.dev23+g09320dd.d20200508</a>
+	<a href="index.html">tollan v0.1.dev27+g859367b.d20200601</a>
 	 &#187;
       </li>
       
@@ -130,9 +130,11 @@
 <h2 id="C">C</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/tollan.utils.db.conventions.client_info.html#tollan.utils.db.conventions.client_info">client_info() (in module tollan.utils.db.conventions)</a>
+      <li><a href="api/tollan.utils.db.conventions.client_info_fk.html#tollan.utils.db.conventions.client_info_fk">client_info_fk() (in module tollan.utils.db.conventions)</a>
 </li>
-      <li><a href="api/tollan.utils.db.conventions.client_info_tbl.html#tollan.utils.db.conventions.client_info_tbl">client_info_tbl() (in module tollan.utils.db.conventions)</a>
+      <li><a href="api/tollan.utils.db.conventions.client_info_model.html#tollan.utils.db.conventions.client_info_model">client_info_model() (in module tollan.utils.db.conventions)</a>
+</li>
+      <li><a href="api/tollan.utils.db.conventions.client_info_table.html#tollan.utils.db.conventions.client_info_table">client_info_table() (in module tollan.utils.db.conventions)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -152,6 +154,8 @@
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.db.conventions.desc.html#tollan.utils.db.conventions.desc">desc() (in module tollan.utils.db.conventions)</a>
+</li>
       <li><a href="api/tollan.utils.namespace.dict_from_object.html#tollan.utils.namespace.dict_from_object">dict_from_object() (in module tollan.utils.namespace)</a>
 </li>
   </ul></td>
@@ -174,11 +178,15 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/tollan.utils.file_uri_to_path.html#tollan.utils.file_uri_to_path">file_uri_to_path() (in module tollan.utils)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/tollan.utils.db.conventions.fk.html#tollan.utils.db.conventions.fk">fk() (in module tollan.utils.db.conventions)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/tollan.utils.np.flex_reshape.html#tollan.utils.np.flex_reshape">flex_reshape() (in module tollan.utils.np)</a>
+</li>
+      <li><a href="api/tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB.from_flask_sqla">from_flask_sqla() (tollan.utils.db.SqlaDB class method)</a>
+</li>
+      <li><a href="api/tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB.from_uri">from_uri() (tollan.utils.db.SqlaDB class method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -228,7 +236,13 @@
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.db.TableDefList.html#tollan.utils.db.TableDefList.init_db">init_db() (tollan.utils.db.TableDefList method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/tollan.utils.log.init_log.html#tollan.utils.log.init_log">init_log() (in module tollan.utils.log)</a>
+</li>
+      <li><a href="api/tollan.utils.db.TableDef.html#tollan.utils.db.TableDef.init_table">init_table() (tollan.utils.db.TableDef method)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -263,6 +277,8 @@
         <li><a href="index.html#module-tollan.utils.cli.click_helpers">tollan.utils.cli.click_helpers</a>
 </li>
         <li><a href="index.html#module-tollan.utils.cli.multi_action_argparser">tollan.utils.cli.multi_action_argparser</a>
+</li>
+        <li><a href="index.html#module-tollan.utils.db">tollan.utils.db</a>
 </li>
         <li><a href="index.html#module-tollan.utils.db.conventions">tollan.utils.db.conventions</a>
 </li>
@@ -299,14 +315,16 @@
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.db.conventions.name.html#tollan.utils.db.conventions.name">name() (in module tollan.utils.db.conventions)</a>
+</li>
       <li><a href="api/tollan.utils.namespace.Namespace.html#tollan.utils.namespace.Namespace">Namespace (class in tollan.utils.namespace)</a>
 </li>
       <li><a href="api/tollan.utils.namespace.NamespaceNotFoundError.html#tollan.utils.namespace.NamespaceNotFoundError">NamespaceNotFoundError</a>
 </li>
-      <li><a href="api/tollan.utils.namespace.NamespaceTypeError.html#tollan.utils.namespace.NamespaceTypeError">NamespaceTypeError</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.namespace.NamespaceTypeError.html#tollan.utils.namespace.NamespaceTypeError">NamespaceTypeError</a>
+</li>
       <li><a href="api/tollan.utils.nc.ncinfo.html#tollan.utils.nc.ncinfo">ncinfo() (in module tollan.utils.nc)</a>
 </li>
       <li><a href="api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper">NcNodeMapper (class in tollan.utils.nc)</a>
@@ -320,6 +338,10 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/tollan.utils.namespace.object_from_dict.html#tollan.utils.namespace.object_from_dict">object_from_dict() (in module tollan.utils.namespace)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.odict_from_list.html#tollan.utils.odict_from_list">odict_from_list() (in module tollan.utils)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -359,16 +381,20 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB.reflect_tables">reflect_tables() (tollan.utils.db.SqlaDB method)</a>
+</li>
       <li><a href="api/tollan.utils.env.EnvRegistry.html#tollan.utils.env.EnvRegistry.register">register() (tollan.utils.env.EnvRegistry method)</a>
+</li>
+      <li><a href="api/tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html#tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.register_action_parser">register_action_parser() (tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser method)</a>
 </li>
       <li><a href="api/tollan.utils.registry.register_to.html#tollan.utils.registry.register_to">register_to() (in module tollan.utils.registry)</a>
 </li>
       <li><a href="api/tollan.utils.registry.Registry.html#tollan.utils.registry.Registry">Registry (class in tollan.utils.registry)</a>
 </li>
-      <li><a href="api/tollan.utils.slice.UnboundedSliceChain.html#tollan.utils.slice.UnboundedSliceChain.resolve">resolve() (tollan.utils.slice.UnboundedSliceChain method)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.slice.UnboundedSliceChain.html#tollan.utils.slice.UnboundedSliceChain.resolve">resolve() (tollan.utils.slice.UnboundedSliceChain method)</a>
+</li>
       <li><a href="api/tollan.utils.slice.resolve_slice.html#tollan.utils.slice.resolve_slice">resolve_slice() (in module tollan.utils.slice)</a>
 </li>
       <li><a href="api/tollan.utils.rgetattr.html#tollan.utils.rgetattr">rgetattr() (in module tollan.utils)</a>
@@ -389,12 +415,22 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/tollan.utils.hookit.html#tollan.utils.hookit.set_post_func">set_post_func() (tollan.utils.hookit method)</a>
 </li>
+      <li><a href="api/tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB">SqlaDB (class in tollan.utils.db)</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="T">T</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/tollan.utils.db.conventions.table_info_table.html#tollan.utils.db.conventions.table_info_table">table_info_table() (in module tollan.utils.db.conventions)</a>
+</li>
+      <li><a href="api/tollan.utils.db.TableDef.html#tollan.utils.db.TableDef">TableDef (class in tollan.utils.db)</a>
+</li>
+      <li><a href="api/tollan.utils.db.TableDefList.html#tollan.utils.db.TableDefList">TableDefList (class in tollan.utils.db)</a>
+</li>
+      <li><a href="api/tollan.utils.db.SqlaDB.html#tollan.utils.db.SqlaDB.tables">tables (tollan.utils.db.SqlaDB attribute)</a>
+</li>
       <li><a href="api/tollan.utils.log.timeit.html#tollan.utils.log.timeit">timeit (class in tollan.utils.log)</a>
 </li>
       <li><a href="api/tollan.utils.slice.BoundedSliceChain.html#tollan.utils.slice.BoundedSliceChain.to_slice">to_slice() (tollan.utils.slice.BoundedSliceChain method)</a>
@@ -430,12 +466,21 @@
 </li>
       </ul></li>
       <li>
+    tollan.utils.db
+
+      <ul>
+        <li><a href="index.html#module-tollan.utils.db">module</a>
+</li>
+      </ul></li>
+      <li>
     tollan.utils.db.conventions
 
       <ul>
         <li><a href="index.html#module-tollan.utils.db.conventions">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     tollan.utils.env
 
@@ -450,8 +495,6 @@
         <li><a href="index.html#module-tollan.utils.fmt">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     tollan.utils.log
 
@@ -553,7 +596,7 @@
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 08 May 2020. <br/>
+    Last built 02 Jun 2020. <br/>
   </p>
 </footer>
   </body>
