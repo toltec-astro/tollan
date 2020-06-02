@@ -5,6 +5,7 @@ from schema import Schema, Optional, Use
 import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData
+from wrapt import ObjectProxy
 
 
 class TableDef(Namespace):
@@ -17,6 +18,38 @@ class TableDef(Namespace):
         Optional('data'): [dict, ],
         str: object
         })
+
+    def init_table(self, db):
+        """Setup table metadata for this table def in `db`.
+
+        Parameters
+        ----------
+        db : `~tollan.utils.db.SqlaDB` or `flask_sqlalchemy.SQLAlchemy`
+            The db instance to which this table is added.
+        """
+        return sa.Table(
+                self.name, db.metadata, *self.columns, comment=self.desc)
+
+
+class TableDefList(ObjectProxy):
+    def __init__(self, table_defs):
+        super().__init__(
+                Schema([Use(TableDef.from_dict), ]).validate(table_defs))
+
+    def init_db(self, db):
+        """Setup tables defined in this `~tollan.utils.TableDefList` in `db`.
+
+        .. note::
+
+            The :meth:`db.metadata.create_all` is not called.
+
+        Parameters
+        ----------
+        db : `~tollan.utils.db.SqlaDB` or `flask_sqlalchemy.SQLAlchemy`
+            The db instance to which this table is added.
+        """
+        for t in self:
+            t.init_table(db)
 
 
 class SqlaDB(Namespace):
@@ -48,20 +81,3 @@ class SqlaDB(Namespace):
 
     def reflect_tables(self):
         self.metadata.reflect(bind=self.engine)
-
-
-def init_db(db, table_defs):
-    """Setup table defined in `table_defs` in `db`.
-
-    .. note::
-
-        The :meth:`db.metadata.create_all` is not called.
-
-    Parameters
-    ----------
-    db : `~tollan.utils.db.SqlaDB` or `flask_sqlalchemy.SQLAlchemy`
-        The db instance to which this table is added.
-    """
-    table_defs = Schema([Use(TableDef.from_dict), ]).validate(table_defs)
-    for t in table_defs:
-        sa.Table(t.name, db.metadata, *t.columns, comment=t.desc)
