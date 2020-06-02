@@ -8,6 +8,9 @@ from sqlalchemy import MetaData
 from wrapt import ObjectProxy
 
 
+__all__ = ['TableDef', 'TableDefList', 'SqlaDB']
+
+
 class TableDef(Namespace):
     """A class that holds definitions to a table."""
 
@@ -24,7 +27,7 @@ class TableDef(Namespace):
 
         Parameters
         ----------
-        db : `~tollan.utils.db.SqlaDB` or `flask_sqlalchemy.SQLAlchemy`
+        db : `~tollan.utils.db.SqlaDB` or `~flask_sqlalchemy.SQLAlchemy`
             The db instance to which this table is added.
         """
         return sa.Table(
@@ -45,7 +48,7 @@ class TableDefList(ObjectProxy):
 
         Parameters
         ----------
-        db : `~tollan.utils.db.SqlaDB` or `flask_sqlalchemy.SQLAlchemy`
+        db : `~tollan.utils.db.SqlaDB` or `~flask_sqlalchemy.SQLAlchemy`
             The db instance to which this table is added.
         """
         for t in self:

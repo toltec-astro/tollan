@@ -57,6 +57,8 @@ highlight_language = 'python3'
 
 intersphinx_mapping['sqlalchemy'] = (
         'https://docs.sqlalchemy.org/en/13/', None)
+intersphinx_mapping['flask_sqlalchemy'] = (
+        'https://flask-sqlalchemy.palletsprojects.com/en/2.x/', None)
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -154,6 +156,7 @@ latex_documents = [('index', project + '.tex', project + u' Documentation',
 man_pages = [('index', project.lower(), project + u' Documentation',
               [author], 1)]
 
+inheritance_graph_attrs = dict(rankdir="LR", size='""')
 
 # -- Options for the edit_on_github extension ---------------------------------
 
