@@ -4,7 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.log &#8212; tollan v0.1.dev27+g859367b.d20200601</title>
+    <title>tollan.utils.log &#8212; tollan v0.1.dev28+gd7893e3</title>
     <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -46,7 +46,7 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev27+g859367b.d20200601</a>
+	<a href="../../../index.html">tollan v0.1.dev28+gd7893e3</a>
 	 &#187;
       </li>
       <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
@@ -70,7 +70,7 @@
 <span class="kn">import</span> <span class="nn">inspect</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">copy</span>
-
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">from</span> <span class="nn">astropy.utils.console</span> <span class="kn">import</span> <span class="n">human_time</span>
 <span class="kn">from</span> <span class="nn">..misc</span> <span class="kn">import</span> <span class="n">rupdate</span>
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">console_color</span>
@@ -238,6 +238,39 @@
 
     <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="si">}</span><span class="s1"> done&#39;</span><span class="p">)</span></div>
+
+
+<span class="c1"># @contextmanager</span>
+<span class="c1"># def scoped_loglevel(level=logging.INFO):</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+<span class="c1">#     A context manager that will prevent any logging messages</span>
+<span class="c1">#     triggered during the body from being processed.</span>
+<span class="c1">#     &quot;&quot;&quot;</span>
+
+<span class="c1">#     previous_level = logging.root.manager.disable</span>
+
+<span class="c1">#     logging.disable(level)</span>
+
+<span class="c1">#     try:</span>
+<span class="c1">#         yield</span>
+<span class="c1">#     finally:</span>
+<span class="c1">#         logging.disable(previous_level)</span>
+
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span> <span class="nf">disable_logger</span><span class="p">(</span><span class="o">*</span><span class="n">names</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Temporarily disable a specific logger.&quot;&quot;&quot;</span>
+    <span class="n">old_values</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">old_values</span><span class="p">[</span><span class="n">logger</span><span class="p">]</span> <span class="o">=</span> <span class="n">logger</span><span class="o">.</span><span class="n">disabled</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">disabled</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">disabled</span> <span class="o">=</span> <span class="n">old_values</span><span class="p">[</span><span class="n">logger</span><span class="p">]</span>
 </pre></div>
 
           </div>
@@ -257,7 +290,7 @@
   <p>
     &copy; Copyright 2020, Zhiyuan Ma.<br/>
     Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 02 Jun 2020. <br/>
+    Last built 03 Jun 2020. <br/>
   </p>
 </footer>
   </body>
