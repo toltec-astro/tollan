@@ -6,7 +6,7 @@ import logging.config
 import inspect
 import time
 import copy
-
+from contextlib import contextmanager
 from astropy.utils.console import human_time
 from ..misc import rupdate
 from . import console_color
@@ -174,3 +174,36 @@ class logit(ContextDecorator):
 
     def __exit__(self, *args):
         self.log(f'{self.msg} done')
+
+
+# @contextmanager
+# def scoped_loglevel(level=logging.INFO):
+#     """
+#     A context manager that will prevent any logging messages
+#     triggered during the body from being processed.
+#     """
+
+#     previous_level = logging.root.manager.disable
+
+#     logging.disable(level)
+
+#     try:
+#         yield
+#     finally:
+#         logging.disable(previous_level)
+
+
+@contextmanager
+def disable_logger(*names):
+    """Temporarily disable a specific logger."""
+    old_values = dict()
+    for name in names:
+        logger = logging.getLogger(name)
+        old_values[logger] = logger.disabled
+        logger.disabled = True
+    try:
+        yield
+    finally:
+        for name in names:
+            logger = logging.getLogger(name)
+            logger.disabled = old_values[logger]
