@@ -37,7 +37,7 @@ class TableDef(Namespace):
 class TableDefList(ObjectProxy):
     def __init__(self, table_defs):
         super().__init__(
-                Schema([Use(TableDef.from_dict), ]).validate(table_defs))
+                Schema([Use(TableDef.from_dict), ]).validate(list(table_defs)))
 
     def init_db(self, db):
         """Setup tables defined in this `~tollan.utils.TableDefList` in `db`.
