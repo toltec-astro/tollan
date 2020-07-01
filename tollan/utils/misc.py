@@ -5,9 +5,11 @@ import sys
 import importlib
 from contextlib import ContextDecorator
 import itertools
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import urllib
 from collections import OrderedDict
+from urllib.parse import urlsplit, urlunsplit
+from typing import NamedTuple
 
 
 _excluded_from_all = set(globals().keys())
@@ -273,31 +275,156 @@ def to_typed(s):
         return s
 
 
-# https://stackoverflow.com/a/57463161/1824372
-def file_uri_to_path(file_uri):
+class FileLoc(NamedTuple):
     """
-    This function returns a pathlib.PurePath object for the supplied file URI.
+    A simple structure to hold file location info.
+    """
+
+    uri: str
+    netloc: str
+    path: Path
+
+    @property
+    def is_local(self):
+        return self.netloc == ''
+
+    @property
+    def is_remote(self):
+        return not self.is_local
+
+
+def fileloc(loc, local_parent_path=None, remote_parent_path=None):
+    """Return a `~tollan.utils.FileLoc` object.
 
     Parameters
     ----------
-    file_uri : str
-        The file URI.
 
-    Returns
-    -------
-    Path
-        The path the URI refers to.
+    loc : str, `~pathlib.Path`, tuple, `~tollan.utils.FileLoc`
 
+        The location of the file, composed of the hostname and the path.
+        It can take the form of the follows:
+
+        * ``str``. In this case, `loc` is interpreted as a local path, or a
+          remote path similar to sftp syntax: ``<hostname>:<abspath>``.
+          A remote relative path is not supported.
+
+        * `~pathlib.Path`. It is a local path.
+
+        * Tuple of ``(<hostname>, <abspath>)``. It is a remote path, unless
+          ``hostname`` is "localhost". A remote relative path is not
+          supported.
+
+        * `~tollan.utils.FileLoc`. It is returned unaltered.
+
+    local_parent_path : str, `~pathlib.Path`, None
+
+        If not None, this is used as the parent of local
+        relative path. Otherwise, the current path (``pwd``) is used.
+        Ignored if `loc` is `~tollan.utils.FileLoc`.
+
+    remote_parent_path : str, `~pathlib.Path`, None
+
+        If not None and is absolute, this is used as the parent of remote
+        relative path. Otherwise, `ValueError` will be raised if a remote
+        relative path is given.
+        Ignored if `loc` is `~tollan.utils.FileLoc`.
     """
-    file_uri_parsed = urllib.parse.urlparse(file_uri)
-    if file_uri_parsed.scheme != 'file':
-        raise ValueError(f"not a file uri: {file_uri}")
-    file_uri_path_unquoted = urllib.parse.unquote(file_uri_parsed.path)
-    result = Path(file_uri_path_unquoted)
-    if not result.is_absolute():
-        raise ValueError(
-                f"invalid file uri {file_uri} : path {result} not absolute")
-    return result
+    if isinstance(loc, FileLoc):
+        return loc
+
+    def _get_abs_path(h, p):
+        p = Path(p)
+        if p.is_absolute():
+            return p
+        # relative path
+        # local file
+        if h is None or h == '':
+            if local_parent_path is not None:
+                return Path(
+                        local_parent_path).joinpath(p).expanduser().resolve()
+            return p.expanduser().resolve()
+        # remote file
+        if remote_parent_path is None or not Path(
+                remote_parent_path).is_absolute():
+            raise ValueError(
+                    'remote path shall be absolute if '
+                    'no remote_parent_path is set.')
+        return Path(remote_parent_path).joinpath(p)
+
+    if isinstance(loc, str):
+        # https://stackoverflow.com/a/57463161/1824372
+        if loc.startswith('file://'):
+            uri_parsed = urllib.parse.urlparse(loc)
+            uri = loc
+            h = uri_parsed.netloc
+            p = urllib.parse.unquote(uri_parsed.path)
+            p = _get_abs_path(h, p)
+        elif ':' in loc:
+            h, p = loc.split(':', 1)
+            p = _get_abs_path(h, p)
+            uri = urlunsplit(
+                    urlsplit(p.as_uri())._replace(netloc=h))
+        else:
+            # local file
+            h = None
+            p = _get_abs_path(h, loc)
+            uri = p.as_uri()
+    elif isinstance(loc, PurePosixPath):
+        # local file
+        h = None
+        p = _get_abs_path(h, loc)
+        uri = p.as_uri()
+    elif isinstance(loc, tuple):
+        h, p = loc
+        p = _get_abs_path(h, p)
+        uri = urlunsplit(
+                urlsplit(p.as_uri())._replace(netloc=h))
+    else:
+        raise ValueError(f'invalid file location {loc}.')
+    if h is None or h == 'localhost' or h == '':
+        h = ''
+    return FileLoc(uri=uri, netloc=h, path=p)
+
+
+# def file_uri_to_path(file_uri):
+#     """
+#     Return the `~pathlib.PurePath` object for `file_uri`.
+
+#     A tuple of
+#     """
+#     file_uri_parsed = urllib.parse.urlparse(file_uri)
+#     if file_uri_parsed.scheme != 'file':
+#         raise ValueError(f"not a file uri: {file_uri}")
+#     file_uri_path_unquoted = urllib.parse.unquote(file_uri_parsed.path)
+#     result = Path(file_uri_path_unquoted)
+#     if not result.is_absolute():
+#         raise ValueError(
+#                 f"invalid file uri {file_uri} : path {result} not absolute")
+#     return result
+
+
+# def file_path_to_uri(filepath):
+#     """Return the file URI for `filepath`.
+
+#     Remote file path could be specified as ``<hostname>:<abspath>`` or
+#     a tuple of ``(<hostname>, <abspath>)``.
+
+#     """
+#     hostname = None
+#     if isinstance(filepath, tuple):
+#         hostname, filepath = filepath
+#     # elif isinstance(filepath, j)
+#     filepath = Path(filepath)
+#     filepath_str = filepath.as_posix()
+#     if ':' in filepath_str:
+#         # remote path
+#         hostname, p = filepath_str.split(':', 1)
+#         if not p.startswith('/'):
+#             raise ValueError("remote path shall be absolute")
+#         return urlunsplit(
+#                 urlsplit(Path(p).resolve().as_uri())._replace(netloc=h))
+#     # local file
+#     return filepath.expanduser().resolve().as_uri()
 
 
 __all__ = list(set(globals().keys()).difference(_excluded_from_all))
