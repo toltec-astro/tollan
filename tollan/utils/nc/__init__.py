@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 import netCDF4
-import numpy as np
 from ..fmt import pformat_list
 from ..log import get_logger, logit
 import functools
+from contextlib import nullcontext, closing
 
 
 __all__ = ['ncopen', 'ncinfo', 'NcNodeMapper']
@@ -22,13 +22,20 @@ def _close(*args, nc=None):
         nc.close()
 
 
-def ncopen(source):
-    """Return an opened netCDF4 dataset a long with a close method."""
+def ncopen2(source):
+    """Return an opened netCDF4 dataset along with a close method."""
     if isinstance(source, netCDF4.Dataset):
         return source, lambda *args: None
-    else:
-        nc = netCDF4.Dataset(str(source))
-        return nc, functools.partial(_close, nc=nc)
+    nc = netCDF4.Dataset(str(source))
+    return nc, functools.partial(_close, nc=nc)
+
+
+def ncopen(source):
+    """Return a context manager to open netCDF file."""
+    if isinstance(source, netCDF4.Dataset):
+        cm = nullcontext(source)
+        return cm
+    return closing(netCDF4.Dataset(str(source)))
 
 
 def ncinfo(source):
@@ -105,7 +112,7 @@ class NcNodeMapper(object):
         return self.nc.dimensions[self[k]].size
 
     def getscalar(self, k):
-        return np.asscalar(self.getvar(k)[:])
+        return self.getvar(k)[:].item()
 
     def getstr(self, k):
         return ncstr(self.getvar(k))
@@ -125,7 +132,7 @@ class NcNodeMapper(object):
                 try:
                     if v.dtype == "|S1":
                         return ncstr(v)
-                    return np.asscalar(v)
+                    return v.item()
                 except ValueError:
                     return v
             return v

@@ -207,3 +207,14 @@ def disable_logger(*names):
         for name in names:
             logger = logging.getLogger(name)
             logger.disabled = old_values[logger]
+
+
+def logged_dict_update(log_func, l, r):
+    """Update a dict with any changes tracked via `log_func`."""
+    for k, v in r.items():
+        if k in l and l[k] != v:
+            log_func(
+                    f"entry changed"
+                    f" {k} {l[k]} -> {v}")
+        l[k] = v
+    return l
