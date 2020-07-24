@@ -2,6 +2,7 @@
 
 import socket
 import os
+import sys
 import appdirs
 from pathlib import Path
 
@@ -39,3 +40,22 @@ def parse_systemd_envfile(filepath):
             k, v = map(str.strip, ln.split('=', 1))
             result[k] = v
     return result
+
+
+def find_parent_package_path(filepath, package_name, add_to_sys_path=False):
+    """Return the path of parent package of `package_name` of `filepath`.
+
+    This works by traversing up the file tree and looking for the first
+    path which has the sub-path matches `package_name`.
+    """
+
+    filepath = Path(filepath).resolve()
+    subpath = ''
+    while not subpath.startswith(package_name):
+        subpath = f'{filepath.name}.{subpath}'
+        if filepath == filepath.parent:
+            raise ValueError("unable to locate package in file tree.")
+        filepath = filepath.parent
+    if add_to_sys_path:
+        sys.path.insert(0, filepath.as_posix())
+    return filepath
