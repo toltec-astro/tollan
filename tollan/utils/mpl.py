@@ -55,24 +55,26 @@ class ScrollableMplWindow(QtWidgets.QMainWindow):
 def save_or_show(fig, filepath,
                  bbox_inches='tight',
                  window_type='default',
+                 save=None,
                  **kwargs):
     '''Save figure or show  plot, depending on
     the last sys.argv'''
     logger = get_logger()
     argv = sys.argv[1:]
-    if not argv:
-        save = False
-    else:
-        try:
-            s = int(argv[-1])
-            save = True if s == 1 else False
-        except ValueError:
-            if argv[-1].lower() in ['true', 'save']:
-                save = True
-            elif argv[-1].lower() in ['plot', ]:
-                save = False
-            else:
-                save = False
+    if save is None:
+        if not argv:
+            save = False
+        else:
+            try:
+                s = int(argv[-1])
+                save = True if s == 1 else False
+            except ValueError:
+                if argv[-1].lower() in ['true', 'save']:
+                    save = True
+                elif argv[-1].lower() in ['plot', ]:
+                    save = False
+                else:
+                    save = False
     if save:
         fig.savefig(
             filepath,

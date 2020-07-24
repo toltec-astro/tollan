@@ -4,6 +4,7 @@ import inspect
 import pyaml
 import textwrap
 import numpy as np
+import math
 
 
 __all__ = [
@@ -136,6 +137,65 @@ def pformat_fancy_index(i):
             result = result.format(f':{i.step}')
         return result
     return i
+
+
+def pformat_bar(value, width=40, prefix="", vmin=0., vmax=1., border=True, fill=' ', reverse=False):
+    """Return a progressbar-like str representation of value.
+
+    Parameters
+    ==========
+    value : float
+        Value to be represented.
+
+    width: int
+        Bar width (in character).
+
+    prefix: string
+        Text to be prepend to the bar.
+
+    vmin : float
+        Minimum value.
+
+    vmax : float
+        Maximum value.
+
+    """
+    # This code is based on https://gist.github.com/rougier/c0d31f5cbdaac27b876c
+    # The original license:
+    # -----------------------------------------------------------------------------
+    # Copyright (c) 2016, Nicolas P. Rougier
+    # Distributed under the (new) BSD License.
+    # -----------------------------------------------------------------------------
+
+    # Block progression is 1/8
+    if reverse:
+        # blocks = ["", "▐", "█"]
+        blocks = ' ▁▂▃▄▅▆▇█'
+    else:
+        blocks = ["", "▏","▎","▍","▌","▋","▊","▉","█"]
+    vmin = vmin or 0.0
+    vmax = vmax or 1.0
+    if border:
+        lsep, rsep = "▏", "▕"
+    else:
+        lsep, rsep = " ", " "
+
+    # Normalize value
+    value = min(max(value, vmin), vmax)
+    value = (value - vmin) / (vmax - vmin)
+    v = value * width
+    x = math.floor(v) # integer part
+    y = v - x         # fractional part
+    i = int(round(y * (len(blocks) - 1)))
+    bar = "█" * x
+    barfrac = blocks[i]
+    n = width - x - 1
+    nobar = fill * n
+    if reverse:
+        bar = f'{lsep}{nobar}{barfrac}{bar}{rsep}'
+    else:
+        bar = f'{lsep}{bar}{barfrac}{nobar}{rsep}'
+    return bar
 
 
 pyaml.add_representer(None, lambda s, d: s.represent_str(str(d)))
