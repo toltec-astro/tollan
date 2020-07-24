@@ -26,7 +26,11 @@ def register_to(registry, key):
     """Register the decorated item with key."""
 
     def decorator(cls):
-        registry.register(key(cls), cls)
+        if callable(key):
+            _key = key(cls)
+        else:
+            _key = key
+        registry.register(_key, cls)
         return cls
 
     return decorator

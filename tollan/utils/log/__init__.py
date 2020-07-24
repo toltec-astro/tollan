@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from contextlib import ContextDecorator
+from contextlib import ContextDecorator, AbstractContextManager
 import logging
 import logging.config
 import inspect
@@ -218,3 +218,23 @@ def logged_dict_update(log_func, l, r):
                     f" {k} {l[k]} -> {v}")
         l[k] = v
     return l
+
+
+class logged_closing(AbstractContextManager):
+    """A slightly modified version of `contextlib.closing` with logging."""
+
+    def __init__(self, log, thing, msg=None):
+        self.log = log
+        self.thing = thing
+
+        if msg is None:
+            msg = f'close {self.thing}'
+        self.msg = msg
+
+    def __enter__(self):
+        return self.thing
+
+    def __exit__(self, *exc_info):
+
+        with logit(self.log, self.msg):
+            self.thing.close()
