@@ -10,6 +10,9 @@ import urllib
 from collections import OrderedDict
 from urllib.parse import urlsplit, urlunsplit
 from typing import NamedTuple
+import re
+import subprocess
+from io import TextIOWrapper
 
 
 _excluded_from_all = set(globals().keys())
@@ -292,6 +295,11 @@ class FileLoc(NamedTuple):
     def is_remote(self):
         return not self.is_local
 
+    def __repr__(self):
+        if self.is_local:
+            return f'{self.__class__.__name__}({self.path})'
+        return f'{self.__class__.__name__}({self.netloc}:{self.path})'
+
 
 def fileloc(loc, local_parent_path=None, remote_parent_path=None):
     """Return a `~tollan.utils.FileLoc` object.
@@ -386,45 +394,56 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
     return FileLoc(uri=uri, netloc=h, path=p)
 
 
-# def file_uri_to_path(file_uri):
-#     """
-#     Return the `~pathlib.PurePath` object for `file_uri`.
+def call_subprocess_with_live_output(cmd):
+    """Execute `cmd` in subprocess with live output."""
+    with subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            # stderr=subprocess.STDOUT,
+            bufsize=1,
+            ) as proc:
+        reader = TextIOWrapper(proc.stdout, newline='')
+        for char in iter(
+                functools.partial(reader.read, 1), b''):
+            # logger.debug(ln.decode().strip())
+            sys.stderr.write(char)
+            if proc.poll() is not None:
+                sys.stderr.write('\n')
+                break
+    return
 
-#     A tuple of
-#     """
-#     file_uri_parsed = urllib.parse.urlparse(file_uri)
-#     if file_uri_parsed.scheme != 'file':
-#         raise ValueError(f"not a file uri: {file_uri}")
-#     file_uri_path_unquoted = urllib.parse.unquote(file_uri_parsed.path)
-#     result = Path(file_uri_path_unquoted)
-#     if not result.is_absolute():
-#         raise ValueError(
-#                 f"invalid file uri {file_uri} : path {result} not absolute")
-#     return result
 
+def dict_from_regex_match(pattern, input_, type_dispatcher=None):
+    """Return a dict from matching `pattern` to `input_`.
 
-# def file_path_to_uri(filepath):
-#     """Return the file URI for `filepath`.
+    If match failed, returns None.
 
-#     Remote file path could be specified as ``<hostname>:<abspath>`` or
-#     a tuple of ``(<hostname>, <abspath>)``.
+    Parameters
+    ----------
+    pattern : str, `re.Pattern`
+        The regex that matches to the `input_`.
 
-#     """
-#     hostname = None
-#     if isinstance(filepath, tuple):
-#         hostname, filepath = filepath
-#     # elif isinstance(filepath, j)
-#     filepath = Path(filepath)
-#     filepath_str = filepath.as_posix()
-#     if ':' in filepath_str:
-#         # remote path
-#         hostname, p = filepath_str.split(':', 1)
-#         if not p.startswith('/'):
-#             raise ValueError("remote path shall be absolute")
-#         return urlunsplit(
-#                 urlsplit(Path(p).resolve().as_uri())._replace(netloc=h))
-#     # local file
-#     return filepath.expanduser().resolve().as_uri()
+    input_ : str
+        The string to be matched.
+
+    type_dispatcher : dict
+        This specifies how the matched group values are handled after being
+        extracted.
+    """
+    if type_dispatcher is None:
+        type_dispatcher = dict()
+    m = re.match(pattern, input_)
+    if m is None:
+        return None
+
+    result = dict()
+
+    for k, v in m.groupdict().items():
+        if k in type_dispatcher:
+            result[k] = type_dispatcher[k](v)
+        else:
+            result[k] = v
+    return result
 
 
 __all__ = list(set(globals().keys()).difference(_excluded_from_all))

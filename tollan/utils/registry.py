@@ -36,6 +36,28 @@ def register_to(registry, key):
     return decorator
 
 
+def register_method_to(registry, key):
+
+    register_to_decorator = register_to(registry, key)
+
+    class decorator(object):
+
+        def __init__(self, func):
+
+            register_to_decorator(func)
+            self.func = func
+
+        def __get__(self, obj, cls):
+
+            return self.func
+
+        @property
+        def __isabstractmethod__(self):
+            return getattr(self.func, "__isabstractmethod__", False)
+
+    return decorator
+
+
 class Registry(wrapt.ObjectProxy, RegistryMixin):
 
     @classmethod

@@ -7,8 +7,20 @@ import numpy as np
 __all__ = ['flex_reshape', ]
 
 
-def flex_reshape(arr, shape):
-    """Reshape an array with possible trimming of extraneous items."""
+def flex_reshape(arr, shape, trim_option='end'):
+    """Reshape an array with possible trimming of extraneous items.
+
+    Parameters
+    ----------
+    arr : `numpy.ndarray`
+        The array to reshape
+
+    shape : tuple
+        The new shape.
+
+    trim_option : str:
+        The way to trim the original shape, can be one of "start" or "end".
+    """
     logger = get_logger()
     shape = list(shape)
     if -1 in shape:
@@ -20,4 +32,21 @@ def flex_reshape(arr, shape):
         shape.insert(iauto, arr.size // n)
     n = np.prod(shape)
     logger.debug(f"flex reshape {arr.shape} -> {shape}")
-    return arr.reshape(-1)[:n].reshape(shape)
+    if trim_option == 'end':
+        s = slice(None, n)
+    elif trim_option == 'start':
+        s = slice(-n, None)
+    else:
+        raise ValueError("invalid trim option.")
+    return arr.reshape(-1)[s].reshape(shape)
+
+
+def to_complex(real_part, imag_part):
+    """Create complex array from the real and imaginary parts."""
+    if real_part.shape != imag_part.shape:
+        raise ValueError(
+                "real and imaginary parts have to be of the same shape.")
+    result = np.empty(real_part.shape, dtype=complex)
+    result.real = real_part
+    result.imag = imag_part
+    return result

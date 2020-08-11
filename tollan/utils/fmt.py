@@ -136,10 +136,14 @@ def pformat_fancy_index(i):
         else:
             result = result.format(f':{i.step}')
         return result
+    if isinstance(i, np.ndarray):
+        return f'<mask {np.sum(i)}/{i.size}>'
     return i
 
 
-def pformat_bar(value, width=40, prefix="", vmin=0., vmax=1., border=True, fill=' ', reverse=False):
+def pformat_bar(
+        value, width=40, prefix="", vmin=0., vmax=1., border=True, fill=' ',
+        reverse=False):
     """Return a progressbar-like str representation of value.
 
     Parameters
@@ -160,7 +164,7 @@ def pformat_bar(value, width=40, prefix="", vmin=0., vmax=1., border=True, fill=
         Maximum value.
 
     """
-    # This code is based on https://gist.github.com/rougier/c0d31f5cbdaac27b876c
+    # This code is based on https://gist.github.com/rougier/c0d31f5cbdaac27b876c  # noqa: E501
     # The original license:
     # -----------------------------------------------------------------------------
     # Copyright (c) 2016, Nicolas P. Rougier
@@ -172,7 +176,7 @@ def pformat_bar(value, width=40, prefix="", vmin=0., vmax=1., border=True, fill=
         # blocks = ["", "▐", "█"]
         blocks = ' ▁▂▃▄▅▆▇█'
     else:
-        blocks = ["", "▏","▎","▍","▌","▋","▊","▉","█"]
+        blocks = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉", "█"]
     vmin = vmin or 0.0
     vmax = vmax or 1.0
     if border:
@@ -184,8 +188,8 @@ def pformat_bar(value, width=40, prefix="", vmin=0., vmax=1., border=True, fill=
     value = min(max(value, vmin), vmax)
     value = (value - vmin) / (vmax - vmin)
     v = value * width
-    x = math.floor(v) # integer part
-    y = v - x         # fractional part
+    x = math.floor(v)  # integer part
+    y = v - x          # fractional part
     i = int(round(y * (len(blocks) - 1)))
     bar = "█" * x
     barfrac = blocks[i]
