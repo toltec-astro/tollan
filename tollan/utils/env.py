@@ -65,9 +65,16 @@ class EnvRegistry(Registry):
                 self.logger.debug(msg + f', use default {result}')
         return result
 
+    def summary(self):
+        """Return a string as a summary of the env vars."""
+        result = {}
+        for k, v in self.items():
+            result[k] = dict(value=self.get(k), **v)
+        return result
+
 
 env_registry = EnvRegistry.create()
 """A global environment variable registry instance."""
 
 
-pyaml.add_representer(EnvRegistry, lambda s, d: s.represent_dict(d))
+pyaml.add_representer(EnvRegistry, lambda s, d: s.represent_dict(d.summary()))
