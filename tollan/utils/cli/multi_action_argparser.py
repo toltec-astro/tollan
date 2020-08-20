@@ -106,8 +106,8 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
             return action
         return decorator
 
-    def bootstrap_actions(self, option):
+    def bootstrap_actions(self, option, unknown_args=None):
         if hasattr(option, 'func'):
-            option.func(option)
+            option.func(option, unknown_args=unknown_args)
         else:
             self.print_help()
