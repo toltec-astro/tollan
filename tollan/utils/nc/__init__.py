@@ -13,7 +13,8 @@ __all__ = ['ncopen', 'ncinfo', 'NcNodeMapper']
 
 def _ncstr(var):
     s = var[:].tolist()
-    s = [c.decode('utf-8') for c in s if c is not None]
+    s = s[:s.index(None)]
+    s = [c.decode('utf-8') for c in s]
     return ''.join(s).strip()
 
 
