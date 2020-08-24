@@ -296,9 +296,13 @@ class FileLoc(NamedTuple):
         return not self.is_local
 
     def __repr__(self):
+        return f'{self.__class__.__name__}({self.rsync_path})'
+
+    @property
+    def rsync_path(self):
         if self.is_local:
-            return f'{self.__class__.__name__}({self.path})'
-        return f'{self.__class__.__name__}({self.netloc}:{self.path})'
+            return self.path.as_posix()
+        return f'{self.netloc}:{self.path}'
 
 
 def fileloc(loc, local_parent_path=None, remote_parent_path=None):
