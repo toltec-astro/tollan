@@ -287,6 +287,9 @@ class FileLoc(NamedTuple):
     netloc: str
     path: Path
 
+    def exists(self):
+        return self.is_local and self.path.exists()
+
     @property
     def is_local(self):
         return self.netloc == ''
