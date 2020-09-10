@@ -13,7 +13,11 @@ __all__ = ['ncopen', 'ncinfo', 'NcNodeMapper']
 
 def _ncstr(var):
     s = var[:].tolist()
-    s = s[:s.index(None)]
+    try:
+        stop = s.index(None)
+    except ValueError:
+        stop = None
+    s = s[:stop]
     s = [c.decode('utf-8') for c in s]
     return ''.join(s).strip()
 
@@ -242,3 +246,7 @@ class NcNodeMapper(ExitStack, NcNodeMapperMixin):
 
         """
         return fileloc(self.nc_node.filepath())
+
+    def sync(self):
+        """Sync the underlying file."""
+        return self.nc_node.sync()
