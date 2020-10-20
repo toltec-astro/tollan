@@ -35,7 +35,7 @@ def parse_systemd_envfile(filepath):
     with open(filepath, 'r') as fo:
         for ln in fo.readlines():
             ln = ln.strip()
-            if ln.strip().startswith("#"):
+            if ln == '' or ln.strip().startswith("#"):
                 continue
             k, v = map(str.strip, ln.split('=', 1))
             result[k] = v
