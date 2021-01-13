@@ -27,6 +27,9 @@ def pformat_list(l, indent, minw=60, max_cell_width=40, fancy=True):
                 min(max_cell_width, max(len(str(e[i])) for e in l))
                 for i in range(len(l[0]))]
 
+    def get_cell_width(c):
+        return len(c[0]) if len(c) > 0 else 1
+
     def fmt_elem(e, width=width, fancy=fancy):
         if len(e) == 1:
             return "{}".format(e)
@@ -54,7 +57,7 @@ def pformat_list(l, indent, minw=60, max_cell_width=40, fancy=True):
                 rows = []
                 for i in range(max(len(c) for c in cells)):
                     row = fmt.format(*(
-                        c[i] if i < len(c) else ' ' * len(c[0])
+                        c[i] if i < len(c) else ' ' * get_cell_width(c)
                         for c in cells))
                     rows.append(row)
                 return '\n'.join(rows)
