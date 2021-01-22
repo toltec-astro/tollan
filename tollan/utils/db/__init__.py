@@ -6,6 +6,7 @@ import sqlalchemy as sa
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import MetaData
 from wrapt import ObjectProxy
+from contextlib import contextmanager
 
 
 __all__ = ['TableDef', 'TableDefList', 'SqlaDB']
@@ -84,3 +85,15 @@ class SqlaDB(Namespace):
 
     def reflect_tables(self):
         self.metadata.reflect(bind=self.engine)
+
+    @property
+    @contextmanager
+    def session_context(self):
+        """Provide a transactional scope around a series of operations."""
+        session = self.session
+        try:
+            yield session
+            session.commit()
+        except Exception:
+            session.rollback()
+            raise
