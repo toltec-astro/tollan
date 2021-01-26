@@ -42,6 +42,20 @@ def getobj(name, *args):
     return rgetattr(module, attr)
 
 
+def module_from_path(filepath, name=None):
+    """Load module from filepath."""
+    filepath = Path(filepath)
+    if name is None:
+        name = f'_module_from_path_{filepath.stem}'
+    spec = importlib.util.spec_from_file_location(
+            name, filepath.as_posix())
+    print(filepath)
+    print(spec)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def rreload(m: ModuleType):
     """Reload module recursively.
 
