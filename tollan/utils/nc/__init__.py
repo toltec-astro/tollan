@@ -186,6 +186,9 @@ class NcNodeMapperMixin(object):
         # dim
         return self.getdim(k)
 
+    def info(self):
+        return ncinfo(self.nc_node)
+
 
 class NcNodeMapper(ExitStack, NcNodeMapperMixin):
     """A adaptor class that accesses netCDF4 dataset with a custom name map.
