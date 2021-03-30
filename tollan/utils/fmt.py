@@ -5,11 +5,12 @@ import pyaml
 import textwrap
 import numpy as np
 import math
+# from astropy.modeling import Model
 
 
 __all__ = [
         'pformat_paths', 'pformat_list', 'pformat_dict', 'pformat_obj',
-        'pformat_yaml', 'pformat_fancy_index'
+        'pformat_yaml', 'pformat_fancy_index', 'model_to_dict',
         ]
 
 
@@ -17,15 +18,15 @@ def pformat_paths(paths, sep='\n'):
     return sep.join(f'{p!s}' for p in paths)
 
 
-def pformat_list(l, indent, minw=60, max_cell_width=40, fancy=True):
-    if not l or not l[0]:
+def pformat_list(lst, indent, minw=60, max_cell_width=40, fancy=True):
+    if not lst or not lst[0]:
         width = None
     else:
         if max_cell_width is None:
             max_cell_width == np.inf
         width = [
-                min(max_cell_width, max(len(str(e[i])) for e in l))
-                for i in range(len(l[0]))]
+                min(max_cell_width, max(len(str(e[i])) for e in lst))
+                for i in range(len(lst[0]))]
 
     def get_cell_width(c):
         return len(c[0]) if len(c) > 0 else 1
@@ -63,10 +64,10 @@ def pformat_list(l, indent, minw=60, max_cell_width=40, fancy=True):
                 return '\n'.join(rows)
             return fmt.format(*map(str, e))
     flat = "[{}]".format(
-            ', '.join(map(lambda e: fmt_elem(e, width=None), l)))
+            ', '.join(map(lambda e: fmt_elem(e, width=None), lst)))
     if len(flat) > minw:
         return textwrap.indent(
-                ''.join(f'\n{fmt_elem(e)}' for e in l), ' ' * indent)
+                ''.join(f'\n{fmt_elem(e)}' for e in lst), ' ' * indent)
         # fmt = "{{:{}s}}{{}}".format(indent)
         # return "\n{}".format(
         #         '\n'.join(fmt.format(" ", fmt_elem(e)) for e in l))
@@ -203,6 +204,17 @@ def pformat_bar(
     else:
         bar = f'{lsep}{bar}{barfrac}{nobar}{rsep}'
     return bar
+
+
+def model_to_dict(m):
+    d = dict()
+    for s in str(m).split('\n'):
+        s = s.strip()
+        if s == '':
+            continue
+        k, v = s.split(':', 1)
+        d[k] = v.strip()
+    return d
 
 
 pyaml.add_representer(np.float64, lambda s, d: s.represent_float(d))
