@@ -5,7 +5,7 @@ import sys
 import importlib
 from contextlib import ContextDecorator
 import itertools
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath, WindowsPath
 import urllib
 from collections import OrderedDict
 from urllib.parse import urlsplit, urlunsplit
@@ -363,6 +363,12 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
 
     def _get_abs_path(h, p):
         p = Path(p)
+        if isinstance(p, WindowsPath):
+            if h is None or h == '':
+                # local window path
+                return p.expanduser().resolve()
+            # remote window path
+            raise ValueError('fileloc does not support remote windows path')
         if p.is_absolute():
             return p
         # relative path
@@ -371,7 +377,9 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
             if local_parent_path is not None:
                 return Path(
                         local_parent_path).joinpath(p).expanduser().resolve()
-            return p.expanduser().resolve()
+            return Path(p).expanduser().resolve()
+        import pdb
+        pdb.set_trace()
         # remote file
         if remote_parent_path is None or not Path(
                 remote_parent_path).is_absolute():
@@ -388,6 +396,11 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
             h = uri_parsed.netloc
             p = urllib.parse.unquote(uri_parsed.path)
             p = _get_abs_path(h, p)
+        elif re.match(r'^[A-Z]:\\\w', loc):
+            # local window path
+            h = None
+            p = _get_abs_path(h, loc)
+            uri = p.as_uri()
         elif ':' in loc:
             h, p = loc.split(':', 1)
             p = _get_abs_path(h, p)
@@ -398,7 +411,7 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
             h = None
             p = _get_abs_path(h, loc)
             uri = p.as_uri()
-    elif isinstance(loc, PurePosixPath):
+    elif isinstance(loc, PurePath):
         # local file
         h = None
         p = _get_abs_path(h, loc)
