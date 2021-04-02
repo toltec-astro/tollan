@@ -378,8 +378,6 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
                 return Path(
                         local_parent_path).joinpath(p).expanduser().resolve()
             return Path(p).expanduser().resolve()
-        import pdb
-        pdb.set_trace()
         # remote file
         if remote_parent_path is None or not Path(
                 remote_parent_path).is_absolute():
