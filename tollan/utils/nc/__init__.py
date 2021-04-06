@@ -6,6 +6,7 @@ from contextlib import ExitStack
 from contextlib import nullcontext
 from ..log import logged_closing, get_logger
 from pathlib import Path
+import numpy as np
 
 
 __all__ = ['ncopen', 'ncinfo', 'NcNodeMapper']
@@ -29,7 +30,7 @@ def ncstr(var):
     return _ncstr(var)
 
 
-def ncopen(source):
+def ncopen(source, **kwargs):
     """Return a context manager to open netCDF file.
 
     Parameters
@@ -42,7 +43,7 @@ def ncopen(source):
             return nullcontext(source)
         raise RuntimeError("dataset is closed.")
     logger = get_logger()
-    dataset = netCDF4.Dataset(str(source))
+    dataset = netCDF4.Dataset(str(source), **kwargs)
     return logged_closing(
             logger.debug, dataset, msg=f'close {dataset.filepath()}')
 
@@ -189,6 +190,30 @@ class NcNodeMapperMixin(object):
     def info(self):
         return ncinfo(self.nc_node)
 
+    def setstr(self, k, s, dim=128):
+        name = self[k]
+        nc = self.nc_node
+        if not isinstance(dim, str) or dim is None:
+            if dim is None:
+                dim = len(s)
+            dim_name = f'{name}_slen'
+            nc.createDimension(dim_name, dim)
+        else:
+            dim_name = dim
+        v = nc.createVariable(name, 'S1', (dim_name, ))
+        v[:] = netCDF4.stringtochar(np.array([s], dtype=f'S{dim}'))
+        return v
+
+    def setscalar(self, k, s, dtype=None):
+        name = self[k]
+        nc = self.nc_node
+        if dtype is None:
+            dt = np.dtype(type(s))
+            dtype = f'{dt.kind}{dt.itemsize}'
+        v = nc.createVariable(name, dtype, ())
+        v[:] = s
+        return v
+
 
 class NcNodeMapper(ExitStack, NcNodeMapperMixin):
     """A adaptor class that accesses netCDF4 dataset with a custom name map.
@@ -201,22 +226,25 @@ class NcNodeMapper(ExitStack, NcNodeMapperMixin):
 
     logger = get_logger()
 
-    def __init__(self, nc_node_map=None, source=None):
+    def __init__(self, nc_node_map=None, source=None, **kwargs):
         if nc_node_map is None:
             nc_node_map = dict()  # an empty map also works
         self._nc_node_map = nc_node_map
         super().__init__()
         # open the given source
         if source is not None:
-            self.open(source)
+            self.open(source, **kwargs)
 
-    def open(self, source):
+    def open(self, source, **kwargs):
         """Return a context to operate on `source`.
 
         Parameters
         ----------
         source : str, `pathlib.Path`, `FileLoc`, `netCDF4.Dataset`
             The netCDF file location or netCDF dataset.
+
+        **kwargs :
+            The keyword arguments passed to `netCDF4.Dataset` constructor.
         """
         if isinstance(source, FileLoc):
             if not source.is_local:
@@ -227,7 +255,7 @@ class NcNodeMapper(ExitStack, NcNodeMapperMixin):
         else:
             # netCDF dataset
             pass
-        self._nc_node = self.enter_context(ncopen(source))
+        self._nc_node = self.enter_context(ncopen(source, **kwargs))
         return self
 
     def __exit__(self, *args):
