@@ -14,8 +14,17 @@ __all__ = [
         ]
 
 
-def pformat_paths(paths, sep='\n'):
-    return sep.join(f'{p!s}' for p in paths)
+def pformat_paths(paths, sep='\n', relative_to=None, sort=False):
+    def fmt_path(p):
+        if relative_to is not None:
+            p = p.relative_to(relative_to)
+        return f'{p!s}'
+
+    def trans(paths):
+        if sort:
+            return sorted(paths)
+        return paths
+    return sep.join(trans(fmt_path(p) for p in paths))
 
 
 def pformat_list(lst, indent, minw=60, max_cell_width=40, fancy=True):

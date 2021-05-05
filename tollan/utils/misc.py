@@ -183,9 +183,9 @@ class hookit(ContextDecorator):
             The function to call after the hooked function.
         """
 
-        def hooked(obj):
-            self.func_hooked(obj)
-            func(obj)
+        def hooked(obj, *args, **kwargs):
+            self.func_hooked(obj, *args, **kwargs)
+            func(obj, *args, **kwargs)
         setattr(self.obj, self.name, hooked)
 
     def __enter__(self):

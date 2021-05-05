@@ -137,17 +137,36 @@ class NcNodeMapperMixin(object):
 
         `k` is returned if it is not present in the map.
         """
-        return self.nc_node_map.get(k, k)
+        name = self.nc_node_map.get(k, k)
+        if isinstance(name, (tuple, list)):
+            # check the first available name in the node
+            for n in name:
+                if self.hasname(n):
+                    return n
+            else:
+                return k
+        return name
 
     def hasvar(self, *ks):
-        """Return True if all keys in `ks` are present in the node."""
+        """Return True if all keys in `ks` are present in the node variables.
+        """
         return all(
                 self[k] in self.nc_node.variables for k in ks)
 
     def hasdim(self, *ks):
-        """Return True if all keys in `ks` are present in the node."""
+        """Return True if all keys in `ks` are present in the node dimensions.
+        """
         return all(
                 self[k] in self.nc_node.dimensions for k in ks)
+
+    def hasname(self, *ks):
+        """Return True if all keys in `ks` are present in the node."""
+        return all(
+                (
+                    (self[k] in self.nc_node.variables)
+                    or (self[k] in self.nc_node.dimensions)
+                    )
+                for k in ks)
 
     def getvar(self, k):
         return self.nc_node.variables[self[k]]
