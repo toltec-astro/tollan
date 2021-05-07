@@ -13,6 +13,7 @@ from typing import NamedTuple
 import re
 import subprocess
 from io import TextIOWrapper
+import os
 
 
 _excluded_from_all = set(globals().keys())
@@ -426,13 +427,21 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
     return FileLoc(uri=uri, netloc=h, path=p)
 
 
+def make_subprocess_env():
+    # on mac os the dyld path may not get propagated
+    return {
+            'DYLD_LIBRARY_PATH': os.environ.get('LIBRARY_PATH', "")
+            }
+
+
 def call_subprocess_with_live_output(cmd):
     """Execute `cmd` in subprocess with live output."""
     with subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
-            # stderr=subprocess.STDOUT,
+            stderr=subprocess.STDOUT,
             bufsize=1,
+            env=make_subprocess_env(),
             ) as proc:
         reader = TextIOWrapper(proc.stdout, newline='')
         for char in iter(
