@@ -22,6 +22,29 @@ def touch_file(out_file):
         os.utime(out_file, None)
 
 
+def get_or_create_dir(dirpath, on_exist=None, on_create=None):
+    """Ensure the `dirpath` exists.
+
+    Parameters
+    ==========
+    dirpath : `pathlib.Path`, str
+        The path of the directory.
+    on_exist : callable, optional
+        If set, called if `dirpath` exists already.
+    on_create : callable, optional
+        If set, called if `dirpath` is created.
+    """
+    dirpath = Path(dirpath)
+    if dirpath.exists():
+        if on_exist is not None:
+            on_exist(dirpath)
+        return dirpath
+    os.makedirs(dirpath)
+    if on_create is not None:
+        on_create(dirpath)
+    return dirpath
+
+
 def get_user_data_dir():
     """Return the directory for saving user data."""
     return Path(appdirs.user_data_dir('tollan', 'toltec'))
