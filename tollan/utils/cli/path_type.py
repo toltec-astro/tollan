@@ -5,6 +5,9 @@ from pathlib import Path
 from argparse import ArgumentTypeError
 
 
+__all__ = ['PathType']
+
+
 class PathType(object):
     """
     A class that facilitates path-like argument for `~argparse.Argument`
