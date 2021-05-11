@@ -89,13 +89,14 @@ class DirConfMixin(object):
             return self._resolve_content_path(self.rootpath, name)
         return super().__getattribute__(name, *args)
 
+    def _get_to_dict_attrs(cls):
+        return  ['rootpath', ] + list(cls._contents.keys())
+
     def to_dict(self):
         """Return a dict representation of the contents."""
         return {
                 attr: getattr(self, attr)
-                for attr in [
-                    'rootpath',
-                    ] + list(self._contents.keys())
+                for attr in self._get_to_dict_attrs()
                 }
 
     def collect_config_files(self):
