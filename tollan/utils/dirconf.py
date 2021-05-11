@@ -90,7 +90,7 @@ class DirConfMixin(object):
         return super().__getattribute__(name, *args)
 
     def _get_to_dict_attrs(cls):
-        return  ['rootpath', ] + list(cls._contents.keys())
+        return ['rootpath', ] + list(cls._contents.keys())
 
     def to_dict(self):
         """Return a dict representation of the contents."""
