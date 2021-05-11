@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.dirconf &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
+	 &#187;
+      </li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.dirconf</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">PosixPath</span><span class="p">,</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">yaml.dumper</span> <span class="kn">import</span> <span class="n">SafeDumper</span>
+<span class="kn">from</span> <span class="nn">schema</span> <span class="kn">import</span> <span class="n">Schema</span>
+
+<span class="kn">import</span> <span class="nn">astropy.units</span> <span class="k">as</span> <span class="nn">u</span>
+
+<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">logit</span>
+<span class="kn">from</span> <span class="nn">.fmt</span> <span class="kn">import</span> <span class="n">pformat_yaml</span>
+<span class="kn">from</span> <span class="nn">.sys</span> <span class="kn">import</span> <span class="n">touch_file</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">rupdate</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;DirConfError&#39;</span><span class="p">,</span> <span class="s1">&#39;DirConfMixin&#39;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_make_config_yaml_dumper</span><span class="p">():</span>
+
+    <span class="k">class</span> <span class="nc">yaml_dumper</span><span class="p">(</span><span class="n">SafeDumper</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Yaml dumper that handles some additional types.&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="n">yaml_dumper</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span>
+            <span class="n">PosixPath</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()))</span>
+    <span class="n">yaml_dumper</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span>
+            <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">to_string</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="n">yaml_dumper</span>
+
+
+<div class="viewcode-block" id="DirConfError"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfError.html#tollan.utils.dirconf.DirConfError">[docs]</a><span class="k">class</span> <span class="nc">DirConfError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raise when errors occur in `DirConfig`.&quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="DirConfMixin"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin">[docs]</a><span class="k">class</span> <span class="nc">DirConfMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A mix-in class for managing configuration files stored in a directory.</span>
+
+<span class="sd">    The class implements the logic to setup a directory and</span>
+<span class="sd">    populate a set of pre-defined items.</span>
+
+<span class="sd">    The class manages a set of configuration files recognized by the</span>
+<span class="sd">    `_config_file_pattern`, provides methods to load and merge the</span>
+<span class="sd">    configuration in memory.</span>
+
+<span class="sd">    The mix-in class expects the following class attributes from the</span>
+<span class="sd">    instrumenting class:</span>
+
+<span class="sd">    * ``_contents``</span>
+
+<span class="sd">        A dictionary ``{&lt;attr&gt;: dict}`` that defines</span>
+<span class="sd">        the content of the directory generated `populate_dir`.</span>
+<span class="sd">        The dict for each attr should have the following keys:</span>
+
+<span class="sd">        - ``path``: The path name.</span>
+<span class="sd">        - ``type``: one of ``file`` or ``dir``</span>
+<span class="sd">        - ``backup_enabled``: True or False.</span>
+
+<span class="sd">    The mix-in class also expects the following property:</span>
+
+<span class="sd">    * ``rootpath``</span>
+
+<span class="sd">        The path of the mapped directory.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+    <span class="n">_backup_time_fmt</span> <span class="o">=</span> <span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">T%H%M%S&quot;</span>
+    <span class="n">_config_file_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\d+_.+\.ya?ml$&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_config_file_sort_key</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The key to sort the given configuration file path.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">filepath</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_resolve_content_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rootpath</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the item path prefixed by `rootpath`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">rootpath</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_contents</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="s1">&#39;path&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="c1"># make available the content attributes</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contents</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_content_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rootpath</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_to_dict_attrs</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;rootpath&#39;</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_contents</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+<div class="viewcode-block" id="DirConfMixin.to_dict"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a dict representation of the contents.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+                <span class="n">attr</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_to_dict_attrs</span><span class="p">()</span>
+                <span class="p">}</span></div>
+
+<div class="viewcode-block" id="DirConfMixin.collect_config_files"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.collect_config_files">[docs]</a>    <span class="k">def</span> <span class="nf">collect_config_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The list of configuration files present in the directory.</span>
+
+<span class="sd">        Files with names match ``_config_file_pattern`` are returned.</span>
+
+<span class="sd">        The returned files are sorted according to the sort key</span>
+<span class="sd">        `_config_file_sort_key`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_file_pattern</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rootpath</span><span class="o">.</span><span class="n">iterdir</span><span class="p">()),</span>
+            <span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_config_file_sort_key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirConfMixin.collect_config_from_files"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.collect_config_from_files">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">collect_config_from_files</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_files</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load config from `config_files` and merge by the order.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config_files : list</span>
+<span class="sd">            A list of configuration file paths.</span>
+<span class="sd">        validate : bool, optional</span>
+<span class="sd">            If True, the configuration is validated using</span>
+<span class="sd">            :meth:`validate_config`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">config_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DirConfError</span><span class="p">(</span><span class="s2">&quot;no config files specified.&quot;</span><span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;load config from files: </span><span class="si">{</span><span class="n">pformat_yaml</span><span class="p">(</span><span class="n">config_files</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">cfg</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">config_files</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">fo</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">c</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># allow empty yaml file</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="c1"># error if invalid config found</span>
+                    <span class="k">raise</span> <span class="n">DirConfError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;invalid config file </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">.&quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot; No top level dict found.&quot;</span><span class="p">)</span>
+                <span class="n">rupdate</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">validate</span><span class="p">:</span>
+            <span class="n">cfg</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cfg</span></div>
+
+<div class="viewcode-block" id="DirConfMixin.validate_config"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.validate_config">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cfg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_config_schema</span><span class="p">()</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirConfMixin.get_config_schema"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.get_config_schema">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_config_schema</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a `schema.Schema` object that validates the config.</span>
+
+<span class="sd">        This combines all :attr:`extend_config_schema` defined in all</span>
+<span class="sd">        base classes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># merge schema</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">getmro</span><span class="p">(</span><span class="bp">cls</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s1">&#39;extend_config_schema&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">extend_config_schema</span><span class="p">):</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">extend_config_schema</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">extend_config_schema</span>
+            <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">Schema</span><span class="p">):</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">schema</span>
+            <span class="n">rupdate</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Schema</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+    <span class="n">yaml_dumper</span> <span class="o">=</span> <span class="n">_make_config_yaml_dumper</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DirConfMixin.write_config_to_yaml"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.write_config_to_yaml">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">write_config_to_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filepath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">overwrite</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">DirConfError</span><span class="p">(</span>
+                        <span class="s2">&quot;cannot write config to exist file. &quot;</span>
+                        <span class="s2">&quot;Re-run with overwrite=True to proceed.&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+            <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">fo</span><span class="p">,</span> <span class="n">Dumper</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">yaml_dumper</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_create_backup</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">timestamp</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">lstat</span><span class="p">()</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_backup_time_fmt</span><span class="p">)</span>
+        <span class="n">backup_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">with_name</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+        <span class="k">with</span> <span class="n">logit</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;backup </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">backup_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dry_run</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">backup_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">backup_path</span>
+
+<div class="viewcode-block" id="DirConfMixin.populate_dir"><a class="viewcode-back" href="../../../api/tollan.utils.dirconf.DirConfMixin.html#tollan.utils.dirconf.DirConfMixin.populate_dir">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">populate_dir</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="p">,</span> <span class="n">dirpath</span><span class="p">,</span>
+            <span class="n">create</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Populate `dirpath` with the defined items.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dirpath : `pathlib.Path`, str</span>
+<span class="sd">            The path to the work directory.</span>
+
+<span class="sd">        create : bool</span>
+<span class="sd">            When set to False, raise `DirConfigError` if `path` does not</span>
+<span class="sd">            already have all content items. Otherwise, create the missing ones.</span>
+
+<span class="sd">        force : bool</span>
+<span class="sd">            When False, raise `DirConfigError` if `dirpath` is not empty</span>
+
+<span class="sd">        overwrite : bool</span>
+<span class="sd">            When False, backups for existing files is created.</span>
+
+<span class="sd">        dry_run : bool</span>
+<span class="sd">            If True, no actual file system changed is made.</span>
+
+<span class="sd">        kwargs : dict</span>
+<span class="sd">            Keyword arguments passed directly into the created</span>
+<span class="sd">            config file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">dirpath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="c1"># validate dirpath</span>
+        <span class="n">path_is_ok</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">dirpath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">dirpath</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="nb">next</span><span class="p">(</span><span class="n">dirpath</span><span class="o">.</span><span class="n">iterdir</span><span class="p">())</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="c1"># empty dir</span>
+                    <span class="n">path_is_ok</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># nonempty dir</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">DirConfError</span><span class="p">(</span>
+                                <span class="sa">f</span><span class="s2">&quot;path </span><span class="si">{</span><span class="n">dirpath</span><span class="si">}</span><span class="s2"> is not empty. Set&quot;</span>
+                                <span class="sa">f</span><span class="s2">&quot; force=True to proceed anyways&quot;</span><span class="p">)</span>
+                    <span class="n">path_is_ok</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># not a dir</span>
+                <span class="k">raise</span> <span class="n">DirConfError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;path </span><span class="si">{</span><span class="n">dirpath</span><span class="si">}</span><span class="s2"> exists but is not a valid directory.&quot;</span>
+                        <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># non exists</span>
+            <span class="n">path_is_ok</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">assert</span> <span class="n">path_is_ok</span>  <span class="c1"># should not fail</span>
+
+        <span class="c1"># create content</span>
+        <span class="k">def</span> <span class="nf">_get_or_create_item_path</span><span class="p">(</span>
+                <span class="n">item</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">backup_enabled</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_contents</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="s1">&#39;backup_enabled&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">overwrite</span><span class="p">:</span>
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;use existing </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">path</span>
+                <span class="k">elif</span> <span class="n">backup_enabled</span><span class="p">:</span>
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;backup existing </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">_create_backup</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">dry_run</span><span class="o">=</span><span class="n">dry_run</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># just always use existing if not set to backup</span>
+                    <span class="k">return</span> <span class="n">path</span>
+            <span class="k">with</span> <span class="n">logit</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;create </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">dry_run</span><span class="p">:</span>
+                    <span class="n">type_</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_contents</span><span class="p">[</span><span class="n">item</span><span class="p">][</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="s1">&#39;dir&#39;</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                            <span class="n">path</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">parents</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">type_</span> <span class="o">==</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
+                        <span class="n">touch_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># should not happen</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> type&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_contents</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">content_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_content_path</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">create</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">content_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="n">DirConfError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;unable to initialize </span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; from </span><span class="si">{</span><span class="n">dirpath</span><span class="si">}</span><span class="s2">:&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; missing </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">content_path</span><span class="si">}</span><span class="s2">. Set&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot; create=True to create missing items&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">create</span><span class="p">:</span>
+                <span class="n">_get_or_create_item_path</span><span class="p">(</span>
+                        <span class="n">item</span><span class="p">,</span>
+                        <span class="n">content_path</span><span class="p">,</span>
+                        <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                        <span class="n">dry_run</span><span class="o">=</span><span class="n">dry_run</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dirpath</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
+  </p>
+</footer>
+  </body>
+</html>

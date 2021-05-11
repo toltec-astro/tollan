@@ -1,0 +1,6 @@
+make_subprocess_env
+===================
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: make_subprocess_env

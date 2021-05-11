@@ -4,23 +4,24 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>TableDef &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TableDef &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/sidebar.js"></script>
     <script type="text/javascript" src="../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="TableDefList" href="tollan.utils.db.TableDefList.html" />
-    <link rel="prev" title="MultiActionArgumentParser" href="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html" />
+    <link rel="prev" title="PathType" href="tollan.utils.cli.path_type.PathType.html" />
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
 
   </head><body>
@@ -53,13 +54,13 @@
 	</a>
       </li>
       <li class="right">
-	<a href="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html" title="MultiActionArgumentParser">
+	<a href="tollan.utils.cli.path_type.PathType.html" title="PathType">
 	  &laquo; previous
 	</a>
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
       
@@ -77,7 +78,7 @@
 <h1>TableDef<a class="headerlink" href="#tabledef" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="tollan.utils.db.TableDef">
-<em class="property">class </em><code class="sig-prename descclassname">tollan.utils.db.</code><code class="sig-name descname">TableDef</code><a class="reference internal" href="../_modules/tollan/utils/db.html#TableDef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.db.TableDef" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">tollan.utils.db.</span></code><code class="sig-name descname"><span class="pre">TableDef</span></code><a class="reference internal" href="../_modules/tollan/utils/db.html#TableDef"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.db.TableDef" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="tollan.utils.namespace.Namespace.html#tollan.utils.namespace.Namespace" title="tollan.utils.namespace.Namespace"><code class="xref py py-class docutils literal notranslate"><span class="pre">tollan.utils.namespace.Namespace</span></code></a></p>
 <p>A class that holds definitions to a table.</p>
 <p class="rubric">Methods Summary</p>
@@ -87,7 +88,7 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.db.TableDef.init_table" title="tollan.utils.db.TableDef.init_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_table</span></code></a>(self, db)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.db.TableDef.init_table" title="tollan.utils.db.TableDef.init_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init_table</span></code></a>(db)</p></td>
 <td><p>Setup table metadata for this table def in <code class="xref py py-obj docutils literal notranslate"><span class="pre">db</span></code>.</p></td>
 </tr>
 </tbody>
@@ -95,7 +96,7 @@
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
 <dt id="tollan.utils.db.TableDef.init_table">
-<code class="sig-name descname">init_table</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">db</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/db.html#TableDef.init_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.db.TableDef.init_table" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">init_table</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/db.html#TableDef.init_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.db.TableDef.init_table" title="Permalink to this definition">¶</a></dt>
 <dd><p>Setup table metadata for this table def in <code class="xref py py-obj docutils literal notranslate"><span class="pre">db</span></code>.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -112,6 +113,7 @@
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -132,9 +134,9 @@
        rel="nofollow">Page Source</a> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>fileloc &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ensure_prefix" href="tollan.utils.ensure_prefix.html" />
+    <link rel="prev" title="dict_from_regex_match" href="tollan.utils.dict_from_regex_match.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="tollan.utils.ensure_prefix.html" title="ensure_prefix">
+	  next &raquo;
+	</a>
+      </li>
+      <li class="right">
+	<a href="tollan.utils.dict_from_regex_match.html" title="dict_from_regex_match">
+	  &laquo; previous
+	</a>
+	 |
+      </li>
+      <li>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
+	 &#187;
+      </li>
+      
+      <li>fileloc</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="fileloc">
+<h1>fileloc<a class="headerlink" href="#fileloc" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt id="tollan.utils.fileloc">
+<code class="sig-prename descclassname"><span class="pre">tollan.utils.</span></code><code class="sig-name descname"><span class="pre">fileloc</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">local_parent_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_parent_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/misc.html#fileloc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.fileloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a <a class="reference internal" href="tollan.utils.FileLoc.html#tollan.utils.FileLoc" title="tollan.utils.FileLoc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code></a> object.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>loc</strong><span class="classifier">str, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Path</span></code></a>, tuple, <a class="reference internal" href="tollan.utils.FileLoc.html#tollan.utils.FileLoc" title="tollan.utils.FileLoc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code></a></span></dt><dd><p>The location of the file, composed of the hostname and the path.
+It can take the form of the follows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">str</span></code>. In this case, <code class="xref py py-obj docutils literal notranslate"><span class="pre">loc</span></code> is interpreted as a local path, or a
+remote path similar to sftp syntax: <code class="docutils literal notranslate"><span class="pre">&lt;hostname&gt;:&lt;abspath&gt;</span></code>.
+A remote relative path is not supported.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Path</span></code></a>. It is a local path.</p></li>
+<li><p>Tuple of <code class="docutils literal notranslate"><span class="pre">(&lt;hostname&gt;,</span> <span class="pre">&lt;abspath&gt;)</span></code>. It is a remote path, unless
+<code class="docutils literal notranslate"><span class="pre">hostname</span></code> is “localhost”. A remote relative path is not
+supported.</p></li>
+<li><p><a class="reference internal" href="tollan.utils.FileLoc.html#tollan.utils.FileLoc" title="tollan.utils.FileLoc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code></a>. It is returned unaltered.</p></li>
+</ul>
+</dd>
+<dt><strong>local_parent_path</strong><span class="classifier">str, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Path</span></code></a>, None</span></dt><dd><p>If not None, this is used as the parent of local
+relative path. Otherwise, the current path (<code class="docutils literal notranslate"><span class="pre">pwd</span></code>) is used.
+Ignored if <code class="xref py py-obj docutils literal notranslate"><span class="pre">loc</span></code> is <a class="reference internal" href="tollan.utils.FileLoc.html#tollan.utils.FileLoc" title="tollan.utils.FileLoc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code></a>.</p>
+</dd>
+<dt><strong>remote_parent_path</strong><span class="classifier">str, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Path</span></code></a>, None</span></dt><dd><p>If not None and is absolute, this is used as the parent of remote
+relative path. Otherwise, <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ValueError</span></code></a> will be raised if a remote
+relative path is given.
+Ignored if <code class="xref py py-obj docutils literal notranslate"><span class="pre">loc</span></code> is <a class="reference internal" href="tollan.utils.FileLoc.html#tollan.utils.FileLoc" title="tollan.utils.FileLoc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">fileloc</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/api/tollan.utils.fileloc.rst.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
+  </p>
+</footer>
+  </body>
+</html>

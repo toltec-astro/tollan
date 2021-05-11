@@ -1,0 +1,6 @@
+DirConfError
+============
+
+.. currentmodule:: tollan.utils.dirconf
+
+.. autoexception:: DirConfError

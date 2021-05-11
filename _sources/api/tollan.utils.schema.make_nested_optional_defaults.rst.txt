@@ -1,0 +1,6 @@
+make_nested_optional_defaults
+=============================
+
+.. currentmodule:: tollan.utils.schema
+
+.. autofunction:: make_nested_optional_defaults

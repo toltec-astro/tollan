@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.misc &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.misc &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
@@ -46,10 +47,11 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
-      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
       
        
     </ul>
@@ -69,9 +71,15 @@
 <span class="kn">import</span> <span class="nn">importlib</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ContextDecorator</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
-<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span><span class="p">,</span> <span class="n">PurePath</span><span class="p">,</span> <span class="n">WindowsPath</span>
 <span class="kn">import</span> <span class="nn">urllib</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlsplit</span><span class="p">,</span> <span class="n">urlunsplit</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">NamedTuple</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">TextIOWrapper</span>
+<span class="kn">import</span> <span class="nn">os</span>
 
 
 <span class="n">_excluded_from_all</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -99,6 +107,20 @@
     <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">module</span>
     <span class="k">return</span> <span class="n">rgetattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="module_from_path"><a class="viewcode-back" href="../../../api/tollan.utils.module_from_path.html#tollan.utils.module_from_path">[docs]</a><span class="k">def</span> <span class="nf">module_from_path</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load module from filepath.&quot;&quot;&quot;</span>
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;_module_from_path_</span><span class="si">{</span><span class="n">filepath</span><span class="o">.</span><span class="n">stem</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">spec_from_file_location</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">filepath</span><span class="o">.</span><span class="n">as_posix</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">module_from_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+    <span class="n">spec</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">exec_module</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">module</span></div>
 
 
 <div class="viewcode-block" id="rreload"><a class="viewcode-back" href="../../../api/tollan.utils.rreload.html#tollan.utils.rreload">[docs]</a><span class="k">def</span> <span class="nf">rreload</span><span class="p">(</span><span class="n">m</span><span class="p">:</span> <span class="n">ModuleType</span><span class="p">):</span>
@@ -228,9 +250,9 @@
 <span class="sd">            The function to call after the hooked function.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">def</span> <span class="nf">hooked</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">func_hooked</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">hooked</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func_hooked</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">func</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">hooked</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -337,36 +359,204 @@
         <span class="k">return</span> <span class="n">s</span></div>
 
 
-<span class="c1"># https://stackoverflow.com/a/57463161/1824372</span>
-<div class="viewcode-block" id="file_uri_to_path"><a class="viewcode-back" href="../../../api/tollan.utils.file_uri_to_path.html#tollan.utils.file_uri_to_path">[docs]</a><span class="k">def</span> <span class="nf">file_uri_to_path</span><span class="p">(</span><span class="n">file_uri</span><span class="p">):</span>
+<div class="viewcode-block" id="FileLoc"><a class="viewcode-back" href="../../../api/tollan.utils.FileLoc.html#tollan.utils.FileLoc">[docs]</a><span class="k">class</span> <span class="nc">FileLoc</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    This function returns a pathlib.PurePath object for the supplied file URI.</span>
+<span class="sd">    A simple structure to hold file location info.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">netloc</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="n">Path</span>
+
+    <span class="k">def</span> <span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_local</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_local</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">netloc</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_remote</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_local</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">rsync_path</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rsync_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_local</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">netloc</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="fileloc"><a class="viewcode-back" href="../../../api/tollan.utils.fileloc.html#tollan.utils.fileloc">[docs]</a><span class="k">def</span> <span class="nf">fileloc</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">local_parent_path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">remote_parent_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a `~tollan.utils.FileLoc` object.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    file_uri : str</span>
-<span class="sd">        The file URI.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    Path</span>
-<span class="sd">        The path the URI refers to.</span>
+<span class="sd">    loc : str, `~pathlib.Path`, tuple, `~tollan.utils.FileLoc`</span>
 
+<span class="sd">        The location of the file, composed of the hostname and the path.</span>
+<span class="sd">        It can take the form of the follows:</span>
+
+<span class="sd">        * ``str``. In this case, `loc` is interpreted as a local path, or a</span>
+<span class="sd">          remote path similar to sftp syntax: ``&lt;hostname&gt;:&lt;abspath&gt;``.</span>
+<span class="sd">          A remote relative path is not supported.</span>
+
+<span class="sd">        * `~pathlib.Path`. It is a local path.</span>
+
+<span class="sd">        * Tuple of ``(&lt;hostname&gt;, &lt;abspath&gt;)``. It is a remote path, unless</span>
+<span class="sd">          ``hostname`` is &quot;localhost&quot;. A remote relative path is not</span>
+<span class="sd">          supported.</span>
+
+<span class="sd">        * `~tollan.utils.FileLoc`. It is returned unaltered.</span>
+
+<span class="sd">    local_parent_path : str, `~pathlib.Path`, None</span>
+
+<span class="sd">        If not None, this is used as the parent of local</span>
+<span class="sd">        relative path. Otherwise, the current path (``pwd``) is used.</span>
+<span class="sd">        Ignored if `loc` is `~tollan.utils.FileLoc`.</span>
+
+<span class="sd">    remote_parent_path : str, `~pathlib.Path`, None</span>
+
+<span class="sd">        If not None and is absolute, this is used as the parent of remote</span>
+<span class="sd">        relative path. Otherwise, `ValueError` will be raised if a remote</span>
+<span class="sd">        relative path is given.</span>
+<span class="sd">        Ignored if `loc` is `~tollan.utils.FileLoc`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">file_uri_parsed</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">file_uri</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">file_uri_parsed</span><span class="o">.</span><span class="n">scheme</span> <span class="o">!=</span> <span class="s1">&#39;file&#39;</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;not a file uri: </span><span class="si">{</span><span class="n">file_uri</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">file_uri_path_unquoted</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="n">file_uri_parsed</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">file_uri_path_unquoted</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;invalid file uri </span><span class="si">{</span><span class="n">file_uri</span><span class="si">}</span><span class="s2"> : path </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2"> not absolute&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">FileLoc</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">loc</span>
+
+    <span class="k">def</span> <span class="nf">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">WindowsPath</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">h</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">h</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                <span class="c1"># local window path</span>
+                <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+            <span class="c1"># remote window path</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;fileloc does not support remote windows path&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">p</span>
+        <span class="c1"># relative path</span>
+        <span class="c1"># local file</span>
+        <span class="k">if</span> <span class="n">h</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">h</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">local_parent_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Path</span><span class="p">(</span>
+                        <span class="n">local_parent_path</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">expanduser</span><span class="p">()</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="c1"># remote file</span>
+        <span class="k">if</span> <span class="n">remote_parent_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span>
+                <span class="n">remote_parent_path</span><span class="p">)</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s1">&#39;remote path shall be absolute if &#39;</span>
+                    <span class="s1">&#39;no remote_parent_path is set.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">remote_parent_path</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="c1"># https://stackoverflow.com/a/57463161/1824372</span>
+        <span class="k">if</span> <span class="n">loc</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;file://&#39;</span><span class="p">):</span>
+            <span class="n">uri_parsed</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urlparse</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">loc</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="n">uri_parsed</span><span class="o">.</span><span class="n">netloc</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="n">uri_parsed</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^[A-Z]:</span><span class="se">\\</span><span class="s1">\w&#39;</span><span class="p">,</span> <span class="n">loc</span><span class="p">):</span>
+            <span class="c1"># local window path</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">loc</span><span class="p">)</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">as_uri</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">loc</span><span class="p">:</span>
+            <span class="n">h</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">loc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">urlunsplit</span><span class="p">(</span>
+                    <span class="n">urlsplit</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">as_uri</span><span class="p">())</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">netloc</span><span class="o">=</span><span class="n">h</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># local file</span>
+            <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">loc</span><span class="p">)</span>
+            <span class="n">uri</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">as_uri</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">PurePath</span><span class="p">):</span>
+        <span class="c1"># local file</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">loc</span><span class="p">)</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">as_uri</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="n">h</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">loc</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">_get_abs_path</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">urlunsplit</span><span class="p">(</span>
+                <span class="n">urlsplit</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">as_uri</span><span class="p">())</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">netloc</span><span class="o">=</span><span class="n">h</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid file location </span><span class="si">{</span><span class="n">loc</span><span class="si">}</span><span class="s1">.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">h</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">h</span> <span class="o">==</span> <span class="s1">&#39;localhost&#39;</span> <span class="ow">or</span> <span class="n">h</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">FileLoc</span><span class="p">(</span><span class="n">uri</span><span class="o">=</span><span class="n">uri</span><span class="p">,</span> <span class="n">netloc</span><span class="o">=</span><span class="n">h</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">p</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="make_subprocess_env"><a class="viewcode-back" href="../../../api/tollan.utils.make_subprocess_env.html#tollan.utils.make_subprocess_env">[docs]</a><span class="k">def</span> <span class="nf">make_subprocess_env</span><span class="p">():</span>
+    <span class="c1"># on mac os the dyld path may not get propagated</span>
+    <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;DYLD_LIBRARY_PATH&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;LIBRARY_PATH&#39;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+            <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="call_subprocess_with_live_output"><a class="viewcode-back" href="../../../api/tollan.utils.call_subprocess_with_live_output.html#tollan.utils.call_subprocess_with_live_output">[docs]</a><span class="k">def</span> <span class="nf">call_subprocess_with_live_output</span><span class="p">(</span><span class="n">cmd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Execute `cmd` in subprocess with live output.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="n">cmd</span><span class="p">,</span>
+            <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">,</span>
+            <span class="n">bufsize</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">env</span><span class="o">=</span><span class="n">make_subprocess_env</span><span class="p">(),</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">proc</span><span class="p">:</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">TextIOWrapper</span><span class="p">(</span><span class="n">proc</span><span class="o">.</span><span class="n">stdout</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span>
+                <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">read</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+            <span class="c1"># logger.debug(ln.decode().strip())</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">char</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">proc</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">break</span>
+    <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="dict_from_regex_match"><a class="viewcode-back" href="../../../api/tollan.utils.dict_from_regex_match.html#tollan.utils.dict_from_regex_match">[docs]</a><span class="k">def</span> <span class="nf">dict_from_regex_match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">input_</span><span class="p">,</span> <span class="n">type_dispatcher</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a dict from matching `pattern` to `input_`.</span>
+
+<span class="sd">    If match failed, returns None.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pattern : str, `re.Pattern`</span>
+<span class="sd">        The regex that matches to the `input_`.</span>
+
+<span class="sd">    input_ : str</span>
+<span class="sd">        The string to be matched.</span>
+
+<span class="sd">    type_dispatcher : dict</span>
+<span class="sd">        This specifies how the matched group values are handled after being</span>
+<span class="sd">        extracted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">type_dispatcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">type_dispatcher</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">input_</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">type_dispatcher</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_dispatcher</span><span class="p">[</span><span class="n">k</span><span class="p">](</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
     <span class="k">return</span> <span class="n">result</span></div>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">_excluded_from_all</span><span class="p">))</span>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -382,9 +572,9 @@
   <p class="pull-right"> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

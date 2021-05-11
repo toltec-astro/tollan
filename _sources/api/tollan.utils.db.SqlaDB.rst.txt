@@ -10,6 +10,7 @@ SqlaDB
 
    .. autosummary::
 
+      ~SqlaDB.session_context
       ~SqlaDB.tables
 
    .. rubric:: Methods Summary
@@ -22,6 +23,7 @@ SqlaDB
 
    .. rubric:: Attributes Documentation
 
+   .. autoattribute:: session_context
    .. autoattribute:: tables
 
    .. rubric:: Methods Documentation

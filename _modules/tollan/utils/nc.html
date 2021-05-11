@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.nc &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.nc &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
@@ -46,10 +47,11 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
-      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
       
        
     </ul>
@@ -64,41 +66,56 @@
   <h1>Source code for tollan.utils.nc</h1><div class="highlight"><pre>
 <span></span><span class="ch">#! /usr/bin/env python</span>
 <span class="kn">import</span> <span class="nn">netCDF4</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">..fmt</span> <span class="kn">import</span> <span class="n">pformat_list</span>
-<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">get_logger</span><span class="p">,</span> <span class="n">logit</span>
-<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">FileLoc</span><span class="p">,</span> <span class="n">fileloc</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">ExitStack</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">nullcontext</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logged_closing</span><span class="p">,</span> <span class="n">get_logger</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;ncopen&#39;</span><span class="p">,</span> <span class="s1">&#39;ncinfo&#39;</span><span class="p">,</span> <span class="s1">&#39;NcNodeMapper&#39;</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">ncstr</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return str from nc variable.&quot;&quot;&quot;</span>
+<span class="k">def</span> <span class="nf">_ncstr</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
     <span class="n">s</span> <span class="o">=</span> <span class="n">var</span><span class="p">[:]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-    <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">s</span><span class="p">[:</span><span class="n">stop</span><span class="p">]</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span><span class="p">]</span>
     <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
 
 
-<span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">nc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">logit</span><span class="p">(</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;close </span><span class="si">{</span><span class="n">nc</span><span class="o">.</span><span class="n">filepath</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
-        <span class="n">nc</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">ncstr</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return str from nc variable.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">var</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="s1">&#39;|S1&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;var is not a string.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ncstr</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="ncopen"><a class="viewcode-back" href="../../../api/tollan.utils.nc.ncopen.html#tollan.utils.nc.ncopen">[docs]</a><span class="k">def</span> <span class="nf">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Return an opened netCDF4 dataset a long with a close method.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="ncopen"><a class="viewcode-back" href="../../../api/tollan.utils.nc.ncopen.html#tollan.utils.nc.ncopen">[docs]</a><span class="k">def</span> <span class="nf">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a context manager to open netCDF file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : str, `~pathlib.Path`, `netCDF4.Dataset`</span>
+<span class="sd">        The file path to open. No-op for opened dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">source</span><span class="p">,</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="kc">None</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">nc</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">nc</span><span class="p">,</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_close</span><span class="p">,</span> <span class="n">nc</span><span class="o">=</span><span class="n">nc</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">isopen</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">nullcontext</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;dataset is closed.&quot;</span><span class="p">)</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">Dataset</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">source</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logged_closing</span><span class="p">(</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;close </span><span class="si">{</span><span class="n">dataset</span><span class="o">.</span><span class="n">filepath</span><span class="p">()</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="ncinfo"><a class="viewcode-back" href="../../../api/tollan.utils.nc.ncinfo.html#tollan.utils.nc.ncinfo">[docs]</a><span class="k">def</span> <span class="nf">ncinfo</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Return a pretty formatted string for netCDF4 dataset.&quot;&quot;&quot;</span>
-
-    <span class="n">nc</span><span class="p">,</span> <span class="n">close</span> <span class="o">=</span> <span class="n">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fmt_var</span><span class="p">(</span><span class="n">var</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">var</span><span class="o">.</span><span class="n">dimensions</span> <span class="ow">or</span> <span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;|S1&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span>
@@ -112,90 +129,246 @@
                 <span class="k">return</span> <span class="n">v</span>
         <span class="k">return</span> <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">var</span><span class="o">.</span><span class="n">dimensions</span><span class="p">))</span>
 
-    <span class="n">attnames</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nc</span><span class="o">.</span><span class="n">getncattr</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">ncattrs</span><span class="p">()]</span>
-    <span class="n">dimnames</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="n">dimname</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="n">dimname</span><span class="p">]))</span>
-        <span class="k">for</span> <span class="n">dimname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
-    <span class="n">varnames</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span>
-            <span class="n">varname</span><span class="p">,</span>
-            <span class="n">fmt_var</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">]),</span>
-            <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
-            <span class="nb">getattr</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">],</span> <span class="s2">&quot;long_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
-            <span class="p">)</span>
-        <span class="k">for</span> <span class="n">varname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="p">]</span>
-    <span class="n">grpnames</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">(</span><span class="n">grpname</span><span class="p">,</span> <span class="p">)</span> <span class="k">for</span> <span class="n">grpname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+    <span class="k">with</span> <span class="n">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="k">as</span> <span class="n">nc</span><span class="p">:</span>
 
-    <span class="k">if</span> <span class="n">nc</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
-        <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0.path}</span><span class="s2">: [</span><span class="si">{0.data_model}</span><span class="s2">, </span><span class="si">{0.disk_format}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nc</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">info</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;{{</span>
-<span class="s2">  file: </span><span class="si">{}</span><span class="s2"></span>
-<span class="s2">  </span><span class="si">{head}</span><span class="s2"></span>
-<span class="s2">    atts: </span><span class="si">{atts}</span><span class="s2"></span>
-<span class="s2">    dims: </span><span class="si">{dims}</span><span class="s2"></span>
-<span class="s2">    vars: </span><span class="si">{vars_}</span><span class="s2"></span>
-<span class="s2">    grps: </span><span class="si">{grps}</span><span class="s2"></span>
-<span class="s2">  }}&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="n">nc</span><span class="o">.</span><span class="n">filepath</span><span class="p">(),</span>
-        <span class="n">head</span><span class="o">=</span><span class="n">head</span><span class="p">,</span>
-        <span class="n">atts</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">attnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
-        <span class="n">dims</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">dimnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
-        <span class="n">vars_</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">varnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
-        <span class="n">grps</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">grpnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
-        <span class="p">)</span>
-    <span class="n">close</span><span class="p">()</span>
+        <span class="n">attnames</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">nc</span><span class="o">.</span><span class="n">getncattr</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">ncattrs</span><span class="p">()]</span>
+        <span class="n">dimnames</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">dimname</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="n">dimname</span><span class="p">]))</span>
+            <span class="k">for</span> <span class="n">dimname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="n">varnames</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span>
+                <span class="n">varname</span><span class="p">,</span>
+                <span class="n">fmt_var</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">]),</span>
+                <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="n">varname</span><span class="p">],</span> <span class="s2">&quot;long_name&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="k">for</span> <span class="n">varname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="p">]</span>
+        <span class="n">grpnames</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">grpname</span><span class="p">,</span> <span class="p">)</span> <span class="k">for</span> <span class="n">grpname</span> <span class="ow">in</span> <span class="n">nc</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+        <span class="k">if</span> <span class="n">nc</span><span class="o">.</span><span class="n">path</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0.path}</span><span class="s2">: [</span><span class="si">{0.data_model}</span><span class="s2">, </span><span class="si">{0.disk_format}</span><span class="s2">]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nc</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nc</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;{{</span>
+<span class="s2">      file: </span><span class="si">{}</span><span class="s2"></span>
+<span class="s2">      </span><span class="si">{head}</span><span class="s2"></span>
+<span class="s2">        atts: </span><span class="si">{atts}</span><span class="s2"></span>
+<span class="s2">        dims: </span><span class="si">{dims}</span><span class="s2"></span>
+<span class="s2">        vars: </span><span class="si">{vars_}</span><span class="s2"></span>
+<span class="s2">        grps: </span><span class="si">{grps}</span><span class="s2"></span>
+<span class="s2">      }}&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">nc</span><span class="o">.</span><span class="n">filepath</span><span class="p">(),</span>
+            <span class="n">head</span><span class="o">=</span><span class="n">head</span><span class="p">,</span>
+            <span class="n">atts</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">attnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">dimnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+            <span class="n">vars_</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">varnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+            <span class="n">grps</span><span class="o">=</span><span class="n">pformat_list</span><span class="p">(</span><span class="n">grpnames</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+            <span class="p">)</span>
     <span class="k">return</span> <span class="n">info</span></div>
 
 
-<div class="viewcode-block" id="NcNodeMapper"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper">[docs]</a><span class="k">class</span> <span class="nc">NcNodeMapper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A adaptor class that accesses netCDF4 dataset with a custom name map.&quot;&quot;&quot;</span>
+<span class="k">class</span> <span class="nc">NcNodeMapperError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raise when failed accessing data through `NcNodeMapperMixin`.&quot;&quot;&quot;</span>
+    <span class="k">pass</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nc</span><span class="p">,</span> <span class="n">map_</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">nc</span> <span class="o">=</span> <span class="n">nc</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_</span> <span class="o">=</span> <span class="n">map_</span>
 
-<div class="viewcode-block" id="NcNodeMapper.hasvar"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.hasvar">[docs]</a>    <span class="k">def</span> <span class="nf">hasvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ks</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">)</span></div>
+<span class="k">class</span> <span class="nc">NcNodeMapperMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A mix-in class that help access netCDF4 datasets with mapped names.</span>
 
-<div class="viewcode-block" id="NcNodeMapper.getvar"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getvar">[docs]</a>    <span class="k">def</span> <span class="nf">getvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span></div>
+<span class="sd">    The cooperating class is shall provide implementation of :attr:`_nc_node`,</span>
+<span class="sd">    and `_nc_node_map`.</span>
 
-<div class="viewcode-block" id="NcNodeMapper.getdim"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getdim">[docs]</a>    <span class="k">def</span> <span class="nf">getdim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">size</span></div>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="NcNodeMapper.getscalar"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getscalar">[docs]</a>    <span class="k">def</span> <span class="nf">getscalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asscalar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">)[:])</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nc_node</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The mapped netCDF data node.</span>
 
-<div class="viewcode-block" id="NcNodeMapper.getstr"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.getstr">[docs]</a>    <span class="k">def</span> <span class="nf">getstr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">ncstr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">))</span></div>
+<span class="sd">        This could be a netCDF dataset or group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_nc_node&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node</span><span class="o">.</span><span class="n">isopen</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node</span>
+        <span class="k">raise</span> <span class="n">NcNodeMapperError</span><span class="p">(</span><span class="s2">&quot;no netCDF dataset.&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nc_node_map</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The dict specifies variable name mapping.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node_map</span>
 
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="sd">&quot;&quot;&quot;Return the mapped variable name for `k`.</span>
 
-    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_</span>
+<span class="sd">        `k` is returned if it is not present in the map.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="c1"># check the first available name in the node</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasname</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">n</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">k</span>
+        <span class="k">return</span> <span class="n">name</span>
 
-<div class="viewcode-block" id="NcNodeMapper.get"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">hasvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if all keys in `ks` are present in the node variables.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">variables</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hasdim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if all keys in `ks` are present in the node dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hasname</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">ks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return True if all keys in `ks` are present in the node.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+                    <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ks</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getvar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">variables</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">getdim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span><span class="o">.</span><span class="n">size</span>
+
+    <span class="k">def</span> <span class="nf">getscalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">():</span>
+            <span class="k">return</span> <span class="n">v</span><span class="p">[:]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="n">NcNodeMapperError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;variable </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s1"> is not a scalar.&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">getstr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ncstr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">getany</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Try return the value of key `k` from the node for simple variables.</span>
+
+<span class="sd">        It first tries the variables then the dimensions. It also checks the</span>
+<span class="sd">        shape and type of the variable for scalar or string. Otherwise it</span>
+<span class="sd">        returns the variable instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hasvar</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getvar</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">dimensions</span> <span class="ow">or</span> <span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;|S1&#39;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span>
-                    <span class="n">v</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
-                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">[:]</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s2">&quot;|S1&quot;</span><span class="p">:</span>
-                        <span class="k">return</span> <span class="n">ncstr</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asscalar</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="n">v</span>
+            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">():</span>
+                <span class="k">return</span> <span class="n">v</span><span class="p">[:]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="s1">&#39;|S1&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="c1"># single string</span>
+                    <span class="k">return</span> <span class="n">_ncstr</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="c1"># a list of strings</span>
+                <span class="c1"># TODO implement this if needed.</span>
+                <span class="k">return</span> <span class="n">v</span>
+            <span class="c1"># large data blob</span>
             <span class="k">return</span> <span class="n">v</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getdim</span><span class="p">(</span><span class="n">k</span><span class="p">)</span></div></div>
+        <span class="c1"># dim</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getdim</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ncinfo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">setstr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">nc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">dim_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s1">_slen&#39;</span>
+            <span class="n">nc</span><span class="o">.</span><span class="n">createDimension</span><span class="p">(</span><span class="n">dim_name</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dim_name</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;S1&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">dim_name</span><span class="p">,</span> <span class="p">))</span>
+        <span class="n">v</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">netCDF4</span><span class="o">.</span><span class="n">stringtochar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;S</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="nf">setscalar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">nc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dt</span><span class="o">.</span><span class="n">kind</span><span class="si">}{</span><span class="n">dt</span><span class="o">.</span><span class="n">itemsize</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">nc</span><span class="o">.</span><span class="n">createVariable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="p">())</span>
+        <span class="n">v</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">s</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+
+<div class="viewcode-block" id="NcNodeMapper"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper">[docs]</a><span class="k">class</span> <span class="nc">NcNodeMapper</span><span class="p">(</span><span class="n">ExitStack</span><span class="p">,</span> <span class="n">NcNodeMapperMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A adaptor class that accesses netCDF4 dataset with a custom name map.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : str, `pathlib.Path`, `FileLoc`, `netCDF4.Dataset`</span>
+<span class="sd">        The netCDF file location or netCDF dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nc_node_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">nc_node_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">nc_node_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># an empty map also works</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node_map</span> <span class="o">=</span> <span class="n">nc_node_map</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="c1"># open the given source</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NcNodeMapper.open"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.open">[docs]</a>    <span class="k">def</span> <span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a context to operate on `source`.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        source : str, `pathlib.Path`, `FileLoc`, `netCDF4.Dataset`</span>
+<span class="sd">            The netCDF file location or netCDF dataset.</span>
+
+<span class="sd">        **kwargs :</span>
+<span class="sd">            The keyword arguments passed to `netCDF4.Dataset` constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">FileLoc</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">source</span><span class="o">.</span><span class="n">is_local</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;source should point to a local file.&#39;</span><span class="p">)</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="n">Path</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># netCDF dataset</span>
+            <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enter_context</span><span class="p">(</span><span class="n">ncopen</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="c1"># reset the nc_node so that this object can be pickled if</span>
+        <span class="c1"># not bind to open dataset.</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node</span>
+
+<div class="viewcode-block" id="NcNodeMapper.set_nc_node"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.set_nc_node">[docs]</a>    <span class="k">def</span> <span class="nf">set_nc_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nc_node</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the node to map.</span>
+
+<span class="sd">        This assumes the `nc_node` is an externally opened dataset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nc_node</span> <span class="o">=</span> <span class="n">nc_node</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">file_loc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The opened file.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">fileloc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">filepath</span><span class="p">())</span>
+
+<div class="viewcode-block" id="NcNodeMapper.sync"><a class="viewcode-back" href="../../../api/tollan.utils.nc.NcNodeMapper.html#tollan.utils.nc.NcNodeMapper.sync">[docs]</a>    <span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sync the underlying file.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">nc_node</span><span class="o">.</span><span class="n">sync</span><span class="p">()</span></div></div>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -211,9 +384,9 @@
   <p class="pull-right"> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

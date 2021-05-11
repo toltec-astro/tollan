@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.mpl &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.mpl &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
@@ -46,10 +47,11 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
-      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
       
        
     </ul>
@@ -119,24 +121,26 @@
 <div class="viewcode-block" id="save_or_show"><a class="viewcode-back" href="../../../api/tollan.utils.mpl.save_or_show.html#tollan.utils.mpl.save_or_show">[docs]</a><span class="k">def</span> <span class="nf">save_or_show</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span>
                  <span class="n">bbox_inches</span><span class="o">=</span><span class="s1">&#39;tight&#39;</span><span class="p">,</span>
                  <span class="n">window_type</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span>
+                 <span class="n">save</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&#39;&#39;&#39;Save figure or show  plot, depending on</span>
 <span class="sd">    the last sys.argv&#39;&#39;&#39;</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
     <span class="n">argv</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">argv</span><span class="p">:</span>
-        <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">save</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">False</span>
-        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="s1">&#39;save&#39;</span><span class="p">]:</span>
-                <span class="n">save</span> <span class="o">=</span> <span class="kc">True</span>
-            <span class="k">elif</span> <span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;plot&#39;</span><span class="p">,</span> <span class="p">]:</span>
-                <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">save</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">argv</span><span class="p">:</span>
+            <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">save</span> <span class="o">=</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">False</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;true&#39;</span><span class="p">,</span> <span class="s1">&#39;save&#39;</span><span class="p">]:</span>
+                    <span class="n">save</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="n">argv</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;plot&#39;</span><span class="p">,</span> <span class="p">]:</span>
+                    <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">save</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
             <span class="n">filepath</span><span class="p">,</span>
@@ -152,6 +156,7 @@
             <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -167,9 +172,9 @@
   <p class="pull-right"> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

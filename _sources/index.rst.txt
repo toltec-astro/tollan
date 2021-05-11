@@ -18,6 +18,8 @@ Reference/API
 
 .. automodapi:: tollan.utils.cli.multi_action_argparser
 
+.. automodapi:: tollan.utils.cli.path_type
+
 .. automodapi:: tollan.utils.db
 
 .. automodapi:: tollan.utils.db.conventions
@@ -41,6 +43,13 @@ Reference/API
 .. automodapi:: tollan.utils.slice
 
 .. automodapi:: tollan.utils.wraps
+
+.. automodapi:: tollan.utils.dirconf
+
+.. automodapi:: tollan.utils.sys
+
+.. automodapi:: tollan.utils.schema
+
 
 
 =====

@@ -1,0 +1,270 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DirConfMixin &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="get_hostname" href="tollan.utils.sys.get_hostname.html" />
+    <link rel="prev" title="DirConfError" href="tollan.utils.dirconf.DirConfError.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="tollan.utils.sys.get_hostname.html" title="get_hostname">
+	  next &raquo;
+	</a>
+      </li>
+      <li class="right">
+	<a href="tollan.utils.dirconf.DirConfError.html" title="DirConfError">
+	  &laquo; previous
+	</a>
+	 |
+      </li>
+      <li>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
+	 &#187;
+      </li>
+      
+      <li>DirConfMixin</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dirconfmixin">
+<h1>DirConfMixin<a class="headerlink" href="#dirconfmixin" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="tollan.utils.dirconf.DirConfMixin">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">tollan.utils.dirconf.</span></code><code class="sig-name descname"><span class="pre">DirConfMixin</span></code><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A mix-in class for managing configuration files stored in a directory.</p>
+<p>The class implements the logic to setup a directory and
+populate a set of pre-defined items.</p>
+<p>The class manages a set of configuration files recognized by the
+<code class="xref py py-obj docutils literal notranslate"><span class="pre">_config_file_pattern</span></code>, provides methods to load and merge the
+configuration in memory.</p>
+<p>The mix-in class expects the following class attributes from the
+instrumenting class:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">_contents</span></code></p>
+<blockquote>
+<div><p>A dictionary <code class="docutils literal notranslate"><span class="pre">{&lt;attr&gt;:</span> <span class="pre">dict}</span></code> that defines
+the content of the directory generated <a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.populate_dir" title="tollan.utils.dirconf.DirConfMixin.populate_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">populate_dir</span></code></a>.
+The dict for each attr should have the following keys:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">path</span></code>: The path name.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code>: one of <code class="docutils literal notranslate"><span class="pre">file</span></code> or <code class="docutils literal notranslate"><span class="pre">dir</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">backup_enabled</span></code>: True or False.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+<p>The mix-in class also expects the following property:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">rootpath</span></code></p>
+<blockquote>
+<div><p>The path of the mapped directory.</p>
+</div></blockquote>
+</li>
+</ul>
+<p class="rubric">Attributes Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.logger" title="tollan.utils.dirconf.DirConfMixin.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.collect_config_files" title="tollan.utils.dirconf.DirConfMixin.collect_config_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_config_files</span></code></a>()</p></td>
+<td><p>The list of configuration files present in the directory.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.collect_config_from_files" title="tollan.utils.dirconf.DirConfMixin.collect_config_from_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">collect_config_from_files</span></code></a>(config_files[, …])</p></td>
+<td><p>Load config from <code class="xref py py-obj docutils literal notranslate"><span class="pre">config_files</span></code> and merge by the order.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.get_config_schema" title="tollan.utils.dirconf.DirConfMixin.get_config_schema"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_config_schema</span></code></a>()</p></td>
+<td><p>Return a <code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Schema</span></code> object that validates the config.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.populate_dir" title="tollan.utils.dirconf.DirConfMixin.populate_dir"><code class="xref py py-obj docutils literal notranslate"><span class="pre">populate_dir</span></code></a>(dirpath[, create, force, …])</p></td>
+<td><p>Populate <code class="xref py py-obj docutils literal notranslate"><span class="pre">dirpath</span></code> with the defined items.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.to_dict" title="tollan.utils.dirconf.DirConfMixin.to_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dict</span></code></a>()</p></td>
+<td><p>Return a dict representation of the contents.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.validate_config" title="tollan.utils.dirconf.DirConfMixin.validate_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_config</span></code></a>(cfg)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.write_config_to_yaml" title="tollan.utils.dirconf.DirConfMixin.write_config_to_yaml"><code class="xref py py-obj docutils literal notranslate"><span class="pre">write_config_to_yaml</span></code></a>(config, filepath[, …])</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="py attribute">
+<dt id="tollan.utils.dirconf.DirConfMixin.logger">
+<code class="sig-name descname"><span class="pre">logger</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;Logger</span> <span class="pre">DirConfMixin</span> <span class="pre">(WARNING)&gt;</span></em><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.collect_config_files">
+<code class="sig-name descname"><span class="pre">collect_config_files</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.collect_config_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.collect_config_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>The list of configuration files present in the directory.</p>
+<p>Files with names match <code class="docutils literal notranslate"><span class="pre">_config_file_pattern</span></code> are returned.</p>
+<p>The returned files are sorted according to the sort key
+<code class="xref py py-obj docutils literal notranslate"><span class="pre">_config_file_sort_key</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.collect_config_from_files">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">collect_config_from_files</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_files</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.collect_config_from_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.collect_config_from_files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load config from <code class="xref py py-obj docutils literal notranslate"><span class="pre">config_files</span></code> and merge by the order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config_files</strong><span class="classifier">list</span></dt><dd><p>A list of configuration file paths.</p>
+</dd>
+<dt><strong>validate</strong><span class="classifier">bool, optional</span></dt><dd><p>If True, the configuration is validated using
+<a class="reference internal" href="#tollan.utils.dirconf.DirConfMixin.validate_config" title="tollan.utils.dirconf.DirConfMixin.validate_config"><code class="xref py py-meth docutils literal notranslate"><span class="pre">validate_config()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.get_config_schema">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">get_config_schema</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.get_config_schema"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.get_config_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a <code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Schema</span></code> object that validates the config.</p>
+<p>This combines all <code class="xref py py-attr docutils literal notranslate"><span class="pre">extend_config_schema</span></code> defined in all
+base classes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.populate_dir">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">populate_dir</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dirpath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">create</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">force</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dry_run</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.populate_dir"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.populate_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Populate <code class="xref py py-obj docutils literal notranslate"><span class="pre">dirpath</span></code> with the defined items.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>dirpath</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>, str</span></dt><dd><p>The path to the work directory.</p>
+</dd>
+<dt><strong>create</strong><span class="classifier">bool</span></dt><dd><p>When set to False, raise <code class="xref py py-obj docutils literal notranslate"><span class="pre">DirConfigError</span></code> if <code class="xref py py-obj docutils literal notranslate"><span class="pre">path</span></code> does not
+already have all content items. Otherwise, create the missing ones.</p>
+</dd>
+<dt><strong>force</strong><span class="classifier">bool</span></dt><dd><p>When False, raise <code class="xref py py-obj docutils literal notranslate"><span class="pre">DirConfigError</span></code> if <code class="xref py py-obj docutils literal notranslate"><span class="pre">dirpath</span></code> is not empty</p>
+</dd>
+<dt><strong>overwrite</strong><span class="classifier">bool</span></dt><dd><p>When False, backups for existing files is created.</p>
+</dd>
+<dt><strong>dry_run</strong><span class="classifier">bool</span></dt><dd><p>If True, no actual file system changed is made.</p>
+</dd>
+<dt><strong>kwargs</strong><span class="classifier">dict</span></dt><dd><p>Keyword arguments passed directly into the created
+config file.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.to_dict">
+<code class="sig-name descname"><span class="pre">to_dict</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.to_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.to_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a dict representation of the contents.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.validate_config">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">validate_config</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.validate_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.validate_config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="tollan.utils.dirconf.DirConfMixin.write_config_to_yaml">
+<em class="property"><span class="pre">classmethod</span> </em><code class="sig-name descname"><span class="pre">write_config_to_yaml</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/dirconf.html#DirConfMixin.write_config_to_yaml"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.dirconf.DirConfMixin.write_config_to_yaml" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">DirConfMixin</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/api/tollan.utils.dirconf.DirConfMixin.rst.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
+  </p>
+</footer>
+  </body>
+</html>

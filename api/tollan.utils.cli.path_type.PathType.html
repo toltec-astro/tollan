@@ -1,0 +1,146 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PathType &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="TableDef" href="tollan.utils.db.TableDef.html" />
+    <link rel="prev" title="MultiActionArgumentParser" href="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li class="right">
+	<a href="tollan.utils.db.TableDef.html" title="TableDef">
+	  next &raquo;
+	</a>
+      </li>
+      <li class="right">
+	<a href="tollan.utils.cli.multi_action_argparser.MultiActionArgumentParser.html" title="MultiActionArgumentParser">
+	  &laquo; previous
+	</a>
+	 |
+      </li>
+      <li>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
+	 &#187;
+      </li>
+      
+      <li>PathType</li> 
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pathtype">
+<h1>PathType<a class="headerlink" href="#pathtype" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="tollan.utils.cli.path_type.PathType">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">tollan.utils.cli.path_type.</span></code><code class="sig-name descname"><span class="pre">PathType</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'file'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/cli/path_type.html#PathType"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.cli.path_type.PathType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A class that facilitates path-like argument for <code class="xref py py-obj docutils literal notranslate"><span class="pre">Argument</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>exists</strong><span class="classifier">bool or None</span></dt><dd><p>If True or False, ensure the path exists or not exists.</p>
+</dd>
+<dt><strong>type_</strong><span class="classifier">str, callable, optional</span></dt><dd><p>The type of the path, can be one of “file”, “dir”, “symlink” or
+a predicate function. It set, the type is enforced.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Methods Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.cli.path_type.PathType.__call__" title="tollan.utils.cli.path_type.PathType.__call__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code></a>(arg)</p></td>
+<td><p>Call self as a function.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods Documentation</p>
+<dl class="py method">
+<dt id="tollan.utils.cli.path_type.PathType.__call__">
+<code class="sig-name descname"><span class="pre">__call__</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arg</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/cli/path_type.html#PathType.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.cli.path_type.PathType.__call__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+<ul>
+<li><a class="reference internal" href="#">PathType</a></li>
+</ul>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right">
+    <a href="../_sources/api/tollan.utils.cli.path_type.PathType.rst.txt"
+       rel="nofollow">Page Source</a> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
+  </p>
+</footer>
+  </body>
+</html>

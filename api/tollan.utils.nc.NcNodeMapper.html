@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>NcNodeMapper &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NcNodeMapper &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/sidebar.js"></script>
     <script type="text/javascript" src="../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
@@ -59,7 +60,7 @@
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
       
@@ -77,9 +78,32 @@
 <h1>NcNodeMapper<a class="headerlink" href="#ncnodemapper" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="tollan.utils.nc.NcNodeMapper">
-<em class="property">class </em><code class="sig-prename descclassname">tollan.utils.nc.</code><code class="sig-name descname">NcNodeMapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nc</span></em>, <em class="sig-param"><span class="n">map_</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.8)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">tollan.utils.nc.</span></code><code class="sig-name descname"><span class="pre">NcNodeMapper</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nc_node_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/contextlib.html#contextlib.ExitStack" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">contextlib.ExitStack</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">tollan.utils.nc.NcNodeMapperMixin</span></code></p>
 <p>A adaptor class that accesses netCDF4 dataset with a custom name map.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>source</strong><span class="classifier">str, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">netCDF4.Dataset</span></code></span></dt><dd><p>The netCDF file location or netCDF dataset.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Attributes Summary</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.file_loc" title="tollan.utils.nc.NcNodeMapper.file_loc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">file_loc</span></code></a></p></td>
+<td><p>The opened file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.logger" title="tollan.utils.nc.NcNodeMapper.logger"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods Summary</p>
 <table class="longtable docutils align-default">
 <colgroup>
@@ -87,62 +111,65 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.get" title="tollan.utils.nc.NcNodeMapper.get"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get</span></code></a>(self, k)</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.open" title="tollan.utils.nc.NcNodeMapper.open"><code class="xref py py-obj docutils literal notranslate"><span class="pre">open</span></code></a>(source, **kwargs)</p></td>
+<td><p>Return a context to operate on <code class="xref py py-obj docutils literal notranslate"><span class="pre">source</span></code>.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.getdim" title="tollan.utils.nc.NcNodeMapper.getdim"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getdim</span></code></a>(self, k)</p></td>
-<td><p></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.set_nc_node" title="tollan.utils.nc.NcNodeMapper.set_nc_node"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_nc_node</span></code></a>(nc_node)</p></td>
+<td><p>Set the node to map.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.getscalar" title="tollan.utils.nc.NcNodeMapper.getscalar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getscalar</span></code></a>(self, k)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.getstr" title="tollan.utils.nc.NcNodeMapper.getstr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getstr</span></code></a>(self, k)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.getvar" title="tollan.utils.nc.NcNodeMapper.getvar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">getvar</span></code></a>(self, k)</p></td>
-<td><p></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.hasvar" title="tollan.utils.nc.NcNodeMapper.hasvar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hasvar</span></code></a>(self, \*ks)</p></td>
-<td><p></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.nc.NcNodeMapper.sync" title="tollan.utils.nc.NcNodeMapper.sync"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sync</span></code></a>()</p></td>
+<td><p>Sync the underlying file.</p></td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Attributes Documentation</p>
+<dl class="py attribute">
+<dt id="tollan.utils.nc.NcNodeMapper.file_loc">
+<code class="sig-name descname"><span class="pre">file_loc</span></code><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.file_loc" title="Permalink to this definition">¶</a></dt>
+<dd><p>The opened file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="tollan.utils.nc.NcNodeMapper.logger">
+<code class="sig-name descname"><span class="pre">logger</span></code><em class="property"> <span class="pre">=</span> <span class="pre">&lt;Logger</span> <span class="pre">NcNodeMapper</span> <span class="pre">(WARNING)&gt;</span></em><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
-<dt id="tollan.utils.nc.NcNodeMapper.get">
-<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">k</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.get" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="tollan.utils.nc.NcNodeMapper.open">
+<code class="sig-name descname"><span class="pre">open</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.open"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a context to operate on <code class="xref py py-obj docutils literal notranslate"><span class="pre">source</span></code>.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl>
+<dt><strong>source</strong><span class="classifier">str, <a class="reference external" href="https://docs.python.org/3/library/pathlib.html#pathlib.Path" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">FileLoc</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">netCDF4.Dataset</span></code></span></dt><dd><p>The netCDF file location or netCDF dataset.</p>
+</dd>
+<dt><strong>**kwargs :</strong></dt><dd><p>The keyword arguments passed to <code class="xref py py-obj docutils literal notranslate"><span class="pre">netCDF4.Dataset</span></code> constructor.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
-<dt id="tollan.utils.nc.NcNodeMapper.getdim">
-<code class="sig-name descname">getdim</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">k</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.getdim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.getdim" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="tollan.utils.nc.NcNodeMapper.set_nc_node">
+<code class="sig-name descname"><span class="pre">set_nc_node</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nc_node</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.set_nc_node"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.set_nc_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the node to map.</p>
+<p>This assumes the <code class="xref py py-obj docutils literal notranslate"><span class="pre">nc_node</span></code> is an externally opened dataset.</p>
+</dd></dl>
 
 <dl class="py method">
-<dt id="tollan.utils.nc.NcNodeMapper.getscalar">
-<code class="sig-name descname">getscalar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">k</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.getscalar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.getscalar" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="tollan.utils.nc.NcNodeMapper.getstr">
-<code class="sig-name descname">getstr</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">k</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.getstr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.getstr" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="tollan.utils.nc.NcNodeMapper.getvar">
-<code class="sig-name descname">getvar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">k</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.getvar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.getvar" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="tollan.utils.nc.NcNodeMapper.hasvar">
-<code class="sig-name descname">hasvar</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">\*ks</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.hasvar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.hasvar" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dt id="tollan.utils.nc.NcNodeMapper.sync">
+<code class="sig-name descname"><span class="pre">sync</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/nc.html#NcNodeMapper.sync"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.nc.NcNodeMapper.sync" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sync the underlying file.</p>
+</dd></dl>
 
 </dd></dl>
 
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -163,9 +190,9 @@
        rel="nofollow">Page Source</a> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

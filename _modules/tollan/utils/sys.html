@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.sys &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/sidebar.js"></script>
+    <script type="text/javascript" src="../../../_static/copybutton.js"></script>
+    <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
+
+  </head><body>
+<div class="topbar">
+  <a class="brand" title="Documentation Home" href="../../../index.html"><span id="logotext1">Tollan</span><span id="logotext2"></span><span id="logotext3">:docs</span></a>
+  <ul>
+    
+    <li><a class="homelink" title="Astropy Homepage" href="http://www.astropy.org"></a></li>
+    <li><a title="General Index" href="../../../genindex.html">Index</a></li>
+    <li><a title="Module Index" href="../../../py-modindex.html">Modules</a></li>
+    <li>
+      
+      
+<form action="../../../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+      
+    </li>
+  </ul>
+</div>
+
+<div class="related">
+    <h3>Navigation</h3>
+    <ul>
+      <li>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
+	 &#187;
+      </li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
+      
+       
+    </ul>
+</div>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tollan.utils.sys</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">appdirs</span>
+<span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_hostname&#39;</span><span class="p">,</span> <span class="s1">&#39;touch_file&#39;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="get_hostname"><a class="viewcode-back" href="../../../api/tollan.utils.sys.get_hostname.html#tollan.utils.sys.get_hostname">[docs]</a><span class="k">def</span> <span class="nf">get_hostname</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Same as the shell command `hostname`&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">socket</span><span class="o">.</span><span class="n">gethostname</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="touch_file"><a class="viewcode-back" href="../../../api/tollan.utils.sys.touch_file.html#tollan.utils.sys.touch_file">[docs]</a><span class="k">def</span> <span class="nf">touch_file</span><span class="p">(</span><span class="n">out_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Same as the shell command `touch`.&quot;&quot;&quot;</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">out_file</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_or_create_dir</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">on_exist</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">on_create</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ensure the `dirpath` exists.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ==========</span>
+<span class="sd">    dirpath : `pathlib.Path`, str</span>
+<span class="sd">        The path of the directory.</span>
+<span class="sd">    on_exist : callable, optional</span>
+<span class="sd">        If set, called if `dirpath` exists already.</span>
+<span class="sd">    on_create : callable, optional</span>
+<span class="sd">        If set, called if `dirpath` is created.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dirpath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">dirpath</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">on_exist</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">on_exist</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dirpath</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">on_create</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">on_create</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dirpath</span>
+
+
+<span class="k">def</span> <span class="nf">get_user_data_dir</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Return the directory for saving user data.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">appdirs</span><span class="o">.</span><span class="n">user_data_dir</span><span class="p">(</span><span class="s1">&#39;tollan&#39;</span><span class="p">,</span> <span class="s1">&#39;toltec&#39;</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">parse_systemd_envfile</span><span class="p">(</span><span class="n">filepath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse systemd environment file into a dict.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">ln</span> <span class="ow">in</span> <span class="n">fo</span><span class="o">.</span><span class="n">readlines</span><span class="p">():</span>
+            <span class="n">ln</span> <span class="o">=</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">ln</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span> <span class="ow">or</span> <span class="n">ln</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="o">.</span><span class="n">strip</span><span class="p">,</span> <span class="n">ln</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="k">def</span> <span class="nf">find_parent_package_path</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">package_name</span><span class="p">,</span> <span class="n">add_to_sys_path</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the path of parent package of `package_name` of `filepath`.</span>
+
+<span class="sd">    This works by traversing up the file tree and looking for the first</span>
+<span class="sd">    path which has the sub-path matches `package_name`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">filepath</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+    <span class="n">subpath</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">subpath</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">package_name</span><span class="p">):</span>
+        <span class="n">subpath</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">filepath</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">subpath</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="n">filepath</span> <span class="o">==</span> <span class="n">filepath</span><span class="o">.</span><span class="n">parent</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unable to locate package in file tree.&quot;</span><span class="p">)</span>
+        <span class="n">filepath</span> <span class="o">=</span> <span class="n">filepath</span><span class="o">.</span><span class="n">parent</span>
+    <span class="k">if</span> <span class="n">add_to_sys_path</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">filepath</span><span class="o">.</span><span class="n">as_posix</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">filepath</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+<footer class="footer">
+  <p class="pull-right"> &nbsp;
+    <a href="#">Back to Top</a></p>
+  <p>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
+  </p>
+</footer>
+  </body>
+</html>

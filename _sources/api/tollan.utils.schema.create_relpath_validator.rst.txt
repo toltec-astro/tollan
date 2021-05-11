@@ -1,0 +1,6 @@
+create_relpath_validator
+========================
+
+.. currentmodule:: tollan.utils.schema
+
+.. autofunction:: create_relpath_validator

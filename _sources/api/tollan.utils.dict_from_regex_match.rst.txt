@@ -1,0 +1,6 @@
+dict_from_regex_match
+=====================
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: dict_from_regex_match

@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.np &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.np &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
@@ -46,10 +47,11 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
-      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
       
        
     </ul>
@@ -71,8 +73,20 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;flex_reshape&#39;</span><span class="p">,</span> <span class="p">]</span>
 
 
-<div class="viewcode-block" id="flex_reshape"><a class="viewcode-back" href="../../../api/tollan.utils.np.flex_reshape.html#tollan.utils.np.flex_reshape">[docs]</a><span class="k">def</span> <span class="nf">flex_reshape</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Reshape an array with possible trimming of extraneous items.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="flex_reshape"><a class="viewcode-back" href="../../../api/tollan.utils.np.flex_reshape.html#tollan.utils.np.flex_reshape">[docs]</a><span class="k">def</span> <span class="nf">flex_reshape</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">trim_option</span><span class="o">=</span><span class="s1">&#39;end&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Reshape an array with possible trimming of extraneous items.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arr : `numpy.ndarray`</span>
+<span class="sd">        The array to reshape</span>
+
+<span class="sd">    shape : tuple</span>
+<span class="sd">        The new shape.</span>
+
+<span class="sd">    trim_option : str:</span>
+<span class="sd">        The way to trim the original shape, can be one of &quot;start&quot; or &quot;end&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">()</span>
     <span class="n">shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
     <span class="k">if</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">in</span> <span class="n">shape</span><span class="p">:</span>
@@ -84,9 +98,27 @@
         <span class="n">shape</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">iauto</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">size</span> <span class="o">//</span> <span class="n">n</span><span class="p">)</span>
     <span class="n">n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
     <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;flex reshape </span><span class="si">{</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">arr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[:</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span></div>
+    <span class="k">if</span> <span class="n">trim_option</span> <span class="o">==</span> <span class="s1">&#39;end&#39;</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">trim_option</span> <span class="o">==</span> <span class="s1">&#39;start&#39;</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="o">-</span><span class="n">n</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid trim option.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">arr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">to_complex</span><span class="p">(</span><span class="n">real_part</span><span class="p">,</span> <span class="n">imag_part</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create complex array from the real and imaginary parts.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">real_part</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">imag_part</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;real and imaginary parts have to be of the same shape.&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">real_part</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">real</span> <span class="o">=</span> <span class="n">real_part</span>
+    <span class="n">result</span><span class="o">.</span><span class="n">imag</span> <span class="o">=</span> <span class="n">imag_part</span>
+    <span class="k">return</span> <span class="n">result</span>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -102,9 +134,9 @@
   <p class="pull-right"> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

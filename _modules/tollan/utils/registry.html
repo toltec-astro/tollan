@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>tollan.utils.registry &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.registry &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
     <script src="../../../_static/jquery.js"></script>
     <script src="../../../_static/underscore.js"></script>
     <script src="../../../_static/doctools.js"></script>
-    <script src="../../../_static/language_data.js"></script>
     <script type="text/javascript" src="../../../_static/sidebar.js"></script>
     <script type="text/javascript" src="../../../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../../../_static/astropy_logo.ico"/>
@@ -46,10 +47,11 @@
     <h3>Navigation</h3>
     <ul>
       <li>
-	<a href="../../../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../../../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
-      <li><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+      <li><a href="../../index.html" >Module code</a> &#187;</li>
+      <li><a href="../utils.html" accesskey="U">tollan.utils</a> &#187;</li>
       
        
     </ul>
@@ -90,10 +92,36 @@
     <span class="sd">&quot;&quot;&quot;Register the decorated item with key.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
-        <span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span> <span class="bp">cls</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="n">_key</span> <span class="o">=</span> <span class="n">key</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="n">registry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">_key</span><span class="p">,</span> <span class="bp">cls</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span>
 
     <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<span class="k">def</span> <span class="nf">register_method_to</span><span class="p">(</span><span class="n">registry</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+
+    <span class="n">register_to_decorator</span> <span class="o">=</span> <span class="n">register_to</span><span class="p">(</span><span class="n">registry</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">decorator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+
+            <span class="n">register_to_decorator</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+
+        <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span>
+
+        <span class="nd">@property</span>
+        <span class="k">def</span> <span class="nf">__isabstractmethod__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="s2">&quot;__isabstractmethod__&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorator</span>
 
 
 <div class="viewcode-block" id="Registry"><a class="viewcode-back" href="../../../api/tollan.utils.registry.Registry.html#tollan.utils.registry.Registry">[docs]</a><span class="k">class</span> <span class="nc">Registry</span><span class="p">(</span><span class="n">wrapt</span><span class="o">.</span><span class="n">ObjectProxy</span><span class="p">,</span> <span class="n">RegistryMixin</span><span class="p">):</span>
@@ -106,6 +134,7 @@
         <span class="k">return</span> <span class="n">Registry</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__wrapped__</span><span class="p">))</span></div>
 </pre></div>
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -121,9 +150,9 @@
   <p class="pull-right"> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

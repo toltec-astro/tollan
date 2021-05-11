@@ -1,0 +1,7 @@
+FileLoc
+=======
+
+.. currentmodule:: tollan.utils
+
+.. autoclass:: FileLoc
+   :show-inheritance:

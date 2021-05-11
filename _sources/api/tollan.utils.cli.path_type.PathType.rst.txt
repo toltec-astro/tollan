@@ -1,0 +1,17 @@
+PathType
+========
+
+.. currentmodule:: tollan.utils.cli.path_type
+
+.. autoclass:: PathType
+   :show-inheritance:
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~PathType.__call__
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: __call__

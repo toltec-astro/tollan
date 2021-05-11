@@ -4,23 +4,23 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>file_uri_to_path &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>make_nested_optional_defaults &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/sidebar.js"></script>
     <script type="text/javascript" src="../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="getobj" href="tollan.utils.getobj.html" />
-    <link rel="prev" title="ensure_prefix" href="tollan.utils.ensure_prefix.html" />
+    <link rel="prev" title="create_relpath_validator" href="tollan.utils.schema.create_relpath_validator.html" />
     <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:200,600' rel='stylesheet' type='text/css'/>
 
   </head><body>
@@ -48,22 +48,17 @@
     <h3>Navigation</h3>
     <ul>
       <li class="right">
-	<a href="tollan.utils.getobj.html" title="getobj">
-	  next &raquo;
-	</a>
-      </li>
-      <li class="right">
-	<a href="tollan.utils.ensure_prefix.html" title="ensure_prefix">
+	<a href="tollan.utils.schema.create_relpath_validator.html" title="create_relpath_validator">
 	  &laquo; previous
 	</a>
-	 |
+	
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
       
-      <li>file_uri_to_path</li> 
+      <li>make_nested_optional_defaults</li> 
     </ul>
 </div>
   
@@ -73,22 +68,17 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="file-uri-to-path">
-<h1>file_uri_to_path<a class="headerlink" href="#file-uri-to-path" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="make-nested-optional-defaults">
+<h1>make_nested_optional_defaults<a class="headerlink" href="#make-nested-optional-defaults" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
-<dt id="tollan.utils.file_uri_to_path">
-<code class="sig-prename descclassname">tollan.utils.</code><code class="sig-name descname">file_uri_to_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_uri</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/misc.html#file_uri_to_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.file_uri_to_path" title="Permalink to this definition">¶</a></dt>
-<dd><p>This function returns a pathlib.PurePath object for the supplied file URI.</p>
-<dl class="field-list simple">
+<dt id="tollan.utils.schema.make_nested_optional_defaults">
+<code class="sig-prename descclassname"><span class="pre">tollan.utils.schema.</span></code><code class="sig-name descname"><span class="pre">make_nested_optional_defaults</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/schema.html#make_nested_optional_defaults"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.schema.make_nested_optional_defaults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a schema that has optional defaults computed from nested schema.</p>
+<p>All the optionals in the subschemas have to have defaults.</p>
+<dl class="field-list">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>file_uri</strong><span class="classifier">str</span></dt><dd><p>The file URI.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>Path</dt><dd><p>The path the URI refers to.</p>
+<dd class="field-odd"><dl>
+<dt><strong>s</strong><span class="classifier"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schema.Schema</span></code> or dict</span></dt><dd><p>The default schema to render</p>
 </dd>
 </dl>
 </dd>
@@ -98,13 +88,14 @@
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper"><h3>Page Contents</h3>
 <ul>
-<li><a class="reference internal" href="#">file_uri_to_path</a></li>
+<li><a class="reference internal" href="#">make_nested_optional_defaults</a></li>
 </ul>
 
 
@@ -114,13 +105,13 @@
     </div>
 <footer class="footer">
   <p class="pull-right">
-    <a href="../_sources/api/tollan.utils.file_uri_to_path.rst.txt"
+    <a href="../_sources/api/tollan.utils.schema.make_nested_optional_defaults.rst.txt"
        rel="nofollow">Page Source</a> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

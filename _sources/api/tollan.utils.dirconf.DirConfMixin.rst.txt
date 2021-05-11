@@ -1,0 +1,39 @@
+DirConfMixin
+============
+
+.. currentmodule:: tollan.utils.dirconf
+
+.. autoclass:: DirConfMixin
+   :show-inheritance:
+
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~DirConfMixin.logger
+
+   .. rubric:: Methods Summary
+
+   .. autosummary::
+
+      ~DirConfMixin.collect_config_files
+      ~DirConfMixin.collect_config_from_files
+      ~DirConfMixin.get_config_schema
+      ~DirConfMixin.populate_dir
+      ~DirConfMixin.to_dict
+      ~DirConfMixin.validate_config
+      ~DirConfMixin.write_config_to_yaml
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: logger
+
+   .. rubric:: Methods Documentation
+
+   .. automethod:: collect_config_files
+   .. automethod:: collect_config_from_files
+   .. automethod:: get_config_schema
+   .. automethod:: populate_dir
+   .. automethod:: to_dict
+   .. automethod:: validate_config
+   .. automethod:: write_config_to_yaml

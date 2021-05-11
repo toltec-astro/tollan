@@ -4,16 +4,17 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>BoundedSliceChain &#8212; tollan v0.1.dev28+gd7893e3</title>
-    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoundedSliceChain &#8212; tollan v0.1.dev60+g2bdd3e3.d20210511</title>
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-astropy.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
     
     <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
-    <script src="../_static/language_data.js"></script>
     <script type="text/javascript" src="../_static/sidebar.js"></script>
     <script type="text/javascript" src="../_static/copybutton.js"></script>
     <link rel="shortcut icon" href="../_static/astropy_logo.ico"/>
@@ -59,7 +60,7 @@
 	 |
       </li>
       <li>
-	<a href="../index.html">tollan v0.1.dev28+gd7893e3</a>
+	<a href="../index.html">tollan v0.1.dev60+g2bdd3e3.d20210511</a>
 	 &#187;
       </li>
       
@@ -77,7 +78,7 @@
 <h1>BoundedSliceChain<a class="headerlink" href="#boundedslicechain" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt id="tollan.utils.slice.BoundedSliceChain">
-<em class="property">class </em><code class="sig-prename descclassname">tollan.utils.slice.</code><code class="sig-name descname">BoundedSliceChain</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">range_</span></em>, <em class="sig-param"><span class="n">n</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/slice.html#BoundedSliceChain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">tollan.utils.slice.</span></code><code class="sig-name descname"><span class="pre">BoundedSliceChain</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">range_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/slice.html#BoundedSliceChain"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tollan.utils.slice.SliceChain</span></code></p>
 <p>A chain of slices, with known array size.</p>
 <dl class="field-list simple">
@@ -109,10 +110,10 @@
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.slice.BoundedSliceChain.apply" title="tollan.utils.slice.BoundedSliceChain.apply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code></a>(self, arr)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.utils.slice.BoundedSliceChain.apply" title="tollan.utils.slice.BoundedSliceChain.apply"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code></a>(arr)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.slice.BoundedSliceChain.to_slice" title="tollan.utils.slice.BoundedSliceChain.to_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_slice</span></code></a>(self)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.utils.slice.BoundedSliceChain.to_slice" title="tollan.utils.slice.BoundedSliceChain.to_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_slice</span></code></a>()</p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -120,18 +121,18 @@
 <p class="rubric">Attributes Documentation</p>
 <dl class="py attribute">
 <dt id="tollan.utils.slice.BoundedSliceChain.bounded">
-<code class="sig-name descname">bounded</code><em class="property"> = True</em><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain.bounded" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">bounded</span></code><em class="property"> <span class="pre">=</span> <span class="pre">True</span></em><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain.bounded" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <p class="rubric">Methods Documentation</p>
 <dl class="py method">
 <dt id="tollan.utils.slice.BoundedSliceChain.apply">
-<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">arr</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/slice.html#BoundedSliceChain.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain.apply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">apply</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">arr</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/slice.html#BoundedSliceChain.apply"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain.apply" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt id="tollan.utils.slice.BoundedSliceChain.to_slice">
-<code class="sig-name descname">to_slice</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/slice.html#BoundedSliceChain.to_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain.to_slice" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname"><span class="pre">to_slice</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/utils/slice.html#BoundedSliceChain.to_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.utils.slice.BoundedSliceChain.to_slice" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -139,6 +140,7 @@
 </div>
 
 
+            <div class="clearer"></div>
           </div>
         </div>
       </div>
@@ -159,9 +161,9 @@
        rel="nofollow">Page Source</a> &nbsp;
     <a href="#">Back to Top</a></p>
   <p>
-    &copy; Copyright 2020, Zhiyuan Ma.<br/>
-    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.0.3. &nbsp;
-    Last built 03 Jun 2020. <br/>
+    &copy; Copyright 2021, Zhiyuan Ma.<br/>
+    Created using <a href="http://www.sphinx-doc.org/en/stable/">Sphinx</a> 3.5.4. &nbsp;
+    Last built 11 May 2021. <br/>
   </p>
 </footer>
   </body>

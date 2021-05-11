@@ -6,22 +6,28 @@ NcNodeMapper
 .. autoclass:: NcNodeMapper
    :show-inheritance:
 
+   .. rubric:: Attributes Summary
+
+   .. autosummary::
+
+      ~NcNodeMapper.file_loc
+      ~NcNodeMapper.logger
+
    .. rubric:: Methods Summary
 
    .. autosummary::
 
-      ~NcNodeMapper.get
-      ~NcNodeMapper.getdim
-      ~NcNodeMapper.getscalar
-      ~NcNodeMapper.getstr
-      ~NcNodeMapper.getvar
-      ~NcNodeMapper.hasvar
+      ~NcNodeMapper.open
+      ~NcNodeMapper.set_nc_node
+      ~NcNodeMapper.sync
+
+   .. rubric:: Attributes Documentation
+
+   .. autoattribute:: file_loc
+   .. autoattribute:: logger
 
    .. rubric:: Methods Documentation
 
-   .. automethod:: get
-   .. automethod:: getdim
-   .. automethod:: getscalar
-   .. automethod:: getstr
-   .. automethod:: getvar
-   .. automethod:: hasvar
+   .. automethod:: open
+   .. automethod:: set_nc_node
+   .. automethod:: sync

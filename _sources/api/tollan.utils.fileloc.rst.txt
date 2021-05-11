@@ -1,0 +1,6 @@
+fileloc
+=======
+
+.. currentmodule:: tollan.utils
+
+.. autofunction:: fileloc

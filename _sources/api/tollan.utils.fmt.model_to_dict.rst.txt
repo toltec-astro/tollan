@@ -1,0 +1,6 @@
+model_to_dict
+=============
+
+.. currentmodule:: tollan.utils.fmt
+
+.. autofunction:: model_to_dict
