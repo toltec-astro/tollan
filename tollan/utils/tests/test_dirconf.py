@@ -39,7 +39,7 @@ class SimpleDirConf(DirConfMixin):
 def test_dirconf_mixin():
     # collect config
     with tempfile.TemporaryDirectory() as tmp:
-        tmp = Path(tmp)
+        tmp = Path(tmp).resolve()
         with open(tmp / '00_a.yaml', 'w') as fa, \
                 open(tmp / '10_b.yaml', 'w') as fb:
             fa.write('''
@@ -90,7 +90,7 @@ d: 'test'
 
 def test_dirconf_simple():
     with tempfile.TemporaryDirectory() as tmp:
-        tmp = Path(tmp)
+        tmp = Path(tmp).resolve()
         dc = SimpleDirConf(tmp, create=True)
         assert dc.rootpath == tmp
         assert dc.to_dict() == {
@@ -153,6 +153,6 @@ d: 'test'
         next(iter(dc.rootpath.glob('00_a.yaml.*'))).rename(tmp / 'a_removed')
         assert SimpleDirConf(
             dc.rootpath,
-            create=True, force=True, overwrite=False, dry_run=False)
+            create=True, force=True, overwrite=True, dry_run=False)
         # no new backup is created
         assert len(list(dc.rootpath.glob('00_a.yaml.*'))) == 0
