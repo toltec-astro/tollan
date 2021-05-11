@@ -172,7 +172,7 @@ class DirConfMixin(object):
             rupdate(d, s)
         return Schema(d)
 
-    _config_yaml_dumper = _make_config_yaml_dumper()
+    yaml_dumper = _make_config_yaml_dumper()
 
     @classmethod
     def write_config_to_yaml(cls, config, filepath, overwrite=False):
@@ -182,7 +182,7 @@ class DirConfMixin(object):
                         "cannot write config to exist file. "
                         "Re-run with overwrite=True to proceed.")
         with open(filepath, 'w') as fo:
-            yaml.dump(config, fo, Dumper=cls._config_yaml_dumper)
+            yaml.dump(config, fo, Dumper=cls.yaml_dumper)
 
     @classmethod
     def _create_backup(cls, path, dry_run=False):
@@ -229,7 +229,7 @@ class DirConfMixin(object):
             config file.
         """
 
-        dirpath = Path(dirpath)
+        dirpath = Path(dirpath).resolve()
         # validate dirpath
         path_is_ok = False
         if dirpath.exists():
@@ -262,24 +262,25 @@ class DirConfMixin(object):
             backup_enabled = cls._contents[item]['backup_enabled']
             if path.exists():
                 if overwrite:
-                    cls.logger.debug(f"overwrite existing {item} {path}")
+                    cls.logger.debug(f"use existing {item} {path}")
+                    return path
                 elif backup_enabled:
                     cls.logger.debug(f"backup existing {item} {path}")
                     cls._create_backup(path, dry_run=dry_run)
                 else:
-                    # just always overwrite if not set to backup
-                    pass
-            else:
-                with logit(cls.logger.debug, f"create {item} {path}"):
-                    if not dry_run:
-                        type_ = cls._contents[item]['type']
-                        if type_ == 'dir':
+                    # just always use existing if not set to backup
+                    return path
+            with logit(cls.logger.debug, f"create {item} {path}"):
+                if not dry_run:
+                    type_ = cls._contents[item]['type']
+                    if type_ == 'dir':
+                        if not path.exists():
                             path.mkdir(parents=True, exist_ok=False)
-                        elif type_ == 'file':
-                            touch_file(path)
-                        else:
-                            # should not happen
-                            raise ValueError(f"unknown {item} type")
+                    elif type_ == 'file':
+                        touch_file(path)
+                    else:
+                        # should not happen
+                        raise ValueError(f"unknown {item} type")
 
         for item in cls._contents.keys():
             content_path = cls._resolve_content_path(dirpath, item)
