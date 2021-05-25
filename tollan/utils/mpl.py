@@ -10,13 +10,14 @@ import matplotlib
 
 matplotlib.use('Qt5Agg')  # noqa
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.backends.backend_qt5agg import \
-        FigureCanvasQTAgg as FigureCanvas
+    FigureCanvasQTAgg as FigureCanvas  # noqa: E402
 from matplotlib.backends.backend_qt5agg import \
-        NavigationToolbar2QT as NavigationToolbar
+    NavigationToolbar2QT as NavigationToolbar  # noqa: E402
 
-from .qt import qt5app
+
+from .qt import qt5app  # noqa: E402
 
 
 __all__ = ['save_or_show', ]
@@ -81,6 +82,7 @@ def save_or_show(fig, filepath,
             dpi='figure',
             format=Path(filepath).suffix.lstrip('.'), **kwargs)
         logger.info('figure saved: {0}'.format(filepath))
+        plt.close()
     else:
         if window_type == 'default':
             plt.show()
