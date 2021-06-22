@@ -87,7 +87,13 @@ def init_log(
 
     """
     config = copy.deepcopy(presets[preset])
-    rupdate(config, {'loggers': {'': {'level': level}}})
+    rupdate(
+            config,
+            {'loggers':
+                {
+                    '': {'level': level},
+                    'root': {'level': level},
+                    }})
     if file_ is not None:
         rupdate(config, {
             'handlers': {'logfile': {
@@ -96,7 +102,10 @@ def init_log(
                     'filename': file_
                     },
                 },
-            'loggers': {'': {'handlers': ['logfile', ]}},
+            'loggers': {
+                '': {'handlers': ['logfile', ]},
+                'root': {'handlers': ['logfile', ]},
+                },
             })
     if colored:
         rupdate(config, console_color.config)
