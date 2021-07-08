@@ -5,6 +5,7 @@ import pyaml
 import textwrap
 import numpy as np
 import math
+from wrapt import ObjectProxy
 # from astropy.modeling import Model
 
 
@@ -130,6 +131,8 @@ def pformat_obj(m):
 
 
 def pformat_yaml(obj):
+    if isinstance(obj, ObjectProxy):
+        obj = obj.__wrapped__
     return f"\n{pyaml.dump(obj)}"
 
 
