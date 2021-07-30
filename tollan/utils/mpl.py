@@ -20,7 +20,7 @@ from matplotlib.backends.backend_qt5agg import \
 from .qt import qt5app  # noqa: E402
 
 
-__all__ = ['save_or_show', ]
+__all__ = ['save_or_show', 'make_tabular_legend']
 
 
 class ScrollableMplWindow(QtWidgets.QMainWindow):
@@ -90,3 +90,40 @@ def save_or_show(fig, filepath,
             ScrollableMplWindow.show_standalone(fig, **kwargs)
         else:
             raise NotImplementedError
+
+
+def make_tabular_legend(
+        ax, handles, *cols,
+        colnames=None, colwidths=5, **kwargs):
+    if set([len(handles)]) != set(map(len, cols)):
+        raise ValueError("all columns need to have the same size")
+
+    if colnames is not None and len(colnames) != len(cols):
+        raise ValueError("size of colnames need to match that of the cols")
+    if isinstance(colwidths, int):
+        colwidths = [colwidths] * len(handles)
+
+    dummy_patch = matplotlib.patches.Rectangle(
+            (1, 1), 1, 1,
+            fill=False, edgecolor='none', visible=False)
+    handles = [dummy_patch, ] + list(handles)
+    labels = []
+    if colnames is not None:
+        label_row = []
+        for colwidth, colname in zip(colwidths, colnames):
+            if isinstance(colname, tuple):
+                name, width = colname
+            else:
+                name = colname
+                width = len(colname)
+            print(name, width, colwidth)
+            label_row.append(' ' * int(width) + name)
+        labels.append(' '.join(label_row))
+    for i, row in enumerate(zip(*cols)):
+        label_row = []
+        for j, value in enumerate(row):
+            fmt = f'{{:>{colwidths[j]}s}}'
+            label_row.append(fmt.format(str(value)))
+        labels.append(' '.join(label_row))
+
+    return ax.legend(handles, labels, **kwargs)

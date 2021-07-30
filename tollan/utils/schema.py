@@ -15,7 +15,7 @@ def create_relpath_validator(rootpath):
     return validate
 
 
-def make_nested_optional_defaults(s):
+def make_nested_optional_defaults(s, return_schema=False):
     """Return a schema that has optional defaults computed from nested schema.
 
     All the optionals in the subschemas have to have defaults.
@@ -24,6 +24,8 @@ def make_nested_optional_defaults(s):
     ----------
     s : `schema.Schema` or dict
         The default schema to render
+    return_schema : bool
+        If true, return `schema.Schema` instead of the dict.
     """
     if isinstance(s, Schema):
         s = s.schema
@@ -54,4 +56,6 @@ def make_nested_optional_defaults(s):
                         make_nested_optional_defaults(v)
         else:
             d_out[k] = v
-    return Schema(d_out)
+    if return_schema:
+        return Schema(d_out)
+    return d_out
