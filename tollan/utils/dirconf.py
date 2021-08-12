@@ -4,6 +4,7 @@ import os
 import re
 import inspect
 import yaml
+from io import StringIO, IOBase
 from datetime import datetime
 from pathlib import PosixPath, Path
 from yaml.dumper import SafeDumper
@@ -175,7 +176,28 @@ class DirConfMixin(object):
     yaml_dumper = _make_config_yaml_dumper()
 
     @classmethod
-    def write_config_to_yaml(cls, config, filepath, overwrite=False):
+    def write_config_to_yaml(cls, config, dest=None):
+        """Write `config` as Yaml to `dest`
+
+        Parameters
+        ----------
+        config : dict
+            The config to write.
+        dest : io.StringIO, optional
+            The object to write to. If None, return the YAML as string.
+        """
+        _dest = dest
+        if dest is None:
+            dest = StringIO()
+        if not isinstance(dest, IOBase):
+            raise ValueError('dest has to be stream object.')
+        yaml.dump(config, dest, Dumper=cls.yaml_dumper)
+        if _dest is None:
+            return dest.getvalue()
+        return dest
+
+    @classmethod
+    def write_config_file(cls, config, filepath, overwrite=False):
         if filepath.exists():
             if not overwrite:
                 raise DirConfError(
