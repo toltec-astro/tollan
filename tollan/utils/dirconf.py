@@ -191,7 +191,7 @@ class DirConfMixin(object):
             dest = StringIO()
         if not isinstance(dest, IOBase):
             raise ValueError('dest has to be stream object.')
-        yaml.dump(config, dest, Dumper=cls.yaml_dumper)
+        yaml.dump(config, dest, Dumper=cls.yaml_dumper, sort_keys=False)
         if _dest is None:
             return dest.getvalue()
         return dest
