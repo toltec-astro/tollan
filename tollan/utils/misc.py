@@ -429,9 +429,12 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
 
 def make_subprocess_env():
     # on mac os the dyld path may not get propagated
-    return {
-            'DYLD_LIBRARY_PATH': os.environ.get('LIBRARY_PATH', "")
+    env = {
+            'DYLD_LIBRARY_PATH': os.environ.get('LIBRARY_PATH', None),
+            'LD_LIBRARY_PATH': os.environ.get('LIBRARY_PATH', None),
+            'PATH': os.environ.get('PATH', None)
             }
+    return {k: v for k, v in env.items() if v is not None}
 
 
 def call_subprocess_with_live_output(cmd):
