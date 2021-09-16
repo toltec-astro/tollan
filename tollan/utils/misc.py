@@ -19,6 +19,11 @@ import os
 _excluded_from_all = set(globals().keys())
 
 
+def ensure_abspath(p):
+    """Return the fully expanded path for `p`."""
+    return Path(p).expanduser().resolve()
+
+
 def getobj(name, *args):
     """Return python object specified by `name`.
 
@@ -367,18 +372,19 @@ def fileloc(loc, local_parent_path=None, remote_parent_path=None):
         if isinstance(p, WindowsPath):
             if h is None or h == '':
                 # local window path
-                return p.expanduser().resolve()
+                return ensure_abspath(p)
             # remote window path
             raise ValueError('fileloc does not support remote windows path')
         if p.is_absolute():
+            # TODO revisit this. may need to resolve anyways
             return p
         # relative path
         # local file
         if h is None or h == '':
             if local_parent_path is not None:
-                return Path(
-                        local_parent_path).joinpath(p).expanduser().resolve()
-            return Path(p).expanduser().resolve()
+                return ensure_abspath(Path(
+                        local_parent_path).joinpath(p))
+            return ensure_abspath(p)
         # remote file
         if remote_parent_path is None or not Path(
                 remote_parent_path).is_absolute():

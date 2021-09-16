@@ -6,83 +6,184 @@ import inspect
 import yaml
 from io import StringIO, IOBase
 from datetime import datetime
-from pathlib import PosixPath, Path
+from pathlib import PosixPath
 from yaml.dumper import SafeDumper
 from schema import Schema
+from dataclasses import dataclass, field
+from enum import Enum, auto
 
 import astropy.units as u
 
 from .log import get_logger, logit
 from .fmt import pformat_yaml
 from .sys import touch_file
-from . import rupdate
+from . import rupdate, ensure_abspath
 
 
-__all__ = ['DirConfError', 'DirConfMixin']
+__all__ = ['DirConfYamlDumper', 'DirConfError', 'DirConfMixin']
 
 
-def _make_config_yaml_dumper():
-
-    class yaml_dumper(SafeDumper):
-        """Yaml dumper that handles some additional types."""
-        pass
-
-    yaml_dumper.add_representer(
-            PosixPath, lambda s, p: s.represent_str(p.as_posix()))
-    yaml_dumper.add_representer(
-            u.Quantity, lambda s, q: s.represent_str(q.to_string()))
-    return yaml_dumper
-
-
-class DirConfError(Exception):
-    """Raise when errors occur in `DirConfig`."""
+class DirConfYamlDumper(SafeDumper):
+    """Yaml dumper that handles common types in config files."""
     pass
 
 
+def _quantity_representer(dumper, q):
+    return dumper.represent_str(q.to_string())
+
+
+def _path_representer(dumper, p):
+    return dumper.represent_str(p.as_posix())
+
+
+DirConfYamlDumper.add_representer(u.Quantity, _quantity_representer)
+DirConfYamlDumper.add_representer(PosixPath, _path_representer)
+
+
+class DirConfError(Exception):
+    """Raise when errors occur in `DirConfMixin`."""
+    pass
+
+
+class DirConfPathType(Enum):
+    """The types of item paths used by `DirConf`."""
+    FILE = auto()
+    DIR = auto()
+
+
+@dataclass
+class DirConfPath(object):
+    """Item path in `DirConf`."""
+
+    label: str
+    """A descriptive name of the path"""
+
+    path_name: str
+    """The name of the path."""
+
+    path_type: DirConfPathType
+    """The type of the path, one of the types in `DirConfPathType`."""
+
+    backup_enabled: bool = False
+    """If True, the item is backed up automatically."""
+
+    _backup_timestamp_fmt: str = field(default="%Y%m%dT%H%M%S", repr=False)
+    """The suffix timestamp str to use for backup file."""
+
+    def resolve_path(self, rootpath):
+        """Return the path prefixed by `rootpath`."""
+        return rootpath.joinpath(self.path_name)
+
+    def rename_as_backup(self, rootpath, dry_run=False):
+        """
+        Rename the path for backup.
+
+        Parameters
+        ----------
+        rootpath : `pathlib.Path`
+            The rootpath to resolve the actual filepath.
+        dry_run : bool
+            If True, no actual rename is done.
+        """
+        logger = get_logger()
+        path = self.resolve_path(rootpath)
+        if not path.exists():
+            raise DirConfError(f'cannot backup non-exists file {path}.')
+        timestamp = datetime.fromtimestamp(
+            path.lstat().st_mtime).strftime(
+                self._backup_timestamp_fmt)
+        backup_path = path.with_name(
+                f"{path.name}.{timestamp}"
+                )
+        with logit(logger.info, f"backup {path} -> {backup_path}"):
+            if not dry_run:
+                os.rename(path, backup_path)
+        return backup_path
+
+    def create(self, rootpath, overwrite, dry_run):
+        """
+        Create this item in `rootpath`.
+
+        Parameters
+        ----------
+        rootpath : `pathlib.Path`
+            The rootpath to resolve the actual filepath.
+        overwrite : bool
+            If True, existing file is overwritten. Otherwise the
+            `backup_enabled` attribute is consulted.
+        dry_run : bool
+            If True, no actual rename is done.
+        """
+        logger = get_logger()
+        path = self.resolve_path(rootpath)
+        item = self.label
+        if path.exists():
+            if overwrite:
+                logger.debug(f"use existing {item} {path}")
+                return path
+            elif self.backup_enabled:
+                logger.debug(f"backup existing {item} {path}")
+                self.rename_as_backup(rootpath, dry_run=dry_run)
+            else:
+                # just always use existing if not set to backup
+                return path
+        with logit(logger.debug, f"create {item} {path}"):
+            if not dry_run:
+                type_ = self.path_type
+                if type_ is DirConfPathType.DIR:
+                    if not path.exists():
+                        path.mkdir(parents=True, exist_ok=False)
+                elif type_ is DirConfPathType.FILE:
+                    touch_file(path)
+                else:
+                    # should not happen
+                    raise ValueError(f"unknown {item} type")
+        return path
+
+
 class DirConfMixin(object):
-    """A mix-in class for managing configuration files stored in a directory.
+    """A mixin class to manage contents and config files of a directory.
 
-    The class implements the logic to setup a directory and
-    populate a set of pre-defined items.
+    The `DirConfMixin` implements the logic to setup a directory with
+    pre-defined contents and manage config files within.
 
-    The class manages a set of configuration files recognized by the
-    `_config_file_pattern`, provides methods to load and merge the
-    configuration in memory.
+    The path of the contents can be accessed via instance attributes
+    as defined in the `_content` dict.
 
-    The mix-in class expects the following class attributes from the
+    The config files are recognized by the `_config_file_pattern` class
+    attribute, and :meth:`collect_config_from_files` can be used to read the
+    config from the files and combine them into a single config dict object.
+    By default, files with names like `10_some_thing.yaml` are recognized
+    as config files.
+
+    The mixin class expects the following class attributes from the
     instrumenting class:
 
     * ``_contents``
 
-        A dictionary ``{<attr>: dict}`` that defines
-        the content of the directory generated `populate_dir`.
-        The dict for each attr should have the following keys:
-
-        - ``path``: The path name.
-        - ``type``: one of ``file`` or ``dir``
-        - ``backup_enabled``: True or False.
+        A dictionary ``{<attr>: DirConfPath}`` that defines
+        the content of the directory generated by `populate_dir`.
 
     The mix-in class also expects the following property:
 
     * ``rootpath``
 
-        The path of the mapped directory.
+        The path of the managed directory.
 
     """
     logger = get_logger()
 
-    _backup_time_fmt = "%Y%m%dT%H%M%S"
     _config_file_pattern = re.compile(r'^\d+_.+\.ya?ml$')
 
     @staticmethod
     def _config_file_sort_key(filepath):
-        """The key to sort the given configuration file path."""
+        """The key to sort the given config file path."""
         return int(filepath.name.split('_', 1)[0])
 
     @classmethod
     def _resolve_content_path(cls, rootpath, item):
         """Return the item path prefixed by `rootpath`."""
-        return rootpath.joinpath(cls._contents[item]['path'])
+        return cls._contents[item].resolve_path(rootpath=rootpath)
 
     def __getattr__(self, name, *args):
         # make available the content attributes
@@ -90,18 +191,18 @@ class DirConfMixin(object):
             return self._resolve_content_path(self.rootpath, name)
         return super().__getattribute__(name, *args)
 
-    def _get_to_dict_attrs(cls):
+    def _get_content_path_attrs(cls):
         return ['rootpath', ] + list(cls._contents.keys())
 
-    def to_dict(self):
-        """Return a dict representation of the contents."""
+    def get_content_paths(self):
+        """Return a dict of managed paths."""
         return {
                 attr: getattr(self, attr)
-                for attr in self._get_to_dict_attrs()
+                for attr in self._get_content_path_attrs()
                 }
 
     def collect_config_files(self):
-        """The list of configuration files present in the directory.
+        """Return the list of config files present in the directory.
 
         Files with names match ``_config_file_pattern`` are returned.
 
@@ -148,14 +249,15 @@ class DirConfMixin(object):
 
     @classmethod
     def validate_config(cls, cfg):
+        """Return the validated config dict from `cfg`."""
         return cls.get_config_schema().validate(cfg)
 
     @classmethod
     def get_config_schema(cls):
-        """Return a `schema.Schema` object that validates the config.
+        """Return a `schema.Schema` for validating loaded config.
 
         This combines all :attr:`extend_config_schema` defined in all
-        base classes.
+        base classes, following the class MRO.
         """
         # merge schema
         d = dict()
@@ -173,60 +275,64 @@ class DirConfMixin(object):
             rupdate(d, s)
         return Schema(d)
 
-    yaml_dumper = _make_config_yaml_dumper()
+    yaml_dumper = DirConfYamlDumper
+    """The config YAML dumper."""
 
     @classmethod
-    def write_config_to_yaml(cls, config, dest=None):
-        """Write `config` as Yaml to `dest`
+    def yaml_dump(cls, config, output=None):
+        """Dump `config` as YAML to `output`
 
         Parameters
         ----------
         config : dict
             The config to write.
-        dest : io.StringIO, optional
+        output : io.StringIO, optional
             The object to write to. If None, return the YAML as string.
         """
-        _dest = dest
-        if dest is None:
-            dest = StringIO()
-        if not isinstance(dest, IOBase):
-            raise ValueError('dest has to be stream object.')
-        yaml.dump(config, dest, Dumper=cls.yaml_dumper, sort_keys=False)
-        if _dest is None:
-            return dest.getvalue()
-        return dest
+        _output = output  # save the original output to check for None
+        if output is None:
+            output = StringIO()
+        if not isinstance(output, IOBase):
+            raise ValueError('output has to be stream object.')
+        yaml.dump(config, output, Dumper=cls.yaml_dumper, sort_keys=False)
+        if _output is None:
+            return output.getvalue()
+        return output
+
+    @classmethod
+    def yaml_load(cls, stream):
+        return yaml.safe_load(stream)
 
     @classmethod
     def write_config_file(cls, config, filepath, overwrite=False):
-        if filepath.exists():
-            if not overwrite:
-                raise DirConfError(
-                        "cannot write config to exist file. "
-                        "Re-run with overwrite=True to proceed.")
-        with open(filepath, 'w') as fo:
-            yaml.dump(config, fo, Dumper=cls.yaml_dumper)
+        """Write `config` to `filepath`.
 
-    @classmethod
-    def _create_backup(cls, path, dry_run=False):
-        timestamp = datetime.fromtimestamp(
-            path.lstat().st_mtime).strftime(
-                cls._backup_time_fmt)
-        backup_path = path.with_name(
-                f"{path.name}.{timestamp}"
-                )
-        with logit(cls.logger.info, f"backup {path} -> {backup_path}"):
-            if not dry_run:
-                os.rename(path, backup_path)
-        return backup_path
+        Parameters
+        ----------
+        config : str
+            The config dict to write.
+        filepath : `pathlib.Path`
+            The filepath to write to.
+        overwrite : bool
+            If True, raise `DirConfError` when `filepath` exists.
+        """
+        if filepath.exists() and not overwrite:
+            raise DirConfError(
+                    f"cannot write config to existing file {filepath}. "
+                    f"Re-run with overwrite=True to proceed.")
+        with open(filepath, 'w') as fo:
+            cls.yaml_dump(config, output=fo)
 
     @classmethod
     def populate_dir(
             cls, dirpath,
-            create=False, force=False, overwrite=False, dry_run=False,
-            **kwargs
+            create=False,
+            force=False,
+            overwrite=False,
+            dry_run=False,
             ):
         """
-        Populate `dirpath` with the defined items.
+        Populate `dirpath` with the pre-defined contents.
 
         Parameters
         ----------
@@ -234,24 +340,21 @@ class DirConfMixin(object):
             The path to the work directory.
 
         create : bool
-            When set to False, raise `DirConfigError` if `path` does not
+            When set to False, raise `DirConfError` if `path` does not
             already have all content items. Otherwise, create the missing ones.
 
         force : bool
-            When False, raise `DirConfigError` if `dirpath` is not empty
+            When False, raise `DirConfError` if `dirpath` is not empty
 
         overwrite : bool
-            When False, backups for existing files is created.
+            When False, backups are created when file exists.
 
         dry_run : bool
             If True, no actual file system changed is made.
 
-        kwargs : dict
-            Keyword arguments passed directly into the created
-            config file.
         """
 
-        dirpath = Path(dirpath).resolve()
+        dirpath = ensure_abspath(dirpath)
         # validate dirpath
         path_is_ok = False
         if dirpath.exists():
@@ -271,7 +374,7 @@ class DirConfMixin(object):
             else:
                 # not a dir
                 raise DirConfError(
-                        f"path {dirpath} exists but is not a valid directory."
+                        f"path {dirpath} exists but is not a directory."
                         )
         else:
             # non exists
@@ -279,31 +382,6 @@ class DirConfMixin(object):
         assert path_is_ok  # should not fail
 
         # create content
-        def _get_or_create_item_path(
-                item, path, overwrite=False, dry_run=False):
-            backup_enabled = cls._contents[item]['backup_enabled']
-            if path.exists():
-                if overwrite:
-                    cls.logger.debug(f"use existing {item} {path}")
-                    return path
-                elif backup_enabled:
-                    cls.logger.debug(f"backup existing {item} {path}")
-                    cls._create_backup(path, dry_run=dry_run)
-                else:
-                    # just always use existing if not set to backup
-                    return path
-            with logit(cls.logger.debug, f"create {item} {path}"):
-                if not dry_run:
-                    type_ = cls._contents[item]['type']
-                    if type_ == 'dir':
-                        if not path.exists():
-                            path.mkdir(parents=True, exist_ok=False)
-                    elif type_ == 'file':
-                        touch_file(path)
-                    else:
-                        # should not happen
-                        raise ValueError(f"unknown {item} type")
-
         for item in cls._contents.keys():
             content_path = cls._resolve_content_path(dirpath, item)
             if not create and not content_path.exists():
@@ -313,9 +391,7 @@ class DirConfMixin(object):
                         f" missing {item} {content_path}. Set"
                         f" create=True to create missing items")
             if create:
-                _get_or_create_item_path(
-                        item,
-                        content_path,
-                        overwrite=overwrite,
-                        dry_run=dry_run)
+                cls._contents[item].create(
+                    rootpath=dirpath, overwrite=overwrite,
+                    dry_run=dry_run)
         return dirpath
