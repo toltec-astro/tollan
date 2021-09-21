@@ -45,13 +45,13 @@ def test_dirconf_paths():
         assert d.resolve_path(Path('.')) == Path(d.path_name)
         assert d.resolve_path(tmp) == tmp.joinpath(d.path_name)
         # create for the first time
-        p0 = d.create(tmp, overwrite=False, dry_run=True)  # not created
+        p0 = d.create(tmp, disable_backup=False, dry_run=True)  # not created
         assert not p0.exists()
-        p0 = d.create(tmp, overwrite=False, dry_run=False)
+        p0 = d.create(tmp, disable_backup=False, dry_run=False)
         assert p0 == d.resolve_path(tmp)
         assert p0.exists()
         # create for the second time does not create backup
-        p1 = d.create(tmp, overwrite=False, dry_run=False)
+        p1 = d.create(tmp, disable_backup=False, dry_run=False)
         assert p1 == p0
         assert len(list(tmp.glob(f'{d.path_name}.*'))) == 0
 
@@ -60,17 +60,17 @@ def test_dirconf_paths():
         assert f.resolve_path(Path('.')) == Path(f.path_name)
         assert f.resolve_path(tmp) == tmp.joinpath(f.path_name)
         # create for the first time
-        p0 = f.create(tmp, overwrite=False, dry_run=True)  # not created
+        p0 = f.create(tmp, disable_backup=False, dry_run=True)  # not created
         assert not p0.exists()
-        p0 = f.create(tmp, overwrite=False, dry_run=False)
+        p0 = f.create(tmp, disable_backup=False, dry_run=False)
         assert p0 == f.resolve_path(tmp)
         assert p0.exists()
-        # create for the second time without overwrite create backup
-        p1 = f.create(tmp, overwrite=False, dry_run=False)
+        # create for the second time without disable_backup create backup
+        p1 = f.create(tmp, disable_backup=False, dry_run=False)
         assert p1.exists()
         assert len(list(tmp.glob(f'{f.path_name}.*'))) == 1
-        # create for the thrid time with overwrite create backup
-        p2 = f.create(tmp, overwrite=True, dry_run=False)
+        # create for the third time with disable_backup not create backup
+        p2 = f.create(tmp, disable_backup=True, dry_run=False)
         assert p2.exists()
         assert len(list(tmp.glob(f'{f.path_name}.*'))) == 1
         assert f.rename_as_backup(tmp) == list(tmp.glob(f'{f.path_name}.*'))[0]
@@ -196,32 +196,32 @@ d: 'test'
                 DirConfError, match='not empty'):
             dc = SimpleDirConf(
                 dc.rootpath,
-                create=False, force=False, overwrite=False, dry_run=False)
+                create=False, force=False, disable_backup=False, dry_run=False)
         # with pytest.raises(
         #         DirConfError, match='not empty'):
         # all items are present, not action
         assert SimpleDirConf(
             dc.rootpath,
-            create=False, force=True, overwrite=False, dry_run=False)
+            create=False, force=True, disable_backup=False, dry_run=False)
         dc.logdir.rename(dc.logdir.with_name('log.removed'))
         # missing logdir
         with pytest.raises(
                 DirConfError, match='Set create=True to create'):
             assert SimpleDirConf(
                 dc.rootpath,
-                create=False, force=True, overwrite=False, dry_run=False)
+                create=False, force=True, disable_backup=False, dry_run=False)
 
         # create a new logdir
         assert SimpleDirConf(
             dc.rootpath,
-            create=True, force=True, overwrite=False, dry_run=False)
+            create=True, force=True, disable_backup=False, dry_run=False)
         # backup of baseconf should be present
         assert len(list(dc.rootpath.glob('00_baseconf.yaml.*'))) == 1
-        # create with overwrite
+        # create with disable_backup
         next(iter(dc.rootpath.glob('00_baseconf.yaml.*'))).rename(
             tmp / 'baseconf_removed')
         assert SimpleDirConf(
             dc.rootpath,
-            create=True, force=True, overwrite=True, dry_run=False)
+            create=True, force=True, disable_backup=True, dry_run=False)
         # no new backup is created
         assert len(list(dc.rootpath.glob('00_baseconf.yaml.*'))) == 0

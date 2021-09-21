@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 
 import astropy.units as u
+from astropy.time import Time
 
 from .log import get_logger, logit
 from .fmt import pformat_yaml
@@ -25,6 +26,7 @@ __all__ = ['DirConfYamlDumper', 'DirConfError', 'DirConfMixin']
 
 class DirConfYamlDumper(SafeDumper):
     """Yaml dumper that handles common types in config files."""
+
     pass
 
 
@@ -32,11 +34,34 @@ def _quantity_representer(dumper, q):
     return dumper.represent_str(q.to_string())
 
 
+def _astropy_time_representer(dumper, t):
+    return dumper.represent_str(t.isot)
+
+
 def _path_representer(dumper, p):
     return dumper.represent_str(p.as_posix())
 
 
+def _should_use_block(value):
+    return '\n' in value or len(value) > 100
+
+
+def _represent_scalar(self, tag, value, style=None):
+    if style is None:
+        if _should_use_block(value):
+            style = '|'
+        else:
+            style = self.default_style
+
+    node = yaml.representer.ScalarNode(tag, value, style=style)
+    if self.alias_key is not None:
+        self.represented_objects[self.alias_key] = node
+    return node
+
+
+DirConfYamlDumper.represent_scalar = _represent_scalar
 DirConfYamlDumper.add_representer(u.Quantity, _quantity_representer)
+DirConfYamlDumper.add_representer(Time, _astropy_time_representer)
 DirConfYamlDumper.add_representer(PosixPath, _path_representer)
 
 
@@ -76,7 +101,7 @@ class DirConfPath(object):
 
     def rename_as_backup(self, rootpath, dry_run=False):
         """
-        Rename the path for backup.
+        Rename the path as backup.
 
         Parameters
         ----------
@@ -93,14 +118,14 @@ class DirConfPath(object):
             path.lstat().st_mtime).strftime(
                 self._backup_timestamp_fmt)
         backup_path = path.with_name(
-                f"{path.name}.{timestamp}"
+                f"{path.name}.{timestamp}.bak"
                 )
         with logit(logger.info, f"backup {path} -> {backup_path}"):
             if not dry_run:
                 os.rename(path, backup_path)
         return backup_path
 
-    def create(self, rootpath, overwrite, dry_run):
+    def create(self, rootpath, disable_backup=False, dry_run=False):
         """
         Create this item in `rootpath`.
 
@@ -108,9 +133,9 @@ class DirConfPath(object):
         ----------
         rootpath : `pathlib.Path`
             The rootpath to resolve the actual filepath.
-        overwrite : bool
-            If True, existing file is overwritten. Otherwise the
-            `backup_enabled` attribute is consulted.
+        disable_backup : bool
+            If True, no backup is created regardless the `backup_enabled`
+            attribute.
         dry_run : bool
             If True, no actual rename is done.
         """
@@ -118,26 +143,26 @@ class DirConfPath(object):
         path = self.resolve_path(rootpath)
         item = self.label
         if path.exists():
-            if overwrite:
+            if disable_backup or not self.backup_enabled:
                 logger.debug(f"use existing {item} {path}")
                 return path
-            elif self.backup_enabled:
-                logger.debug(f"backup existing {item} {path}")
-                self.rename_as_backup(rootpath, dry_run=dry_run)
-            else:
-                # just always use existing if not set to backup
-                return path
+            # make backup
+            logger.debug(f"backup existing {item} {path}")
+            self.rename_as_backup(rootpath, dry_run=dry_run)
+        # now the path does not exists
+        # create item
         with logit(logger.debug, f"create {item} {path}"):
             if not dry_run:
                 type_ = self.path_type
                 if type_ is DirConfPathType.DIR:
-                    if not path.exists():
-                        path.mkdir(parents=True, exist_ok=False)
+                    path.mkdir(parents=True, exist_ok=False)
                 elif type_ is DirConfPathType.FILE:
                     touch_file(path)
                 else:
                     # should not happen
                     raise ValueError(f"unknown {item} type")
+            else:
+                logger.debug(f"dry run create {item} {path}")
         return path
 
 
@@ -215,6 +240,20 @@ class DirConfMixin(object):
             key=self._config_file_sort_key)
 
     @classmethod
+    def get_config_from_file(cls, config_file):
+        """Load config from `config_file."""
+        with open(config_file, 'r') as fo:
+            cfg = cls.yaml_load(fo)
+            if cfg is None:
+                cfg = dict()  # allow empty yaml file
+            if not isinstance(cfg, dict):
+                # error if invalid config found
+                raise DirConfError(
+                        f"invalid config file {config_file}."
+                        f" The file must contain a top level dict.")
+            return cfg
+
+    @classmethod
     def collect_config_from_files(cls, config_files, validate=True):
         """
         Load config from `config_files` and merge by the order.
@@ -233,16 +272,7 @@ class DirConfMixin(object):
                 f"load config from files: {pformat_yaml(config_files)}")
         cfg = dict()
         for f in config_files:
-            with open(f, 'r') as fo:
-                c = yaml.safe_load(fo)
-                if c is None:
-                    c = dict()  # allow empty yaml file
-                if not isinstance(c, dict):
-                    # error if invalid config found
-                    raise DirConfError(
-                            f"invalid config file {f}."
-                            f" No top level dict found.")
-                rupdate(cfg, c)
+            rupdate(cfg, cls.get_config_from_file(f))
         if validate:
             cfg = cls.validate_config(cfg)
         return cfg
@@ -323,12 +353,40 @@ class DirConfMixin(object):
         with open(filepath, 'w') as fo:
             cls.yaml_dump(config, output=fo)
 
+    # @classmethod
+    # def update_config_file(cls, config, filepath):
+    #     """Update `config` in `filepath`.
+
+    #     Parameters
+    #     ----------
+    #     config : str
+    #         The config dict to write.
+    #     filepath : `pathlib.Path`
+    #         The filepath to write to.
+    #     """
+    #     cfg = cls.get_config_from_file(filepath)
+    #     rupdate(cfg, config)
+    #     cls.write_config_file(cfg, filepath, overwrite=True)
+
+    @staticmethod
+    def make_metadata_dict_key(filepath):
+        """Return a unique key suitable to be added to a YMAL config file for
+        storing metadata.
+        """
+        filepath = ensure_abspath(filepath)
+        key_body = re.sub(r'[ .%"\'\\]', '_', filepath.stem)
+        return f'_{key_body}'
+
+    @classmethod
+    def from_populated(cls, dirpath):
+        return cls.populate_dir(dirpath, create=False, force=True)
+
     @classmethod
     def populate_dir(
             cls, dirpath,
             create=False,
             force=False,
-            overwrite=False,
+            disable_backup=False,
             dry_run=False,
             ):
         """
@@ -346,8 +404,9 @@ class DirConfMixin(object):
         force : bool
             When False, raise `DirConfError` if `dirpath` is not empty
 
-        overwrite : bool
-            When False, backups are created when file exists.
+        disable_backup : bool
+            When True, backups are not created when paths exist for
+            backup-enabled items.
 
         dry_run : bool
             If True, no actual file system changed is made.
@@ -392,6 +451,6 @@ class DirConfMixin(object):
                         f" create=True to create missing items")
             if create:
                 cls._contents[item].create(
-                    rootpath=dirpath, overwrite=overwrite,
+                    rootpath=dirpath, disable_backup=disable_backup,
                     dry_run=dry_run)
         return dirpath

@@ -3,11 +3,20 @@
 import socket
 import os
 import sys
+import pwd
 import appdirs
 from pathlib import Path
 
 
-__all__ = ['get_hostname', 'touch_file']
+__all__ = [
+    'get_username', 'get_hostname', 'touch_file', 'get_or_create_dir',
+    'get_user_data_dir', 'parse_systemd_envfile', 'find_parent_package_path']
+
+
+def get_username():
+    """Return the current username."""
+    # https://stackoverflow.com/a/2899055
+    return pwd.getpwuid(os.getuid()).pw_name
 
 
 def get_hostname():
