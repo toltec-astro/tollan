@@ -34,6 +34,8 @@ class NamespaceMixin(object):
 
     _namespace_type_key = '__class__'
 
+    _namespace_validate_kwargs = None
+
     @classmethod
     def _namespace_check_type(cls, ns_type):
         return cls is ns_type
@@ -92,6 +94,7 @@ class NamespaceMixin(object):
                 _namespace_check_type=cls._namespace_check_type,
                 _namespace_default_type=cls,
                 _namespace_include_namespace_keys=False,
+                _namespace_validate_kwargs=cls._namespace_validate_kwargs,
                 **kwargs)
 
 
@@ -164,6 +167,7 @@ def object_from_dict(
         _namespace_check_type=None,
         _namespace_default_type=None,
         _namespace_include_namespace_keys=True,
+        _namespace_validate_kwargs=None,
         **kwargs):
     """Construct a `~tollan.utils.namespace.Namespace` object from dict.
 
@@ -189,6 +193,8 @@ def object_from_dict(
         If False, the `_namespace_*` keys will be excluded
         from the created object. Note that this will disallow
         `object_to_dict` from the created object.
+    _namespace_validate_kwargs : dict
+        The kwargs passed to schema.validate function.
     **kwargs
         Additional keyword arguments that get updated to the dict.
     """
@@ -202,6 +208,7 @@ def object_from_dict(
         _namespace_type_key=_namespace_type_key,
         _namespace_check_type=_namespace_check_type,
         _namespace_include_namespace_keys=_namespace_include_namespace_keys,
+        _namespace_validate_kwargs=_namespace_validate_kwargs,
         **kwargs)
     # this has to go before the schema validation
     # in case the type key get pruned.
@@ -223,7 +230,9 @@ def object_from_dict(
             _namespace_dict[k] = d.pop(k)
         if schema is not None:
             # the validation needs to exclude the _namespace_ keys
-            d = schema.validate(d)
+            d = schema.validate(
+                d, **_namespace_dict.get(
+                    '_namespace_validate_kwargs', dict()))
             if include_ns_attrs:
                 d.update(_namespace_dict)
     return ns_type(**d)

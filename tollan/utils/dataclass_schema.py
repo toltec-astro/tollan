@@ -4,16 +4,18 @@ from functools import lru_cache
 from cached_property import cached_property
 
 import schema
+import inspect
 import typing_inspect
 import collections.abc
 import functools
 from .fmt import pformat_list
 from .misc import odict_from_list
+from .namespace import Namespace
 
 
 __all__ = [
     'DataclassSchemaOptional', 'DataclassSchema',
-    'class_schema', 'add_schema']
+    'class_schema', 'add_schema', 'DataclassNamespace']
 
 
 MAX_CLASS_SCHEMA_CACHE_SIZE = 1024
@@ -26,10 +28,13 @@ class DataclassSchemaOptional(schema.Optional):
 
     def __init__(self, *args, **kwargs):
         dataclass_cls = kwargs.pop('dataclass_cls', None)
-        if dataclass_cls is None:
-            raise ValueError("dataclass_cls is required")
         self._dataclass_cls = dataclass_cls
         super().__init__(*args, **kwargs)
+
+    @property
+    def dataclass_cls(self):
+        """Return the dataclass this schema is associated with."""
+        return self._dataclass_cls
 
     @property
     def default(self):
@@ -39,6 +44,15 @@ class DataclassSchemaOptional(schema.Optional):
         and return dataclass instance if True.
         """
         d = self._default_value
+        # when the field is not of dataclass type
+        if self.dataclass_cls is None:
+            # the callable needs to be wrapped to it takes the
+            # create_instance argument but does not do any thing
+            # this simplifies the signature
+            if callable(d):
+                return lambda **k: d()
+            return d
+        # this is the case with dataclass_cls
         if isinstance(d, collections.abc.Mapping):
             # wrap this in a callable to handle "create_instance"
             def wrapped(**kwargs):
@@ -140,15 +154,22 @@ class DataclassSchema(schema.Schema):
                     return qualname
                 return f"{module}.{qualname}"
             try:
-                type_ = fullname(self._fields_dict[name].type)
-            except AttributeError:
-                type_ = str(self._fields_dict[name].type)
+                fields_dict = self._fields_dict
+                try:
+                    type_ = fullname(fields_dict[name].type)
+                except AttributeError:
+                    type_ = str(fields_dict[name].type)
+            except TypeError:
+                if isinstance(v, DataclassSchema):
+                    type_ = fullname(v.dataclass_cls)
+                else:
+                    type_ = fullname(v if inspect.isclass(v) else type(v))
             text = getattr(k, 'description', None)
             if text is None:
                 text = 'N/A'
             if isinstance(k, schema.Optional):
                 # text = f'{text} (default={k.default})'
-                default_ = k.default
+                default_ = getattr(k, 'default', '')
                 # expand callable default
                 if callable(default_):
                     if isinstance(k, DataclassSchemaOptional):
@@ -179,6 +200,10 @@ def _get_field_default(field):
     """
     default_factory = field.default_factory  # type: ignore
     if default_factory is not dataclasses.MISSING:
+        if dataclasses.is_dataclass(default_factory):
+            # the default factory needs to be replaced
+            # with the default_factory type
+            return default_factory.default_factory(dict())
         return default_factory
     elif field.default is dataclasses.MISSING:
         return None
@@ -198,14 +223,16 @@ def field_to_schema(field):
         is_optional = False
     key_kwargs = dict(description=metadata.get('description', None))
     if is_optional:
+        key_cls = DataclassSchemaOptional
         if dataclasses.is_dataclass(field.type):
-            # for nested dataclass, we use the subclass of optional
-            # to handle default dict.
-            key_cls = DataclassSchemaOptional
+            # for nested dataclass, we pass to the optional subclass
             key_kwargs.update(dataclass_cls=field.type)
         else:
             # regular optional type
-            key_cls = schema.Optional
+            # we also need the spacial subclass of optional
+            # to handle more gracefully the default factory
+            # of the other fileds
+            pass
         key_kwargs.update(default=_get_field_default(field))
     else:
         key_cls = schema.Literal
@@ -266,3 +293,18 @@ def add_schema(cls):
     else:
         raise TypeError(f"cannot create schema from type {cls}")
     return cls
+
+
+class DataclassNamespace(Namespace):
+    """A subclass of `tollan.utils.namespace.Namespace`
+    that support dataclass type members.
+    """
+    _namespace_validate_kwargs = {'create_instance': True}
+
+    def __init_subclass__(cls):
+        """This provides the schema attribute with same behavior
+        as the dataclass decorated with `add_schema`.
+        """
+        cls.schema = DataclassSchema(
+            cls._namespace_from_dict_schema.schema,
+            dataclass_cls=cls)

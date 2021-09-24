@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
-from schema import Schema, Optional, Use
-from contextlib import contextmanager
+from schema import Schema, Optional
 
 
 def create_relpath_validator(rootpath):
@@ -60,31 +59,3 @@ def make_nested_optional_defaults(s, return_schema=False):
     if return_schema:
         return Schema(d_out)
     return d_out
-
-
-class NestedSchemaHelperMixin(object):
-    """A mixin class to handle nesting class with schema.
-
-    It requires the presence of :attr:`schema` on class.
-    """
-
-    _expand_nested_schema = False
-
-    @classmethod
-    def validate(cls, data):
-        # valid the data with the class schema
-        # here we check the schema for any nested types of this type
-        # and we either expand then or Use them.
-        if cls._expand_nested_schema:
-            return cls.schema.validate(data)
-        return Use(cls.from_dict).validate(data)
-
-
-@contextmanager
-def expand_nested_schema(cls):
-    """
-    A context to allow expanding any object of type `NestedSchemaHelperMixin`
-    """
-    cls._expand_nested_schema = True
-    yield
-    cls._expand_nested_schema = False
