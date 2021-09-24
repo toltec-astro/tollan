@@ -443,7 +443,7 @@ def make_subprocess_env():
     return {k: v for k, v in env.items() if v is not None}
 
 
-def call_subprocess_with_live_output(cmd):
+def call_subprocess_with_live_output(cmd, logger_func=None):
     """Execute `cmd` in subprocess with live output."""
     with subprocess.Popen(
             cmd,
@@ -453,10 +453,19 @@ def call_subprocess_with_live_output(cmd):
             env=make_subprocess_env(),
             ) as proc:
         reader = TextIOWrapper(proc.stdout, newline='')
-        for char in iter(
-                functools.partial(reader.read, 1), b''):
+        # for char in iter(
+        #         functools.partial(reader.read, 1), b''):
+        #     # logger.debug(ln.decode().strip())
+        #     sys.stderr.write(char)
+        #     if proc.poll() is not None:
+        #         sys.stderr.write('\n')
+        #         break
+        for ln in iter(
+                reader.readline, b''):
             # logger.debug(ln.decode().strip())
-            sys.stderr.write(char)
+            sys.stderr.write(ln)
+            if logger_func is not None:
+                logger_func(ln.strip())
             if proc.poll() is not None:
                 sys.stderr.write('\n')
                 break
