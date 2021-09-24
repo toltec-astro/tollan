@@ -16,7 +16,7 @@ def test_make_nested_optional_defaults():
                 }
             })
 
-    s_out = make_nested_optional_defaults(s_in)
+    s_out = make_nested_optional_defaults(s_in, return_schema=True)
 
     # s_int does not have nested defaults attached
     assert s_in.validate(dict()) == dict()

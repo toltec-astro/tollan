@@ -82,6 +82,8 @@ class NamespaceMixin(object):
         **kwargs
             Additional keyword arguments that get updated to the dict.
         """
+        # all the namespace keys are from the cls already
+        # so no need to include them.
         return object_from_dict(
                 d,
                 _namespace_from_dict_op=cls._namespace_from_dict_op,
@@ -89,6 +91,7 @@ class NamespaceMixin(object):
                 _namespace_type_key=cls._namespace_type_key,
                 _namespace_check_type=cls._namespace_check_type,
                 _namespace_default_type=cls,
+                _namespace_include_namespace_keys=False,
                 **kwargs)
 
 
@@ -160,6 +163,7 @@ def object_from_dict(
         _namespace_type_key=NamespaceMixin._namespace_type_key,
         _namespace_check_type=None,
         _namespace_default_type=None,
+        _namespace_include_namespace_keys=True,
         **kwargs):
     """Construct a `~tollan.utils.namespace.Namespace` object from dict.
 
@@ -181,6 +185,10 @@ def object_from_dict(
     _namespace_default_type : `NamespaceMixin` subclass.
         If set, this is assumed when the namespace type cannot be inferred
         from `_namespace_type_key`.
+    _namespace_include_namespace_keys : bool
+        If False, the `_namespace_*` keys will be excluded
+        from the created object. Note that this will disallow
+        `object_to_dict` from the created object.
     **kwargs
         Additional keyword arguments that get updated to the dict.
     """
@@ -188,12 +196,13 @@ def object_from_dict(
     # notes that we also add some of the _namespace_*  kwargs
     # so that these get stored into the created object.
     d = _prepare_dict(
-            d,
-            _namespace_from_dict_op=_namespace_from_dict_op,
-            _namespace_from_dict_schema=_namespace_from_dict_schema,
-            _namespace_type_key=_namespace_type_key,
-            _namespace_check_type=_namespace_check_type,
-            **kwargs)
+        d,
+        _namespace_from_dict_op=_namespace_from_dict_op,
+        _namespace_from_dict_schema=_namespace_from_dict_schema,
+        _namespace_type_key=_namespace_type_key,
+        _namespace_check_type=_namespace_check_type,
+        _namespace_include_namespace_keys=_namespace_include_namespace_keys,
+        **kwargs)
     # this has to go before the schema validation
     # in case the type key get pruned.
     # type_key and check_type is already in d
@@ -204,8 +213,19 @@ def object_from_dict(
     if schema is None:
         # use the found type schema if no schema is set.
         schema = ns_type._namespace_from_dict_schema
-    if schema is not None:
-        d = schema.validate(d)
+    include_ns_attrs = d.get(
+        '_namespace_include_namespace_keys', _namespace_include_namespace_keys)
+    # make d without ns attrs
+    if not include_ns_attrs or schema is not None:
+        _namespace_attrs = [k for k in d.keys() if k.startswith('_namespace_')]
+        _namespace_dict = dict()
+        for k in _namespace_attrs:
+            _namespace_dict[k] = d.pop(k)
+        if schema is not None:
+            # the validation needs to exclude the _namespace_ keys
+            d = schema.validate(d)
+            if include_ns_attrs:
+                d.update(_namespace_dict)
     return ns_type(**d)
 
 
@@ -213,7 +233,7 @@ def _prepare_dict(d, _namespace_from_dict_op=copy, **kwargs):
     """Return a dict composed from `d` and `kwargs`.
 
     .. note::
-        The keyword argument `_namespace_from_dict_op` is is only used
+        The keyword argument `_namespace_from_dict_op` is only used
         when "_namespace_from_dict_op" is not defined in `d`.
 
     Parameters
@@ -255,7 +275,7 @@ def _get_namespace_type(
     """
     type_key = d.get('_namespace_type_key', _namespace_type_key)
     if type_key not in d and _namespace_default_type is None:
-            raise NamespaceNotFoundError(
+        raise NamespaceNotFoundError(
                 f"unable to get namespace type: missing type_key {type_key}")
     ns_type = d.get(type_key, _namespace_default_type)
     if isinstance(ns_type, str):
