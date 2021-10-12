@@ -14,7 +14,7 @@ from ..misc import rupdate
 from . import console_color
 
 
-__all__ = ['init_log', 'log_to_file' 'get_logger', 'timeit', 'logit']
+__all__ = ['init_log', 'log_to_file', 'get_logger', 'timeit', 'logit']
 
 
 presets = {
@@ -46,6 +46,11 @@ presets = {
                 'propagate': False
                 },
             'numexpr': {
+                'handlers': ['default'],
+                'level': 'WARNING',
+                'propagate': False
+                },
+            'numba': {
                 'handlers': ['default'],
                 'level': 'WARNING',
                 'propagate': False
