@@ -28,6 +28,12 @@ def pformat_paths(paths, sep='\n', relative_to=None, sort=False):
     return sep.join(trans(fmt_path(p) for p in paths))
 
 
+def pformat_array(arr, skip_small=True):
+    if arr.size >= 10 or not skip_small:
+        return f'arr{arr.shape}[...]'
+    return f'{arr}'
+
+
 def pformat_list(lst, indent, minw=60, max_cell_width=40, fancy=True):
     if not lst or not lst[0]:
         width = None
@@ -40,6 +46,10 @@ def pformat_list(lst, indent, minw=60, max_cell_width=40, fancy=True):
 
     def get_cell_width(c):
         return len(c[0]) if len(c) > 0 else 1
+
+    def cell_is_tuple_of_type(c, ts):
+        return isinstance(c, tuple) and all(
+            isinstance(cc, ts) for cc in c)
 
     def fmt_elem(e, width=width, fancy=fancy):
         if len(e) == 1:
@@ -57,6 +67,13 @@ def pformat_list(lst, indent, minw=60, max_cell_width=40, fancy=True):
                 fmt = ", ".join("{}" for _ in e)
             if (len(e) == 2) and isinstance(e[1], (float)):
                 return fmt.format(str(e[0]), "{:g}".format(e[1]))
+            if len(e) == 2 and isinstance(e[1], np.ndarray):
+                e = (e[0], pformat_array(e[1]))
+            if len(e) == 2 and cell_is_tuple_of_type(e[1], np.ndarray):
+                return fmt.format(
+                        str(e[0]), tuple(
+                            pformat_array(ee, skip_small=False)
+                            for ee in e[1]))
             if len(e) == 2 and hasattr(e[1], 'items'):
                 return fmt.format(
                         str(e[0]), pformat_dict(e[1], indent=indent + 2))
