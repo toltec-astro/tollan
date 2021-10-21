@@ -3,6 +3,7 @@ import dataclasses
 from functools import lru_cache
 from cached_property import cached_property
 
+import copy
 import schema
 import inspect
 import typing_inspect
@@ -155,10 +156,16 @@ class DataclassSchema(schema.Schema):
                 return f"{module}.{qualname}"
             try:
                 fields_dict = self._fields_dict
-                try:
-                    type_ = fullname(fields_dict[name].type)
-                except AttributeError:
-                    type_ = str(fields_dict[name].type)
+                field = fields_dict[name]
+                pformat_field_schema_type = field.metadata.get(
+                    "pformat_schema_type", None)
+                if pformat_field_schema_type is not None:
+                    type_ = pformat_field_schema_type
+                else:
+                    try:
+                        type_ = fullname(field.type)
+                    except AttributeError:
+                        type_ = str(field.type)
             except TypeError:
                 if isinstance(v, DataclassSchema):
                     type_ = fullname(v.dataclass_cls)
@@ -288,7 +295,7 @@ def add_schema(cls):
         cls.optional = functools.partial(
             DataclassSchemaOptional, dataclass_cls=cls)
         cls.default_factory = cls.schema.default_factory
-        cls.to_dict = dataclasses.asdict
+        cls.to_dict = asdict
         cls.from_dict = cls.schema.load
     else:
         raise TypeError(f"cannot create schema from type {cls}")
@@ -308,3 +315,97 @@ class DataclassNamespace(Namespace):
         cls.schema = DataclassSchema(
             cls._namespace_from_dict_schema.schema,
             dataclass_cls=cls)
+
+
+def get_meta_attr(cls, name):
+    """
+    Get meta attribute value following a unified convention for
+    `dataclasses.dataclass` and `DataclassNamespace`.
+
+    For `dataclasses.dataclass`, such attributes are defined in the
+    inner class named ``Meta``; for `DataclassNamespace`, such attributes
+    are class attributes with a leading ``_``.
+    """
+    value = None
+    if dataclasses.is_dataclass(cls):
+        # retrieve the attr from the Meta class
+        Meta = getattr(cls, 'Meta', None)
+        if Meta is not None:
+            value = getattr(Meta, name, None)
+    elif issubclass(cls, DataclassNamespace):
+        value = getattr(cls, f'_{name}', None)
+    else:
+        raise TypeError(f"invalid type {cls}")
+    if value is None:
+        raise AttributeError(
+            f"meta attribute {name} not found in {cls.__name__}")
+    return value
+
+
+def _schema_to_keys(s):
+    """Return the entry keys for schema of dict type."""
+    def _get_d(s):
+        d = s
+        while hasattr(d, 'schema'):
+            d = s.schema
+        return d
+    d = _get_d(s)
+    if not isinstance(d, dict):
+        return None
+    return (_get_d(ss) for ss in d.keys())
+
+
+# This is from python dataclasses.py but we make it support
+# DataclassNamespace
+
+def _is_dataclass_instance(obj):
+    return hasattr(type(obj), dataclasses._FIELDS)
+
+
+def asdict(obj, *, dict_factory=dict):
+    if not _is_dataclass_instance(obj):
+        raise TypeError("asdict() should be called on dataclass instances")
+    return _asdict_inner(obj, dict_factory)
+
+
+def _asdict_inner(obj, dict_factory):
+    if _is_dataclass_instance(obj):
+        result = []
+        for f in dataclasses.fields(obj):
+            value = _asdict_inner(getattr(obj, f.name), dict_factory)
+            result.append((f.name, value))
+        return dict_factory(result)
+    elif isinstance(obj, tuple) and hasattr(obj, '_fields'):
+        # obj is a namedtuple.  Recurse into it, but the returned
+        # object is another namedtuple of the same type.  This is
+        # similar to how other list- or tuple-derived classes are
+        # treated (see below), but we just need to create them
+        # differently because a namedtuple's __init__ needs to be
+        # called differently (see bpo-34363).
+
+        # I'm not using namedtuple's _asdict()
+        # method, because:
+        # - it does not recurse in to the namedtuple fields and
+        #   convert them to dicts (using dict_factory).
+        # - I don't actually want to return a dict here.  The main
+        #   use case here is json.dumps, and it handles converting
+        #   namedtuples to lists.  Admittedly we're losing some
+        #   information here when we produce a json list instead of a
+        #   dict.  Note that if we returned dicts here instead of
+        #   namedtuples, we could no longer call asdict() on a data
+        #   structure where a namedtuple was used as a dict key.
+
+        return type(obj)(*[_asdict_inner(v, dict_factory) for v in obj])
+    elif isinstance(obj, (list, tuple)):
+        # Assume we can create an object of this type by passing in a
+        # generator (which is not true for namedtuples, handled
+        # above).
+        return type(obj)(_asdict_inner(v, dict_factory) for v in obj)
+    elif isinstance(obj, dict):
+        return type(obj)((_asdict_inner(k, dict_factory),
+                          _asdict_inner(v, dict_factory))
+                         for k, v in obj.items())
+    elif isinstance(obj, DataclassNamespace):
+        return obj.to_dict(keys=_schema_to_keys(obj.schema))
+    else:
+        return copy.deepcopy(obj)
