@@ -93,7 +93,7 @@ class DataclassSchema(schema.Schema):
         """Return the dataclass this schema is associated with."""
         return self._dataclass_cls
 
-    def validate(self, data, create_instance=False):
+    def validate(self, data, create_instance=False, **kwargs):
         """Validate `data`, optionally create the dataclass instance.
 
         Parameters
@@ -107,7 +107,8 @@ class DataclassSchema(schema.Schema):
         """
         # validate the data. Note that the create_instance is propagated
         # down to any nested DataclassSchema instance's validate method.
-        data = super().validate(data, create_instance=create_instance)
+        data = super().validate(
+            data, create_instance=create_instance, **kwargs)
         if self.dataclass_cls is not None and create_instance:
             return self.dataclass_cls(**data)
         return data
