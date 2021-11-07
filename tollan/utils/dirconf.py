@@ -272,7 +272,8 @@ class DirConfMixin(object):
                 f"load config from files: {pformat_yaml(config_files)}")
         cfg = dict()
         for f in config_files:
-            rupdate(cfg, cls.get_config_from_file(f))
+            # this will perserve any anchor dict for recursive update
+            rupdate(cfg, cls.get_config_from_file(f), copy_subdict=False)
         if validate:
             cfg = cls.validate_config(cfg)
         return cfg

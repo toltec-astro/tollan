@@ -55,8 +55,8 @@ def module_from_path(filepath, name=None):
         name = f'_module_from_path_{filepath.stem}'
     spec = importlib.util.spec_from_file_location(
             name, filepath.as_posix())
-    print(filepath)
-    print(spec)
+    # print(filepath)
+    # print(spec)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -95,16 +95,31 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split('.'))
 
 
-def rupdate(d, u):
+def rupdate(d, u, copy_subdict=True):
     """Update dict recursively.
 
     This will update `d` with items in `u` in a recursive fashion.
-    Keys in d will not be deleted if they are found in `u`.
+
+    `d` can be either list or dict. `u` has to be dict where int
+    keys can be used to identify list items.
+
+    When updating list, the special key matches ``<<\\d+`` can be used to
+    append item to the list.
 
     Parameters
     ----------
-    d, u : dict
+    d : dict, list
+        The container to be updated
 
+    u : dict
+        The update dict.
+
+    copy_subdict : bool
+        If True, subdicts in `u` will get copied to `d`, such that
+        further change in `d` will not propagate back to `u`.
+
+    update_list : bool
+        If True, value with int key will be used to update list.
 
     Returns
     -------
@@ -118,28 +133,41 @@ def rupdate(d, u):
     .. [1] https://stackoverflow.com/a/52099238/1824372
 
     """
-
+    re_list_append_key = re.compile(r'<<\d?')
     stack = [(d, u)]
     while stack:
         d, u = stack.pop(0)
         for k, v in u.items():
+            # print(f"processing {d=} {u=} {k=} {v=}")
             if not isinstance(v, collections.abc.Mapping):
                 # u[k] is not a dict, nothing to merge, so just set it,
                 # regardless if d[k] *was* a dict
                 d[k] = v
+                continue
+            # now v = u[k] is dict
+            # d may be list or dict. For list, we check the special key
+            # "<<" to append a new item.
+            if copy_subdict:
+                default = dict()  # subdicts in u will get copied to this
             else:
-                # note: u[k] is a dict
-                # get d[k], defaulting to a dict, if it doesn't previously
-                # exist
-                dv = d.setdefault(k, {})
-                if not isinstance(dv, collections.abc.Mapping):
-                    # d[k] is not a dict, so just set it to u[k],
-                    # overriding whatever it was
-                    d[k] = v
-                else:
-                    # both d[k] and u[k] are dicts, push them on the stack
-                    # to merge
-                    stack.append((dv, v))
+                default = None  # subdicts in u will be assigned to it.
+            if isinstance(d, collections.abc.Sequence):
+                k = int(k)
+                if re.match(re_list_append_key, str(k)) is not None:
+                    d.append(default)
+                    k = -1
+                dv = d[k]
+            else:
+                dv = d.setdefault(k, default)
+            if not isinstance(
+                    dv, (collections.abc.Mapping, collections.abc.Sequence)):
+                # d[k] is not a dict, so just set it to u[k],
+                # overriding whatever it was
+                d[k] = v
+            else:
+                # both d[k] and u[k] are dicts, push them on the stack
+                # to merge
+                stack.append((dv, v))
 
 
 def odict_from_list(lst, key):
