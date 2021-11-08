@@ -241,22 +241,24 @@ class timeit(ContextDecorator):
         in the generated message in places of the name of the decorated object.
     """
 
-    def __new__(cls, arg):
+    def __new__(cls, arg, **kwargs):
         if callable(arg):
-            return cls(arg.__name__)(arg)
+            return cls(arg.__name__, **kwargs)(arg)
         return super().__new__(cls)
 
-    def __init__(self, msg):
+    def __init__(self, msg, level='DEBUG'):
         self.msg = msg
         self.logger = logging.getLogger("timeit")
+        self._level = logging.getLevelName(level)
 
     def __enter__(self):
-        self.logger.debug("{} ...".format(self.msg))
+        self.logger.log(self._level, "{} ...".format(self.msg))
         self._start = time.time()
 
     def __exit__(self, *args):
         elapsed = time.time() - self._start
-        self.logger.debug(
+        self.logger.log(
+                self._level,
                 "{} done in {}".format(
                     self.msg, _format_time(elapsed)))
 
