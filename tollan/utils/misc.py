@@ -473,31 +473,37 @@ def make_subprocess_env():
 
 def call_subprocess_with_live_output(cmd, logger_func=None):
     """Execute `cmd` in subprocess with live output."""
+
+    def _handle_ln(ln):
+        # logger.debug(ln.decode().strip())
+        # print(ln)
+        sys.stderr.write(ln)
+        if logger_func is not None:
+            logger_func(ln.strip())
+
     with subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
-            bufsize=1,
+            bufsize=0,
             env=make_subprocess_env(),
             ) as proc:
         reader = TextIOWrapper(proc.stdout, newline='')
-        # for char in iter(
-        #         functools.partial(reader.read, 1), b''):
-        #     # logger.debug(ln.decode().strip())
-        #     sys.stderr.write(char)
-        #     if proc.poll() is not None:
-        #         sys.stderr.write('\n')
-        #         break
         for ln in iter(
                 reader.readline, b''):
-            # logger.debug(ln.decode().strip())
-            sys.stderr.write(ln)
-            if logger_func is not None:
-                logger_func(ln.strip())
+            _handle_ln(ln)
             if proc.poll() is not None:
                 sys.stderr.write('\n')
                 break
-    return
+        retcode = proc.returncode
+        if retcode:
+            # get any remaining message
+            ln, _ = proc.communicate()
+            _handle_ln(ln.decode())
+            _handle_ln(
+                f"The process exited with error code: {retcode}\n")
+            return False
+        return True
 
 
 def dict_from_regex_match(pattern, input_, type_dispatcher=None):
