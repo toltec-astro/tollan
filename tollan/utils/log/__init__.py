@@ -203,6 +203,7 @@ class log_to_file(AbstractContextManager):
                     original_handlers.append(h)
             for h in original_handlers:
                 logger.removeHandler(h)
+        return logfile_handler
 
     def __exit__(self, *exc_info):
         logger = self._logger
