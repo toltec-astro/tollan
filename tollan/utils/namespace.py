@@ -231,8 +231,9 @@ def object_from_dict(
         if schema is not None:
             # the validation needs to exclude the _namespace_ keys
             d = schema.validate(
-                d, **_namespace_dict.get(
-                    '_namespace_validate_kwargs', dict()))
+                d, **(
+                    _namespace_dict.get('_namespace_validate_kwargs', None)
+                    or dict()))
             if include_ns_attrs:
                 d.update(_namespace_dict)
     return ns_type(**d)
