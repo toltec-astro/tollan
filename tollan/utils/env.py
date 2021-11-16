@@ -9,7 +9,7 @@ __all__ = ['EnvRegistry', 'env_registry']
 
 
 class EnvRegistry(Registry):
-    """A registry class that helps work with env vars."""
+    """A registry class to manage env vars and the defaults."""
 
     _NODEFUALT = "__no_default__"
 

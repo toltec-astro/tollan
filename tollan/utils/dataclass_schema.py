@@ -288,16 +288,23 @@ def _class_schema(dataclass_cls):
 
 def add_schema(cls):
     """A decorator to add schema and related methods to dataclass `cls`."""
-    if any(hasattr(cls, a) for a in (
-            'schema', 'optional', 'default_factory', 'to_dict', 'from_dict')):
-        raise TypeError(f"conflicted attribute exists on {cls}")
+    # if any(hasattr(cls, a) for a in (
+    #         'schema', 'optional', 'default_factory',
+    #         'to_dict', 'from_dict')):
+    #     raise TypeError(f"conflicted attribute exists on {cls}")
+
+    def _add_attr(name, value):
+        if hasattr(cls, name):
+            return _add_attr(f'{name}_', value)
+        return setattr(cls, name, value)
+
     if dataclasses.is_dataclass(cls):
-        cls.schema = class_schema(cls)
-        cls.optional = functools.partial(
-            DataclassSchemaOptional, dataclass_cls=cls)
-        cls.default_factory = cls.schema.default_factory
-        cls.to_dict = asdict
-        cls.from_dict = cls.schema.load
+        _add_attr('schema', class_schema(cls))
+        _add_attr('optional', functools.partial(
+            DataclassSchemaOptional, dataclass_cls=cls))
+        _add_attr('default_factory', cls.schema.default_factory)
+        _add_attr('to_dict', asdict)
+        _add_attr('from_dict', cls.schema.load)
     else:
         raise TypeError(f"cannot create schema from type {cls}")
     return cls

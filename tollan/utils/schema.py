@@ -1,6 +1,21 @@
 #! /usr/bin/env python
 
-from schema import Schema, Optional
+from schema import Schema, Optional, SchemaError
+
+
+class ObjectSchema(Schema):
+    """A schema that validates python object."""
+
+    def __init__(self, attrs_required=None, base_schema=object):
+        super().__init__(base_schema)
+        self._attrs_required = attrs_required
+
+    def validate(self, data, **kwargs):
+        data = super().validate(data, **kwargs)
+        for attr in self._attrs_required:
+            if not hasattr(data, attr):
+                raise SchemaError(f"missing required attr {attr}")
+        return data
 
 
 def create_relpath_validator(rootpath):
