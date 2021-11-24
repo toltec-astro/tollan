@@ -20,7 +20,7 @@ class TableDef(Namespace):
         Optional('desc', default=None): str,
         'columns': Schema([sa.sql.schema.SchemaItem, ]),
         Optional('data'): [dict, ],
-        str: object
+        Optional(str): object
         })
 
     def init_table(self, db):

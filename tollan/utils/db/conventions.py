@@ -79,7 +79,7 @@ def pk(**kwargs):
 def name(**kwargs):
     return Column(
             'name', String(128),
-            comment=f'The name.',
+            comment='The name.',
             **kwargs)
 
 
@@ -88,14 +88,14 @@ def label(**kwargs):
             'label', String(128),
             unique=True,
             sqlite_on_conflict_unique='REPLACE',
-            comment=f'The short descriptive label.',
+            comment='The short descriptive label.',
             **kwargs)
 
 
 def desc(**kwargs):
     return Column(
             'desc', Text,
-            comment=f'The long description.',
+            comment='The long description.',
             **kwargs)
 
 
@@ -103,7 +103,7 @@ def created_at(**kwargs):
     return Column(
             'created_at', DateTime,
             server_default=utcnow(),
-            comment=f'The datetime of creation.',
+            comment='The datetime of creation.',
             **kwargs)
 
 
@@ -111,7 +111,7 @@ def updated_at(**kwargs):
     return Column(
             'updated_at',
             DateTime, server_default=utcnow(),
-            comment=f'The datetime of last modification.',
+            comment='The datetime of last modification.',
             onupdate=utcnow())
 
 
@@ -131,13 +131,13 @@ def client_info_table():
                 default=get_hostname(),
                 unique=True,
                 sqlite_on_conflict_unique='REPLACE',
-                comment=f'The client hostname.'
+                comment='The client hostname.'
                 ),
             Column(
                 'tz',
                 TimezoneType(backend='pytz'),
-                default=tzlocal.get_localzone(),
-                comment=f'The client time zone.'
+                default=tzlocal.get_localzone_name(),
+                comment='The client time zone.'
                 ),
             created_at(),
             updated_at(),
