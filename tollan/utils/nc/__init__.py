@@ -233,6 +233,14 @@ class NcNodeMapperMixin(object):
         v[:] = s
         return v
 
+    def update(self, d):
+        """Add mappings specified by `d`."""
+        for k, v in d.items():
+            if isinstance(v, str):
+                self._nc_node_map[k] = v
+            else:
+                self._nc_node_map[k] = v.name
+
 
 class NcNodeMapper(ExitStack, NcNodeMapperMixin):
     """A adaptor class that accesses netCDF4 dataset with a custom name map.

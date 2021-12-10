@@ -14,6 +14,7 @@ from enum import Enum, auto
 
 import astropy.units as u
 from astropy.time import Time
+from astropy.coordinates import BaseCoordinateFrame
 
 from .log import get_logger, logit
 from .fmt import pformat_yaml
@@ -27,7 +28,10 @@ __all__ = ['DirConfYamlDumper', 'DirConfError', 'DirConfMixin']
 class DirConfYamlDumper(SafeDumper):
     """Yaml dumper that handles common types in config files."""
 
-    pass
+    def represent_data(self, data):
+        if isinstance(data, BaseCoordinateFrame):
+            return self.represent_data(data.name)
+        return super().represent_data(data)
 
 
 def _quantity_representer(dumper, q):
