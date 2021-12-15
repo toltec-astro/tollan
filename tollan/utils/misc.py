@@ -190,6 +190,14 @@ def odict_from_list(lst, key):
         for v in lst])
 
 
+def dict_product(**kwargs):
+    """
+    Return the Cartesian product of dicts.
+    """
+    return (dict(zip(kwargs.keys(), x))
+            for x in itertools.product(*kwargs.values()))
+
+
 class hookit(ContextDecorator):
     """A context manager that allow inject code to object's method.
 
