@@ -7,6 +7,7 @@ from contextlib import ContextDecorator
 import itertools
 from pathlib import Path, PurePath, WindowsPath
 import urllib
+import inspect
 from collections import OrderedDict
 from urllib.parse import urlsplit, urlunsplit
 from typing import NamedTuple
@@ -545,6 +546,20 @@ def dict_from_regex_match(pattern, input_, type_dispatcher=None):
         else:
             result[k] = v
     return result
+
+
+def getname(obj):
+    """Return the name of `obj`.
+
+    The inverse of `getobj`.
+    """
+    if inspect.isclass(obj):
+        module = obj.__module__
+        qualname = obj.__qualname__
+        if module is None or module == str.__module__:
+            return qualname
+        return f"{module}.{qualname}"
+    raise NotImplementedError(f"cannot get name for obj {obj}")
 
 
 __all__ = list(set(globals().keys()).difference(_excluded_from_all))

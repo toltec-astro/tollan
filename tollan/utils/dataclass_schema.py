@@ -10,7 +10,7 @@ import typing_inspect
 import collections.abc
 import functools
 from .fmt import pformat_list
-from .misc import odict_from_list
+from .misc import odict_from_list, getname
 from .namespace import Namespace
 
 
@@ -138,55 +138,66 @@ class DataclassSchema(schema.Schema):
         return odict_from_list(
             dataclasses.fields(self.dataclass_cls), key=lambda f: f.name)
 
-    def pformat(self):
-        def _pformat_item(k, v):
-            # if isinstance(v, (schema.Use)):
-            #     func_name = getattr(
-            #         v._callable, '__name__', repr(v._callable))
-            #     text = f'{func_name}()'
-            # else:
-            #     text = str(v)
-            name = f'{k.schema}'
-            # we try to get the dataclass field type here
-
-            def fullname(cls):
-                module = cls.__module__
-                qualname = cls.__qualname__
-                if module is None or module == str.__module__:
-                    return qualname
-                return f"{module}.{qualname}"
-            try:
-                fields_dict = self._fields_dict
-                field = fields_dict[name]
-                pformat_field_schema_type = field.metadata.get(
-                    "pformat_schema_type", None)
-                if pformat_field_schema_type is not None:
-                    type_ = pformat_field_schema_type
-                else:
-                    try:
-                        type_ = fullname(field.type)
-                    except AttributeError:
-                        type_ = str(field.type)
-            except TypeError:
-                if isinstance(v, DataclassSchema):
-                    type_ = fullname(v.dataclass_cls)
-                else:
-                    type_ = fullname(v if inspect.isclass(v) else type(v))
-            text = getattr(k, 'description', None)
-            if text is None:
-                text = 'N/A'
-            if isinstance(k, schema.Optional):
-                # text = f'{text} (default={k.default})'
-                default_ = getattr(k, 'default', '')
-                # expand callable default
-                if callable(default_):
-                    if isinstance(k, DataclassSchemaOptional):
-                        default_ = default_(create_instance=False)
-                    else:
-                        default_ = default_()
+    def _schema_item_info(self, item):
+        k, v = item
+        # if isinstance(v, (schema.Use)):
+        #     func_name = getattr(
+        #         v._callable, '__name__', repr(v._callable))
+        #     text = f'{func_name}()'
+        # else:
+        #     text = str(v)
+        name = f'{k.schema}'
+        # we try to get the dataclass field type here
+        try:
+            fields_dict = self._fields_dict
+            field = fields_dict[name]
+            pformat_field_schema_type = field.metadata.get(
+                "pformat_schema_type", None)
+            if pformat_field_schema_type is not None:
+                type_ = pformat_field_schema_type
             else:
-                default_ = ''
-            return (name, type_, default_, text)
+                try:
+                    type_ = getname(field.type)
+                except Exception:
+                    type_ = str(field.type)
+        except TypeError:
+            if isinstance(v, DataclassSchema):
+                type_ = getname(v.dataclass_cls)
+            else:
+                type_ = getname(v if inspect.isclass(v) else type(v))
+        text = getattr(k, 'description', None)
+        if text is None:
+            text = 'N/A'
+        if isinstance(k, schema.Optional):
+            # text = f'{text} (default={k.default})'
+            default_ = getattr(k, 'default', '')
+            # expand callable default
+            if callable(default_):
+                if isinstance(k, DataclassSchemaOptional):
+                    default_ = default_(create_instance=False)
+                else:
+                    default_ = default_()
+        else:
+            default_ = ''
+        return (name, type_, default_, text)
+
+    def to_rst(self):
+        """Return the schema formatted as RST doc blob."""
+        # header
+        title = self.name or self.dataclass_cls.__name__
+        desc = self.description or self.dataclass_cls.__doc__
+        member_table = ""
+        return inspect.cleandoc(
+            f"""{title}
+            {'-' * len(title)}
+
+            :description: {desc}
+
+            :members:
+            {member_table}
+            """)
+
+    def pformat(self):
         body = pformat_list(
             [
                 # ('---', '----', '-------------', '-----------'),
@@ -194,7 +205,7 @@ class DataclassSchema(schema.Schema):
                 ('---', '----', '-------------', '-----------'),
              ] +
             list(
-                _pformat_item(k, v) for k, v in self.schema.items()
+                self._schema_item_info(item) for item in self.schema.items()
                 ),
             indent=4)
         cls_desc = self.description or self.dataclass_cls.__doc__
