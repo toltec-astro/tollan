@@ -13,19 +13,28 @@ __all__ = ['ncopen', 'ncinfo', 'NcNodeMapper']
 
 
 def _ncstr(var):
+
+    def _make_str(s):
+        try:
+            stop = s.index(None)
+        except ValueError:
+            stop = None
+        s = s[:stop]
+        s = [c.decode('utf-8') for c in s]
+        return ''.join(s).strip()
+
     s = var[:].tolist()
-    try:
-        stop = s.index(None)
-    except ValueError:
-        stop = None
-    s = s[:stop]
-    s = [c.decode('utf-8') for c in s]
-    return ''.join(s).strip()
+    if len(var.shape) == 1:
+        return _make_str(s)
+    # TODO make this work for ndim > 2
+    elif len(var.shape) == 2:
+        return [_make_str(ss) for ss in s]
+    raise RuntimeError("var has to be 2-d or less")
 
 
 def ncstr(var):
     """Return str from nc variable."""
-    if len(var.shape) != 1 or var.dtype != '|S1':
+    if var.dtype != '|S1':
         raise RuntimeError("var is not a string.")
     return _ncstr(var)
 
