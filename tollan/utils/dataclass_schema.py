@@ -2,15 +2,15 @@
 import dataclasses
 from functools import lru_cache
 from cached_property import cached_property
+import functools
 
 import copy
 import schema
 import inspect
 import typing_inspect
 import collections.abc
-import functools
 from .fmt import pformat_list
-from .misc import odict_from_list, getname
+from .misc import odict_from_list, getname, compose
 from .namespace import Namespace
 
 
@@ -85,8 +85,55 @@ class DataclassSchema(schema.Schema):
         dataclass_cls = kwargs.pop('dataclass_cls', None)
         # if dataclass_cls is None:
         #     raise ValueError("dataclass_cls is required")
+        # pre_validate_func = kwargs.pop("pre_validate_func", None)
+        # post_validate_func = kwargs.pop("post_validate_func", None)
         super().__init__(*args, **kwargs)
         self._dataclass_cls = dataclass_cls
+        # add pre and post validation hooks for fine-tuning
+        # the behavior
+        self._pre_validate_funcs = list()
+        self._post_validate_funcs = list()
+        # if pre_validate_func is not None:
+        #     self.append_pre_validate_func(pre_validate_func)
+        # if post_validate_func is not None:
+        #     self.append_pre_validate_func(post_validate_func)
+
+    def copy(self):
+        # TODO need improve
+        s = copy.copy(self)
+        # deep copy the underlying schema dict and hooks
+        s._schema = copy.deepcopy(self._schema)
+        s.pre_validate_funcs = self.pre_validate_funcs[:]
+        s.post_validate_funcs = self.post_validate_funcs[:]
+        return s
+
+    @property
+    def pre_validate_funcs(self):
+        return self._pre_validate_funcs
+
+    @pre_validate_funcs.setter
+    def pre_validate_funcs(self, funcs):
+        self._pre_validate_funcs = funcs
+
+    @property
+    def post_validate_funcs(self):
+        return self._post_validate_funcs
+
+    @post_validate_funcs.setter
+    def post_validate_funcs(self, funcs):
+        self._post_validate_funcs = funcs
+
+    def append_pre_validate_func(self, f):
+        self._pre_validate_funcs.append(f)
+
+    def append_post_validate_func(self, f):
+        self._post_validate_funcs.append(f)
+
+    def remove_pre_validate_func(self, f):
+        self._pre_validate_funcs.remove(f)
+
+    def remove_post_validate_func(self, f):
+        self._post_validate_funcs.remove(f)
 
     @property
     def dataclass_cls(self):
@@ -107,9 +154,14 @@ class DataclassSchema(schema.Schema):
         """
         # validate the data. Note that the create_instance is propagated
         # down to any nested DataclassSchema instance's validate method.
+
+        if self.pre_validate_funcs:
+            data = compose(*self.pre_validate_funcs)(data)
         data = super().validate(
             data, create_instance=create_instance, **kwargs)
         if self.dataclass_cls is not None and create_instance:
+            if self.post_validate_funcs:
+                data = compose(*self.post_validate_funcs)(data)
             return self.dataclass_cls(**data)
         return data
 

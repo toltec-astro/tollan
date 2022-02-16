@@ -199,6 +199,14 @@ def dict_product(**kwargs):
             for x in itertools.product(*kwargs.values()))
 
 
+def compose(*fs):
+    """Return composition of functions."""
+
+    def compose2(f, g):
+        return lambda *a, **kw: f(g(*a, **kw))
+    return functools.reduce(compose2, fs)
+
+
 class hookit(ContextDecorator):
     """A context manager that allow inject code to object's method.
 
