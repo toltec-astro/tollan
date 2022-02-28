@@ -434,7 +434,8 @@ def _is_dataclass_instance(obj):
 
 
 def asdict(obj, *, dict_factory=dict):
-    if not _is_dataclass_instance(obj):
+    if (not _is_dataclass_instance(obj)) and (
+            not isinstance(obj, DataclassNamespace)):
         raise TypeError("asdict() should be called on dataclass instances")
     return _asdict_inner(obj, dict_factory)
 

@@ -125,8 +125,35 @@ def init_log(
     for h in config['handlers'].values():
         h['level'] = level
     # we save the config so we can access the sensibles later
+    # reset the logging module before re-configure
+    # import pdb
+    # pdb.set_trace()
+    # _reset_log()
     dict_config.__wrapped__ = logging.config.dictConfigClass(config)
     dict_config.configure()
+
+
+def _reset_log():
+    manager = logging.root.manager
+    manager.disabled = logging.NOTSET
+    for logger in manager.loggerDict.values():
+        if isinstance(logger, logging.Logger):
+            logger.setLevel(logging.NOTSET)
+            logger.propagate = True
+            logger.disabled = False
+            logger.filters.clear()
+            handlers = logger.handlers.copy()
+            for handler in handlers:
+                # Copied from `logging.shutdown`.
+                try:
+                    handler.acquire()
+                    handler.flush()
+                    handler.close()
+                except (OSError, ValueError):
+                    pass
+                finally:
+                    handler.release()
+                logger.removeHandler(handler)
 
 
 def _find_logfile_handler(handlers, filepath):
