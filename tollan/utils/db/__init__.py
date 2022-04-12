@@ -63,7 +63,7 @@ class SqlaDB(Namespace):
     """
     @classmethod
     def from_uri(cls, uri, engine_options=None):
-        engine = sa.create_engine(uri, **engine_options)
+        engine = sa.create_engine(uri, **(engine_options or dict()))
         metadata = sa.MetaData(bind=engine)
         Session = sessionmaker(bind=engine)
         return cls(engine=engine, metadata=metadata, Session=Session)
