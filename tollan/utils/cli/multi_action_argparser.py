@@ -81,7 +81,7 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
                 help="Available actions."
                 )
 
-    def add_action_parser(self, *args, **kwargs):
+    def add_action_parser(self, *args, mpi_passthrough=False, **kwargs):
         p = self._self_action_parser_group.add_parser(
                 add_help=False,
                 *args, **kwargs)
@@ -89,7 +89,8 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
                 '-h', '--help', action='help', default=argparse.SUPPRESS,
                 help='Show help for this subcommand and exit.')
         # patch the action parser with method
-        p.parser_action = self.parser_action(p)
+        p.parser_action = self.parser_action(
+            p, mpi_passthrough=mpi_passthrough)
         return p
 
     def register_action_parser(self, *args, **kwargs):
@@ -100,13 +101,26 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
         return decorator
 
     @staticmethod
-    def parser_action(parser):
+    def parser_action(parser, mpi_passthrough=False):
         def decorator(action):
-            parser.set_defaults(func=action)
+            if mpi_passthrough:
+                func = action
+            else:
+                # we return an no-op action for worker ranks
+                from mpi4py import MPI
+                comm = MPI.COMM_WORLD
+                rank = comm.Get_rank()
+                if rank == 0:
+                    func = action
+                else:
+                    def func(*a, **k):
+                        return
+            parser.set_defaults(func=func)
             return action
         return decorator
 
     def bootstrap_actions(self, option, unknown_args=None):
+        print(option)
         if hasattr(option, 'func'):
             option.func(option, unknown_args=unknown_args)
         else:
