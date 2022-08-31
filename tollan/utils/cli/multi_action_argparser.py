@@ -107,14 +107,17 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
                 func = action
             else:
                 # we return an no-op action for worker ranks
-                from mpi4py import MPI
-                comm = MPI.COMM_WORLD
-                rank = comm.Get_rank()
-                if rank == 0:
+                try:
+                    from mpi4py import MPI
+                    comm = MPI.COMM_WORLD
+                    rank = comm.Get_rank()
+                    if rank == 0:
+                        func = action
+                    else:
+                        def func(*a, **k):
+                            return
+                except ModuleNotFoundError:
                     func = action
-                else:
-                    def func(*a, **k):
-                        return
             parser.set_defaults(func=func)
             return action
         return decorator
