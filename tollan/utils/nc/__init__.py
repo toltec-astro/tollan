@@ -232,13 +232,18 @@ class NcNodeMapperMixin(object):
         v[:] = netCDF4.stringtochar(np.array([s], dtype=f'S{dim}'))
         return v
 
-    def setscalar(self, k, s, dtype=None):
+    def setscalar(self, k, s, dtype=None, exist_ok=False):
         name = self[k]
         nc = self.nc_node
         if dtype is None:
             dt = np.dtype(type(s))
             dtype = f'{dt.kind}{dt.itemsize}'
-        v = nc.createVariable(name, dtype, ())
+        if name in nc.variables:
+            if not exist_ok:
+                raise ValueError(f"variable key={k} name={name} exists.")
+            v = nc.variables[name]
+        else:
+            v = nc.createVariable(name, dtype, ())
         v[:] = s
         return v
 
