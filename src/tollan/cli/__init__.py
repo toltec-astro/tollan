@@ -1,14 +1,15 @@
 """Console script for tollan."""
+import argparse
 import sys
 
-import click
 
-
-@click.command()
 def main(args=None):
     """Console script for tollan."""
-    click.echo("Replace this message by putting your code into tollan.cli.main")
-    click.echo("See click documentation at https://click.palletsprojects.com/")
+    parser = argparse.ArgumentParser(description="Tollan is a utility lib.")
+    from .. import _version
+
+    parser.add_argument("--version", "-v", action="version", version=_version.version)
+    parser.parse_args(args)
     return 0
 
 

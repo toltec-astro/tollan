@@ -47,7 +47,7 @@ def test_config_source_file():
         logger.debug(f"cs:\n{cs}")
         assert cs.order == 1
         assert cs.source == f0.resolve()
-        assert cs.format is None
+        assert cs.format == "yaml"
         assert cs.enabled
         assert cs.enable_if
         assert cs.is_file()
@@ -60,20 +60,20 @@ def test_config_source_file():
         assert cs.name == "f0"
 
 
-def test_config_source_inmemory():
+def test_config_source_pyobj():
     data = {"in_memory": True}
     cs = ConfigSource.parse_obj({"order": 1, "source": data})
     logger.debug(f"cs:\n{cs}")
     assert cs.order == 1
     assert cs.source == data
-    assert cs.format is None
+    assert cs.format == "pyobj"
     assert cs.enabled
     assert cs.enable_if
     assert not cs.is_file()
     assert cs.load() == data
     cs.dump({"updated": True})
     assert cs.source == {"updated": True}
-    assert cs.name == "memory"
+    assert cs.name == "pyobj"
 
 
 def test_config_source_list():
@@ -87,7 +87,7 @@ def test_config_source_list():
                     "order": 1,
                     "source": {
                         "a": "updated",
-                        "e": {1: "updated", "<<": {"new": "newvalue"}},
+                        "e": {1: "updated", "+": {"new": "newvalue"}},
                     },
                 },
                 {"order": 0, "source": f0, "name": "f0"},
@@ -96,7 +96,7 @@ def test_config_source_list():
         logger.debug(f"cl:\n{cl}")
         assert cl[0].name == "f0"
         assert cl[0].order == 0
-        assert cl[1].name == "memory"
+        assert cl[1].name == "pyobj"
         assert cl[1].order == 1
         data = cl.load()
         assert data == {

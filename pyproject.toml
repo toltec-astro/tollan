@@ -33,6 +33,8 @@ dependencies = [
     "pydantic_yaml",
     "astropy",
     "pandas",
+    "pyaml",
+    "scalpl",
 ]
 
 [project.scripts]

@@ -9,20 +9,15 @@ from astropy.io.registry import UnifiedIORegistry
 from pydantic import Field, root_validator
 
 from ..utils import envfile
-from ..utils.general import rupdate
+from ..utils.general import dict_from_flat_dict, rupdate
 from ..utils.log import logger
 from .types import AbsFilePath, ImmutableBaseModel
 
 config_source_io_registry = UnifiedIORegistry()
-
-config_source_io_registry.register_reader(
-    "yaml", dict, ImmutableBaseModel.Config.yaml_loads
-)
-config_source_io_registry.register_writer(
-    "yaml", dict, ImmutableBaseModel.Config.yaml_dumps
-)
+"""An unified IO registry for load and dump config files."""
 
 
+# YAML IO
 def _identify_yaml(origin, path, fileobj, *args, **kwargs):
     if path is None:
         if hasattr(fileobj, "name"):
@@ -36,12 +31,16 @@ def _identify_yaml(origin, path, fileobj, *args, **kwargs):
 
 
 config_source_io_registry.register_identifier("yaml", dict, _identify_yaml)
+config_source_io_registry.register_reader(
+    "yaml", dict, ImmutableBaseModel.Config.yaml_loads
+)
+config_source_io_registry.register_writer(
+    "yaml", dict, ImmutableBaseModel.Config.yaml_dumps
+)
 
-config_source_io_registry.register_reader("env", dict, envfile.env_load)
-config_source_io_registry.register_writer("env", dict, envfile.env_dump)
 
-
-def _identify_env(origin, path, fileobj, *args, **kwargs):
+# systemd env file IO
+def _identify_envfile(origin, path, fileobj, *args, **kwargs):
     if path is None:
         if hasattr(fileobj, "name"):
             path = fileobj.name
@@ -58,22 +57,53 @@ def _identify_env(origin, path, fileobj, *args, **kwargs):
     return False
 
 
-config_source_io_registry.register_identifier("env", dict, _identify_env)
+config_source_io_registry.register_identifier("env", dict, _identify_envfile)
+config_source_io_registry.register_reader("env", dict, envfile.env_load)
+config_source_io_registry.register_writer("env", dict, envfile.env_dump)
+
+
+def _identify_pyobj(origin, path, fileobj, *args, **kwargs):
+    # in this like both path and file should be none
+    if not args:
+        return False
+    data = args[0]
+    if not isinstance(data, (dict, list)):
+        return False
+    # if list, this has to be a set of cli args
+    if isinstance(data, list):
+        if not all(isinstance(item, str) for item in data):
+            return False
+    if isinstance(data, dict):
+        if not all(isinstance(key, (int, str)) for key in data):
+            return False
+    return True
+
+
+def _pyobj_load(data):
+    if isinstance(data, list):
+        return dict_from_cli_args(data)
+    elif isinstance(data, dict):
+        return dict_from_flat_dict(data)
+    raise ValueError("invalid config source.")
+
+
+config_source_io_registry.register_identifier("pyobj", dict, _identify_pyobj)
+config_source_io_registry.register_reader("pyobj", dict, _pyobj_load)
 
 
 class ConfigSource(ImmutableBaseModel):
     """The config source class.
 
-    The config source can be an in-memory dict or a file.
+    The config source can be anything that are registered in the `config_source_io_registry`.
     """
 
     io_registry: ClassVar[UnifiedIORegistry] = config_source_io_registry
     order: int = Field(
         description="The order of this config dict when merged with others."
     )
-    source: Union[dict, AbsFilePath] = Field(description="The config source.")
-    format: Union[None, Literal["env", "yaml"]] = Field(
-        description="The config source format"
+    source: Union[dict, list, AbsFilePath] = Field(description="The config source.")
+    format: Union[None, Literal["env", "yaml", "pyobj"]] = Field(
+        description="The config source format."
     )
     name: Union[None, str] = Field(description="Identifier of this config source.")
     enabled: bool = Field(default=True, description="Wether this config is enabled.")
@@ -88,19 +118,39 @@ class ConfigSource(ImmutableBaseModel):
             return values
         source = values["source"]
         if isinstance(source, os.PathLike):
-            values["name"] = source.as_posix()
+            values["name"] = str(source)
         else:
-            values["name"] = "memory"
+            values["name"] = "pyobj"
+        return values
+
+    @root_validator
+    def _validate_format(cls, values):
+        format = values["format"]
+        if format is not None:
+            return values
+        source = values["source"]
+        print(source)
+        if isinstance(source, os.PathLike):
+            path = source
+        else:
+            path = None
+        format = cls.io_registry.identify_format(
+            "read", dict, path, None, (source,), {}
+        )
+        print(format)
+        if not format:
+            return values
+        values["format"] = format[0]
         return values
 
     def is_file(self):
         return isinstance(self.source, os.PathLike)
 
+    def is_pyobj(self):
+        return isinstance(self.source, (dict, list))
+
     def load(self, **kwargs):
         """Load config from source."""
-        if not self.is_file():
-            # source is the data
-            return self.source
         return self.io_registry.read(dict, self.source, format=self.format, **kwargs)
 
     def dump(self, data, **kwargs):
@@ -133,7 +183,7 @@ class ConfigSourceList(ImmutableBaseModel):
     __root__: List[ConfigSource]
 
     @root_validator(pre=True)
-    def check_order_and_sort(cls, values):
+    def _check_order_and_sort(cls, values):
         # print(f"{values}")
         sources = values.get("__root__")
         orders = [source.get("order") for source in sources]

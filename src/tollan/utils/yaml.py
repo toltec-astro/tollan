@@ -31,7 +31,7 @@ def _astropy_time_representer(dumper, t):
 
 
 def _path_representer(dumper, p):
-    return dumper.represent_str(p.as_posix())
+    return dumper.represent_str(str(p))
 
 
 def _should_use_block(value):
@@ -86,4 +86,8 @@ def yaml_dump(data, output=None, **kwargs):
 
 def yaml_load(source):
     with ensure_readable_fileobj(source) as fo:
-        return yaml.safe_load(fo)
+        return yaml_loads(fo)
+
+
+def yaml_loads(stream):
+    return yaml.safe_load(stream)

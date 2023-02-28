@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
-
 import collections.abc
 import contextlib
 import functools
-import importlib
+import importlib.util
 import itertools
 import os
 import re
@@ -12,8 +11,9 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 from types import ModuleType
-from typing import Union
+from typing import List, Tuple, Union
 
+import scalpl
 from astropy.utils.data import get_readable_fileobj
 
 
@@ -142,34 +142,38 @@ def rupdate(d, u, copy_subdict=True):
     .. [1] https://stackoverflow.com/a/52099238/1824372
 
     """
-    re_list_append_key = re.compile(r"<<(:P<index>\d+)?")
+    re_list_append_key = re.compile(r"\+(?P<index>\d+)?")
     stack = [(d, u)]
+
+    def _handle_list_append(d, k, default):
+        if not isinstance(d, collections.abc.Sequence):
+            return d, k, d.setdefault(k, default)
+        m = re.match(re_list_append_key, str(k))
+        if m is not None:
+            k = int(m.groupdict().get("index", None) or len(d))
+            # print(m.groupdict())
+            # print(f"insert to d {k=}")
+            d.insert(k, default)
+        else:
+            k = int(k)
+        return d, k, d[k]
+
     while stack:
         d, u = stack.pop(0)
         for k, v in u.items():
             # print(f"processing {d=} {u=} {k=} {v=}")
+            if copy_subdict:
+                default = dict()  # subdicts in u will get copied to this
+            else:
+                default = None  # subdicts in u will be assigned to it.
+            # This checks the special key +0 for append new item
+            d, k, dv = _handle_list_append(d, k, default)
             if not isinstance(v, collections.abc.Mapping):
                 # u[k] is not a dict, nothing to merge, so just set it,
                 # regardless if d[k] *was* a dict
                 d[k] = v
                 continue
             # now v = u[k] is dict
-            # d may be list or dict. For list, we check the special key
-            # "<<" to append a new item.
-            if copy_subdict:
-                default = dict()  # subdicts in u will get copied to this
-            else:
-                default = None  # subdicts in u will be assigned to it.
-            if isinstance(d, collections.abc.Sequence):
-                m = re.match(re_list_append_key, str(k))
-                if m is not None:
-                    k = int(m.groupdict().get("index", len(d)))
-                    d.insert(k, default)
-                else:
-                    k = int(k)
-                dv = d[k]
-            else:
-                dv = d.setdefault(k, default)
             if not isinstance(dv, (collections.abc.Mapping, collections.abc.Sequence)):
                 # d[k] is not a dict, so just set it to u[k],
                 # overriding whatever it was
@@ -203,6 +207,65 @@ def dict_product(**kwargs):
     Return the Cartesian product of dicts.
     """
     return (dict(zip(kwargs.keys(), x)) for x in itertools.product(*kwargs.values()))
+
+
+def dict_from_flat_dict(dct):
+    """Return dict from dict with flattened keys."""
+    d = scalpl.Cut(dict())
+    _missing = object()
+    for k, v in dct.items():
+        v0 = d.get(k, _missing)
+        if v0 is _missing:
+            d.setdefault(k, v)
+            continue
+        # update v to v0 if dict
+        if isinstance(v0, dict):
+            rupdate(v0, v)
+        else:
+            d[k] = v
+    d = d.data
+    return d
+
+
+def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):
+    """Return dict from dict with nested dicts."""
+
+    def _dk(key):
+        return f".{key}"
+
+    def _lk(i):
+        if list_index_as_key:
+            return _dk(i)
+        return f"[{i}]"
+
+    def _nested_kvs(data) -> Union[List, Tuple]:
+        if isinstance(data, (list, dict)):
+            kvs = []
+            if isinstance(data, list):
+                items = ((_lk(i), data[i]) for i in range(len(data)))
+            else:
+                items = ((_dk(key), data[key]) for key in data.keys())
+            for key, value in items:
+                result = _nested_kvs(value)
+                if isinstance(result, list):
+                    if isinstance(value, (dict, list)):
+                        kvs.extend([(f"{key}{item}", val) for (item, val) in result])
+                elif isinstance(result, tuple):
+                    kvs.append((f"{key}", result[1]))
+            return kvs
+        else:
+            # leaf
+            return (None, data)
+
+    if not isinstance(dct, dict):
+        raise ValueError("only dict is allowed as input.")
+    kvs = _nested_kvs(dct)
+    # build the dict
+    result = dict()
+    for k, v in kvs:
+        _k = key_prefix + k.lstrip(".")
+        result[_k] = v
+    return result
 
 
 def compose(*fs):
