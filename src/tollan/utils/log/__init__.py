@@ -5,6 +5,9 @@ from contextlib import ContextDecorator
 
 from loguru import logger as _loguru_logger
 
+__all__ = ["logger", "logit"]
+
+
 logger = _loguru_logger
 """A global logger instance."""
 

@@ -1,6 +1,8 @@
 import numpy as np
 import pyaml
 
+__all__ = ["pformat_yaml"]
+
 pyaml.add_representer(np.float64, lambda s, d: s.represent_float(d))
 pyaml.add_representer(np.float32, lambda s, d: s.represent_float(d))
 pyaml.add_representer(np.int32, lambda s, d: s.represent_int(d))

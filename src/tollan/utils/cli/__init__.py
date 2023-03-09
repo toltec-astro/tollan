@@ -6,6 +6,8 @@ from ..general import dict_from_flat_dict
 from ..log import logger
 from ..yaml import yaml_loads
 
+__all__ = ["dict_from_cli_args"]
+
 
 def dict_from_cli_args(args):
     """Return a nested dict composed from CLI arguments.

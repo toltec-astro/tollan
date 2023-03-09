@@ -16,6 +16,21 @@ from typing import List, Tuple, Union
 import scalpl
 from astropy.utils.data import get_readable_fileobj
 
+__all__ = [
+    "ensure_abspath",
+    "ensure_readable_fileobj",
+    "getobj",
+    "module_from_path",
+    "rreload",
+    "rgetattr",
+    "rupdate",
+    "odict_from_list",
+    "dict_product",
+    "dict_from_flat_dict",
+    "dict_to_flat_dict",
+    "fcompose",
+]
+
 
 def ensure_abspath(p: Union[str, Path]) -> Path:
     """Return the fully expanded path."""
@@ -268,7 +283,7 @@ def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):
     return result
 
 
-def compose(*fs):
+def fcompose(*fs):
     """Return composition of functions."""
 
     def compose2(f, g):

@@ -2,6 +2,8 @@ from pydantic import Field
 
 from ..types import ImmutableBaseModel, TimeField
 
+__all__ = ["ConfigSnapshot"]
+
 
 class ConfigSnapshot(ImmutableBaseModel):
     """A time-tagged config dict."""

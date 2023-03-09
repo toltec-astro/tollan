@@ -1,6 +1,3 @@
-#! /usr/bin/env python
-
-
 __all__ = ["env_load", "env_dump"]
 
 

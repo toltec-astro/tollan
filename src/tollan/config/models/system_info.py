@@ -7,6 +7,8 @@ from pydantic import Field
 from ...utils.sys import get_hostname, get_username
 from ..types import AbsDirectoryPath, AbsFilePath, ImmutableBaseModel, TimeField
 
+__all__ = ["SystemInfo"]
+
 
 class SystemInfo(ImmutableBaseModel):
     """The system info."""

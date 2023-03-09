@@ -215,13 +215,20 @@ class PathFieldBase(Path):
 
 
 def path_field(
-    type: Union[None, str] = None, exists: bool = True, resolve: bool = True
+    type: Union[None, str] = None, exists: bool = False, resolve: bool = False
 ) -> Type[Path]:
     namespace = {"type": type, "exists": exists, "resolve": resolve}
     return builtins.type("PathField", (PathFieldBase,), namespace)
 
 
+AnyPath = PathField = path_field(type=None, exists=False, resolve=False)
+"""A field for any path."""
+
 AbsDirectoryPath = path_field(type="dir", resolve=True)
+"A field for resolved, existing directory path."
+
 AbsFilePath = path_field(type="file", resolve=True)
+"A field for resolved, existing file path."
+
 AbsAnyPath = path_field(type=None, exists=False, resolve=True)
-AnyPath = path_field(type=None, exists=False, resolve=False)
+"A field for resolved path."

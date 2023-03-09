@@ -14,6 +14,8 @@ from ...utils.general import dict_from_flat_dict, rupdate
 from ...utils.log import logger
 from ..types import AbsFilePath, ImmutableBaseModel
 
+__all__ = ["config_source_io_registry", "ConfigSource", "ConfigSourceList"]
+
 config_source_io_registry = UnifiedIORegistry()
 """An unified IO registry for load and dump config files."""
 
