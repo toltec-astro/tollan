@@ -1,13 +1,14 @@
-#!/usr/bin/env python
-
-
 import tempfile
 from pathlib import Path
 
 import pytest
 from astropy.io.registry import IORegistryError
 
-from tollan.config.core import ConfigSource, ConfigSourceList, config_source_io_registry
+from tollan.config.models.config_source import (
+    ConfigSource,
+    ConfigSourceList,
+    config_source_io_registry,
+)
 from tollan.utils.log import logger
 
 _yaml_content = """

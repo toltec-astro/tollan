@@ -8,10 +8,11 @@ import pandas as pd
 from astropy.io.registry import UnifiedIORegistry
 from pydantic import Field, root_validator
 
-from ..utils import envfile
-from ..utils.general import dict_from_flat_dict, rupdate
-from ..utils.log import logger
-from .types import AbsFilePath, ImmutableBaseModel
+from ...utils import envfile
+from ...utils.cli import dict_from_cli_args
+from ...utils.general import dict_from_flat_dict, rupdate
+from ...utils.log import logger
+from ..types import AbsFilePath, ImmutableBaseModel
 
 config_source_io_registry = UnifiedIORegistry()
 """An unified IO registry for load and dump config files."""
@@ -129,7 +130,6 @@ class ConfigSource(ImmutableBaseModel):
         if format is not None:
             return values
         source = values["source"]
-        print(source)
         if isinstance(source, os.PathLike):
             path = source
         else:
@@ -137,7 +137,6 @@ class ConfigSource(ImmutableBaseModel):
         format = cls.io_registry.identify_format(
             "read", dict, path, None, (source,), {}
         )
-        print(format)
         if not format:
             return values
         values["format"] = format[0]
@@ -171,7 +170,7 @@ class ConfigSource(ImmutableBaseModel):
         if isinstance(self.enable_if, bool):
             return self.enabled
         # evaluate
-        result = pd.eval(self.enable_if, resolver=context)
+        result = pd.eval(self.enable_if, resolvers=[context])
         if isinstance(result, bool):
             return result
         raise ValueError(f"ambiguous enabled_if result: {result}")
@@ -184,7 +183,6 @@ class ConfigSourceList(ImmutableBaseModel):
 
     @root_validator(pre=True)
     def _check_order_and_sort(cls, values):
-        # print(f"{values}")
         sources = values.get("__root__")
         orders = [source.get("order") for source in sources]
         if len(set(orders)) != len(orders):
@@ -215,6 +213,7 @@ class ConfigSourceList(ImmutableBaseModel):
                 continue
             if context is None or cs.is_enabled_for(context=context):
                 d = cs.load(**kwargs)
+                print(f"merge {d=} to {data=}")
                 rupdate(data, d)
                 continue
             else:
