@@ -9,8 +9,9 @@ from typing import Any, ClassVar, Dict, Sequence, Type, Union
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import BaseModel, DirectoryPath, FilePath, validator, validators
+from pydantic import BaseModel, DirectoryPath, Field, FilePath, validator, validators
 from pydantic_yaml import YamlModelMixin
+from typing_extensions import dataclass_transform
 
 from ..utils.yaml import yaml_dump, yaml_load
 
@@ -29,6 +30,7 @@ __all__ = [
 ]
 
 
+@dataclass_transform(kw_only_default=True, field_specifiers=(Field,))
 class ContextfulBaseModelMeta(type(BaseModel)):
     """A custom metaclass to support attaching context to models."""
 
@@ -90,7 +92,7 @@ class ImmutableBaseModel(YamlModelMixin, BaseModel, metaclass=ContextfulBaseMode
             return None
 
         def _inject_ctx(v, f):
-            print(f"inject field {f} {v=}")
+            # print(f"inject field {f} {v=}")
 
             if isinstance(v, collections.abc.Mapping) and issubclass(
                 f.type_, ImmutableBaseModel
