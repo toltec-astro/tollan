@@ -11,9 +11,10 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 from types import ModuleType
-from typing import List, Tuple, Union
+from typing import Callable, List, Tuple, Union
 
 import scalpl
+import wrapt
 from astropy.utils.data import get_readable_fileobj
 
 __all__ = [
@@ -29,6 +30,7 @@ __all__ = [
     "dict_from_flat_dict",
     "dict_to_flat_dict",
     "fcompose",
+    "Deferred",
 ]
 
 
@@ -290,3 +292,30 @@ def fcompose(*fs):
         return lambda *a, **kw: f(g(*a, **kw))
 
     return functools.reduce(compose2, fs)
+
+
+class Deferred(wrapt.ObjectProxy):
+    """A class to hold object for deferred initialization.
+
+    Parameters
+    ----------
+    factory : callable, optional
+        The facory fuction to invoke when :meth:`init` is called. The return
+        value is set as the underlying instance of this proxy object.
+        If None, the first argument of the call is used as the underlying instance.
+    """
+
+    def __init__(self, factory=None):
+        self._self_factory = factory
+        super().__init__(None)
+
+    def init(self, *args, **kwargs):
+        if self._self_factory is None:
+            if kwargs or len(args) > 1:
+                raise ValueError("too many arguments.")
+            elif len(args) == 0:
+                raise ValueError("too few arguments.")
+            self.__wrapped__ = args[0]
+            return self
+        self.__wrapped__ = self._self_factory(*args, **kwargs)  # type: ignore
+        return self
