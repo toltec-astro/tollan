@@ -8,19 +8,16 @@ from .. import _version
 from ..utils.cli.multi_action_argument_parser import MultiActionArgumentParser
 from ..utils.general import Deferred
 
-main_parser = wrapt.ObjectProxy(None)
+main_parser = Deferred(MultiActionArgumentParser)
 """
 A proxy to the
 `tollan.utils.cli.multi_action_argument_parser.MultiActionArgumentParser`
 instance, which is made available when `tolteca.cli.main` is invoked.
 """
 
-main_parser = Deferred(MultiActionArgumentParser)
-
 
 def main(args=None):
     """Console script for tollan."""
-    from ..utils.cli.multi_action_argument_parser import MultiActionArgumentParser
 
     parser = main_parser.init(description="Tollan is a utility lib.")
 
