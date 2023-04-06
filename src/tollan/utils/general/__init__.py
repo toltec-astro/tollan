@@ -31,6 +31,7 @@ __all__ = [
     "dict_to_flat_dict",
     "fcompose",
     "Deferred",
+    "add_to_dict",
 ]
 
 
@@ -319,3 +320,23 @@ class Deferred(wrapt.ObjectProxy):
             return self
         self.__wrapped__ = self._self_factory(*args, **kwargs)  # type: ignore
         return self
+
+
+def add_to_dict(d, key, exist_ok=True):
+    """A decorator to add decorated item to dict.
+
+    When key is callable, it generate the actual key by
+    invoking it with the decorated item.
+    """
+
+    def decorator(thing):
+        if callable(key):
+            _key = key(thing)
+        else:
+            _key = key
+        if not exist_ok and _key in d:
+            raise ValueError("key={_key} exist.")
+        d[_key] = thing
+        return thing
+
+    return decorator

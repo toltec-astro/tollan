@@ -16,3 +16,25 @@ def pformat_yaml(obj):
         # unwrap if has wrapped interface
         obj = obj.__wrapped__
     return f"\n{pyaml.dump(obj)}"
+
+
+def pformat_fancy_index(arg):
+    """Return pretty-formated index or slice."""
+    if isinstance(arg, slice):
+        if arg.start is None:
+            start = ""
+        else:
+            start = arg.start
+        if arg.stop is None:
+            stop = ""
+        else:
+            stop = arg.stop
+        result = f"[{start}:{stop}{{}}]"
+        if arg.step is None or arg.step == 1:
+            result = result.format("")
+        else:
+            result = result.format(f":{arg.step}")
+        return result
+    if isinstance(arg, np.ndarray):
+        return f"<mask {np.sum(arg)}/{arg.size}>"
+    return arg

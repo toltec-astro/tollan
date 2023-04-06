@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import TYPE_CHECKING, List
 
 import astropy.units as u
 from astropy.time import Time
@@ -18,17 +18,21 @@ from tollan.config.types import (
 )
 from tollan.utils.log import logger
 
-_LengthQuantity = quantity_field("length")
-
 
 def test_types():
     class TestModel(ImmutableBaseModel):
         """A model to test `tollan.config.types`."""
 
-        path0: AbsFilePath = Field(default=__file__)
-        path1: AbsDirectoryPath = Field(default="~")
-        time: TimeField = Field(default_factory=TimeField.now)
-        length: _LengthQuantity = Field(default="10m")
+        if TYPE_CHECKING:
+            path0: Path
+            path1: Path
+            time: u.Quantity
+            length: u.Quantity
+        else:
+            path0: AbsFilePath = Field(default=__file__)
+            path1: AbsDirectoryPath = Field(default="~")
+            time: TimeField = Field(default_factory=TimeField.now)
+            length: quantity_field("length") = Field(default="10m")
 
     m = TestModel.parse_obj({})
     logger.debug(f"m.schema:\n{m.schema_json(indent=2)}")
@@ -51,8 +55,12 @@ def test_abspath_rootpath():
     class TestModel(ImmutableBaseModel):
         """A model to test `tollan.config.types`."""
 
-        path0: AbsAnyPath = Field(default="a")
-        path1: AnyPath = Field(default="a")
+        if TYPE_CHECKING:
+            path0: Path
+            path1: Path
+        else:
+            path0: AbsAnyPath = Field(default="a")
+            path1: AnyPath = Field(default="a")
 
     m = TestModel.parse_obj({"validation_context": {"rootpath": "~"}})
     logger.debug(f"m.schema:\n{m.schema_json(indent=2)}")
@@ -66,7 +74,10 @@ def test_abspath_rootpath():
 
 
 class Nested(ImmutableBaseModel):
-    path0: AbsAnyPath = Field(default="a")
+    if TYPE_CHECKING:
+        path0: Path
+    else:
+        path0: AbsAnyPath = Field(default="a")
 
 
 class Nested1(ImmutableBaseModel):

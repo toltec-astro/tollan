@@ -35,6 +35,8 @@ dependencies = [
     "pandas",
     "pyaml",
     "scalpl",
+    "tabulate",
+    "netcdf4",
 ]
 
 [project.scripts]

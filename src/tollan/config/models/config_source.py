@@ -225,7 +225,7 @@ class ConfigSourceList(ImmutableBaseModel):
                 continue
         return data
 
-    def locate(config, root_key=None):
+    def locate(self, config, root_key=None):
         """Return the list of sources that provides `config`.
 
         Parameters
