@@ -340,3 +340,36 @@ def add_to_dict(d, key, exist_ok=True):
         return thing
 
     return decorator
+
+
+def dict_from_regex_match(pattern, string, type_dispatcher=None):
+    """Return a dict from matching `pattern` to `string`.
+
+    If match failed, returns None.
+
+    Parameters
+    ----------
+    pattern : str, `re.Pattern`
+        The regex that matches to the `input_`.
+
+    input_ : str
+        The string to be matched.
+
+    type_dispatcher : dict
+        This specifies how the matched group values are handled after being
+        extracted.
+    """
+    if type_dispatcher is None:
+        type_dispatcher = dict()
+    m = re.match(pattern, string)
+    if m is None:
+        return None
+
+    result = dict()
+
+    for k, v in m.groupdict().items():
+        if k in type_dispatcher:
+            result[k] = type_dispatcher[k](v)
+        else:
+            result[k] = v
+    return result
