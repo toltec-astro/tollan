@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import os
 import re
-from datetime import datetime
-from typing import Any, Callable, Dict, Literal, Union
+from datetime import datetime, timezone
+from typing import Any, Callable, Literal
 
 from pydantic import Field, constr
 
@@ -16,8 +15,6 @@ __all__ = ["PathValidationError", "validate_path", "PathItem", "DirectoryPresetM
 
 class PathValidationError(RuntimeError):
     """Error related to path preset validation."""
-
-    pass
 
 
 def _check_path(path, type_required=None):
@@ -35,9 +32,11 @@ def _check_path(path, type_required=None):
     path = ensure_abspath(path)
     result = {
         "exists": path.exists(),
-        "type_ok": (not path.exists())
-        or (path.is_dir() and type_required == "dir")
-        or (path.is_file() and type_required == "file"),
+        "type_ok": (
+            (not path.exists())
+            or (path.is_dir() and type_required == "dir")
+            or (path.is_file() and type_required == "file")
+        ),
         "is_clean": False,
         "is_glob": False,
         "path": path,
@@ -62,16 +61,17 @@ def _check_path(path, type_required=None):
 def _make_backup_path(path, backup_timestamp_format, check_paths=None):
     check_paths = check_paths or []
     check_paths.append(path)
-    mtime_latest = max(datetime.fromtimestamp(p.lstat().st_mtime) for p in check_paths)
+    mtime_latest = max(
+        datetime.fromtimestamp(p.lstat().st_mtime, tz=timezone.utc) for p in check_paths
+    )
     timestamp = mtime_latest.strftime(backup_timestamp_format)
-    backup_path = path.with_name(f"{path.name}.{timestamp}.bak")
-    return backup_path
+    return path.with_name(f"{path.name}.{timestamp}.bak")
 
 
 def _rename_path(path, dst_path, dry_run, name):
     with logit(logger.debug, f"rename {name}: {path} -> {dst_path}"):
         if not dry_run:
-            os.rename(path, dst_path)
+            path.rename(dst_path)
         else:
             logger.info(f"dry run rename {name}: {path} -> {dst_path}")
     return dst_path
@@ -94,7 +94,7 @@ def _create_path(path, type_required, dry_run, name, on_create):
             elif type_required == "file":
                 if path.exists():
                     logger.debug(f"overwrite {name}: {path} exists.")
-                with open(path, "wb") as fo:
+                with path.open("wb") as fo:
                     fo.write(b"")
             else:
                 raise ValueError(f"unknown {name} type {type_required}")
@@ -105,7 +105,7 @@ def _create_path(path, type_required, dry_run, name, on_create):
     return path
 
 
-def validate_path(
+def validate_path(  # noqa: PLR0913
     path,
     type_required,
     create=True,
@@ -160,7 +160,7 @@ def validate_path(
     c = _check_path(path=path, type_required=type_required)
     if not c["type_ok"]:
         raise PathValidationError(
-            f"invalid {name}: {path} is not of type {type_required}."
+            f"invalid {name}: {path} is not of type {type_required}.",
         )
     # for glob pattern this is it so return
     if c["is_glob"]:
@@ -170,10 +170,9 @@ def validate_path(
     if not create:
         if not c["exists"]:
             raise PathValidationError(f"missing {name}: {path} does not exists.")
-        else:
-            # good
-            logger.debug(f"validated {name}: {path} exist and is valid")
-            return path
+        # good
+        logger.debug(f"validated {name}: {path} exist and is valid")
+        return path
     # check backup and do the backup, this will change the clean and exist state
     if backup and c["exists"]:
         _rename_as_backup(path, backup_timestamp_format, dry_run, name)
@@ -182,17 +181,22 @@ def validate_path(
 
     if clean_create_only and not c["is_clean"]:
         raise PathValidationError(
-            f"invalid {name}: {path} exists or is not empty. set clean_create_only=False to proceed create"
+            (
+                f"invalid {name}: {path} exists or is not empty. set"
+                " clean_create_only=False to proceed create"
+            ),
         )
     # proceed to create this item
     if c["exists"] and not always_create:
         logger.debug(
-            f"validated {name}: {path} exist and creation is skipped. set always_create=True to force re-create."
+            (
+                f"validated {name}: {path} exist and creation is skipped. set"
+                " always_create=True to force re-create."
+            ),
         )
         return path
     # finally we create the item, this may overwrite existing item
-    path = _create_path(path, type_required, dry_run, name, on_create)
-    return path
+    return _create_path(path, type_required, dry_run, name, on_create)
 
 
 RelPathStr = constr(regex=r"^(?![\/\\]+|~).*")
@@ -203,16 +207,18 @@ class PathItem(ImmutableBaseModel):
 
     name: str = Field(description="The name of this item.")
 
-    path_name: RelPathStr = Field(description="The path name.")
+    path_name: RelPathStr = Field(description="The path name.")  # type: ignore
 
     path_type: Literal["dir", "file", "glob"] = Field(description="The path type.")
 
     re_glob_ignore: str = Field(
-        default=r".+.bak/.+", description="The files to ignore from glob"
+        default=r".+.bak/.+",
+        description="The files to ignore from glob",
     )
 
-    on_create: Union[None, Callable] = Field(
-        default=None, description="The function to call after creating this path."
+    on_create: None | Callable = Field(
+        default=None,
+        description="The function to call after creating this path.",
     )
 
     def resolve_path(self, rootpath, resolve_glob=True):
@@ -237,7 +243,7 @@ class PathItem(ImmutableBaseModel):
         return validate_path(path, self.path_type, **kwargs)
 
 
-class DirectoryPresetMixin(object):
+class DirectoryPresetMixin:
     """A mixin class to manage contents of a directory.
 
     The `DirectoryPresetMixin` implements the logic to setup a directory with
@@ -266,7 +272,7 @@ class DirectoryPresetMixin(object):
     with name specified in the ``path_items``.
     """
 
-    _path_items_by_attr: Dict[str, PathItem]
+    _path_items_by_attr: dict[str, PathItem]
     _rootpath_item: PathItem
     rootpath = NotImplemented
 
@@ -291,12 +297,12 @@ class DirectoryPresetMixin(object):
 
     @classmethod
     def get_path_attrs(cls):
-        """The list of attribute names of managed paths."""
+        """Return the list of attribute names of managed paths."""
         return list(cls._path_items_by_attr.keys())
 
     def __getattr__(self, name, *args) -> Any:
         # make available the content attributes note rootpath is
-        if name != "rootpath" and name in self._path_items_by_attr.keys():
+        if name != "rootpath" and name in self._path_items_by_attr:
             return self._resolve_content_path(self._rootpath, name)
         return super().__getattribute__(name, *args)
 
@@ -305,10 +311,13 @@ class DirectoryPresetMixin(object):
         return {attr: getattr(self, attr) for attr in self.get_path_attrs()}
 
     @classmethod
-    def make_inplace_backup(
-        cls, rootpath, backup_timestamp_format="%Y%m%dT%H%M%S", dry_run=False
+    def make_inplace_backup(  # noqa: C901
+        cls,
+        rootpath,
+        backup_timestamp_format="%Y%m%dT%H%M%S",
+        dry_run=False,
     ):
-        """Helper function to create in-place backup of all managed contents."""
+        """Create in-place backup of all managed contents."""
         if not rootpath.exists():
             raise ValueError(f"rootpath {rootpath} does not exist.")
         backup_content_paths = set()
@@ -322,11 +331,13 @@ class DirectoryPresetMixin(object):
                 # missing item, no need to backup
                 pass
         backup_name = _make_backup_path(
-            rootpath, backup_timestamp_format, check_paths=list(backup_content_paths)
+            rootpath,
+            backup_timestamp_format,
+            check_paths=list(backup_content_paths),
         ).name
         backup_path = rootpath.joinpath(backup_name)
         logger.debug(
-            f"collected inplace backup\n{backup_path=}\n{backup_content_paths=}"
+            f"collected inplace backup\n{backup_path=}\n{backup_content_paths=}",
         )
 
         # go through all content paths, bulid the list of backup dst
@@ -361,7 +372,10 @@ class DirectoryPresetMixin(object):
             if dst.exists():
                 # TODO check if this make sense. this should be unlikely to happen...
                 _rename_as_backup(
-                    dst, backup_timestamp_format, dry_run=dry_run, name="backup content"
+                    dst,
+                    backup_timestamp_format,
+                    dry_run=dry_run,
+                    name="backup content",
                 )
             if not dst.parent.exists():
                 _create_path(
@@ -429,4 +443,5 @@ class DirectoryPresetBase(DirectoryPresetMixin):
 
     @property
     def rootpath(self):
+        """The rootpath."""
         return self._rootpath

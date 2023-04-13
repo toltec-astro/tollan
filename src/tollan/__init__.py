@@ -1,4 +1,4 @@
-"""Top-level package for tollan."""
+"""A utilty package for TolTEC data analysis."""
 
 from . import _version
 

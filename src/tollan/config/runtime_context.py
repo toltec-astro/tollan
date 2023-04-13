@@ -10,15 +10,12 @@ __all__ = ["RuntimeContextError", "RuntimeContext", "RuntimeBaseError", "Runtime
 class RuntimeContextError(RuntimeError):
     """Error related to runtime context."""
 
-    pass
 
-
-class RuntimeContext(object):
+class RuntimeContext:
     """A class to manage runtime context.
 
     Parameters
     ----------
-
     config : str, `os.PathLike`, dict, list, optional
         The runtime context config source, can be a file path,  a
         python dict, or a list of config source dict.
@@ -29,7 +26,7 @@ class RuntimeContext(object):
     @classmethod
     def _config_to_config_source_list(cls, config):
         if config is None:
-            config = dict()
+            config = {}
         if isinstance(config, (str, os.PathLike, collections.abc.Mapping)):
             config_source_list = [{"order": cls._default_cs_order, "source": config}]
         elif isinstance(config, collections.abc.Sequence):
@@ -37,21 +34,34 @@ class RuntimeContext(object):
         else:
             raise RuntimeContextError(f"invalid config source: {config}.")
         logger.debug(f"load config sources from {len(config_source_list)} items")
-        csl = ConfigSourceList.parse_obj(config_source_list)
+        csl = ConfigSourceList.parse_obj(config_source_list)  # type: ignore
         logger.debug(f"loaded config sources:\n{csl.yaml()}")
         return csl
 
     def __init__(self, config):
         self._config_sources = self._config_to_config_source_list(config)
 
+    @property
+    def config(self):
+        """The config dict composed from the config source."""
+        return self._config_sources.load()
+
+    @property
+    def rootpath(self):
+        """The rootpath."""
+        return NotImplemented
+
+    @property
+    def runtime_info(self):
+        """The runtime info object."""
+        return NotImplemented
+
 
 class RuntimeBaseError(RuntimeError):
     """Exception related to Runtime."""
 
-    pass
 
-
-class RuntimeBase(object):
+class RuntimeBase:
     """A base class for classes that consume `RuntimeContext`.
 
     This class acts as a proxy of an underlying `RuntimeContext` object,
@@ -66,21 +76,22 @@ class RuntimeBase(object):
     """
 
     def __init__(self, config):
-        if isinstance(config, RuntimeContext):
-            rc = config
-        else:
-            rc = RuntimeContext(config)
+        rc = config if isinstance(config, RuntimeContext) else RuntimeContext(config)
         self._rc = rc
 
     @property
     def rc(self):
+        """The underlying runtime context."""
         return self._rc
 
     config_cls = NotImplemented
     """Subclasses implement this to provide specialized config object."""
 
+    @property
     def config(self):
-        """The config object of :attr:`config_cls` constructed from the
+        """The runtime config object.
+
+        The config object is of :attr:`config_cls` constructed from the
         runtime context config dict.
 
         The config dict is validated and the constructed object is cached.

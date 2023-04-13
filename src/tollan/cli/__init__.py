@@ -1,7 +1,6 @@
 """Console script for tollan."""
 import sys
 
-import wrapt
 from loguru import logger
 
 from .. import _version
@@ -18,24 +17,23 @@ instance, which is made available when `tolteca.cli.main` is invoked.
 
 def main(args=None):
     """Console script for tollan."""
-
     parser = main_parser.init(description="Tollan is a utility lib.")
 
     parser.add_argument("--version", "-v", action="version", version=_version.version)
     parser.add_argument(
-        "-g", "--debug", help="Show debug logging messages.", action="store_true"
+        "-g",
+        "--debug",
+        help="Show debug logging messages.",
+        action="store_true",
     )
 
     # load subcommands
-    from . import config as _
+    from . import config as _  # noqa: F401
 
     option, unknown_args = parser.parse_known_args(args)
     parser.parse_args(args)
 
-    if option.debug:
-        loglevel = "DEBUG"
-    else:
-        loglevel = "INFO"
+    loglevel = "DEBUG" if option.debug else "INFO"
     logger.remove()
     logger.add(sys.stderr, level=loglevel)
     logger.debug(f"{option=} {unknown_args=}")

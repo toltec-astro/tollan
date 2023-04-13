@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 import os
 from io import IOBase, StringIO
-from pathlib import PosixPath
+from pathlib import Path, PosixPath
 
 import astropy.units as u
 import yaml
@@ -18,10 +16,22 @@ __all__ = ["YamlDumper", "yaml_dump", "yaml_load", "yaml_loads"]
 class YamlDumper(SafeDumper):
     """Yaml dumper that handles common types."""
 
-    def represent_data(self, data):
+    def represent_data(self, data):  # noqa: D102
         if isinstance(data, BaseCoordinateFrame):
             return self.represent_data(data.name)
         return super().represent_data(data)
+
+    _str_block_style_min_length = 100
+    """Mininum length of str to format as block."""
+
+    @classmethod
+    def _should_use_block(cls, value):
+        return "\n" in value or len(value) > cls._str_block_style_min_length
+
+    def represent_scalar(self, tag, value, style=None):  # noqa: D102
+        if style is None:
+            style = "|" if self._should_use_block(value) else self.default_style
+        return super().represent_scalar(tag=tag, value=value, style=style)
 
 
 def _quantity_representer(dumper, q):
@@ -36,31 +46,13 @@ def _path_representer(dumper, p):
     return dumper.represent_str(str(p))
 
 
-def _should_use_block(value):
-    return "\n" in value or len(value) > 100
-
-
-def _represent_scalar(self, tag, value, style=None):
-    if style is None:
-        if _should_use_block(value):
-            style = "|"
-        else:
-            style = self.default_style
-
-    node = yaml.representer.ScalarNode(tag, value, style=style)
-    if self.alias_key is not None:
-        self.represented_objects[self.alias_key] = node
-    return node
-
-
-YamlDumper.represent_scalar = _represent_scalar
 YamlDumper.add_multi_representer(u.Quantity, _quantity_representer)
 YamlDumper.add_multi_representer(Time, _astropy_time_representer)
 YamlDumper.add_multi_representer(PosixPath, _path_representer)
 
 
 def yaml_dump(data, output=None, **kwargs):
-    """Dump `data` as YAML to `output`
+    """Dump `data` as YAML to `output`.
 
     Parameters
     ----------
@@ -69,27 +61,30 @@ def yaml_dump(data, output=None, **kwargs):
     output : io.StringIO, optional
         The object to write to. If None, return the YAML as string.
     """
-    _output = output  # save the original output to check for None
-    if output is None:
-        output = StringIO()
+    out = StringIO() if output is None else output
     ctx = None
-    if isinstance(output, (str, os.PathLike)):
-        ctx = open(output, "w")
-        output = ctx.__enter__()
-    if not isinstance(output, IOBase):
-        raise ValueError("output has to be stream object.")
-    yaml.dump(data, output, Dumper=YamlDumper, **kwargs)
+    if isinstance(out, (str, os.PathLike)):
+        ctx = Path(out).open("w")
+        out = ctx.__enter__()
+    if not isinstance(out, IOBase):
+        raise TypeError("output has to be stream object.")
+    yaml.dump(data, out, Dumper=YamlDumper, **kwargs)
     if ctx is not None:
         ctx.close()
-    if _output is None:
-        return output.getvalue()
+    if output is None:
+        return out.getvalue()  # type: ignore
     return None
 
 
 def yaml_load(source):
+    """Load yaml data.
+
+    `source` can be filepath, stream, or string.
+    """
     with ensure_readable_fileobj(source) as fo:
         return yaml_loads(fo)
 
 
 def yaml_loads(stream):
+    """Load yaml data from string or stream."""
     return yaml.safe_load(stream)

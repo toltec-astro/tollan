@@ -1,11 +1,12 @@
-from ..utils.log import logger, logit
+from ..utils.log import logger
 from . import main_parser
 
 __all__ = ["cmd_config"]
 
 
 def cmd_config(option, unknown_args=None):
-    logger.info(f"option: {option}")
+    """Subcommand `config`."""
+    logger.info(f"option: {option}, unknown_args: {unknown_args}")
 
 
 if main_parser.__wrapped__ is not None:
@@ -15,4 +16,4 @@ if main_parser.__wrapped__ is not None:
         action=cmd_config,
     )
 else:
-    raise RuntimeError("main_parser is not initalized.")
+    logger.debug(f"{__name__} loaded before main_parser is initalized.")

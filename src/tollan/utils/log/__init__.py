@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""A submodule of logging related utilties."""
 
 import time
 from contextlib import AbstractContextManager, ContextDecorator
@@ -13,7 +13,7 @@ logger = _loguru_logger
 """A global logger instance."""
 
 
-class logit(ContextDecorator):
+class logit(ContextDecorator):  # noqa: N801
     """Decorator that logs the execution of the decorated item.
 
     Parameters
@@ -45,7 +45,7 @@ class logit(ContextDecorator):
         self.log_func(f"{self.msg} done")
 
 
-class logged_closing(AbstractContextManager):
+class logged_closing(AbstractContextManager):  # noqa: N801
     """A slightly modified version of `contextlib.closing` with logging."""
 
     def __init__(self, log_func, thing, msg=None):
@@ -64,7 +64,7 @@ class logged_closing(AbstractContextManager):
             self.thing.close()
 
 
-class timeit(ContextDecorator):
+class timeit(ContextDecorator):  # noqa: N801
     """Context decorator that logs the execution time of the decorated item.
 
     Parameters
@@ -74,9 +74,11 @@ class timeit(ContextDecorator):
         in the generated message in places of the name of the decorated object.
     """
 
-    _logger = _loguru_logger.patch(lambda r: r.update(name=f'timeit: {r["name"]}'))  # type: ignore
+    _logger = _loguru_logger.patch(
+        lambda r: r.update(name=f'timeit: {r["name"]}'),  # type: ignore
+    )
 
-    def __new__(cls, arg, **kwargs):
+    def __new__(cls, arg, **kwargs):  # noqa: D102
         if callable(arg):
             return cls(arg.__name__, **kwargs)(arg)
         return super().__new__(cls)
@@ -86,18 +88,19 @@ class timeit(ContextDecorator):
         self._level = level
 
     def __enter__(self):
-        self._logger.log(self._level, "{} ...".format(self.msg))
+        self._logger.log(self._level, f"{self.msg} ...")
         self._start = time.time()
 
     def __exit__(self, *args):
         elapsed = time.time() - self._start
         self._logger.log(
-            self._level, "{} done in {}".format(self.msg, self._format_time(elapsed))
+            self._level,
+            f"{self.msg} done in {self._format_time(elapsed)}",
         )
 
     @staticmethod
     def _format_time(time):
-        if time < 15:
+        max_ms = 15
+        if time < max_ms:
             return f"{time * 1e3:.0f}ms"
-        else:
-            return f"{human_time(time).strip()}"
+        return f"{human_time(time).strip()}"

@@ -9,7 +9,7 @@ def test_fileloc():
     fl = FileLoc("file:///a.b")
 
     assert fl.uri == "file:///a.b"
-    assert fl.netloc == ""
+    assert not fl.netloc
     assert fl.path.name == "a.b"
     assert fl.is_local
 
@@ -23,7 +23,7 @@ def test_fileloc():
     fl = FileLoc("a.b")
 
     assert fl.uri.endswith("a.b")
-    assert fl.netloc == ""
+    assert not fl.netloc
     assert fl.path.name == "a.b"
     assert fl.is_local
 
@@ -42,13 +42,13 @@ def test_fileloc():
 
     fl = FileLoc(("", "b.c"), remote_parent_path="/")
     assert re.match(r"file:///.+b\.c", fl.uri)
-    assert fl.netloc == ""
+    assert not fl.netloc
     assert fl.path.name == "b.c"
     assert fl.is_local
 
     fl = FileLoc(("", "b.c"), remote_parent_path="/", local_parent_path="/")
     assert fl.uri == "file:///b.c"
-    assert fl.netloc == ""
+    assert not fl.netloc
     assert fl.path.name == "b.c"
     assert fl.is_local
 

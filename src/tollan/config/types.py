@@ -1,11 +1,10 @@
-#!/usr/bin/env python
-
 import builtins
 import collections.abc
 import numbers
+from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Sequence, Type, Union
+from typing import Any, ClassVar, Union
 
 from astropy.time import Time
 from astropy.units import Quantity
@@ -34,12 +33,12 @@ __all__ = [
 class ContextfulBaseModelMeta(type(BaseModel)):
     """A custom metaclass to support attaching context to models."""
 
-    _context_key = "validation_context"
-    _root_key = "__root__"
+    context_key = "validation_context"
+    root_key = "__root__"
 
-    def __new__(cls, name, bases, namespace, **kwargs):
-        context_key = cls._context_key
-        root_key = cls._root_key
+    def __new__(cls, name, bases, namespace, **kwargs):  # noqa: D102
+        context_key = cls.context_key
+        root_key = cls.root_key
         # this creates the validation
         anno_new = {}
         namespace_new = {"__annotations__": anno_new}
@@ -61,10 +60,10 @@ class ContextfulBaseModelMeta(type(BaseModel)):
 class ImmutableBaseModel(YamlModelMixin, BaseModel, metaclass=ContextfulBaseModelMeta):
     """A common base model class for config models."""
 
-    _context_key: ClassVar = ContextfulBaseModelMeta._context_key
-    _root_key: ClassVar = ContextfulBaseModelMeta._root_key
+    _context_key: ClassVar = ContextfulBaseModelMeta.context_key
+    _root_key: ClassVar = ContextfulBaseModelMeta.root_key
 
-    class Config:
+    class Config:  # noqa: D106
         yaml_dumps = yaml_dump
         yaml_loads = yaml_load
         allow_mutation = False
@@ -72,7 +71,7 @@ class ImmutableBaseModel(YamlModelMixin, BaseModel, metaclass=ContextfulBaseMode
         validate_all = True
 
     @validator("*", each_item=True, pre=True)
-    def _add_context(cls, value, values, field):
+    def _add_context(cls, value, values, field):  # noqa: N805
         context_key = cls._context_key
         root_key = cls._root_key
         if field.name == context_key or context_key not in values:
@@ -95,7 +94,8 @@ class ImmutableBaseModel(YamlModelMixin, BaseModel, metaclass=ContextfulBaseMode
             # print(f"inject field {f} {v=}")
 
             if isinstance(v, collections.abc.Mapping) and issubclass(
-                f.type_, ImmutableBaseModel
+                f.type_,
+                ImmutableBaseModel,
             ):
                 v[context_key] = ctx  # type: ignore
             elif isinstance(v, list):
@@ -114,11 +114,15 @@ class ImmutableBaseModel(YamlModelMixin, BaseModel, metaclass=ContextfulBaseMode
         exclude = exclude or {}
         exclude[context_key] = ...
         return super()._calculate_keys(
-            include=include, exclude=exclude, exclude_unset=exclude_unset
+            include=include,
+            exclude=exclude,
+            exclude_unset=exclude_unset,
         )
 
 
 class TimeField(Time):
+    """A pydantic field for `astropy.time.Time`."""
+
     @classmethod
     def __get_validators__(cls):
         yield cls.validate
@@ -128,16 +132,18 @@ class TimeField(Time):
         field_schema.update({"type": "string", "format": "date-time"})
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v):  # noqa: D102
         if not isinstance(v, (str, Time)):
             raise TypeError("string or Time required")
         try:
             return cls(v)
-        except ValueError:
-            raise ValueError("invalid time format")
+        except ValueError as e:
+            raise ValueError("invalid time format") from e
 
 
 class QuantityFieldBase(Quantity):
+    """A pydantic field for `astropy.units.Quantity`."""
+
     physical_types_allowed: Union[None, str, Sequence[str]] = None
 
     @classmethod
@@ -149,13 +155,13 @@ class QuantityFieldBase(Quantity):
         field_schema.update({"type": "string"})
 
     @classmethod
-    def validate(cls, v):
+    def validate(cls, v):  # noqa: D102
         if not isinstance(v, (str, numbers.Number)):
             raise TypeError("string or number required")
         try:
             vv = cls(v)
-        except ValueError:
-            raise ValueError("invalid quantity format")
+        except ValueError as e:
+            raise ValueError("invalid quantity format") from e
         ptypes = cls.physical_types_allowed
         if ptypes is None or not ptypes:
             return vv
@@ -164,20 +170,25 @@ class QuantityFieldBase(Quantity):
             ptypes = [ptypes]
         if vv.unit is not None and vv.unit.physical_type not in ptypes:
             raise ValueError(
-                f"quantity of {vv.unit} does not have "
-                f"the required physical types {ptypes}.",
+                (
+                    f"quantity of {vv.unit} does not have "
+                    f"the required physical types {ptypes}."
+                ),
             )
         return vv
 
 
 def quantity_field(
     physical_types_allowed: Union[None, str, Sequence[str]] = None,
-) -> Type[Quantity]:
+) -> type[Quantity]:
+    """Return a constrained quantity field type."""
     namespace = {"physical_types_allowed": physical_types_allowed}
     return type("QuantityField", (QuantityFieldBase,), namespace)
 
 
 class PathFieldBase(Path):
+    """A base class for path-like pydantic fields."""
+
     type: Union[None, str] = None
     exists: bool = True
     resolve: bool = True
@@ -185,11 +196,14 @@ class PathFieldBase(Path):
     _type_dispatch = {
         None: {"format": "path", "validator": None},
         "file": {"format": "file-path", "validator": FilePath.validate},  # type: ignore
-        "dir": {"format": "directory-path", "validator": DirectoryPath.validate},  # type: ignore
+        "dir": {
+            "format": "directory-path",
+            "validator": DirectoryPath.validate,  # type: ignore
+        },
     }
 
     @classmethod
-    def __modify_schema__(cls, field_schema: Dict[str, Any]) -> None:
+    def __modify_schema__(cls, field_schema: dict[str, Any]) -> None:
         field_schema.update(format=cls._type_dispatch[cls.type]["format"])
 
     @classmethod
@@ -205,20 +219,23 @@ class PathFieldBase(Path):
             yield type_validator
 
     @classmethod
-    def validate_rootpath(cls, value, field):
+    def validate_rootpath(cls, value, field):  # noqa: D102
         ctx = field.field_info.extra.get("validation_context", None) or {}
         if "rootpath" in ctx:
-            value = Path(ctx["rootpath"]).joinpath(value)
+            return Path(ctx["rootpath"]).joinpath(value)
         return value
 
     @classmethod
-    def resolve_path(cls, value):
+    def resolve_path(cls, value):  # noqa: D102
         return value.expanduser().resolve()
 
 
 def path_field(
-    type: Union[None, str] = None, exists: bool = False, resolve: bool = False
-) -> Type[Path]:
+    type: Union[None, str] = None,
+    exists: bool = False,
+    resolve: bool = False,
+) -> type[Path]:
+    """Return a constrained path field type."""
     namespace = {"type": type, "exists": exists, "resolve": resolve}
     return builtins.type("PathField", (PathFieldBase,), namespace)
 

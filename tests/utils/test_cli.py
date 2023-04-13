@@ -13,5 +13,5 @@ def test_dict_from_cli_args():
                 "c": "value",
             },
             "+0": {"p": "q"},
-        }
+        },
     }

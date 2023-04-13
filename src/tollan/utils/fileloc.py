@@ -2,19 +2,16 @@ import pathlib
 import re
 import urllib.parse
 from pathlib import Path
-from typing import Tuple
 from urllib.parse import urlsplit, urlunsplit
 
 from tollan.utils.general import ensure_abspath
 
 
-class FileLoc(object):
-    """
-    A structure to hold file location info.
+class FileLoc:
+    """A structure to hold file location info.
 
     Parameters
     ----------
-
     args : str, `~pathlib.Path`, `FileLoc`, or tuple of two strings.
 
         The location of the file, composed of the hostname and the path.
@@ -47,7 +44,7 @@ class FileLoc(object):
     def __init__(self, *args, local_parent_path=None, remote_parent_path=None):
         if len(args) == 1:
             loc = args[0]
-        elif len(args) == 2:
+        elif len(args) == 2:  # noqa: PLR2004
             loc = args
         elif len(args) == 0:
             raise ValueError("no argument is specified.")
@@ -64,12 +61,16 @@ class FileLoc(object):
 
     @classmethod
     def _resolve_path(
-        cls, hostname, path, local_parent_path=None, remote_parent_path=None
+        cls,
+        hostname,
+        path,
+        local_parent_path=None,
+        remote_parent_path=None,
     ) -> Path:
         h = hostname
         p = Path(path)
         if isinstance(p, pathlib.WindowsPath):
-            if h is None or h == "":
+            if not h:
                 # local window path
                 return ensure_abspath(p)
             # remote window path
@@ -79,19 +80,19 @@ class FileLoc(object):
             return p
         # relative path
         # local file
-        if h is None or h == "":
+        if not h:
             if local_parent_path is not None:
                 return ensure_abspath(Path(local_parent_path).joinpath(p))
             return ensure_abspath(p)
         # remote file
         if remote_parent_path is None or not Path(remote_parent_path).is_absolute():
             raise ValueError(
-                "remote path shall be absolute if " "no remote_parent_path is set."
+                "remote path shall be absolute if no remote_parent_path is set.",
             )
         return Path(remote_parent_path).joinpath(p)
 
     @classmethod
-    def _resolve_loc(cls, loc, **kwargs) -> Tuple[str, str, Path]:
+    def _resolve_loc(cls, loc, **kwargs) -> tuple[str, str, Path]:
         if isinstance(loc, cls):
             uri = loc.uri
             h = loc.netloc
@@ -128,7 +129,7 @@ class FileLoc(object):
             p = cls._resolve_path(h, p, **kwargs)
             uri = str(urlunsplit(urlsplit(p.as_uri())._replace(netloc=h)))
         else:
-            raise ValueError(f"invalid file location {loc}.")
+            raise TypeError(f"invalid file location type {loc}.")
         if h is None or h == "localhost":
             h = ""
         return uri, h, p
@@ -139,32 +140,38 @@ class FileLoc(object):
 
     @property
     def uri(self) -> str:
+        """The URI."""
         return self._uri
 
     @property
     def netloc(self) -> str:
+        """The network location."""
         return self._netloc
 
     @property
     def path(self) -> Path:
+        """The path."""
         return self._path
 
     def exists(self):
+        """Check if file is local and exists."""
         return self.is_local and self.path.exists()
 
     @property
     def is_local(self):
-        return self.netloc == ""
+        """Check if file is local."""
+        return not self.netloc
 
     @property
     def is_remote(self):
+        """Check if file is remote."""
         return not self.is_local
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self.rsync_path})"
+        return f"{self.__class__.__name__}({self.as_rsync()})"
 
-    @property
-    def rsync_path(self):
+    def as_rsync(self):
+        """Return a string suitable to use as rsync argument."""
         if self.is_local:
             return self.path.as_posix()
         return f"{self.netloc}:{self.path}"

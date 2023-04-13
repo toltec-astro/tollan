@@ -1,11 +1,10 @@
 import shlex
 import sys
-from typing import List
 
 from pydantic import Field
 
 from ...utils.sys import get_hostname, get_username
-from ..types import AbsDirectoryPath, AbsFilePath, ImmutableBaseModel, TimeField
+from ..types import AbsDirectoryPath, AbsFilePath, ImmutableBaseModel
 
 __all__ = ["SystemInfo"]
 
@@ -24,11 +23,11 @@ class SystemInfo(ImmutableBaseModel):
     platform: str = Field(
         default_factory=lambda: sys.platform,
     )
-    python_prefix: AbsDirectoryPath = Field(
+    python_prefix: AbsDirectoryPath = Field(  # type: ignore
         default_factory=lambda: sys.prefix,
         description="The path to the python installation.",
     )
-    exec_path: AbsFilePath = Field(
+    exec_path: AbsFilePath = Field(  # type: ignore
         default_factory=lambda: sys.argv[0],
         description="Path to the command-line executable.",
     )

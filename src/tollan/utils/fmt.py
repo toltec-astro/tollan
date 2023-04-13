@@ -21,14 +21,8 @@ def pformat_yaml(obj):
 def pformat_fancy_index(arg):
     """Return pretty-formated index or slice."""
     if isinstance(arg, slice):
-        if arg.start is None:
-            start = ""
-        else:
-            start = arg.start
-        if arg.stop is None:
-            stop = ""
-        else:
-            stop = arg.stop
+        start = "" if arg.start is None else arg.start
+        stop = "" if arg.stop is None else arg.stop
         result = f"[{start}:{stop}{{}}]"
         if arg.step is None or arg.step == 1:
             result = result.format("")

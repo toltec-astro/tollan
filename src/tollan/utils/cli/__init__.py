@@ -1,3 +1,5 @@
+"""A subpackage that provides CLI utilties."""
+
 import argparse
 import re
 
@@ -17,7 +19,6 @@ def dict_from_cli_args(args):
     supported with the index as the key: ``--a.0.c``. The values
     of the options are parsed as YAML string.
     """
-
     logger.debug(f"parse command line args: {args}")
 
     parser = argparse.ArgumentParser()
@@ -28,12 +29,8 @@ def dict_from_cli_args(args):
         m = re_arg.match(arg)
         if m is None:
             continue
-        if i + 1 < n_args:
-            val = args[i + 1]
-        else:
-            # the last item
-            val = None
-        arg_kwargs = dict()
+        val = args[i + 1] if i + 1 < n_args else None
+        arg_kwargs = {}
         if val is None or re_arg.match(val) is not None:
             # the next item is a validate arg, this is a flag
             arg_kwargs["action"] = "store_true"

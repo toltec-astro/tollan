@@ -21,14 +21,13 @@ def get_username():
 
 
 def get_hostname():
-    """Same as the shell command `hostname`"""
+    """Return the hostname."""
     return socket.gethostname()
 
 
 def touch_file(out_file):
-    """Same as the shell command `touch`."""
-
-    with open(out_file, "a"):
+    """Touch file, the same as the shell command ``touch``."""
+    with Path(out_file).open("a"):
         os.utime(out_file, None)
 
 
@@ -49,7 +48,7 @@ def get_or_create_dir(dirpath, on_exist=None, on_create=None):
         if on_exist is not None:
             on_exist(dirpath)
         return dirpath
-    os.makedirs(dirpath)
+    dirpath.mkdir(parents=True)
     if on_create is not None:
         on_create(dirpath)
     return dirpath

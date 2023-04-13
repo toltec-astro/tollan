@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+"""A submodule that contains a general utilities and helpers."""
+
+from __future__ import annotations
 
 import collections.abc
 import contextlib
@@ -10,8 +12,6 @@ import re
 import sys
 from collections import OrderedDict
 from pathlib import Path
-from types import ModuleType
-from typing import Callable, List, Tuple, Union
 
 import scalpl
 import wrapt
@@ -35,17 +35,19 @@ __all__ = [
 ]
 
 
-def ensure_abspath(p: Union[str, Path]) -> Path:
-    """Return the fully expanded path."""
+def ensure_abspath(p: str | Path) -> Path:
+    """Return the fullUnion[Uni,[y e,]anded] path."""
     return Path(p).expanduser().resolve()
 
 
 def ensure_readable_fileobj(arg, *args, **kwargs):
-    """Return a readable object."""
-    ctx = None
-    if isinstance(arg, (str, os.PathLike)) and not os.path.isdir(arg):
-        ctx = get_readable_fileobj(arg, *args, **kwargs)
-        return ctx
+    """Return a readable object.
+
+    This differs from the `astropy.utils.data.get_readable_fileobj` in that it
+    is no-op if `arg` is already readable.
+    """
+    if isinstance(arg, (str, os.PathLike)) and not os.path.isdir(arg):  # noqa: PTH112
+        return get_readable_fileobj(arg, *args, **kwargs)
     if hasattr(arg, "read"):
         return contextlib.nullcontext(arg)
     raise ValueError(f"cannot create readable context for {arg}")
@@ -59,18 +61,18 @@ def getobj(name, *args):
 
     """
     if not isinstance(name, str):
-        raise ValueError("name must be a string.")
+        raise TypeError("name must be a string.")
     sep = ":"
     if sep not in name:
         name = f"{name}:"
     module, attr = name.split(sep, 1)
     try:
         module = importlib.import_module(module)
-    except Exception:
+    except Exception:  # noqa: BLE001
         if not args:
             raise
         return args[0]  # return the default if specified
-    if attr == "":
+    if not attr:
         return module
     return rgetattr(module, attr)
 
@@ -81,21 +83,17 @@ def module_from_path(filepath, name=None):
     if name is None:
         name = f"_module_from_path_{filepath.stem}"
     spec = importlib.util.spec_from_file_location(name, filepath.as_posix())
-    # print(filepath)
-    # print(spec)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = importlib.util.module_from_spec(spec)  # type: ignore
+    spec.loader.exec_module(module)  # type: ignore
     return module
 
 
-def rreload(m: ModuleType):
+def rreload(m):
     """Reload module recursively.
 
     Different from the `importlib.reload`, this also reloads submodules
     (modules with names prefixed by ``m.__name__``).
-
     """
-
     name = m.__name__  # get the name that is used in sys.modules
     name_ext = name + "."  # support finding sub modules or packages
 
@@ -123,14 +121,14 @@ def rgetattr(obj, attr, *args):
 
 
 def rupdate(d, u, copy_subdict=True):
-    """Update dict recursively.
+    r"""Update dict recursively.
 
     This will update `d` with items in `u` in a recursive fashion.
 
     `d` can be either list or dict. `u` has to be dict where int
     keys can be used to identify list items.
 
-    When updating list, the special key matches ``<<\\d+`` can be used to
+    When updating list, the special key matches ``<<\d+`` can be used to
     append item to the list.
 
     Parameters
@@ -171,31 +169,34 @@ def rupdate(d, u, copy_subdict=True):
             k = int(m.groupdict().get("index", None) or len(d))
             # print(m.groupdict())
             # print(f"insert to d {k=}")
-            d.insert(k, default)
+            d.insert(k, default)  # type: ignore
         else:
-            k = int(k)
+            try:
+                k = int(k)
+            except ValueError as e:
+                raise ValueError(f"invalid key {k} for list assignment.") from e
         return d, k, d[k]
 
     while stack:
         d, u = stack.pop(0)
         for k, v in u.items():
             # print(f"processing {d=} {u=} {k=} {v=}")
-            if copy_subdict:
-                default = dict()  # subdicts in u will get copied to this
+            if copy_subdict:  # noqa: SIM108
+                default = {}  # subdicts in u will get copied to this
             else:
                 default = None  # subdicts in u will be assigned to it.
             # This checks the special key +0 for append new item
-            d, k, dv = _handle_list_append(d, k, default)
+            d, k, dv = _handle_list_append(d, k, default)  # noqa: PLW2901
             if not isinstance(v, collections.abc.Mapping):
                 # u[k] is not a dict, nothing to merge, so just set it,
                 # regardless if d[k] *was* a dict
-                d[k] = v
+                d[k] = v  # type: ignore
                 continue
             # now v = u[k] is dict
             if not isinstance(dv, (collections.abc.Mapping, collections.abc.Sequence)):
                 # d[k] is not a dict, so just set it to u[k],
                 # overriding whatever it was
-                d[k] = v
+                d[k] = v  # type: ignore
             else:
                 # both d[k] and u[k] are dicts, push them on the stack
                 # to merge
@@ -221,15 +222,13 @@ def odict_from_list(lst, key):
 
 
 def dict_product(**kwargs):
-    """
-    Return the Cartesian product of dicts.
-    """
+    """Return the Cartesian product of dicts."""
     return (dict(zip(kwargs.keys(), x)) for x in itertools.product(*kwargs.values()))
 
 
 def dict_from_flat_dict(dct):
     """Return dict from dict with flattened keys."""
-    d = scalpl.Cut(dict())
+    d = scalpl.Cut({})
     _missing = object()
     for k, v in dct.items():
         v0 = d.get(k, _missing)
@@ -245,7 +244,7 @@ def dict_from_flat_dict(dct):
     return d
 
 
-def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):
+def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):  # noqa: C901
     """Return dict from dict with nested dicts."""
 
     def _dk(key):
@@ -256,13 +255,13 @@ def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):
             return _dk(i)
         return f"[{i}]"
 
-    def _nested_kvs(data) -> Union[List, Tuple]:
+    def _nested_kvs(data) -> list | tuple:
         if isinstance(data, (list, dict)):
             kvs = []
             if isinstance(data, list):
                 items = ((_lk(i), data[i]) for i in range(len(data)))
             else:
-                items = ((_dk(key), data[key]) for key in data.keys())
+                items = ((_dk(key), data[key]) for key in data)
             for key, value in items:
                 result = _nested_kvs(value)
                 if isinstance(result, list):
@@ -270,16 +269,17 @@ def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):
                         kvs.extend([(f"{key}{item}", val) for (item, val) in result])
                 elif isinstance(result, tuple):
                     kvs.append((f"{key}", result[1]))
+                else:
+                    pass
             return kvs
-        else:
-            # leaf
-            return (None, data)
+        # leaf
+        return (None, data)
 
     if not isinstance(dct, dict):
-        raise ValueError("only dict is allowed as input.")
+        raise TypeError("only dict is allowed as input.")
     kvs = _nested_kvs(dct)
     # build the dict
-    result = dict()
+    result = {}
     for k, v in kvs:
         _k = key_prefix + k.lstrip(".")
         result[_k] = v
@@ -311,10 +311,11 @@ class Deferred(wrapt.ObjectProxy):
         super().__init__(None)
 
     def init(self, *args, **kwargs):
+        """Initialize this proxy."""
         if self._self_factory is None:
             if kwargs or len(args) > 1:
                 raise ValueError("too many arguments.")
-            elif len(args) == 0:
+            if len(args) == 0:
                 raise ValueError("too few arguments.")
             self.__wrapped__ = args[0]
             return self
@@ -323,17 +324,14 @@ class Deferred(wrapt.ObjectProxy):
 
 
 def add_to_dict(d, key, exist_ok=True):
-    """A decorator to add decorated item to dict.
+    """Return a decorator to add decorated item to dict.
 
     When key is callable, it generate the actual key by
     invoking it with the decorated item.
     """
 
     def decorator(thing):
-        if callable(key):
-            _key = key(thing)
-        else:
-            _key = key
+        _key = key(thing) if callable(key) else key
         if not exist_ok and _key in d:
             raise ValueError("key={_key} exist.")
         d[_key] = thing
@@ -360,13 +358,12 @@ def dict_from_regex_match(pattern, string, type_dispatcher=None):
         extracted.
     """
     if type_dispatcher is None:
-        type_dispatcher = dict()
+        type_dispatcher = {}
     m = re.match(pattern, string)
     if m is None:
         return None
 
-    result = dict()
-
+    result = {}
     for k, v in m.groupdict().items():
         if k in type_dispatcher:
             result[k] = type_dispatcher[k](v)

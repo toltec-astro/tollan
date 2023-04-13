@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tempfile
 from pathlib import Path
 
@@ -26,9 +28,9 @@ def test_config_source_io_registry():
     with tempfile.TemporaryDirectory() as tmp:
         f0 = Path(tmp) / "a.yaml"
         f1 = Path(tmp) / "a.not_yaml"
-        with open(f0, "w") as fo:
+        with f0.open("w") as fo:
             fo.write(_yaml_content)
-        with open(f1, "w") as fo:
+        with f1.open("w") as fo:
             fo.write(_yaml_content)
         assert r.identify_format("read", dict, f0, None, (), {})
         logger.debug(f"yaml_content: {r.read(dict, f0)}")
@@ -42,7 +44,7 @@ def test_config_source_io_registry():
 def test_config_source_file():
     with tempfile.TemporaryDirectory() as tmp:
         f0 = Path(tmp) / "a.yaml"
-        with open(f0, "w") as fo:
+        with f0.open("w") as fo:
             fo.write(_yaml_content)
         cs = ConfigSource.parse_obj({"order": 1, "source": f0, "name": "f0"})
         logger.debug(f"cs:\n{cs}")
@@ -53,9 +55,9 @@ def test_config_source_file():
         assert cs.enable_if
         assert cs.is_file()
         assert cs.load() == _yaml_content_dict
-        f1 = Path(tmp) / "b.yaml"
+        # f1 = Path(tmp) / "b.yaml"
         cs.dump({"updated": True})
-        with open(f0, "r") as fo:
+        with f0.open("r") as fo:
             logger.debug(f"file content:\n{fo.read()}")
         assert cs.load() == {"updated": True}
         assert cs.name == "f0"
@@ -80,7 +82,7 @@ def test_config_source_pyobj():
 def test_config_source_list():
     with tempfile.TemporaryDirectory() as tmp:
         f0 = Path(tmp) / "a.yaml"
-        with open(f0, "w") as fo:
+        with f0.open("w") as fo:
             fo.write(_yaml_content)
         cl = ConfigSourceList.parse_obj(
             [
@@ -92,7 +94,7 @@ def test_config_source_list():
                     },
                 },
                 {"order": 0, "source": f0, "name": "f0"},
-            ]
+            ],
         )
         logger.debug(f"cl:\n{cl}")
         assert cl[0].name == "f0"

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 import astropy.units as u
 from astropy.time import Time
@@ -81,7 +81,7 @@ class Nested(ImmutableBaseModel):
 
 
 class Nested1(ImmutableBaseModel):
-    __root__: List[Nested]
+    __root__: list[Nested]
 
     def __iter__(self):
         return iter(self.__root__)
