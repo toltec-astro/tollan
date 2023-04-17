@@ -6,13 +6,14 @@ from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from astropy.io.registry import UnifiedIORegistry
-from pydantic import Field, root_validator
+from pydantic import Field
+from pydantic.decorators import model_validator
 
 from ...utils import envfile
 from ...utils.cli import dict_from_cli_args
 from ...utils.general import dict_from_flat_dict, rupdate
 from ...utils.log import logger
-from ..types import AbsFilePath, ImmutableBaseModel
+from ..types import AbsFilePath, ImmutableBaseModel, create_list_model
 
 __all__ = ["config_source_io_registry", "ConfigSource", "ConfigSourceList"]
 
@@ -37,12 +38,12 @@ config_source_io_registry.register_identifier("yaml", dict, _identify_yaml)
 config_source_io_registry.register_reader(
     "yaml",
     dict,
-    ImmutableBaseModel.Config.yaml_loads,
+    ImmutableBaseModel.yaml_load,
 )
 config_source_io_registry.register_writer(
     "yaml",
     dict,
-    ImmutableBaseModel.Config.yaml_dumps,
+    ImmutableBaseModel.yaml_dump,
 )
 
 
@@ -108,22 +109,28 @@ class ConfigSource(ImmutableBaseModel):
     order: int = Field(
         description="The order of this config dict when merged with others.",
     )
-    source: dict | list | AbsFilePath = Field(  # type: ignore
+    source: dict | list | AbsFilePath = Field(
         description="The config source.",
     )
     format: None | Literal["env", "yaml", "pyobj"] = Field(
+        default=None,
         description="The config source format.",
     )
-    name: None | str = Field(description="Identifier of this config source.")
+    name: None | str = Field(
+        default=None,
+        description="Identifier of this config source.",
+    )
     enabled: bool = Field(default=True, description="Wether this config is enabled.")
     enable_if: bool | str = Field(
         default=True,
         description="Enable this config when this evaluates to True.",
     )
 
-    @root_validator
-    def _validate_name(cls, values):  # noqa: N805
-        name = values["name"]
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_name(cls, values):
+        print(f"validate_name: {values=}")
+        name = values.get("name", None)
         if name is not None:
             return values
         source = values["source"]
@@ -133,9 +140,11 @@ class ConfigSource(ImmutableBaseModel):
             values["name"] = "pyobj"
         return values
 
-    @root_validator
-    def _validate_format(cls, values):  # noqa: N805
-        format = values["format"]
+    @model_validator(mode="before")
+    @classmethod
+    def _validate_format(cls, values):
+        print(f"validate_format: {values=}")
+        format = values.get("format", None)
         if format is not None:
             return values
         source = values["source"]
@@ -173,7 +182,7 @@ class ConfigSource(ImmutableBaseModel):
             object.__setattr__(
                 self,
                 "__dict__",
-                self.copy(update={"source": data}).__dict__,
+                self.model_copy(update={"source": data}).__dict__,
             )
         else:
             self.io_registry.write(data, self.source, format=self.format, **kwargs)
@@ -192,27 +201,20 @@ class ConfigSource(ImmutableBaseModel):
         raise ValueError(f"ambiguous enabled_if result: {result}")
 
 
-class ConfigSourceList(ImmutableBaseModel):
+_ConfigSourceList = create_list_model("_ConfigSourceList", ConfigSource)
+
+
+class ConfigSourceList(_ConfigSourceList):
     """A base class to manage multiple config sources."""
 
-    __root__: list[ConfigSource]
-
-    @root_validator(pre=True)
-    def _check_order_and_sort(cls, values):  # noqa: N805
-        sources = values.get("__root__")
+    @model_validator(mode="before")
+    @classmethod
+    def _check_order_and_sort(cls, sources):
         orders = [source.get("order") for source in sources]
         if len(set(orders)) != len(orders):
             raise ValueError(f"order of config sources is ambiguous:\n{sources}")
         # sort by orders
-        sources_sorted = sorted(sources, key=lambda s: s.get("order"))
-        values["__root__"] = sources_sorted
-        return values
-
-    def __iter__(self):
-        return iter(self.__root__)
-
-    def __getitem__(self, item):
-        return self.__root__[item]
+        return sorted(sources, key=lambda s: s.get("order"))
 
     def load(self, context=None, **kwargs):
         """Load config from all sources.
@@ -223,7 +225,7 @@ class ConfigSourceList(ImmutableBaseModel):
             The context object to pass to `ConfigSource.is_enabled_for`.
         """
         data = {}
-        for cs in self.__root__:
+        for cs in self:
             if not cs.enabled:
                 logger.debug(f"config source {cs.name} is disabled.")
                 continue

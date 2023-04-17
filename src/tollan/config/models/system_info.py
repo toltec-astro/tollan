@@ -23,11 +23,11 @@ class SystemInfo(ImmutableBaseModel):
     platform: str = Field(
         default_factory=lambda: sys.platform,
     )
-    python_prefix: AbsDirectoryPath = Field(  # type: ignore
+    python_prefix: AbsDirectoryPath = Field(
         default_factory=lambda: sys.prefix,
         description="The path to the python installation.",
     )
-    exec_path: AbsFilePath = Field(  # type: ignore
+    exec_path: AbsFilePath = Field(
         default_factory=lambda: sys.argv[0],
         description="Path to the command-line executable.",
     )

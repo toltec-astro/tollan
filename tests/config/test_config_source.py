@@ -46,7 +46,7 @@ def test_config_source_file():
         f0 = Path(tmp) / "a.yaml"
         with f0.open("w") as fo:
             fo.write(_yaml_content)
-        cs = ConfigSource.parse_obj({"order": 1, "source": f0, "name": "f0"})
+        cs = ConfigSource.model_validate({"order": 1, "source": f0, "name": "f0"})
         logger.debug(f"cs:\n{cs}")
         assert cs.order == 1
         assert cs.source == f0.resolve()
@@ -65,7 +65,7 @@ def test_config_source_file():
 
 def test_config_source_pyobj():
     data = {"in_memory": True}
-    cs = ConfigSource.parse_obj({"order": 1, "source": data})
+    cs = ConfigSource.model_validate({"order": 1, "source": data})
     logger.debug(f"cs:\n{cs}")
     assert cs.order == 1
     assert cs.source == data
@@ -84,7 +84,7 @@ def test_config_source_list():
         f0 = Path(tmp) / "a.yaml"
         with f0.open("w") as fo:
             fo.write(_yaml_content)
-        cl = ConfigSourceList.parse_obj(
+        cl = ConfigSourceList.model_validate(
             [
                 {
                     "order": 1,

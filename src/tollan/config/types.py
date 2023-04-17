@@ -1,253 +1,483 @@
-import builtins
-import collections.abc
+import dataclasses
 import numbers
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Any, ClassVar, Union
+from typing import Annotated, Any, ClassVar, Literal, TypedDict, cast
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import BaseModel, DirectoryPath, Field, FilePath, validator, validators
-from pydantic_yaml import YamlModelMixin
-from typing_extensions import dataclass_transform
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationInfo,
+    model_serializer,
+    root_validator,
+)
+from pydantic.types import PathType as _PathType
+from pydantic_core import PydanticCustomError, core_schema
 
 from ..utils.yaml import yaml_dump, yaml_load
-
-"""Common pydantic types used in config."""
-
 
 __all__ = [
     "ImmutableBaseModel",
     "TimeField",
+    "time_field",
+    "IsoTimeField",
+    "UnixTimeField",
+    "QuantityField",
     "quantity_field",
-    "path_field",
+    "LengthQuantityField",
+    "AngleQuantityField",
+    "TimeQuantityField",
+    "DimensionlessQuantityField",
+    "AnyPath",
+    "AbsAnyPath",
     "AbsFilePath",
     "AbsDirectoryPath",
-    "AbsAnyPath",
-    "AnyPath",
+    "create_list_model",
 ]
 
 
-@dataclass_transform(kw_only_default=True, field_specifiers=(Field,))
-class ContextfulBaseModelMeta(type(BaseModel)):
-    """A custom metaclass to support attaching context to models."""
+class ImmutableBaseModel(BaseModel):
+    """A common base model class."""
 
-    context_key = "validation_context"
-    root_key = "__root__"
+    yaml_load: ClassVar = staticmethod(yaml_load)
+    yaml_dump: ClassVar = staticmethod(yaml_dump)
 
-    def __new__(cls, name, bases, namespace, **kwargs):  # noqa: D102
-        context_key = cls.context_key
-        root_key = cls.root_key
-        # this creates the validation
-        anno_new = {}
-        namespace_new = {"__annotations__": anno_new}
-        if (
-            root_key not in namespace
-            and root_key not in namespace.get("__annotations__", {})
-            and name != "ImmutableBaseModel"
-        ):
-            namespace_new[context_key] = None  # type: ignore
-            anno_new[context_key] = Any
-        for k, v in namespace.items():
-            if k == "__annotations__":
-                anno_new.update(v)
-            else:
-                namespace_new[k] = v
-        return super().__new__(cls, name, bases, namespace_new, **kwargs)
+    model_config = ConfigDict(
+        frozen=True,
+        validate_default=True,
+        ignored_types=(cached_property,),
+        strict=True,
+        # arbitrary_types_allowed=True,
+    )
+
+    def model_dump_yaml(self, **kwargs):
+        """Dump model as yaml."""
+        d = self.model_dump(**kwargs)
+        return self.yaml_dump(d)
+
+    @classmethod
+    def model_validate_yaml(cls, yaml_source, **kwargs):
+        """Validate model from yaml."""
+        d = cls.yaml_load(yaml_source)
+        return cls.model_validate(d, **kwargs)
 
 
-class ImmutableBaseModel(YamlModelMixin, BaseModel, metaclass=ContextfulBaseModelMeta):
-    """A common base model class for config models."""
+class DeferredValidationFieldMixin:
+    """An adaptor class to implement custom pydantic fields with constraints."""
 
-    _context_key: ClassVar = ContextfulBaseModelMeta.context_key
-    _root_key: ClassVar = ContextfulBaseModelMeta.root_key
+    @classmethod
+    def __pydantic_modify_json_schema__(
+        cls,
+        _field_schema: TypedDict,
+    ) -> TypedDict:
+        return core_schema.any_schema()
 
-    class Config:  # noqa: D106
-        yaml_dumps = yaml_dump
-        yaml_loads = yaml_load
-        allow_mutation = False
-        keep_untouched = (cached_property,)
-        validate_all = True
+    @classmethod
+    def __get_pydantic_core_schema__(cls, **_kwargs) -> core_schema.CoreSchema:
+        return core_schema.any_schema()
 
-    @validator("*", each_item=True, pre=True)
-    def _add_context(cls, value, values, field):  # noqa: N805
-        context_key = cls._context_key
-        root_key = cls._root_key
-        if field.name == context_key or context_key not in values:
-            return value
-        ctx = values[context_key]
-        field.field_info.extra[context_key] = ctx
 
-        # propagate ctx down
-        def _get_nested_list_item_field(f):
-            # infer child field for list value
-            t = f.type_
-            if root_key not in t.__fields__:
-                return None
-            item_type = t.__fields__[root_key].type_
-            if issubclass(item_type, ImmutableBaseModel):
-                return t.__fields__[root_key]
-            return None
+class _SimpleTypeValidatorMixin:
+    """A mixin class for custom type validation."""
 
-        def _inject_ctx(v, f):
-            # print(f"inject field {f} {v=}")
+    _field_type: ClassVar[type]
+    _field_type_name: ClassVar[str]
+    _field_type_error_message: ClassVar[str]
+    _field_value_types: ClassVar[set]
 
-            if isinstance(v, collections.abc.Mapping) and issubclass(
-                f.type_,
-                ImmutableBaseModel,
-            ):
-                v[context_key] = ctx  # type: ignore
-            elif isinstance(v, list):
-                item_field = _get_nested_list_item_field(f)
-                if item_field is not None:
-                    for vv in v:
-                        _inject_ctx(vv, item_field)  # type: ignore
-            else:
-                pass
+    _field_value_schema_stub: dict[str, Any]
+    _field_value_error_message: str
 
-        _inject_ctx(value, field)
-        return value
+    def __init_subclass__(cls):
+        if cls._field_type not in cls._field_value_types:
+            cls._field_value_types.add(cls._field_type)
 
-    def _calculate_keys(self, include, exclude, exclude_unset):
-        context_key = self._context_key
-        exclude = exclude or {}
-        exclude[context_key] = ...
-        return super()._calculate_keys(
-            include=include,
-            exclude=exclude,
-            exclude_unset=exclude_unset,
+    def __pydantic_modify_json_schema__(
+        self,
+        field_schema: dict[str, Any],
+    ) -> dict[str, Any]:
+        field_schema.update(self._field_value_schema_stub)
+        return field_schema
+
+    def __get_pydantic_core_schema__(
+        self,
+        schema: core_schema.CoreSchema,
+        **_kwargs,
+    ) -> core_schema.AfterValidatorFunctionSchema:
+        return core_schema.field_after_validator_function(
+            self._field_validate,
+            schema=schema,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                self._field_serialize,
+            ),
         )
 
+    def _field_serialize(self, value):
+        return str(value)
 
-class TimeField(Time):
-    """A pydantic field for `astropy.time.Time`."""
+    def _field_validate(self, value, info):
+        # validate type first
+        value = self._field_validate_type(value, info)
+        # do construction
+        value = self._field_construct_value(value, info)
+        # do post check
+        return self._field_validate_value(value, info)
 
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update({"type": "string", "format": "date-time"})
-
-    @classmethod
-    def validate(cls, v):  # noqa: D102
-        if not isinstance(v, (str, Time)):
-            raise TypeError("string or Time required")
-        try:
-            return cls(v)
-        except ValueError as e:
-            raise ValueError("invalid time format") from e
-
-
-class QuantityFieldBase(Quantity):
-    """A pydantic field for `astropy.units.Quantity`."""
-
-    physical_types_allowed: Union[None, str, Sequence[str]] = None
-
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update({"type": "string"})
-
-    @classmethod
-    def validate(cls, v):  # noqa: D102
-        if not isinstance(v, (str, numbers.Number)):
-            raise TypeError("string or number required")
-        try:
-            vv = cls(v)
-        except ValueError as e:
-            raise ValueError("invalid quantity format") from e
-        ptypes = cls.physical_types_allowed
-        if ptypes is None or not ptypes:
-            return vv
-        # check physical types
-        if isinstance(ptypes, str):
-            ptypes = [ptypes]
-        if vv.unit is not None and vv.unit.physical_type not in ptypes:
-            raise ValueError(
-                (
-                    f"quantity of {vv.unit} does not have "
-                    f"the required physical types {ptypes}."
-                ),
+    def _field_validate_type(self, value, *_args, **_kwargs):
+        """Return validate custom type."""
+        if not isinstance(value, tuple(self._field_value_types)):
+            raise PydanticCustomError(
+                f"invalid_{self._field_type_name}_type",
+                self._field_type_error_message.format(type=type(value)),
             )
-        return vv
+        return value
+
+    def _field_construct_value(self, value, *_args, **kwargs):
+        try:
+            field_construct_kw = kwargs.get("field_construct_kw", {})
+            return self._field_type(value, **field_construct_kw)
+        except ValueError as e:
+            raise PydanticCustomError(
+                f"invalid_{self._field_type_name}_arg",
+                self._field_value_error_message.format(value=value),
+            ) from e
+
+    def _field_validate_value(self, value, *_args, **_kwargs):
+        return value
 
 
-def quantity_field(
-    physical_types_allowed: Union[None, str, Sequence[str]] = None,
-) -> type[Quantity]:
-    """Return a constrained quantity field type."""
-    namespace = {"physical_types_allowed": physical_types_allowed}
-    return type("QuantityField", (QuantityFieldBase,), namespace)
+@dataclasses.dataclass
+class TimeValidator(_SimpleTypeValidatorMixin):
+    """The constraints for validating `astropy.time.Time`."""
+
+    formats_allowed: None | str | Sequence[str] = None
+
+    _field_type: ClassVar = Time
+    _field_type_name: ClassVar = "Time"
+    _field_type_error_message: ClassVar = (
+        "Time or datatime string is required, got {type}."
+    )
+    _field_value_types: ClassVar = {numbers.Number, str}
+
+    @cached_property
+    def _field_formats(self):
+        fmts = self.formats_allowed
+        if not fmts:
+            return None
+        if isinstance(fmts, str):
+            return (fmts,)
+        return fmts
+
+    @cached_property
+    def _field_value_schema_stub(self):
+        schema: dict[str, Any] = {
+            "type": "string",
+            "format": "date-time",
+        }
+        fmts = self._field_formats
+        if fmts is None:
+            return schema
+        schema["time_formats_allowed"] = fmts
+        return schema
+
+    def _field_serialize(self, value):
+        return value.isot
+
+    @cached_property
+    def _field_value_error_message(self):
+        if self.formats_allowed is None:
+            return "Invalid time format: {value}"
+        return f"Time formats {self.formats_allowed} required, got {{value}}"
+
+    def _field_construct_value(self, value, *args, **kwargs):
+        """Return `astropy.time.Time`."""
+        formats = self.formats_allowed
+        if not formats:
+            return super()._field_construct_value(value, *args, **kwargs)
+        # here we construct the type with explicit formats
+        if isinstance(formats, str):
+            formats = [formats]
+        for format in formats:
+            try:
+                value = super()._field_construct_value(
+                    value,
+                    *args,
+                    field_construct_kw={"format": format},
+                )
+            except PydanticCustomError:
+                continue
+            else:
+                break
+        else:
+            raise PydanticCustomError(
+                "time_format_not_allowed",
+                f"{value!r} does not have the required time formats {formats}.",
+            )
+        return value
 
 
-class PathFieldBase(Path):
-    """A base class for path-like pydantic fields."""
+class _TimeFieldDeferred(DeferredValidationFieldMixin, Time):
+    pass
 
-    type: Union[None, str] = None
+
+TimeField = Annotated[_TimeFieldDeferred, TimeValidator()]
+IsoTimeField = Annotated[
+    _TimeFieldDeferred,
+    TimeValidator(formats_allowed=["isot", "fits", "iso"]),
+]
+UnixTimeField = Annotated[
+    _TimeFieldDeferred,
+    TimeValidator(formats_allowed=("unix", "unix_tai")),
+]
+
+
+def time_field(formats_allowed=None):
+    """Return a pydantic field type to valid time."""
+    return Annotated[  # type: ignore[return-value]
+        _TimeFieldDeferred,
+        TimeValidator(formats_allowed=formats_allowed),
+    ]
+
+
+@dataclasses.dataclass
+class QuantityValidator(_SimpleTypeValidatorMixin):
+    """The constraints for validating `astropy.units.Quantity`."""
+
+    physical_types_allowed: None | str | Sequence[str] = None
+
+    _field_type: ClassVar = Quantity
+    _field_type_name: ClassVar = "Quantity"
+    _field_type_error_message: ClassVar = (
+        "Quantiy, number, or string is required, got {type}."
+    )
+    _field_value_types: ClassVar = {numbers.Number, str}
+
+    @cached_property
+    def _field_physical_types(self):
+        pts = self.physical_types_allowed
+        if not pts:
+            return None
+        if isinstance(pts, str):
+            return (pts,)
+        return pts
+
+    @cached_property
+    def _field_value_schema_stub(self):
+        schema: dict[str, Any] = {
+            "type": "string",
+            "format": "quantity",
+        }
+        pts = self._field_physical_types
+        if pts is None:
+            return schema
+        schema["physical_types_allowed"] = pts
+        return schema
+
+    @cached_property
+    def _field_value_error_message(self):
+        if self._field_physical_types is None:
+            return "Invalid quantity: {value}"
+        return (
+            "{value} is not a valid quantity of physical types"
+            f" {self._field_physical_types}."
+        )
+
+    def _field_validate_value(self, value, *_args, **_kwargs):
+        """Validate `astropy.units.Quantity`."""
+        pts = self._field_physical_types
+        if not pts:
+            return value
+        # check physical types
+        if value.unit is None or value.unit.physical_type not in pts:
+            raise PydanticCustomError(
+                "invalid_quantity_phyical_type",
+                f"{value!r} does not have the required physical types {pts}.",
+            )
+        return value
+
+
+class _QuantityFieldDeferred(DeferredValidationFieldMixin, Quantity):
+    pass
+
+
+QuantityField = Annotated[_QuantityFieldDeferred, QuantityValidator()]
+LengthQuantityField = Annotated[
+    _QuantityFieldDeferred,
+    QuantityValidator("length"),
+]
+AngleQuantityField = Annotated[
+    _QuantityFieldDeferred,
+    QuantityValidator("angler"),
+]
+TimeQuantityField = Annotated[
+    _QuantityFieldDeferred,
+    QuantityValidator("time"),
+]
+DimensionlessQuantityField = Annotated[
+    _QuantityFieldDeferred,
+    QuantityValidator("dimensionless"),
+]
+
+
+def quantity_field(physical_types_allowed=None):
+    """Return a pydantic field type to valid quantity."""
+    return Annotated[  # type: ignore[return-value]
+        _QuantityFieldDeferred,
+        QuantityValidator(physical_types_allowed=physical_types_allowed),
+    ]
+
+
+@dataclasses.dataclass
+class PathType:
+    """A better path-like pydantic field."""
+
+    path_type: None | Literal["file", "dir", "new"]
     exists: bool = True
     resolve: bool = True
 
-    _type_dispatch = {
-        None: {"format": "path", "validator": None},
-        "file": {"format": "file-path", "validator": FilePath.validate},  # type: ignore
-        "dir": {
-            "format": "directory-path",
-            "validator": DirectoryPath.validate,  # type: ignore
-        },
-    }
+    def __post_init__(self):
+        path_type = self.path_type
+        if path_type == "new":
+            self.exists = False
+        if path_type is not None:
+            # the native pydantic path type
+            self._super = _PathType(path_type)
+        else:
+            self._super = None
 
-    @classmethod
-    def __modify_schema__(cls, field_schema: dict[str, Any]) -> None:
-        field_schema.update(format=cls._type_dispatch[cls.type]["format"])
+    def __hash__(self):
+        return (self.path_type, self.exists, self.resolve).__hash__()
 
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate_rootpath
-        yield validators.path_validator
-        if cls.resolve:
-            yield cls.resolve_path
-        if cls.exists:
-            yield validators.path_exists_validator
-        type_validator = cls._type_dispatch[cls.type]["validator"]
-        if type_validator is not None:
-            yield type_validator
+    def __pydantic_modify_json_schema__(
+        self,
+        field_schema: dict[str, Any],
+    ) -> dict[str, Any]:
+        if self._super is not None:
+            return self._super.__pydantic_modify_json_schema__(field_schema)
+        field_schema.update(
+            {"type": "string", "format": "path"},
+        )
+        return field_schema
 
-    @classmethod
-    def validate_rootpath(cls, value, field):  # noqa: D102
-        ctx = field.field_info.extra.get("validation_context", None) or {}
-        if "rootpath" in ctx:
-            return Path(ctx["rootpath"]).joinpath(value)
-        return value
+    def __get_pydantic_core_schema__(
+        self,
+        schema: core_schema.CoreSchema,
+        **kwargs,
+    ) -> (
+        core_schema.BeforeValidatorFunctionSchema
+        | core_schema.AfterValidatorFunctionSchema
+    ):
+        # handle rootpath if present in the context
+        # this has to go before any other validation
+        schema0 = core_schema.general_before_validator_function(
+            self.validate_rootpath,
+            schema=schema,
+        )
+        # resolve if requested
+        if self.resolve:
+            schema1 = core_schema.general_after_validator_function(
+                self.resolve_path,
+                schema=schema0,
+            )
+        else:
+            schema1 = schema0
+        # check exists
+        if self.exists:
+            schema2 = core_schema.general_after_validator_function(
+                self.validate_exists,
+                schema=schema1,
+            )
+        else:
+            schema2 = schema1
+        # finally, do the type check if requested
+        if self._super is not None:
+            # in case the path_type is file, dir or new, the exists state is check
+            # in the _super object
+            return self._super.__get_pydantic_core_schema__(
+                schema=schema2,
+                kwargs=kwargs,
+            )
+        # nothing to do
+        return schema2
 
-    @classmethod
-    def resolve_path(cls, value):  # noqa: D102
-        return value.expanduser().resolve()
+    def validate_exists(self, path: Path, _info: ValidationInfo):
+        """Ensure `path` exists."""
+        if path.exists():
+            return path
+        raise PydanticCustomError("path_does_not_exist", "Path does not exist.")
+
+    def validate_rootpath(self, path: Path, info: ValidationInfo):
+        """Handle rootpath from context."""
+        if info.context is not None:
+            rootpath = info.context.get("rootpath", None)
+        else:
+            rootpath = None
+        if rootpath is not None:
+            return Path(rootpath).joinpath(path)
+        return path
+
+    def resolve_path(self, path: Path, _info: ValidationInfo):
+        """Resolve the path."""
+        return path.expanduser().resolve()
 
 
-def path_field(
-    type: Union[None, str] = None,
-    exists: bool = False,
-    resolve: bool = False,
-) -> type[Path]:
-    """Return a constrained path field type."""
-    namespace = {"type": type, "exists": exists, "resolve": resolve}
-    return builtins.type("PathField", (PathFieldBase,), namespace)
+AnyPath = Annotated[Path, PathType(path_type=None, exists=False, resolve=False)]
+AbsDirectoryPath = Annotated[Path, PathType(path_type="dir", exists=True, resolve=True)]
+AbsFilePath = Annotated[Path, PathType(path_type="file", exists=True, resolve=True)]
+AbsAnyPath = Annotated[Path, PathType(path_type=None, exists=False, resolve=True)]
 
 
-AnyPath = PathField = path_field(type=None, exists=False, resolve=False)
-"""A field for any path."""
+class ModelListMeta(type(ImmutableBaseModel)):
+    """A meta class to setup root models."""
 
-AbsDirectoryPath = path_field(type="dir", resolve=True)
-"A field for resolved, existing directory path."
+    def __new__(cls, name, bases, namespace, **kwargs):  # noqa: D102
+        @root_validator(pre=True)
+        @classmethod
+        def populate_root(mcls, values):  # noqa: ARG001
+            return {"root_field": values}
 
-AbsFilePath = path_field(type="file", resolve=True)
-"A field for resolved, existing file path."
+        @model_serializer(mode="wrap")  # type: ignore
+        def _serialize(self, handler, _info):
+            data = handler(self)
+            return data["root_field"]
 
-AbsAnyPath = path_field(type=None, exists=False, resolve=True)
-"A field for resolved path."
+        @classmethod
+        def model_modify_json_schema(mcls, json_schema):  # noqa: ARG001
+            return json_schema["properties"]["root_field"]
+
+        namespace["populate_root"] = populate_root
+        namespace["_serialize"] = _serialize
+        namespace["model_modify_json_schema"] = model_modify_json_schema
+
+        return super().__new__(cls, name, bases, namespace, **kwargs)
+
+
+class ModelListBase(ImmutableBaseModel):
+    """A base class for mode list."""
+
+    root_field: Any
+
+    def __iter__(self):
+        return iter(self.root_field)
+
+    def __getitem__(self, item):
+        return self.root_field[item]
+
+
+def create_list_model(name, item_model_cls):
+    """Return a pydantic model to validate a list."""
+    return cast(
+        type[ModelListBase],
+        ModelListMeta(
+            name,
+            (ModelListBase,),
+            {
+                "__annotations__": {
+                    "root_field": list[item_model_cls],
+                },
+            },
+        ),
+    )

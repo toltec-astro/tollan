@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timezone
-from typing import Any, Callable, Literal
+from pathlib import Path
+from typing import Annotated, Any, Callable, Literal
 
 from pydantic import Field, constr
 
@@ -199,7 +200,7 @@ def validate_path(  # noqa: PLR0913
     return _create_path(path, type_required, dry_run, name, on_create)
 
 
-RelPathStr = constr(regex=r"^(?![\/\\]+|~).*")
+RelPathStr = Annotated[str, constr(pattern=r"^(?![\/\\]+|~).*")]
 
 
 class PathItem(ImmutableBaseModel):
@@ -207,7 +208,7 @@ class PathItem(ImmutableBaseModel):
 
     name: str = Field(description="The name of this item.")
 
-    path_name: RelPathStr = Field(description="The path name.")  # type: ignore
+    path_name: RelPathStr = Field(description="The path name.")
 
     path_type: Literal["dir", "file", "glob"] = Field(description="The path type.")
 
@@ -225,13 +226,13 @@ class PathItem(ImmutableBaseModel):
         """Return the path prefixed by `rootpath`."""
         if self.path_type == "glob":
             if resolve_glob:
-                # glob generator
+                # a list of resovled paths expanded from the glob pattern.
                 paths = rootpath.glob(self.path_name)
                 re_glob_ignore = re.compile(self.re_glob_ignore)
                 return [p for p in paths if not re.match(re_glob_ignore, str(p))]
-            # glob pattern
+            # the glob pattern itself
             return str(rootpath.joinpath(self.path_name))
-        # path
+        # a single path
         return rootpath.joinpath(self.path_name)
 
     def validate(self, rootpath, **kwargs):
@@ -323,9 +324,10 @@ class DirectoryPresetMixin:
         backup_content_paths = set()
         for item in cls._path_items_by_attr.values():
             p = item.resolve_path(rootpath, resolve_glob=True)
-            if item.path_type == "glob":
+            if isinstance(p, list):
+                # this is after resolving the glob pattern
                 backup_content_paths.update(p)
-            elif p.exists():  # type: ignore
+            elif Path(p).exists():
                 backup_content_paths.add(p)
             else:
                 # missing item, no need to backup
