@@ -13,23 +13,24 @@ from .log import logged_closing, logger
 __all__ = ["ncopen", "ncinfo", "NcNodeMapper"]
 
 
-def _ncstr(var):
-    def _make_str(s):
-        try:
-            stop = s.index(None)
-        except ValueError:
-            stop = None
-        s = s[:stop]
-        s = [c.decode("utf-8") for c in s]
-        return "".join(s).strip()
+def _bytes_to_str(s):
+    try:
+        stop = s.index(None)
+    except ValueError:
+        stop = None
+    s = s[:stop]
+    s = [c.decode("utf-8") for c in s]
+    return "".join(s).strip()
 
+
+def _ncstr(var):
     s = var[:].tolist()
     if len(var.shape) == 1:
-        return _make_str(s)
+        return _bytes_to_str(s)
     # TODO make this work for ndim > 2
     if len(var.shape) == 2:  # noqa: PLR2004
-        return [_make_str(ss) for ss in s]
-    raise RuntimeError("var has to be 2-d or less")
+        return [_bytes_to_str(ss) for ss in s]
+    raise ValueError("var has to be 2-d or less")
 
 
 def ncstr(var):

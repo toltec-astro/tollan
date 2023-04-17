@@ -22,7 +22,7 @@ config_source_io_registry = UnifiedIORegistry()
 
 
 # YAML IO
-def _identify_yaml(origin, path, fileobj, *args, **kwargs):  # noqa: ARG001
+def _identify_yaml(_origin, path, fileobj, *_args, **_kwargs):
     if path is None:
         if hasattr(fileobj, "name"):
             path = fileobj.name
@@ -48,7 +48,7 @@ config_source_io_registry.register_writer(
 
 
 # systemd env file IO
-def _identify_envfile(origin, path, fileobj, *args, **kwargs):  # noqa: ARG001
+def _identify_envfile(_origin, path, fileobj, *_args, **_kwargs):
     if path is None:
         if hasattr(fileobj, "name"):
             path = fileobj.name
@@ -71,7 +71,7 @@ config_source_io_registry.register_reader("env", dict, envfile.env_load)
 config_source_io_registry.register_writer("env", dict, envfile.env_dump)
 
 
-def _identify_pyobj(origin, path, fileobj, *args, **kwargs):  # noqa: ARG001
+def _identify_pyobj(_origin, _path, _fileobj, *args, **_kwargs):
     # in this like both path and file should be none
     if not args:
         return False
@@ -129,7 +129,6 @@ class ConfigSource(ImmutableBaseModel):
     @model_validator(mode="before")
     @classmethod
     def _validate_name(cls, values):
-        print(f"validate_name: {values=}")
         name = values.get("name", None)
         if name is not None:
             return values
@@ -143,7 +142,6 @@ class ConfigSource(ImmutableBaseModel):
     @model_validator(mode="before")
     @classmethod
     def _validate_format(cls, values):
-        print(f"validate_format: {values=}")
         format = values.get("format", None)
         if format is not None:
             return values
@@ -238,7 +236,7 @@ class ConfigSourceList(_ConfigSourceList):
             continue
         return data
 
-    def locate(self, config, root_key=None):  # noqa: ARG002
+    def locate(self, _config, _root_key=None):
         """Return the list of sources that provides `config`.
 
         Parameters

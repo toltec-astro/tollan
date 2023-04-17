@@ -16,7 +16,8 @@ __all__ = ["YamlDumper", "yaml_dump", "yaml_load", "yaml_loads"]
 class YamlDumper(SafeDumper):
     """Yaml dumper that handles common types."""
 
-    def represent_data(self, data):  # noqa: D102
+    def represent_data(self, data):
+        """Represent data handling skycoords."""
         if isinstance(data, BaseCoordinateFrame):
             return self.represent_data(data.name)
         return super().represent_data(data)
@@ -28,7 +29,8 @@ class YamlDumper(SafeDumper):
     def _should_use_block(cls, value):
         return "\n" in value or len(value) > cls._str_block_style_min_length
 
-    def represent_scalar(self, tag, value, style=None):  # noqa: D102
+    def represent_scalar(self, tag, value, style=None):
+        """Represent scalar with better block logic."""
         if style is None:
             style = "|" if self._should_use_block(value) else self.default_style
         return super().represent_scalar(tag=tag, value=value, style=style)

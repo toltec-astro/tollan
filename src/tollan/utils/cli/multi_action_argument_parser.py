@@ -44,9 +44,9 @@ class RecursiveHelpAction(argparse._HelpAction):  # noqa: SLF001
     def __call__(  # noqa: D102
         self,
         parser,
-        namespace,  # noqa: ARG002
-        values,  # noqa: ARG002
-        option_string=None,  # noqa: ARG002
+        _namespace,
+        _values,
+        _option_string=None,
     ):
         parser.print_help()
         # retrieve subparsers from parser

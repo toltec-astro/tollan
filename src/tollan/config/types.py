@@ -12,7 +12,7 @@ from pydantic import (
     ConfigDict,
     ValidationInfo,
     model_serializer,
-    root_validator,
+    model_validator,
 )
 from pydantic.types import PathType as _PathType
 from pydantic_core import PydanticCustomError, core_schema
@@ -433,10 +433,12 @@ AbsAnyPath = Annotated[Path, PathType(path_type=None, exists=False, resolve=True
 class ModelListMeta(type(ImmutableBaseModel)):
     """A meta class to setup root models."""
 
-    def __new__(cls, name, bases, namespace, **kwargs):  # noqa: D102
-        @root_validator(pre=True)
+    def __new__(cls, name, bases, namespace, **kwargs):
+        """Create class to validate list model."""
+
+        @model_validator(mode="before")
         @classmethod
-        def populate_root(mcls, values):  # noqa: ARG001
+        def populate_root(_cls, values):
             return {"root_field": values}
 
         @model_serializer(mode="wrap")  # type: ignore
@@ -445,7 +447,7 @@ class ModelListMeta(type(ImmutableBaseModel)):
             return data["root_field"]
 
         @classmethod
-        def model_modify_json_schema(mcls, json_schema):  # noqa: ARG001
+        def model_modify_json_schema(_cls, json_schema):
             return json_schema["properties"]["root_field"]
 
         namespace["populate_root"] = populate_root

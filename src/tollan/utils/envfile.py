@@ -16,6 +16,6 @@ def env_load(filepath):
     return result
 
 
-def env_dump(data, output=None):  # noqa: ARG001
+def env_dump(_data, _output=None):
     """Dump dict to a systemd-like environment file."""
     return NotImplemented

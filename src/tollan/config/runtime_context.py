@@ -35,7 +35,7 @@ class RuntimeContext:
             raise RuntimeContextError(f"invalid config source: {config}.")
         logger.debug(f"load config sources from {len(config_source_list)} items")
         csl = ConfigSourceList.parse_obj(config_source_list)  # type: ignore
-        logger.debug(f"loaded config sources:\n{csl.yaml()}")
+        logger.debug(f"loaded config sources:\n{csl.model_dump_yaml()}")
         return csl
 
     def __init__(self, config):
