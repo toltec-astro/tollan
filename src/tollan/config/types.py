@@ -7,13 +7,8 @@ from typing import Annotated, Any, ClassVar, Literal, TypedDict, cast
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    ValidationInfo,
-    model_serializer,
-    model_validator,
-)
+from pydantic import BaseModel, ConfigDict, ValidationInfo
+from pydantic.decorators import model_serializer, model_validator
 from pydantic.types import PathType as _PathType
 from pydantic_core import PydanticCustomError, core_schema
 
