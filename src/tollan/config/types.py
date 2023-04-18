@@ -366,9 +366,8 @@ class PathType:
         | core_schema.AfterValidatorFunctionSchema
     ):
         # handle rootpath if present in the context
-        # this has to go before any other validation
         schema0 = core_schema.general_before_validator_function(
-            self.validate_rootpath,
+            self.validate_path_rootpath,
             schema=schema,
         )
         # resolve if requested
@@ -404,7 +403,7 @@ class PathType:
             return path
         raise PydanticCustomError("path_does_not_exist", "Path does not exist.")
 
-    def validate_rootpath(self, path: Path, info: ValidationInfo):
+    def validate_path_rootpath(self, path: str | Path, info: ValidationInfo):
         """Handle rootpath from context."""
         if info.context is not None:
             rootpath = info.context.get("rootpath", None)
@@ -412,7 +411,7 @@ class PathType:
             rootpath = None
         if rootpath is not None:
             return Path(rootpath).joinpath(path)
-        return path
+        return Path(path)
 
     def resolve_path(self, path: Path, _info: ValidationInfo):
         """Resolve the path."""

@@ -29,8 +29,10 @@ def _identify_yaml(_origin, path, fileobj, *_args, **_kwargs):
         else:
             return False
     path = Path(path)
-    if path.suffix in [".yaml", "yml"]:
+    if path.suffix in _PATH_EXTS["yaml"]:
         return True
+    if path.suffix in _PATH_EXTS["known"]:
+        return False
     return False
 
 
@@ -46,6 +48,25 @@ config_source_io_registry.register_writer(
     ImmutableBaseModel.yaml_dump,
 )
 
+# these are know format that we check to by pass content check
+_PATH_EXTS = {
+    "yaml": {
+        ".yaml",
+        ".yml",
+    },
+    "env": {
+        ".env",
+    },
+    "known": {
+        ".nc",
+        ".ecsv",
+        ".csv",
+        ".env",
+        ".yaml",
+        ".yml",
+    },
+}
+
 
 # systemd env file IO
 def _identify_envfile(_origin, path, fileobj, *_args, **_kwargs):
@@ -55,8 +76,10 @@ def _identify_envfile(_origin, path, fileobj, *_args, **_kwargs):
         else:
             return False
     path = Path(path)
-    if path.suffix in [".env"]:
+    if path.suffix in _PATH_EXTS["env"]:
         return True
+    if path.suffix in _PATH_EXTS["known"]:
+        return False
     try:
         envfile.env_load(path)
     except Exception:  # noqa: BLE001
@@ -132,7 +155,9 @@ class ConfigSource(ImmutableBaseModel):
         name = values.get("name", None)
         if name is not None:
             return values
-        source = values["source"]
+        source = values.get("source", None)
+        if source is None:
+            return values
         if isinstance(source, os.PathLike):
             values["name"] = str(source)
         else:
@@ -145,7 +170,9 @@ class ConfigSource(ImmutableBaseModel):
         format = values.get("format", None)
         if format is not None:
             return values
-        source = values["source"]
+        source = values.get("source", None)
+        if source is None:
+            return values
         path = source if isinstance(source, os.PathLike) else None
         format = cls.io_registry.identify_format(
             "read",
@@ -231,7 +258,7 @@ class ConfigSourceList(_ConfigSourceList):
                 continue
             if context is None or cs.is_enabled_for(context=context):
                 d = cs.load(**kwargs)
-                logger.debug(f"merge {d=} to {data=}")
+                # logger.debug(f"merge {d} to {data}")
                 rupdate(data, d)
                 continue
             logger.debug(f"config source {cs.name} is disabled with {cs.enable_if} ")

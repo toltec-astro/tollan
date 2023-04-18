@@ -4,7 +4,9 @@ from ..types import ImmutableBaseModel
 from .system_info import SystemInfo
 
 
-def create_runtime_config_base_model(runtime_info_model_cls=SystemInfo):
+def create_runtime_config_base_model(
+    runtime_info_model_cls: type[ImmutableBaseModel] = SystemInfo,
+):
     """Return a config base class with given runtime info model."""
     return create_model(
         "RuntimeConfigBaseModel",
