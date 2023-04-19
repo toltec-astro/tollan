@@ -111,7 +111,7 @@ def test_runtime_config_backend_file_config():
 a: 1
 b:
   c: 'some_value'
-"""
+""",
             )
         rcb = RuntimeConfigBackend(config=f)
         assert rcb.dict() == {
@@ -133,7 +133,7 @@ def test_runtime_context():
 a: 1
 b:
   c: 'some_value'
-"""
+""",
             )
         rc = RuntimeContext(f)
         assert rc.config.model_dump() == {

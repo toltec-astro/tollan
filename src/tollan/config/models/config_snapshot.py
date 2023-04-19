@@ -13,3 +13,4 @@ class ConfigSnapshot(ImmutableBaseModel):
         description="The creation time",
     )
     config: dict = Field(default_factory=dict, description="The config dict.")
+    meta: dict = Field(default_factor=dict, description="Additional meta data.")
