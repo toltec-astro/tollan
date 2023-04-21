@@ -1,7 +1,10 @@
 """A submodule of logging related utilties."""
 
+from __future__ import annotations
+
 import time
 from contextlib import AbstractContextManager, ContextDecorator
+from typing import TYPE_CHECKING, Any
 
 from astropy.utils.console import human_time
 from loguru import logger as _loguru_logger
@@ -64,43 +67,47 @@ class logged_closing(AbstractContextManager):  # noqa: N801
             self.thing.close()
 
 
-class timeit(ContextDecorator):  # noqa: N801
-    """Context decorator that logs the execution time of the decorated item.
+if TYPE_CHECKING:
+    timeit = Any
+else:
 
-    Parameters
-    ----------
-    arg: object or str
-        If `arg` type is `str`, a new decorator is returned which uses `arg`
-        in the generated message in places of the name of the decorated object.
-    """
+    class timeit(ContextDecorator):  # noqa: N801
+        """Context decorator that logs the execution time of the decorated item.
 
-    _logger = _loguru_logger.patch(
-        lambda r: r.update(name=f'timeit: {r["name"]}'),  # type: ignore
-    )
+        Parameters
+        ----------
+        arg: object or str
+            If `arg` type is `str`, a new decorator is returned which uses `arg`
+            in the generated message in places of the name of the decorated object.
+        """
 
-    def __new__(cls, arg, **kwargs):  # noqa: D102
-        if callable(arg):
-            return cls(arg.__name__, **kwargs)(arg)
-        return super().__new__(cls)
-
-    def __init__(self, msg, level="DEBUG"):
-        self.msg = msg
-        self._level = level
-
-    def __enter__(self):
-        self._logger.log(self._level, f"{self.msg} ...")
-        self._start = time.time()
-
-    def __exit__(self, *args):
-        elapsed = time.time() - self._start
-        self._logger.log(
-            self._level,
-            f"{self.msg} done in {self._format_time(elapsed)}",
+        _logger = _loguru_logger.patch(
+            lambda r: r.update(name=f'timeit: {r["name"]}'),  # type: ignore
         )
 
-    @staticmethod
-    def _format_time(time):
-        max_ms = 15
-        if time < max_ms:
-            return f"{time * 1e3:.0f}ms"
-        return f"{human_time(time).strip()}"
+        def __new__(cls, arg, **kwargs):  # noqa: D102
+            if callable(arg):
+                return cls(arg.__name__, **kwargs)(arg)
+            return super().__new__(cls)
+
+        def __init__(self, msg, level="DEBUG"):
+            self.msg = msg
+            self._level = level
+
+        def __enter__(self):
+            self._logger.log(self._level, f"{self.msg} ...")
+            self._start = time.time()
+
+        def __exit__(self, *args):
+            elapsed = time.time() - self._start
+            self._logger.log(
+                self._level,
+                f"{self.msg} done in {self._format_time(elapsed)}",
+            )
+
+        @staticmethod
+        def _format_time(time):
+            max_ms = 15
+            if time < max_ms:
+                return f"{time * 1e3:.0f}ms"
+            return f"{human_time(time).strip()}"
