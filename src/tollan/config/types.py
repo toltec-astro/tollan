@@ -3,16 +3,20 @@ import numbers
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, TypedDict, cast
+from typing import Annotated, Any, ClassVar, Literal, cast
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import BaseModel, ConfigDict, ValidationInfo
-from pydantic.decorators import model_serializer, model_validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, model_serializer
+from pydantic.decorators import model_validator
+from pydantic.json_schema import JsonSchemaValue  # GetJsonSchemaHandler
 from pydantic.types import PathType as _PathType
-from pydantic_core import PydanticCustomError, core_schema
+from pydantic_core import CoreSchema, core_schema
 
 from ..utils.yaml import yaml_dump, yaml_load
+
+# from pydantic.annotated import GetCoreSchemaHandler  # type: ignore
+
 
 __all__ = [
     "ImmutableBaseModel",
@@ -60,23 +64,8 @@ class ImmutableBaseModel(BaseModel):
         return cls.model_validate(d, **kwargs)
 
 
-class DeferredValidationFieldMixin:
-    """An adaptor class to implement custom pydantic fields with constraints."""
-
-    @classmethod
-    def __pydantic_modify_json_schema__(
-        cls,
-        _field_schema: TypedDict,
-    ) -> TypedDict:
-        return core_schema.any_schema()
-
-    @classmethod
-    def __get_pydantic_core_schema__(cls, **_kwargs) -> core_schema.CoreSchema:
-        return core_schema.any_schema()
-
-
 class _SimpleTypeValidatorMixin:
-    """A mixin class for custom type validation."""
+    """A mixin class for simple custom type validation."""
 
     _field_type: ClassVar[type]
     _field_type_name: ClassVar[str]
@@ -90,23 +79,25 @@ class _SimpleTypeValidatorMixin:
         if cls._field_type not in cls._field_value_types:
             cls._field_value_types.add(cls._field_type)
 
-    def __pydantic_modify_json_schema__(
-        self,
-        field_schema: dict[str, Any],
-    ) -> dict[str, Any]:
-        field_schema.update(self._field_value_schema_stub)
-        return field_schema
+    # def __get_pydantic_json_schema__(
+    #     self, core_schema: CoreSchema, handler  # : GetJsonSchemaHandler,
+    # ) -> JsonSchemaValue:
+    #     js = handler(core_schema)
+    #     js.update(self._field_value_schema_stub)
+    #     return js
+
+    def __pydantic_modify_json_schema__(self, js):
+        js.update(self._field_value_schema_stub)
+        return js
 
     def __get_pydantic_core_schema__(
-        self,
-        schema: core_schema.CoreSchema,
-        **_kwargs,
-    ) -> core_schema.AfterValidatorFunctionSchema:
-        return core_schema.field_after_validator_function(
+        self, source: type[Any], handler  # : GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        return core_schema.general_plain_validator_function(
             self._field_validate,
-            schema=schema,
             serialization=core_schema.plain_serializer_function_ser_schema(
                 self._field_serialize,
+                info_arg=False,
             ),
         )
 
@@ -124,8 +115,7 @@ class _SimpleTypeValidatorMixin:
     def _field_validate_type(self, value, *_args, **_kwargs):
         """Return validate custom type."""
         if not isinstance(value, tuple(self._field_value_types)):
-            raise PydanticCustomError(
-                f"invalid_{self._field_type_name}_type",
+            raise TypeError(
                 self._field_type_error_message.format(type=type(value)),
             )
         return value
@@ -135,8 +125,7 @@ class _SimpleTypeValidatorMixin:
             field_construct_kw = kwargs.get("field_construct_kw", {})
             return self._field_type(value, **field_construct_kw)
         except ValueError as e:
-            raise PydanticCustomError(
-                f"invalid_{self._field_type_name}_arg",
+            raise ValueError(
                 self._field_value_error_message.format(value=value),
             ) from e
 
@@ -202,29 +191,24 @@ class TimeValidator(_SimpleTypeValidatorMixin):
                     *args,
                     field_construct_kw={"format": format},
                 )
-            except PydanticCustomError:
+            except ValueError:
                 continue
             else:
                 break
         else:
-            raise PydanticCustomError(
-                "time_format_not_allowed",
+            raise ValueError(
                 f"{value!r} does not have the required time formats {formats}.",
             )
         return value
 
 
-class _TimeFieldDeferred(DeferredValidationFieldMixin, Time):
-    pass
-
-
-TimeField = Annotated[_TimeFieldDeferred, TimeValidator()]
+TimeField = Annotated[Time, TimeValidator()]
 IsoTimeField = Annotated[
-    _TimeFieldDeferred,
+    Time,
     TimeValidator(formats_allowed=["isot", "fits", "iso"]),
 ]
 UnixTimeField = Annotated[
-    _TimeFieldDeferred,
+    Time,
     TimeValidator(formats_allowed=("unix", "unix_tai")),
 ]
 
@@ -232,7 +216,7 @@ UnixTimeField = Annotated[
 def time_field(formats_allowed=None):
     """Return a pydantic field type to valid time."""
     return Annotated[  # type: ignore[return-value]
-        _TimeFieldDeferred,
+        Time,
         TimeValidator(formats_allowed=formats_allowed),
     ]
 
@@ -287,32 +271,27 @@ class QuantityValidator(_SimpleTypeValidatorMixin):
             return value
         # check physical types
         if value.unit is None or value.unit.physical_type not in pts:
-            raise PydanticCustomError(
-                "invalid_quantity_phyical_type",
+            raise ValueError(
                 f"{value!r} does not have the required physical types {pts}.",
             )
         return value
 
 
-class _QuantityFieldDeferred(DeferredValidationFieldMixin, Quantity):
-    pass
-
-
-QuantityField = Annotated[_QuantityFieldDeferred, QuantityValidator()]
+QuantityField = Annotated[Quantity, QuantityValidator()]
 LengthQuantityField = Annotated[
-    _QuantityFieldDeferred,
+    Quantity,
     QuantityValidator("length"),
 ]
 AngleQuantityField = Annotated[
-    _QuantityFieldDeferred,
+    Quantity,
     QuantityValidator("angler"),
 ]
 TimeQuantityField = Annotated[
-    _QuantityFieldDeferred,
+    Quantity,
     QuantityValidator("time"),
 ]
 DimensionlessQuantityField = Annotated[
-    _QuantityFieldDeferred,
+    Quantity,
     QuantityValidator("dimensionless"),
 ]
 
@@ -320,7 +299,7 @@ DimensionlessQuantityField = Annotated[
 def quantity_field(physical_types_allowed=None):
     """Return a pydantic field type to valid quantity."""
     return Annotated[  # type: ignore[return-value]
-        _QuantityFieldDeferred,
+        Quantity,
         QuantityValidator(physical_types_allowed=physical_types_allowed),
     ]
 
@@ -346,29 +325,34 @@ class PathType:
     def __hash__(self):
         return (self.path_type, self.exists, self.resolve).__hash__()
 
-    def __pydantic_modify_json_schema__(
-        self,
-        field_schema: dict[str, Any],
-    ) -> dict[str, Any]:
+    # def __get_pydantic_json_schema__(
+    #     self,
+    #     core_schema: CoreSchema,
+    #     handler: GetJsonSchemaHandler,
+    # ) -> JsonSchemaValue:
+    #     if self._super is not None:
+    #         return self._super.__get_pydantic_json_schema__(core_schema, handler)
+    #     js = handler(core_schema)
+    #     js.update(
+    #         {"type": "string", "format": "path"},
+    #     )
+    #     return js
+
+    def __pydantic_modify_json_schema__(self, js):
         if self._super is not None:
-            return self._super.__pydantic_modify_json_schema__(field_schema)
-        field_schema.update(
+            return self._super.__pydantic_modify_json_schema__(js)
+        js.update(
             {"type": "string", "format": "path"},
         )
-        return field_schema
+        return js
 
     def __get_pydantic_core_schema__(
-        self,
-        schema: core_schema.CoreSchema,
-        **kwargs,
-    ) -> (
-        core_schema.BeforeValidatorFunctionSchema
-        | core_schema.AfterValidatorFunctionSchema
-    ):
+        self, source: type[Any], handler  # : GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
         # handle rootpath if present in the context
         schema0 = core_schema.general_before_validator_function(
             self.validate_path_rootpath,
-            schema=schema,
+            schema=handler(source),
         )
         # resolve if requested
         if self.resolve:
@@ -390,9 +374,14 @@ class PathType:
         if self._super is not None:
             # in case the path_type is file, dir or new, the exists state is check
             # in the _super object
-            return self._super.__get_pydantic_core_schema__(
-                schema=schema2,
-                kwargs=kwargs,
+            return core_schema.chain_schema(
+                [
+                    schema2,
+                    self._super.__get_pydantic_core_schema__(
+                        source=source,
+                        handler=handler,
+                    ),
+                ],
             )
         # nothing to do
         return schema2
@@ -401,7 +390,7 @@ class PathType:
         """Ensure `path` exists."""
         if path.exists():
             return path
-        raise PydanticCustomError("path_does_not_exist", "Path does not exist.")
+        raise ValueError(f"Path {path} does not exist.")
 
     def validate_path_rootpath(self, path: str | Path, info: ValidationInfo):
         """Handle rootpath from context."""

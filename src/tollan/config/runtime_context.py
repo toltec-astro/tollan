@@ -63,8 +63,8 @@ class _RuntimeConfigBackendBase:
 class RuntimeConfigBackend(_RuntimeConfigBackendBase):
     """A mixin class to manage config at runtime.
 
-    This class manages a stack of config objects `_default_config`,
-    `source_config`, and `override_config`, to allow manipulating
+    This class manages a stack of config objects ``default_config``,
+    ``source_config``, and ``override_config``, to allow manipulating
     config dict at runtime.
     This class can be customized via subclassing by specifying
     an alternative `runtime_config_model`.

@@ -234,14 +234,12 @@ class ConfigSourceList(_ConfigSourceList):
 
     @model_validator(mode="before")
     @classmethod
-    def _check_order_and_sort(cls, values):
-        sources = values["root_field"]
+    def _check_order_and_sort(cls, sources):
         orders = [source.get("order") for source in sources]
         if len(set(orders)) != len(orders):
             raise ValueError(f"order of config sources is ambiguous:\n{sources}")
         # sort by orders
-        values["root_field"] = sorted(sources, key=lambda s: s.get("order"))
-        return values
+        return sorted(sources, key=lambda s: s.get("order"))
 
     def load(self, context=None, **kwargs):
         """Load config from all sources.
