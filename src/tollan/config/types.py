@@ -3,14 +3,14 @@ import numbers
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, cast, Callable
+from typing import Annotated, Any, Callable, ClassVar, Literal, cast
 
 from astropy.time import Time
 from astropy.units import Quantity
 from pydantic import BaseModel, ConfigDict, ValidationInfo, model_serializer
 from pydantic.decorators import model_validator
-from pydantic.json_schema import JsonSchemaValue  # GetJsonSchemaHandler
 from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
+from pydantic.json_schema import JsonSchemaValue  # GetJsonSchemaHandler
 from pydantic.types import PathType as _PathType
 from pydantic_core import CoreSchema, core_schema
 
@@ -36,6 +36,7 @@ __all__ = [
     "AbsFilePath",
     "AbsDirectoryPath",
     "create_list_model",
+    "GenerateJsonSchema",
 ]
 
 
