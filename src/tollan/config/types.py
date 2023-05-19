@@ -7,17 +7,20 @@ from typing import Annotated, Any, Callable, ClassVar, Literal, cast
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import BaseModel, ConfigDict, ValidationInfo, model_serializer
-from pydantic.decorators import model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    ValidationInfo,
+    model_serializer,
+    model_validator,
+)
+from pydantic.annotated import GetCoreSchemaHandler  # type: ignore
 from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
-from pydantic.json_schema import JsonSchemaValue  # GetJsonSchemaHandler
+from pydantic.json_schema import GetJsonSchemaHandler, JsonSchemaValue
 from pydantic.types import PathType as _PathType
 from pydantic_core import CoreSchema, core_schema
 
 from ..utils.yaml import yaml_dump, yaml_load
-
-# from pydantic.annotated import GetCoreSchemaHandler  # type: ignore
-
 
 __all__ = [
     "ImmutableBaseModel",
@@ -85,7 +88,7 @@ class ImmutableBaseModel(BaseModel):
         return cls.model_validate(d, **kwargs)
 
     @classmethod
-    def model_json_schema(self, *args, **kwargs):
+    def model_json_schema(cls, *args, **kwargs):
         """Dump model json schema."""
         kwargs.setdefault("schema_generator", GenerateJsonSchema)
         return super().model_json_schema(*args, **kwargs)
@@ -106,19 +109,19 @@ class _SimpleTypeValidatorMixin:
         if cls._field_type not in cls._field_value_types:
             cls._field_value_types.add(cls._field_type)
 
-    # def __get_pydantic_json_schema__(
-    #     self, core_schema: CoreSchema, handler  # : GetJsonSchemaHandler,
-    # ) -> JsonSchemaValue:
-    #     js = handler(core_schema)
-    #     js.update(self._field_value_schema_stub)
-    #     return js
-
-    def __pydantic_modify_json_schema__(self, js):
+    def __get_pydantic_json_schema__(
+        self,
+        core_schema: CoreSchema,
+        handler: GetJsonSchemaHandler,
+    ) -> JsonSchemaValue:
+        js = handler(core_schema)
         js.update(self._field_value_schema_stub)
         return js
 
     def __get_pydantic_core_schema__(
-        self, source: type[Any], handler  # : GetCoreSchemaHandler,
+        self,
+        source: type[Any],
+        handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
         return core_schema.general_plain_validator_function(
             self._field_validate,
@@ -352,29 +355,23 @@ class PathType:
     def __hash__(self):
         return (self.path_type, self.exists, self.resolve).__hash__()
 
-    # def __get_pydantic_json_schema__(
-    #     self,
-    #     core_schema: CoreSchema,
-    #     handler: GetJsonSchemaHandler,
-    # ) -> JsonSchemaValue:
-    #     if self._super is not None:
-    #         return self._super.__get_pydantic_json_schema__(core_schema, handler)
-    #     js = handler(core_schema)
-    #     js.update(
-    #         {"type": "string", "format": "path"},
-    #     )
-    #     return js
-
-    def __pydantic_modify_json_schema__(self, js):
+    def __get_pydantic_json_schema__(
+        self,
+        core_schema: CoreSchema,
+        handler: GetJsonSchemaHandler,
+    ) -> JsonSchemaValue:
         if self._super is not None:
-            return self._super.__pydantic_modify_json_schema__(js)
+            return self._super.__get_pydantic_json_schema__(core_schema, handler)
+        js = handler(core_schema)
         js.update(
             {"type": "string", "format": "path"},
         )
         return js
 
     def __get_pydantic_core_schema__(
-        self, source: type[Any], handler  # : GetCoreSchemaHandler,
+        self,
+        source: type[Any],
+        handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
         # handle rootpath if present in the context
         schema0 = core_schema.general_before_validator_function(

@@ -31,7 +31,7 @@ class RuntimeInfo(ImmutableBaseModel):
         default_factory=SystemInfo,
         description="The system info.",
     )
-    model_validation_context: dict = Field(
+    validation_context: dict = Field(
         default_factory=dict,
         description="Context passed to model validation function.",
     )
@@ -117,7 +117,7 @@ class RuntimeConfigBackend(_RuntimeConfigBackendBase):
             self._info_config,
             {
                 "runtime_info": {
-                    "model_validation_context": {},
+                    "validation_context": {},
                     "config_sources": self.sources.model_dump(),
                 },
             },
@@ -182,7 +182,7 @@ class RuntimeConfigBackend(_RuntimeConfigBackendBase):
         return self._runtime_config_model_cls.model_validate(
             config,
             # TODO may need to check if the key exists?
-            context=config["runtime_info"]["model_validation_context"],
+            context=config["runtime_info"]["validation_context"],
         )
 
     def dict(self, exclude_runtime_info=False) -> Any:

@@ -6,8 +6,7 @@ from typing import Any, ClassVar, Literal
 
 import pandas as pd
 from astropy.io.registry import UnifiedIORegistry
-from pydantic import Field
-from pydantic.decorators import model_validator
+from pydantic import Field, model_validator
 
 from ...utils import envfile
 from ...utils.cli import dict_from_cli_args
