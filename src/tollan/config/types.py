@@ -3,13 +3,14 @@ import numbers
 from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, ClassVar, Literal, cast
+from typing import Annotated, Any, ClassVar, Literal, cast, Callable
 
 from astropy.time import Time
 from astropy.units import Quantity
 from pydantic import BaseModel, ConfigDict, ValidationInfo, model_serializer
 from pydantic.decorators import model_validator
 from pydantic.json_schema import JsonSchemaValue  # GetJsonSchemaHandler
+from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
 from pydantic.types import PathType as _PathType
 from pydantic_core import CoreSchema, core_schema
 
@@ -38,6 +39,25 @@ __all__ = [
 ]
 
 
+class GenerateJsonSchema(_GenerateJsonSchema):
+    """Custom json schema generator."""
+
+    _default_serializers: dict[type[Any], Callable] = {}
+
+    @classmethod
+    def register_default_serializers(cls, dft_type: type[Any], handler: Callable):
+        """Add handler for type."""
+        cls._default_serializers[dft_type] = handler
+
+    def encode_default(self, dft: Any) -> Any:
+        """Override default behavior to inovke the the custom type handlers."""
+        for dft_type, handler in self._default_serializers.items():
+            if isinstance(dft, dft_type):
+                dft = handler(dft)
+                break
+        return super().encode_default(dft)
+
+
 class ImmutableBaseModel(BaseModel):
     """A common base model class."""
 
@@ -62,6 +82,12 @@ class ImmutableBaseModel(BaseModel):
         """Validate model from yaml."""
         d = cls.yaml_load(yaml_source)
         return cls.model_validate(d, **kwargs)
+
+    @classmethod
+    def model_json_schema(self, *args, **kwargs):
+        """Dump model json schema."""
+        kwargs.setdefault("schema_generator", GenerateJsonSchema)
+        return super().model_json_schema(*args, **kwargs)
 
 
 class _SimpleTypeValidatorMixin:
@@ -466,3 +492,11 @@ def create_list_model(name, item_model_cls):
             },
         ),
     )
+
+
+def _to_str_serializer(v):
+    return str(v)
+
+
+GenerateJsonSchema.register_default_serializers(Time, _to_str_serializer)
+GenerateJsonSchema.register_default_serializers(Quantity, _to_str_serializer)
