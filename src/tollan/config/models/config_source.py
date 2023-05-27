@@ -12,7 +12,7 @@ from ...utils import envfile
 from ...utils.cli import dict_from_cli_args
 from ...utils.general import dict_from_flat_dict, rupdate
 from ...utils.log import logger
-from ..types import AbsFilePath, ImmutableBaseModel, create_list_model
+from ..types import AbsFilePath, ImmutableBaseModel, ModelListBase
 
 __all__ = ["config_source_io_registry", "ConfigSource", "ConfigSourceList"]
 
@@ -225,10 +225,7 @@ class ConfigSource(ImmutableBaseModel):
         raise ValueError(f"ambiguous enabled_if result: {result}")
 
 
-_ConfigSourceList = create_list_model("_ConfigSourceList", ConfigSource)
-
-
-class ConfigSourceList(_ConfigSourceList):
+class ConfigSourceList(ModelListBase[ConfigSource]):
     """A base class to manage multiple config sources."""
 
     @model_validator(mode="before")

@@ -13,9 +13,9 @@ from tollan.config.types import (
     AbsFilePath,
     AnyPath,
     ImmutableBaseModel,
+    ModelListBase,
     QuantityField,
     TimeField,
-    create_list_model,
     quantity_field,
     time_field,
 )
@@ -104,7 +104,8 @@ class Nested(ImmutableBaseModel):
     path0: AbsAnyPath = Field(default="a")
 
 
-Nested1 = create_list_model("Nested1", item_model_cls=Nested)
+class Nested1(ModelListBase[Nested]):
+    pass
 
 
 class Nested2(ImmutableBaseModel):

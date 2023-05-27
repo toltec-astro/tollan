@@ -1,22 +1,20 @@
 import dataclasses
 import numbers
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, Callable, ClassVar, Literal, cast
+from typing import Annotated, Any, Callable, ClassVar, Generic, Literal, TypeVar
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    ValidationInfo,
-    model_serializer,
-    model_validator,
-)
-from pydantic.annotated import GetCoreSchemaHandler  # type: ignore
+from pydantic import BaseModel, ConfigDict, RootModel, ValidationInfo
+from pydantic.annotated import GetCoreSchemaHandler
 from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
-from pydantic.json_schema import GetJsonSchemaHandler, JsonSchemaValue
+from pydantic.json_schema import (
+    GetJsonSchemaHandler,
+    JsonSchemaValue,
+    update_json_schema,
+)
 from pydantic.types import PathType as _PathType
 from pydantic_core import CoreSchema, core_schema
 
@@ -38,7 +36,6 @@ __all__ = [
     "AbsAnyPath",
     "AbsFilePath",
     "AbsDirectoryPath",
-    "create_list_model",
     "GenerateJsonSchema",
 ]
 
@@ -111,17 +108,17 @@ class _SimpleTypeValidatorMixin:
 
     def __get_pydantic_json_schema__(
         self,
-        core_schema: CoreSchema,
+        _schema: CoreSchema,
         handler: GetJsonSchemaHandler,
     ) -> JsonSchemaValue:
-        js = handler(core_schema)
-        js.update(self._field_value_schema_stub)
+        js = handler(core_schema.str_schema())
+        update_json_schema(js, self._field_value_schema_stub)
         return js
 
     def __get_pydantic_core_schema__(
         self,
-        source: type[Any],
-        handler: GetCoreSchemaHandler,
+        _source: type[Any],
+        _handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
         return core_schema.general_plain_validator_function(
             self._field_validate,
@@ -437,59 +434,21 @@ AbsFilePath = Annotated[Path, PathType(path_type="file", exists=True, resolve=Tr
 AbsAnyPath = Annotated[Path, PathType(path_type=None, exists=False, resolve=True)]
 
 
-class ModelListMeta(type(ImmutableBaseModel)):
-    """A meta class to setup root models."""
-
-    def __new__(cls, name, bases, namespace, **kwargs):
-        """Create class to validate list model."""
-
-        @model_validator(mode="before")
-        @classmethod
-        def populate_root(_cls, values):
-            return {"root_field": values}
-
-        @model_serializer(mode="wrap")  # type: ignore
-        def _serialize(self, handler, _info):
-            data = handler(self)
-            return data["root_field"]
-
-        @classmethod
-        def model_modify_json_schema(_cls, json_schema):
-            return json_schema["properties"]["root_field"]
-
-        namespace["populate_root"] = populate_root
-        namespace["_serialize"] = _serialize
-        namespace["model_modify_json_schema"] = model_modify_json_schema
-
-        return super().__new__(cls, name, bases, namespace, **kwargs)
+ModelListItemType = TypeVar("ModelListItemType")
 
 
-class ModelListBase(ImmutableBaseModel):
-    """A base class for mode list."""
+class ModelListBase(
+    ImmutableBaseModel,
+    RootModel[list[ModelListItemType]],
+    Generic[ModelListItemType],
+):
+    """A base class for model list."""
 
-    root_field: Any
+    def __iter__(self) -> Iterator[ModelListItemType]:
+        return iter(self.root)
 
-    def __iter__(self):
-        return iter(self.root_field)
-
-    def __getitem__(self, item):
-        return self.root_field[item]
-
-
-def create_list_model(name, item_model_cls):
-    """Return a pydantic model to validate a list."""
-    return cast(
-        type[ModelListBase],
-        ModelListMeta(
-            name,
-            (ModelListBase,),
-            {
-                "__annotations__": {
-                    "root_field": list[item_model_cls],
-                },
-            },
-        ),
-    )
+    def __getitem__(self, item: int) -> ModelListItemType:
+        return self.root[item]
 
 
 def _to_str_serializer(v):
