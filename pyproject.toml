@@ -29,8 +29,7 @@ classifiers = [
 
 dependencies = [
     "loguru",
-    "pydantic",
-    "pydantic_yaml",
+    "pydantic@git+https://github.com/pydantic/pydantic.git#egg=main",
     "astropy",
     "pandas",
     "pyaml",
