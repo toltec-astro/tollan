@@ -36,6 +36,7 @@ dependencies = [
     "scalpl",
     "tabulate",
     "netcdf4",
+    "wrapt",
 ]
 
 [project.scripts]
