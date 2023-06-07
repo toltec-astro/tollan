@@ -7,14 +7,16 @@ from typing import Annotated, Any, Callable, ClassVar, Generic, Literal, TypeVar
 
 from astropy.time import Time
 from astropy.units import Quantity
-from pydantic import BaseModel, ConfigDict, RootModel, ValidationInfo
-from pydantic.annotated import GetCoreSchemaHandler
-from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
-from pydantic.json_schema import (
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    GetCoreSchemaHandler,
     GetJsonSchemaHandler,
-    JsonSchemaValue,
-    update_json_schema,
+    RootModel,
+    ValidationInfo,
 )
+from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
+from pydantic.json_schema import JsonSchemaValue, update_json_schema
 from pydantic.types import PathType as _PathType
 from pydantic_core import CoreSchema, core_schema
 

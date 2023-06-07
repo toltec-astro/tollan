@@ -13,42 +13,30 @@ from .models.config_source import ConfigSourceList
 from .models.system_info import SystemInfo
 from .types import ImmutableBaseModel, TimeField
 
-__all__ = ["RuntimeInfo", "RuntimeConfigBackend", "RuntimeContext"]
+__all__ = ["RuntimeInfo", "ConfigBackend", "RuntimeContext"]
 
 
-class RuntimeInfo(ImmutableBaseModel):
-    """A default runtime info model."""
+class ConfigBackendBase:
+    """A base class to manage a set of config sources.
 
-    created_at: TimeField = Field(
-        default_factory=TimeField.now,
-        description="The creation time",
-    )
-    config_sources: None | ConfigSourceList = Field(
-        default=None,
-        description="The config source list.",
-    )
-    system: SystemInfo = Field(
-        default_factory=SystemInfo,
-        description="The system info.",
-    )
-    validation_context: dict = Field(
-        default_factory=dict,
-        description="Context passed to model validation function.",
-    )
+    This class manages a stack of config objects ``default_config``,
+    ``source_config``, and ``override_config``, to allow manipulating
+    config dict at runtime.
+    This class shall be customized via subclassing by specifying
+    the ``runtime_info_model`` keyword argument.
+    """
 
+    class _ConfigModelBase(ImmutableBaseModel):
+        # this is to allow extra keys on the config dict.
+        model_config = ImmutableBaseModel.model_config | {"extra": "allow"}
 
-class _RuntimeConfigModelBase(ImmutableBaseModel):
-    model_config = ImmutableBaseModel.model_config | {"extra": "allow"}
+    config_model_cls: ClassVar[type[BaseModel]]
 
-
-class _RuntimeConfigBackendBase:
-    _runtime_config_model_cls: ClassVar[type[BaseModel]]
-
-    def __init_subclass__(cls, runtime_info_model_cls=RuntimeInfo, **kwargs):
+    def __init_subclass__(cls, runtime_info_model_cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        runtime_config_model_cls = create_model(
-            "RuntimeConfigModel",
-            __base__=_RuntimeConfigModelBase,
+        config_model_cls = create_model(
+            "ConfigModel",
+            __base__=cls._ConfigModelBase,
             runtime_info=(
                 runtime_info_model_cls,
                 Field(
@@ -57,18 +45,7 @@ class _RuntimeConfigBackendBase:
                 ),
             ),
         )
-        cls._runtime_config_model_cls = runtime_config_model_cls
-
-
-class RuntimeConfigBackend(_RuntimeConfigBackendBase):
-    """A mixin class to manage config at runtime.
-
-    This class manages a stack of config objects ``default_config``,
-    ``source_config``, and ``override_config``, to allow manipulating
-    config dict at runtime.
-    This class can be customized via subclassing by specifying
-    an alternative `runtime_config_model`.
-    """
+        cls.config_model_cls = config_model_cls
 
     def __init__(self, config):
         self._config_sources = self._make_config_sources(config)
@@ -87,7 +64,7 @@ class RuntimeConfigBackend(_RuntimeConfigBackendBase):
     """The config source list to load config from."""
 
     @cached_property
-    def sources(self):
+    def sources(self) -> ConfigSourceList:
         """The config dict loaded from config source."""
         return self._config_sources
 
@@ -179,7 +156,7 @@ class RuntimeConfigBackend(_RuntimeConfigBackendBase):
             self._invalidate_cache("source_config")
         config = self._make_config()
         # validate the config agains config model
-        return self._runtime_config_model_cls.model_validate(
+        return self.config_model_cls.model_validate(
             config,
             # TODO may need to check if the key exists?
             context=config["runtime_info"]["validation_context"],
@@ -260,46 +237,39 @@ class RuntimeConfigBackend(_RuntimeConfigBackendBase):
         return self.config.runtime_info
 
 
-class _RuntimeContextBase:
-    _runtime_config_backend_cls: ClassVar[type[RuntimeConfigBackend]]
-
-    def __init_subclass__(
-        cls,
-        runtime_config_backend_cls=RuntimeConfigBackend,
-        **kwargs,
-    ):
-        super().__init_subclass__(**kwargs)
-        cls._runtime_config_backend_cls = runtime_config_backend_cls
-
-
-class RuntimeContext(_RuntimeContextBase):
-    """A class to manage runtime context.
+class RuntimeContextBase:
+    """A base class to manage runtime context.
 
     This class acts as a proxy of an underlying runtime config backend
     object.
 
-    This class can be customized via subclassing and one may specify an
-    alternative `runtime_config_backend_cls`. This allows more specialized
-    config and the runtime info generation.
+    This class shall be customized via subclassing
+    and specifying the `config_backend_cls` keyword argument.
 
     Parameters
     ----------
     *args, **kwargs :
         Specify the underlying runtime config backend.
-        If only one arg passed and it is of type `RuntimeConfigBackend`,
+        If only one arg passed and it is of type `ConfigBackend`,
         it is used as as-is, otherwise these arguments are passed
-        to the `_runtime_config_backend_cls` constructor.
+        to the `_config_backend_cls` constructor.
     """
 
+    config_backend_cls: ClassVar[type[ConfigBackend]]
+
+    def __init_subclass__(
+        cls,
+        config_backend_cls,
+        **kwargs,
+    ):
+        super().__init_subclass__(**kwargs)
+        cls.config_backend_cls = config_backend_cls
+
     def __init__(self, *args, **kwargs):
-        if (
-            len(args) == 1
-            and len(kwargs) == 0
-            and isinstance(args[0], RuntimeConfigBackend)
-        ):
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], ConfigBackend):
             cb = args[0]
         else:
-            cb = self._runtime_config_backend_cls(*args, **kwargs)
+            cb = self.config_backend_cls(*args, **kwargs)
         self._config_backend = cb
 
     @property
@@ -316,3 +286,33 @@ class RuntimeContext(_RuntimeContextBase):
     def config(self):
         """The config dict."""
         return self.config_backend.config
+
+
+##  A set of default implementations:
+class RuntimeInfo(ImmutableBaseModel):
+    """A default runtime info model."""
+
+    created_at: TimeField = Field(
+        default_factory=TimeField.now,
+        description="The creation time",
+    )
+    config_sources: None | ConfigSourceList = Field(
+        default=None,
+        description="The config source list.",
+    )
+    system: SystemInfo = Field(
+        default_factory=SystemInfo,
+        description="The system info.",
+    )
+    validation_context: dict = Field(
+        default_factory=dict,
+        description="Context passed to model validation function.",
+    )
+
+
+class ConfigBackend(ConfigBackendBase, runtime_info_model_cls=RuntimeInfo):
+    """A default config backend."""
+
+
+class RuntimeContext(RuntimeContextBase, config_backend_cls=ConfigBackend):
+    """A default runtime context."""

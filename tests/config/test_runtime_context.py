@@ -2,16 +2,16 @@ import tempfile
 from pathlib import Path
 
 from tollan.config.models.system_info import SystemInfo
-from tollan.config.runtime_context import RuntimeConfigBackend, RuntimeContext
+from tollan.config.runtime_context import ConfigBackend, RuntimeContext
 from tollan.utils.log import logger
 
 
 def test_runtime_config_backend_null_config():
-    rcb = RuntimeConfigBackend(None)
+    cb = ConfigBackend(None)
 
-    assert rcb.source_config == {}
-    assert list(rcb.dict().keys()) == ["runtime_info"]
-    assert rcb.runtime_info.system == SystemInfo()
+    assert cb.source_config == {}
+    assert list(cb.dict().keys()) == ["runtime_info"]
+    assert cb.runtime_info.system == SystemInfo()
 
 
 def test_runtime_config_backend_dict_config():
@@ -37,17 +37,17 @@ def test_runtime_config_backend_dict_config():
         },
     }
 
-    rcb = RuntimeConfigBackend(scfg)
-    assert rcb.source_config == scfg
-    assert list(rcb.dict().keys()) == ["runtime_info", "a", "b"]
-    assert rcb.runtime_info.system == SystemInfo()
-    assert rcb.dict(exclude_runtime_info=True) == scfg
+    cb = ConfigBackend(scfg)
+    assert cb.source_config == scfg
+    assert list(cb.dict().keys()) == ["runtime_info", "a", "b"]
+    assert cb.runtime_info.system == SystemInfo()
+    assert cb.dict(exclude_runtime_info=True) == scfg
 
-    rcb.set_default_config(dcfg)
-    assert rcb.source_config == scfg
-    assert set(rcb.dict().keys()) == {"runtime_info", "default_key", "a", "b"}
-    assert rcb.runtime_info.system == SystemInfo()
-    assert rcb.dict(exclude_runtime_info=True) == {
+    cb.set_default_config(dcfg)
+    assert cb.source_config == scfg
+    assert set(cb.dict().keys()) == {"runtime_info", "default_key", "a", "b"}
+    assert cb.runtime_info.system == SystemInfo()
+    assert cb.dict(exclude_runtime_info=True) == {
         "a": "a_value",
         "b": {
             "c": 1,
@@ -57,17 +57,17 @@ def test_runtime_config_backend_dict_config():
         "default_key": "default_value",
     }
 
-    rcb.set_override_config(ocfg)
-    assert rcb.source_config == scfg
-    assert set(rcb.dict().keys()) == {
+    cb.set_override_config(ocfg)
+    assert cb.source_config == scfg
+    assert set(cb.dict().keys()) == {
         "runtime_info",
         "default_key",
         "override_key",
         "a",
         "b",
     }
-    assert rcb.runtime_info.system == SystemInfo()
-    assert rcb.dict(exclude_runtime_info=True) == {
+    assert cb.runtime_info.system == SystemInfo()
+    assert cb.dict(exclude_runtime_info=True) == {
         "a": "a_value",
         "b": {
             "c": 2,
@@ -78,19 +78,19 @@ def test_runtime_config_backend_dict_config():
         "default_key": "default_value",
         "override_key": "override_value",
     }
-    logger.debug(f"config:\n{rcb.yaml()}")
+    logger.debug(f"config:\n{cb.yaml()}")
 
     # clear all
-    rcb.set_default_config({})
-    rcb.set_override_config({})
-    assert rcb.source_config == scfg
-    assert list(rcb.dict().keys()) == ["runtime_info", "a", "b"]
-    assert rcb.runtime_info.system == SystemInfo()
-    assert rcb.dict(exclude_runtime_info=True) == scfg
+    cb.set_default_config({})
+    cb.set_override_config({})
+    assert cb.source_config == scfg
+    assert list(cb.dict().keys()) == ["runtime_info", "a", "b"]
+    assert cb.runtime_info.system == SystemInfo()
+    assert cb.dict(exclude_runtime_info=True) == scfg
 
     # update source config
-    rcb.sources[0].source.update({"source": "source_value"})
-    assert rcb.load_source_config() == {
+    cb.sources[0].source.update({"source": "source_value"})  # type: ignore
+    assert cb.load_source_config() == {
         "a": "a_value",
         "b": {
             "c": 1,
@@ -113,13 +113,13 @@ b:
   c: 'some_value'
 """,
             )
-        rcb = RuntimeConfigBackend(config=f)
-        assert rcb.dict() == {
+        cb = ConfigBackend(config=f)
+        assert cb.dict() == {
             "a": 1,
             "b": {"c": "some_value"},
-            "runtime_info": rcb.runtime_info.model_dump(),
+            "runtime_info": cb.runtime_info.model_dump(),
         }
-    logger.debug(f"config:\n{rcb.yaml()}")
+    logger.debug(f"config:\n{cb.yaml()}")
 
 
 def test_runtime_context():
