@@ -132,6 +132,7 @@ class ConfigSource(ImmutableBaseModel):
         description="The order of this config dict when merged with others.",
     )
     source: dict | list | AbsFilePath = Field(
+        # union_mode='left_to_right',
         description="The config source.",
     )
     format: None | Literal["env", "yaml", "pyobj"] = Field(

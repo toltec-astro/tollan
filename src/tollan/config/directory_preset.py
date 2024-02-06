@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated, Any, Callable, Literal
@@ -18,45 +19,54 @@ class PathValidationError(RuntimeError):
     """Error related to path preset validation."""
 
 
-def _check_path(path, type_required=None):
-    # helper function to inspect path for information
-    if re.search(r"[?*\[\]]", str(path)):
-        # path is glob pattern
-        return {
-            "exists": False,
-            "type_ok": type_required == "glob",
-            "is_clean": False,
-            "is_glob": True,
-            "path": path,
-        }
-    # normal path file or dir
-    path = ensure_abspath(path)
-    result = {
-        "exists": path.exists(),
-        "type_ok": (
-            (not path.exists())
-            or (path.is_dir() and type_required == "dir")
-            or (path.is_file() and type_required == "file")
-        ),
-        "is_clean": False,
-        "is_glob": False,
-        "path": path,
-    }
-    # check if path is clean
-    if result["exists"] and path.is_dir():
-        # empty dir is clean
-        try:
-            next(path.iterdir())
-        except StopIteration:
-            result["is_clean"] = True
+@dataclass
+class _PathInfo:
+    exists: bool
+    type_ok: bool
+    is_clean: bool
+    is_glob: bool
+    path: Path
+
+    @classmethod
+    def check(cls, path, type_required=None):
+        # helper function to inspect path for information
+        if re.search(r"[?*\[\]]", str(path)):
+            # path is glob pattern
+            return cls(
+                exists=False,
+                type_ok=(type_required == "glob"),
+                is_clean=False,
+                is_glob=True,
+                path=path,
+            )
+        # normal path file or dir
+        path = ensure_abspath(path)
+        inst = cls(
+            exists=path.exists(),
+            type_ok=(
+                (not path.exists())
+                or (path.is_dir() and type_required == "dir")
+                or (path.is_file() and type_required == "file")
+            ),
+            is_clean=False,
+            is_glob=False,
+            path=path,
+        )
+        # check if path is clean
+        if inst.exists and path.is_dir():
+            # empty dir is clean
+            try:
+                next(path.iterdir())
+            except StopIteration:
+                inst.is_clean = True
+            else:
+                inst.is_clean = False
+        elif not inst.exists:
+            # non-exist paths are clean
+            inst.is_clean = True
         else:
-            result["is_clean"] = False
-    elif not result["exists"]:
-        # non-exist paths are clean
-        result["is_clean"] = True
-    else:
-        result["is_clean"] = False
-    return result
+            inst.is_clean = False
+        return inst
 
 
 def _make_backup_path(path, backup_timestamp_format, check_paths=None):
@@ -158,29 +168,29 @@ def validate_path(  # noqa: PLR0913
     name = name or "path"
     if "path" not in name:
         name = f"{name} path"
-    c = _check_path(path=path, type_required=type_required)
-    if not c["type_ok"]:
+    c = _PathInfo.check(path=path, type_required=type_required)
+    if not c.type_ok:
         raise PathValidationError(
             f"invalid {name}: {path} is not of type {type_required}.",
         )
     # for glob pattern this is it so return
-    if c["is_glob"]:
+    if c.is_glob:
         return path
     # file or dir types
     # check against the create protocol
     if not create:
-        if not c["exists"]:
+        if not c.exists:
             raise PathValidationError(f"missing {name}: {path} does not exists.")
         # good
         logger.debug(f"validated {name}: {path} exist and is valid")
         return path
     # check backup and do the backup, this will change the clean and exist state
-    if backup and c["exists"]:
+    if backup and c.exists:
         _rename_as_backup(path, backup_timestamp_format, dry_run, name)
-        c["is_clean"] = True
-        c["exists"] = False
+        c.is_clean = True
+        c.exists = False
 
-    if clean_create_only and not c["is_clean"]:
+    if clean_create_only and not c.is_clean:
         raise PathValidationError(
             (
                 f"invalid {name}: {path} exists or is not empty. set"
@@ -188,7 +198,7 @@ def validate_path(  # noqa: PLR0913
             ),
         )
     # proceed to create this item
-    if c["exists"] and not always_create:
+    if c.exists and not always_create:
         logger.debug(
             (
                 f"validated {name}: {path} exist and creation is skipped. set"

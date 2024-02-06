@@ -122,7 +122,7 @@ class _SimpleTypeValidatorMixin:
         _source: type[Any],
         _handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
-        return core_schema.general_plain_validator_function(
+        return core_schema.with_info_plain_validator_function(
             self._field_validate,
             serialization=core_schema.plain_serializer_function_ser_schema(
                 self._field_serialize,
@@ -373,13 +373,13 @@ class PathType:
         handler: GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
         # handle rootpath if present in the context
-        schema0 = core_schema.general_before_validator_function(
+        schema0 = core_schema.with_info_before_validator_function(
             self.validate_path_rootpath,
             schema=handler(source),
         )
         # resolve if requested
         if self.resolve:
-            schema1 = core_schema.general_after_validator_function(
+            schema1 = core_schema.with_info_after_validator_function(
                 self.resolve_path,
                 schema=schema0,
             )
@@ -387,7 +387,7 @@ class PathType:
             schema1 = schema0
         # check exists
         if self.exists:
-            schema2 = core_schema.general_after_validator_function(
+            schema2 = core_schema.with_info_after_validator_function(
                 self.validate_exists,
                 schema=schema1,
             )
@@ -415,8 +415,10 @@ class PathType:
             return path
         raise ValueError(f"Path {path} does not exist.")
 
-    def validate_path_rootpath(self, path: str | Path, info: ValidationInfo):
+    def validate_path_rootpath(self, path: Any, info: ValidationInfo):
         """Handle rootpath from context."""
+        if not isinstance(path, (str, Path)):
+            raise ValueError(f"invalid path data type {type(path)}")  # noqa: TRY004
         if info.context is not None:
             rootpath = info.context.get("rootpath", None)
         else:
