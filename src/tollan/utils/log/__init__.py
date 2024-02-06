@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import inspect
 import time
 from contextlib import AbstractContextManager, ContextDecorator
-from typing import TYPE_CHECKING, Any
 
 from astropy.utils.console import human_time
 from loguru import logger as _loguru_logger
@@ -83,7 +81,7 @@ class logged_closing(AbstractContextManager):  # noqa: N801
             self.thing.close()
 
 
-class _timeit(ContextDecorator):  # noqa: N801
+class timeit(ContextDecorator):  # noqa: N801
     """Context decorator that logs the execution time of the decorated item.
 
     Parameters
@@ -96,6 +94,11 @@ class _timeit(ContextDecorator):  # noqa: N801
     _logger = _loguru_logger.patch(
         lambda r: r.update(name=f'timeit: {r["name"]}'),
     )
+
+    def __new__(cls, arg, **kwargs):  # noqa: D102
+        if callable(arg):
+            return cls(arg.__name__, **kwargs)(arg)
+        return super().__new__(cls)
 
     def __init__(self, msg, level="DEBUG"):
         self.msg = msg
@@ -113,7 +116,7 @@ class _timeit(ContextDecorator):  # noqa: N801
             f"{self.msg} done in {self._format_time(elapsed)}",
         )
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, **kwargs):  # noqa: D102
         self._logger = self._logger.opt(depth=2)
         return super().__call__(*args, **kwargs)
 
@@ -123,10 +126,3 @@ class _timeit(ContextDecorator):  # noqa: N801
         if time < max_ms:
             return f"{time * 1e3:.0f}ms"
         return f"{human_time(time).strip()}"
-
-
-def timeit(arg, **kwargs):
-    """Return a decorator to time the execution of code."""
-    if callable(arg):
-        return _timeit(arg.__name__, **kwargs)(arg)
-    return _timeit(arg, **kwargs)
