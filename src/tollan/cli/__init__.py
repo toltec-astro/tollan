@@ -6,9 +6,9 @@ from loguru import logger
 
 from .. import _version
 from ..utils.cli.multi_action_argument_parser import MultiActionArgumentParser
-from ..utils.general import Deferred
+from ..utils.general import ObjectProxy
 
-main_parser = Deferred(MultiActionArgumentParser)
+main_parser = ObjectProxy(MultiActionArgumentParser)
 """
 A proxy to the
 `tollan.utils.cli.multi_action_argument_parser.MultiActionArgumentParser`

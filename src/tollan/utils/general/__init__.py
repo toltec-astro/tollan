@@ -30,7 +30,7 @@ __all__ = [
     "dict_from_flat_dict",
     "dict_to_flat_dict",
     "fcompose",
-    "Deferred",
+    "ObjectProxy",
     "add_to_dict",
 ]
 
@@ -297,7 +297,7 @@ def fcompose(*fs):
     return functools.reduce(compose2, fs)
 
 
-class Deferred(wrapt.ObjectProxy):
+class ObjectProxy(wrapt.ObjectProxy):
     """A class to hold object for deferred initialization.
 
     Parameters
@@ -312,7 +312,7 @@ class Deferred(wrapt.ObjectProxy):
         self._self_factory = factory
         super().__init__(None)
 
-    def init(self, *args, **kwargs):
+    def proxy_init(self, *args, **kwargs):
         """Initialize this proxy."""
         if self._self_factory is None:
             if kwargs or len(args) > 1:
