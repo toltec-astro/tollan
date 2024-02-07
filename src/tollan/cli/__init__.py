@@ -18,7 +18,7 @@ instance, which is made available when `tolteca.cli.main` is invoked.
 
 def main(args=None):
     """Console script for tollan."""
-    parser = main_parser.init(description="Tollan is a utility library.")
+    parser = main_parser.proxy_init(description="Tollan is a utility library.")
 
     parser.add_argument("--version", "-v", action="version", version=_version.version)
     parser.add_argument(
