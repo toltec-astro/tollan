@@ -143,13 +143,15 @@ def validate_path(  # noqa: PLR0913
     create : bool
         When True, missing item is created instead of raising
         validation error when `path` is invalid. This is ignored for ``glob`` type.
+
     always_create : bool
         When True, existing item is re-created even when no backup is made.
+
     clean_create_only : bool
         When True, missing item is only created when the item is clean. For
         file item, this means it does not exist, and for directory item, this
         means it either does not exist or is empty.
-        This is ignored for ``glob```type.
+        This is ignored for ``glob`` type.
 
     backup : bool
         When True, a backup of the contents are created inside `rootpath`.
@@ -267,7 +269,7 @@ class DirectoryPresetMixin:
     * ``content_path_items``: a list of directory content `PathItem` definitions.
 
     * ``rootpath_kw``: A dict to overwrite the default rootpath PathItem. Note
-    that path_name and path_type are fixed.
+      that path_name and path_type are fixed.
 
     Example of implementing class::
 

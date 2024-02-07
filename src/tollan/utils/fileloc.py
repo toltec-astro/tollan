@@ -22,6 +22,13 @@ from pydantic_core import ArgsKwargs
 
 from .general import ensure_abspath
 
+__all__ = [
+    "FileLocUrl",
+    "FileLocData",
+    "FileLoc",
+    "fileloc",
+]
+
 
 def _url_unquote(
     v: Any,

@@ -13,6 +13,8 @@ API References
 
 .. automodapi:: tollan.config.models.system_info
 
+.. automodapi:: tollan.config.directory_preset
+
 .. automodapi:: tollan.config.runtime_context
 
 .. automodapi:: tollan.config.types
@@ -21,14 +23,16 @@ API References
 
 .. automodapi:: tollan.utils.cli
 
-.. automodapi:: tollan.utils.envfile
+.. automodapi:: tollan.utils.cli.multi_action_argument_parser
 
-.. automodapi:: tollan.utils.fmt
+.. automodapi:: tollan.utils.db
 
 .. automodapi:: tollan.utils.general
 
 .. automodapi:: tollan.utils.log
 
-.. automodapi:: tollan.utils.sys
+.. automodapi:: tollan.utils.envfile
 
-.. automodapi:: tollan.utils.yaml
+.. automodapi:: tollan.utils.fileloc
+
+.. automodapi:: tollan.utils.fmt

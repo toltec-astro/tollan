@@ -7,6 +7,8 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Session as Session_cls
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+__all__ = ["SqlaDB"]
+
 
 @dataclass
 class SqlaDB:
