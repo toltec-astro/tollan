@@ -1,9 +1,9 @@
 import dataclasses
 import numbers
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from functools import cached_property
 from pathlib import Path
-from typing import Annotated, Any, Callable, ClassVar, Generic, Literal, TypeVar
+from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
 
 from astropy.time import Time
 from astropy.units import Quantity
@@ -45,7 +45,7 @@ __all__ = [
 class GenerateJsonSchema(_GenerateJsonSchema):
     """Custom json schema generator."""
 
-    _default_serializers: dict[type[Any], Callable] = {}
+    _default_serializers: ClassVar[dict[type[Any], Callable]] = {}
 
     @classmethod
     def register_default_serializers(cls, dft_type: type[Any], handler: Callable):
@@ -220,7 +220,7 @@ class TimeValidator(_SimpleTypeValidatorMixin):
                     *args,
                     field_construct_kw={"format": format},
                 )
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 continue
             else:
                 break
@@ -417,7 +417,7 @@ class PathType:
 
     def validate_path_rootpath(self, path: Any, info: ValidationInfo):
         """Handle rootpath from context."""
-        if not isinstance(path, (str, Path)):
+        if not isinstance(path, str | Path):
             raise ValueError(f"invalid path data type {type(path)}")  # noqa: TRY004
         if info.context is not None:
             rootpath = info.context.get("rootpath", None)

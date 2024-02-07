@@ -27,7 +27,7 @@ def _ncstr(var):
     s = var[:].tolist()
     if len(var.shape) == 1:
         return _bytes_to_str(s)
-    # TODO make this work for ndim > 2
+    # TODO: make this work for ndim > 2
     if len(var.shape) == 2:  # noqa: PLR2004
         return [_bytes_to_str(ss) for ss in s]
     raise ValueError("var has to be 2-d or less")
@@ -91,7 +91,7 @@ def ncinfo(source):
         grpnames = [(grpname,) for grpname in nc.groups]
 
         if nc.path == "/":
-            head = "{0.path}: [{0.data_model}, {0.disk_format}]".format(nc)
+            head = f"{nc.path}: [{nc.data_model}, {nc.disk_format}]"
         else:
             head = f"{nc.path}:"
         items_indent = 10
@@ -159,7 +159,7 @@ class NcNodeMapperMixin:
         `k` is returned if it is not present in the map.
         """
         name = self.nc_node_map.get(k, k)
-        if isinstance(name, (tuple, list)):
+        if isinstance(name, tuple | list):
             # check the first available name in the node
             for n in name:
                 if self.has_key(n):
@@ -220,7 +220,7 @@ class NcNodeMapperMixin:
                     # single string
                     return _ncstr(v)
                 # a list of strings
-                # TODO implement this if needed.
+                # TODO: implement this if needed.
                 return v
             # large data blob
             return v
@@ -320,7 +320,7 @@ class NcNodeMapper(ExitStack, NcNodeMapperMixin):
             if not source.is_local:
                 raise ValueError("source should point to a local file.")
             source = source.path
-        elif isinstance(source, (Path, str)):
+        elif isinstance(source, Path | str):
             pass
         else:
             # netCDF dataset

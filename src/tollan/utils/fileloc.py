@@ -4,7 +4,6 @@ import urllib.parse
 from functools import cached_property
 from pathlib import Path
 from typing import Annotated, Any
-from urllib.parse import urlsplit, urlunsplit
 
 from pydantic import (
     BeforeValidator,
@@ -21,7 +20,6 @@ from pydantic.dataclasses import dataclass
 from pydantic.networks import Url, UrlConstraints
 from pydantic_core import ArgsKwargs
 
-from ..config.types import ImmutableBaseModel
 from .general import ensure_abspath
 
 
@@ -108,7 +106,11 @@ class FileLocData:
 
     @model_validator(mode="before")
     @classmethod
-    def validate_arg(cls, values: ArgsKwargs, info: ValidationInfo):
+    def validate_arg(  # noqa: C901, PLR0912, PLR0915
+        cls,
+        values: ArgsKwargs,
+        info: ValidationInfo,
+    ):
         """Return file loc data from any compatible input.
 
         Valid forms of inputs are:
@@ -130,7 +132,7 @@ class FileLocData:
         elif len(args) == 1:
             # this is single argument, unpack
             arg = args[0]
-        elif len(args) == 2:
+        elif len(args) == 2:  # noqa: PLR2004
             # 2-tuple of (netloc, path), will be handled by the code below
             arg = args
         else:
@@ -184,7 +186,7 @@ class FileLocData:
         elif isinstance(arg, dict):
             for k, v in arg.items():
                 _set_kwarg(k, v)
-        elif isinstance(arg, (cls, FileLoc)):
+        elif isinstance(arg, cls | FileLoc):
             # handle validated instance, just extrtact the fields
             if isinstance(arg, FileLoc):
                 arg = arg.root
@@ -223,7 +225,8 @@ class FileLocData:
             url_resolved = _url_replace(self.url, path=p)
         else:
             url_resolved = _url_replace(
-                _validate_file_loc_url(p.as_uri()), host=self.netloc
+                _validate_file_loc_url(p.as_uri()),
+                host=self.netloc,
             )
         self.url_resolved = url_resolved
         return self
@@ -253,14 +256,14 @@ class FileLocData:
             # remote window path
             raise TypeError("file loc does not support remote windows path")
         if p.is_absolute():
-            # TODO revisit this. may need to resolve anyways
+            # TODO: revisit this. may need to resolve anyways
             return p
         # relative path
         if remote_parent_path is None or not Path(remote_parent_path).is_absolute():
             raise ValueError(
                 "remote path shall be absolute if no remote_parent_path is set.",
             )
-        # TODO note that this may not be fully absolute...
+        # TODO: note that this may not be fully absolute...
         return Path(remote_parent_path).joinpath(p)
 
     @classmethod
@@ -278,11 +281,13 @@ class FileLocData:
     @computed_field
     @cached_property
     def netloc_resolved(self) -> str:
+        """The resolved netloc."""
         return self.url_resolved.host or ""
 
     @computed_field
     @cached_property
     def path_resolved(self) -> Path:
+        """The resolved path."""
         return Path(self.url_resolved.path)
 
     @property
@@ -332,11 +337,11 @@ class FileLoc(RootModel):
         return self.root.path
 
     def is_remote(self) -> bool:
-        """True if file is remote."""
+        """Return True if file is remote."""
         return self.netloc not in ["", "localhost"]
 
     def is_local(self) -> bool:
-        """True if file is local."""
+        """Return True if file is local."""
         return not self.is_remote()
 
     def exists(self) -> bool:
@@ -375,8 +380,8 @@ def fileloc(loc, remote_parent_path=None, local_parent_path=None, revalidate=Fal
           ``hostname`` is "localhost". A remote relative path is not
           valid.
 
-        * `FileLoc`. It is used as-is if `revalidate` is false, and re-validated with the
-          ``data`` attribute otherwise.
+        * `FileLoc`. It is used as-is if `revalidate` is false, and re-validated with
+          the ``data`` attribute otherwise.
 
     local_parent_path : str, `~pathlib.Path`, None
 

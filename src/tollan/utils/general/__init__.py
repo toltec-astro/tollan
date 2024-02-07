@@ -46,7 +46,7 @@ def ensure_readable_fileobj(arg, *args, **kwargs):
     This differs from the `astropy.utils.data.get_readable_fileobj` in that it
     is no-op if `arg` is already readable.
     """
-    if isinstance(arg, (str, os.PathLike)) and not os.path.isdir(arg):  # noqa: PTH112
+    if isinstance(arg, str | os.PathLike) and not os.path.isdir(arg):  # noqa: PTH112
         return get_readable_fileobj(arg, *args, **kwargs)
     if hasattr(arg, "read"):
         return contextlib.nullcontext(arg)
@@ -193,7 +193,7 @@ def rupdate(d, u, copy_subdict=True):
                 d[k] = v  # type: ignore
                 continue
             # now v = u[k] is dict
-            if not isinstance(dv, (collections.abc.Mapping, collections.abc.Sequence)):
+            if not isinstance(dv, collections.abc.Mapping | collections.abc.Sequence):
                 # d[k] is not a dict, so just set it to u[k],
                 # overriding whatever it was
                 d[k] = v  # type: ignore
@@ -223,7 +223,10 @@ def odict_from_list(lst, key):
 
 def dict_product(**kwargs):
     """Return the Cartesian product of dicts."""
-    return (dict(zip(kwargs.keys(), x)) for x in itertools.product(*kwargs.values()))
+    return (
+        dict(zip(kwargs.keys(), x, strict=False))
+        for x in itertools.product(*kwargs.values())
+    )
 
 
 def dict_from_flat_dict(dct):
@@ -240,8 +243,7 @@ def dict_from_flat_dict(dct):
             rupdate(v0, v)
         else:
             d[k] = v
-    d = d.data
-    return d
+    return d.data
 
 
 def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):  # noqa: C901
@@ -256,7 +258,7 @@ def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):  # noqa: C90
         return f"[{i}]"
 
     def _nested_kvs(data) -> list | tuple:
-        if isinstance(data, (list, dict)):
+        if isinstance(data, list | dict):
             kvs = []
             if isinstance(data, list):
                 items = ((_lk(i), data[i]) for i in range(len(data)))
@@ -265,7 +267,7 @@ def dict_to_flat_dict(dct, key_prefix="", list_index_as_key=False):  # noqa: C90
             for key, value in items:
                 result = _nested_kvs(value)
                 if isinstance(result, list):
-                    if isinstance(value, (dict, list)):
+                    if isinstance(value, dict | list):
                         kvs.extend([(f"{key}{item}", val) for (item, val) in result])
                 elif isinstance(result, tuple):
                     kvs.append((f"{key}", result[1]))

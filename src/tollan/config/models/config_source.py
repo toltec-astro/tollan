@@ -98,12 +98,12 @@ def _identify_pyobj(_origin, _path, _fileobj, *args, **_kwargs):
     if not args:
         return False
     data = args[0]
-    if not isinstance(data, (dict, list)):
+    if not isinstance(data, dict | list):
         return False
     # if list, this has to be a set of cli args
     if isinstance(data, list) and not all(isinstance(item, str) for item in data):
         return False
-    if isinstance(data, dict) and not all(isinstance(key, (int, str)) for key in data):
+    if isinstance(data, dict) and not all(isinstance(key, int | str) for key in data):
         return False
     return True
 
@@ -193,7 +193,7 @@ class ConfigSource(ImmutableBaseModel):
 
     def is_pyobj(self):
         """Check if the config source is in-memory object."""
-        return isinstance(self.source, (dict, list))
+        return isinstance(self.source, dict | list)
 
     def load(self, **kwargs):
         """Load config from source."""

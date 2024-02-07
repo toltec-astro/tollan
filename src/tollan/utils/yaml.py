@@ -65,8 +65,8 @@ def yaml_dump(data, output=None, **kwargs):
     """
     out = StringIO() if output is None else output
     ctx = None
-    if isinstance(out, (str, os.PathLike)):
-        ctx = Path(out).open("w")
+    if isinstance(out, str | os.PathLike):
+        ctx = Path(out).open("w")  # noqa: SIM115
         out = ctx.__enter__()
     if not isinstance(out, IOBase):
         raise TypeError("output has to be stream object.")

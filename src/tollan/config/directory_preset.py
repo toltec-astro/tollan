@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Annotated, Any, Callable, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, constr
 
@@ -94,7 +95,7 @@ def _rename_as_backup(path, backup_timestamp_format, dry_run, name):
 
 
 def _create_path(path, type_required, dry_run, name, on_create):
-    # TODO create in temporary tree and move.
+    # TODO: create in temporary tree and move.
     with logit(logger.debug, f"create {name}: {path}"):
         if not dry_run:
             if type_required == "dir":
@@ -293,9 +294,11 @@ class DirectoryPresetMixin:
         rootpath_kw.setdefault("name", "rootpath")
         rootpath_kw.update({"path_type": "dir", "path_name": ""})
         rootpath_attr_name = rootpath_kw["name"]
-        path_items = [PathItem(**rootpath_kw)]
-        for item in rgetattr(cls, "Config.content_path_items", []):
-            path_items.append(item)
+        path_items = [PathItem(**rootpath_kw)] + rgetattr(
+            cls,
+            "Config.content_path_items",
+            [],
+        )
         # build a dict for random access
         path_items_by_attr = {item.name: item for item in path_items}
         cls._path_items_by_attr = path_items_by_attr
@@ -382,7 +385,7 @@ class DirectoryPresetMixin:
         )
         for src, dst in rename_list:
             if dst.exists():
-                # TODO check if this make sense. this should be unlikely to happen...
+                # TODO: check if this make sense. this should be unlikely to happen...
                 _rename_as_backup(
                     dst,
                     backup_timestamp_format,

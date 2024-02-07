@@ -41,7 +41,7 @@ class RecursiveHelpAction(argparse._HelpAction):  # noqa: SLF001
 
         return "".join(prefixed_lines())
 
-    def __call__(  # noqa: D102
+    def __call__(
         self,
         parser,
         _namespace,

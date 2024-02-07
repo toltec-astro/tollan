@@ -104,7 +104,7 @@ class ConfigBackendBase:
     def _make_config_sources(cls, config):
         if config is None:
             sources = [{"source": {}, "order": 0}]
-        elif isinstance(config, (str, os.PathLike, collections.abc.Mapping)):
+        elif isinstance(config, str | os.PathLike | collections.abc.Mapping):
             sources = [
                 {
                     "source": config,
@@ -158,7 +158,7 @@ class ConfigBackendBase:
         # validate the config agains config model
         return self.config_model_cls.model_validate(
             config,
-            # TODO may need to check if the key exists?
+            # TODO: may need to check if the key exists?
             context=config["runtime_info"]["validation_context"],
         )
 

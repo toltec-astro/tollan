@@ -27,7 +27,7 @@ def test_fileloc_data():
 
     # new context on FileLocData instance should fail
     with pytest.raises(ValueError, match="remote_parent_path not allowed"):
-        fld3 = FileLocData(fld, remote_parent_path="/remote2")
+        FileLocData(fld, remote_parent_path="/remote2")
 
 
 def test_fileloc():
@@ -81,7 +81,9 @@ def test_fileloc():
     assert fl.is_local()
 
     fl = fileloc(
-        ("localhost", "b.c"), remote_parent_path="/", local_parent_path="/local"
+        ("localhost", "b.c"),
+        remote_parent_path="/",
+        local_parent_path="/local",
     )
     assert fl.url == "file:///local/b.c"
     assert fl.netloc == ""
@@ -102,7 +104,7 @@ def test_fileloc():
     with pytest.raises(ValueError, match="remote path shall be absolute"):
         fl = fileloc("a:b.c")
 
-    # TODO, this is tricky, and may need some special logic to
+    # TODO: this is tricky, and may need some special logic to
     # avoid resolving to remote host root /
     # with pytest.raises(ValueError, match="remote path shall be absolute"):
     #    fl = fileloc("file://a.c")

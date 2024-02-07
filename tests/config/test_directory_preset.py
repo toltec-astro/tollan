@@ -1,5 +1,6 @@
 import tempfile
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -100,13 +101,13 @@ def test_validate_path():
         backups = list(tmp.glob("*.bak"))
         assert len(backups) == 1
         assert backups[0].name.startswith("test_dir.")
-        assert list(backups[0].glob("*"))[0].name == "test_file"
+        assert next(iter(backups[0].glob("*"))).name == "test_file"
 
 
 def test_dir_preset():
     class Preset(DirectoryPresetBase):
         class Config:
-            content_path_items = [
+            content_path_items: ClassVar[list[PathItem]] = [
                 PathItem(name="test_dir", path_name="test_dir", path_type="dir"),
                 PathItem(name="test_file", path_name="test_file", path_type="file"),
                 PathItem(

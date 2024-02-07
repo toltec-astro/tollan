@@ -95,7 +95,7 @@ class timeit(ContextDecorator):  # noqa: N801
         lambda r: r.update(name=f'timeit: {r["name"]}'),
     )
 
-    def __new__(cls, arg, **kwargs):  # noqa: D102
+    def __new__(cls, arg, **kwargs):
         if callable(arg):
             return cls(arg.__name__, **kwargs)(arg)
         return super().__new__(cls)
@@ -116,7 +116,7 @@ class timeit(ContextDecorator):  # noqa: N801
             f"{self.msg} done in {self._format_time(elapsed)}",
         )
 
-    def __call__(self, *args, **kwargs):  # noqa: D102
+    def __call__(self, *args, **kwargs):
         self._logger = self._logger.opt(depth=2)
         return super().__call__(*args, **kwargs)
 
