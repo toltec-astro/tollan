@@ -27,12 +27,28 @@ API References
 
 .. automodapi:: tollan.utils.db
 
+.. automodapi:: tollan.utils.db.func
+
+.. automodapi:: tollan.utils.db.mapped_types
+
+.. automodapi:: tollan.utils.db.orm
+
 .. automodapi:: tollan.utils.general
 
 .. automodapi:: tollan.utils.log
+
+.. automodapi:: tollan.utils.dataclasses
 
 .. automodapi:: tollan.utils.envfile
 
 .. automodapi:: tollan.utils.fileloc
 
 .. automodapi:: tollan.utils.fmt
+
+.. automodapi:: tollan.utils.nc
+
+.. automodapi:: tollan.utils.np
+
+.. automodapi:: tollan.utils.sys
+
+.. automodapi:: tollan.utils.yaml

@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import sqlalchemy.exc as sae
 import tzlocal
+from astropy.utils.decorators import classproperty
 from sqlalchemy.dialects import sqlite
 from sqlalchemy.orm import DeclarativeBase as _DeclarativeBase
 from sqlalchemy.orm import Mapped, MappedAsDataclass
@@ -10,7 +11,6 @@ from sqlalchemy.orm import Session as Session_cls
 from sqlalchemy.orm import declared_attr, mapped_column, relationship
 
 from ..dataclasses import get_dataclass_field_default, get_dataclass_fields
-from ..general import classproperty_readonly
 from ..log import logger
 from ..sys import get_hostname
 from . import mapped_types as mtypes
@@ -37,7 +37,7 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
         """Set active session."""
         cls._session = session
 
-    @classproperty_readonly
+    @classproperty
     def session(cls):
         """The active session."""
         if cls._session is not None:
@@ -45,7 +45,7 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
         raise ValueError("session is not set.")
 
     @classmethod
-    def query(cls, session=None):
+    def query(cls, session: None | Session_cls = None):
         """Return the ORM query."""
         session = session or cls.session
         return session.query(cls)

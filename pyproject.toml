@@ -130,7 +130,7 @@ lint.extend-ignore = [
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
-property-decorators = ["tollan.utils.general.classproperty_readonly"]
+property-decorators = ["astropy.utils.decorators.classproperty"]
 
 [tool.ruff.lint.pep8-naming]
-classmethod-decorators = ["classproperty_readonly"]
+classmethod-decorators = ["classproperty"]

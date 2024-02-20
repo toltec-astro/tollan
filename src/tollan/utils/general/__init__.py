@@ -32,7 +32,6 @@ __all__ = [
     "fcompose",
     "ObjectProxy",
     "add_to_dict",
-    "classproperty_readonly",
 ]
 
 
@@ -382,13 +381,3 @@ def dict_from_regex_match(pattern, string, type_dispatcher=None):
         else:
             result[k] = v
     return result
-
-
-class classproperty_readonly:  # noqa: N801
-    """A descriptor for readonly class property."""
-
-    def __init__(self, fget):
-        self.fget = fget
-
-    def __get__(self, _owner_self, owner_cls):
-        return self.fget(owner_cls)
