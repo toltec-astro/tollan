@@ -18,6 +18,8 @@ from . import mapped_types as mtypes
 if TYPE_CHECKING:
     from . import SqlaDB
 
+__all__ = ["BetterDeclarativeBase", "SqlaORM"]
+
 
 class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
     """A enhanced declarative base."""
@@ -87,7 +89,7 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
         return session.execute(stmt)
 
 
-class DatabaseTableInfoMixin(MappedAsDataclass):
+class _DatabaseTableInfoMixin(MappedAsDataclass):
     """The database table info."""
 
     __tablename__ = "database_table_info"
@@ -186,14 +188,14 @@ class SqlaORM:
             "ClientInfoRefMixin",
             (_ClientInfoRefMixin, MappedAsDataclass),
             {
-                "__doc__": ClientInfoMixin.__doc__,
+                "__doc__": _ClientInfoRefMixin.__doc__,
                 "_client_info_cls": self.ClientInfo,
             },
         )
         self.DatabaseTableInfo = type(
             "DatabaseTableInfo",
-            (self.Base, DatabaseTableInfoMixin),
-            {"__doc__": DatabaseTableInfoMixin.__doc__},
+            (self.Base, _DatabaseTableInfoMixin),
+            {"__doc__": _DatabaseTableInfoMixin.__doc__},
         )
         self.WorkflowBase = type(
             "WorkflowBase",
