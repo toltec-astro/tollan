@@ -32,6 +32,7 @@ __all__ = [
     "fcompose",
     "ObjectProxy",
     "add_to_dict",
+    "classproperty_readonly",
 ]
 
 
@@ -324,6 +325,15 @@ class ObjectProxy(wrapt.ObjectProxy):
         self.__wrapped__ = self._self_factory(*args, **kwargs)  # type: ignore
         return self
 
+    def proxy_reset(self):
+        """Reset this proxy."""
+        self.__wrapped__ = None
+        return self
+
+    def proxy_initialized(self):
+        """Return True if proxy is initialized."""
+        return self.__wrapped__ is not None
+
 
 def add_to_dict(d, key, exist_ok=True):
     """Return a decorator to add decorated item to dict.
@@ -372,3 +382,13 @@ def dict_from_regex_match(pattern, string, type_dispatcher=None):
         else:
             result[k] = v
     return result
+
+
+class classproperty_readonly:  # noqa: N801
+    """A descriptor for readonly class property."""
+
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, _owner_self, owner_cls):
+        return self.fget(owner_cls)

@@ -47,7 +47,7 @@ class ConfigBackendBase:
         )
         cls.config_model_cls = config_model_cls
 
-    def __init__(self, config):
+    def __init__(self, config=None):
         self._config_sources = self._make_config_sources(config)
         self._update_info_config()
 

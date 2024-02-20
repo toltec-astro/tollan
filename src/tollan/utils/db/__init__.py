@@ -1,11 +1,15 @@
-"""The DB utiltiy."""
+"""The database utilties."""
 
 from contextlib import contextmanager
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Session as Session_cls
 from sqlalchemy.orm import scoped_session, sessionmaker
+
+if TYPE_CHECKING:
+    from .orm import SqlaORM
 
 __all__ = ["SqlaDB"]
 
@@ -63,3 +67,26 @@ class SqlaDB:
         except Exception:
             session.rollback()
             raise
+
+    def init_orm(self, orm: "SqlaORM"):
+        """Set ORM with this database."""
+        orm.Base.metadata.create_all(self.engine)
+        orm.Base.set_session(self.session)
+        # update the database table info table
+        reg = orm.Base.registry
+        data = []
+        for mapper in reg.mappers:
+            t = mapper.local_table
+            data.append(
+                {
+                    "name": t.name,
+                    "desc": t.comment,
+                },
+            )
+        with self.session_context():
+            orm.DatabaseTableInfo.batch_upsert(
+                data,
+                index_elements=[
+                    "name",
+                ],
+            )
