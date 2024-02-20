@@ -80,7 +80,7 @@ class SqlaDB:
             data.append(
                 {
                     "name": t.name,
-                    "desc": t.comment,
+                    "desc": t.comment or "",
                 },
             )
         with self.session_context():

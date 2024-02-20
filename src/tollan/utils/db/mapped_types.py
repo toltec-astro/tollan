@@ -51,7 +51,7 @@ Timezone = Annotated[
     zoneinfo.ZoneInfo,
     mapped_column(
         TimezoneType(backend="zoneinfo"),
-        default_factory=tzlocal.get_localzone_name,
+        default=tzlocal.get_localzone_name,
         comment="The local timezone.",
     ),
 ]

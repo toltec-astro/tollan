@@ -59,7 +59,7 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
         """Get or create an object from database."""
         session = session or cls.session
         try:
-            return session.query(cls).filter_by(**kwargs).one(), True
+            return session.query(cls).filter_by(**kwargs).one(), False
         except sae.NoResultFound:
             kwargs.update(create_method_kwargs or {})
             try:
@@ -67,9 +67,9 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
                     created = getattr(cls, create_method, cls)(**kwargs)
                     session.add(created)
             except sae.IntegrityError:
-                return session.query(cls).filter_by(**kwargs).one(), True
+                return session.query(cls).filter_by(**kwargs).one(), False
             else:
-                return created, False
+                return created, True
 
     @classmethod
     def batch_upsert(cls, data, index_elements, session: None | Session_cls = None):
@@ -156,14 +156,17 @@ class _SqlaORMWorkflow:
     db: "SqlaDB"
     client_info: BetterDeclarativeBase
 
-    def __init__(self, db: "SqlaDB", client_name: str):
+    def __init__(self, db: "SqlaDB", client_name: None | str = None):
         # validate that db has the correct protocal
         if not hasattr(db, "init_orm"):
             raise ValueError(f"invalid database {db=}")
         self.db = db
         self.db.init_orm(self.orm)
         with self.db.session_context():
-            self.client_info = self.orm.get_or_create_client_info(name=client_name)
+            client_info, _ = self.orm.get_or_create_client_info(
+                name=client_name or self.__class__.__name__.lower(),
+            )
+            self.client_info = client_info
 
 
 @dataclass
