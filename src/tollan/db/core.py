@@ -1,5 +1,3 @@
-"""The database utilties."""
-
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
@@ -11,7 +9,9 @@ from sqlalchemy.orm import scoped_session, sessionmaker
 if TYPE_CHECKING:
     from .orm import SqlaORM
 
-__all__ = ["SqlaDB"]
+__all__ = [
+    "SqlaDB",
+]
 
 
 @dataclass

@@ -19,19 +19,19 @@ API References
 
 .. automodapi:: tollan.config.types
 
+.. automodapi:: tollan.db
+
+.. automodapi:: tollan.db.func
+
+.. automodapi:: tollan.db.mapped_types
+
+.. automodapi:: tollan.db.orm
+
 .. automodapi:: tollan.utils
 
 .. automodapi:: tollan.utils.cli
 
 .. automodapi:: tollan.utils.cli.multi_action_argument_parser
-
-.. automodapi:: tollan.utils.db
-
-.. automodapi:: tollan.utils.db.func
-
-.. automodapi:: tollan.utils.db.mapped_types
-
-.. automodapi:: tollan.utils.db.orm
 
 .. automodapi:: tollan.utils.general
 

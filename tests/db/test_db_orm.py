@@ -1,9 +1,9 @@
 import tzlocal
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-import tollan.utils.db.mapped_types as mtypes
-from tollan.utils.db import SqlaDB
-from tollan.utils.db.orm import BetterDeclarativeBase, ClientInfoMixin, SqlaORM
+import tollan.db.mapped_types as mtypes
+from tollan.db import SqlaDB
+from tollan.db.orm import BetterDeclarativeBase, ClientInfoMixin, SqlaORM
 from tollan.utils.sys import get_hostname
 
 

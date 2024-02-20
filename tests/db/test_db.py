@@ -1,4 +1,4 @@
-from tollan.utils.db import SqlaDB
+from tollan.db.core import SqlaDB
 
 
 def test_sqladb_url():

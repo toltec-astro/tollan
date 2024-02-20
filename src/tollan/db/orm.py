@@ -10,15 +10,18 @@ from sqlalchemy.orm import Mapped, MappedAsDataclass
 from sqlalchemy.orm import Session as Session_cls
 from sqlalchemy.orm import declared_attr, mapped_column, relationship
 
-from ..dataclasses import get_dataclass_field_default, get_dataclass_fields
-from ..log import logger
-from ..sys import get_hostname
+from ..utils.dataclasses import get_dataclass_field_default, get_dataclass_fields
+from ..utils.log import logger
+from ..utils.sys import get_hostname
 from . import mapped_types as mtypes
 
 if TYPE_CHECKING:
     from . import SqlaDB
 
-__all__ = ["BetterDeclarativeBase", "SqlaORM"]
+__all__ = [
+    "BetterDeclarativeBase",
+    "SqlaORM",
+]
 
 
 class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):

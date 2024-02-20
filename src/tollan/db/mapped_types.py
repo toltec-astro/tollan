@@ -22,6 +22,7 @@ __all__ = [
 ]
 
 Pk = Annotated[int, mapped_column(Integer, primary_key=True, comment="The primary key")]
+"""Primary key mapper type."""
 
 Label = Annotated[
     str,
@@ -33,10 +34,13 @@ Label = Annotated[
         comment="The short descriptive label.",
     ),
 ]
+"""Unqiue label mapper type."""
 
 Name = Annotated[str, mapped_column(String(128), comment="The name.")]
+"""Short name mapper type."""
 
 Desc = Annotated[str, mapped_column(Text, comment="The long description.")]
+"""Long description mapper type."""
 
 Created_at = Annotated[
     datetime.datetime,
@@ -47,6 +51,7 @@ Created_at = Annotated[
         comment="The datetime of creation.",
     ),
 ]
+"""Timestamp mapper type of creation."""
 
 Updated_at = Annotated[
     datetime.datetime,
@@ -58,6 +63,7 @@ Updated_at = Annotated[
         comment="The datetime of last modification.",
     ),
 ]
+"""Timestamp mapper type of last modification."""
 
 Timezone = Annotated[
     zoneinfo.ZoneInfo,
@@ -67,6 +73,7 @@ Timezone = Annotated[
         comment="The local timezone.",
     ),
 ]
+"""Timezone mapper type."""
 
 
 def fk(other, name=None, **kwargs):
