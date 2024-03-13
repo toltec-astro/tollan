@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, ClassVar
 import sqlalchemy.exc as sae
 import tzlocal
 from astropy.utils.decorators import classproperty
+from sqlalchemy import inspect
 from sqlalchemy.dialects import sqlite
 from sqlalchemy.orm import DeclarativeBase as _DeclarativeBase
 from sqlalchemy.orm import Mapped, MappedAsDataclass
@@ -82,11 +83,17 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
         if not data:
             raise ValueError("data cannot be empty.")
         stmt = sqlite.insert(cls).values(data)
+        set_ = {
+            k: getattr(stmt.excluded, k) for k in data[0] if k not in index_elements
+        }
+        # make sure to update the timestamp
+        cols = inspect(cls).columns
+        c_updated_at = "updated_at"
+        if c_updated_at in cols and c_updated_at not in set_:
+            set_[c_updated_at] = cols[c_updated_at].default.arg
         stmt = stmt.on_conflict_do_update(
             index_elements=index_elements,
-            set_={
-                k: getattr(stmt.excluded, k) for k in data[0] if k not in index_elements
-            },
+            set_=set_,
         )
         session = session or cls.session
         return session.execute(stmt)

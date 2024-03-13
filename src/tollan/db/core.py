@@ -54,7 +54,7 @@ class SqlaDB:
         engine = db.engines[bind]
         metadata = db.metadatas[bind]
         Session = sessionmaker(bind=engine)  # noqa: N806
-        session = scoped_session(options={"bind": engine})
+        session = scoped_session(Session)
         return cls(engine=engine, metadata=metadata, Session=Session, session=session)
 
     @contextmanager

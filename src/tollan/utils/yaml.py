@@ -1,4 +1,5 @@
 import os
+from enum import Enum
 from io import IOBase, StringIO
 from pathlib import Path, PosixPath
 
@@ -8,6 +9,7 @@ from astropy.coordinates import BaseCoordinateFrame
 from astropy.time import Time
 from yaml.dumper import SafeDumper
 
+from .fileloc import FileLoc
 from .general import ensure_readable_fileobj
 
 __all__ = ["YamlDumper", "yaml_dump", "yaml_load", "yaml_loads"]
@@ -48,9 +50,19 @@ def _path_representer(dumper, p):
     return dumper.represent_str(str(p))
 
 
+def _enum_representer(dumper, p):
+    return dumper.represent_str(str(p))
+
+
+def _fileloc_representer(dumper, p):
+    return dumper.represent_str(p.as_rsync())
+
+
 YamlDumper.add_multi_representer(u.Quantity, _quantity_representer)
 YamlDumper.add_multi_representer(Time, _astropy_time_representer)
 YamlDumper.add_multi_representer(PosixPath, _path_representer)
+YamlDumper.add_multi_representer(Enum, _enum_representer)
+YamlDumper.add_multi_representer(FileLoc, _fileloc_representer)
 
 
 def yaml_dump(data, output=None, **kwargs):
