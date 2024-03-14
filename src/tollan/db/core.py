@@ -6,6 +6,8 @@ import sqlalchemy as sa
 from sqlalchemy.orm import Session as Session_cls
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+from . import sqlite_funcs
+
 if TYPE_CHECKING:
     from .orm import SqlaORM
 
@@ -29,6 +31,16 @@ class SqlaDB:
 
     session: Session_cls
     """The session."""
+
+    def __post_init__(self):
+        if self.engine.dialect.name == "sqlite":
+
+            @sa.event.listens_for(self.engine, "connect")
+            def connect(conn, _rec):
+                for func_args in sqlite_funcs.functions:
+                    conn.create_function(*func_args)
+                for func_args in sqlite_funcs.aggregates:
+                    conn.create_aggregate(*func_args)
 
     @property
     def tables(self):
