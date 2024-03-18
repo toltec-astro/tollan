@@ -4,6 +4,7 @@ from io import IOBase, StringIO
 from pathlib import Path, PosixPath
 
 import astropy.units as u
+import numpy as np
 import yaml
 from astropy.coordinates import BaseCoordinateFrame
 from astropy.time import Time
@@ -37,6 +38,10 @@ class YamlDumper(SafeDumper):
             style = "|" if self._should_use_block(value) else self.default_style
         return super().represent_scalar(tag=tag, value=value, style=style)
 
+    def ignore_aliases(self, _data):
+        """Avoid generating aliases."""
+        return True
+
 
 def _quantity_representer(dumper, q):
     return dumper.represent_str(q.to_string())
@@ -63,6 +68,10 @@ YamlDumper.add_multi_representer(Time, _astropy_time_representer)
 YamlDumper.add_multi_representer(PosixPath, _path_representer)
 YamlDumper.add_multi_representer(Enum, _enum_representer)
 YamlDumper.add_multi_representer(FileLoc, _fileloc_representer)
+YamlDumper.add_representer(np.float64, lambda s, d: s.represent_float(d))
+YamlDumper.add_representer(np.float32, lambda s, d: s.represent_float(d))
+YamlDumper.add_representer(np.int32, lambda s, d: s.represent_int(d))
+YamlDumper.add_representer(np.int64, lambda s, d: s.represent_int(d))
 
 
 def yaml_dump(data, output=None, **kwargs):
