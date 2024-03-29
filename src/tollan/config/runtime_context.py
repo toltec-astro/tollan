@@ -3,12 +3,13 @@ from __future__ import annotations
 import collections.abc
 import os
 from functools import cached_property
-from typing import Any, ClassVar
+from typing import ClassVar, Generic, TypeVar
 
-from pydantic import BaseModel, Field, create_model
+from pydantic import Field, create_model
 
 from ..utils.general import rupdate
 from ..utils.log import logger
+from ..utils.typing import get_typing_args
 from .models.config_source import ConfigSourceList
 from .models.system_info import SystemInfo
 from .types import ImmutableBaseModel, TimeField
@@ -16,7 +17,15 @@ from .types import ImmutableBaseModel, TimeField
 __all__ = ["RuntimeInfo", "ConfigBackend", "RuntimeContext"]
 
 
-class ConfigBackendBase:
+RuntimeInfoModelT = TypeVar("RuntimeInfoModelT", bound=ImmutableBaseModel)
+
+
+class _ConfigModelBase(ImmutableBaseModel, Generic[RuntimeInfoModelT]):
+    model_config = ImmutableBaseModel.model_config | {"extra": "allow"}
+    runtime_info: RuntimeInfoModelT
+
+
+class ConfigBackendBase(Generic[RuntimeInfoModelT]):
     """A base class to manage a set of config sources.
 
     This class manages a stack of config objects ``default_config``,
@@ -26,17 +35,20 @@ class ConfigBackendBase:
     the ``runtime_info_model`` keyword argument.
     """
 
-    class _ConfigModelBase(ImmutableBaseModel):
-        # this is to allow extra keys on the config dict.
-        model_config = ImmutableBaseModel.model_config | {"extra": "allow"}
+    runtime_info_model_cls: ClassVar[type[RuntimeInfoModelT]]
+    config_model_cls: ClassVar[type[_ConfigModelBase[RuntimeInfoModelT]]]
 
-    config_model_cls: ClassVar[type[BaseModel]]
-
-    def __init_subclass__(cls, runtime_info_model_cls, **kwargs):
-        super().__init_subclass__(**kwargs)
+    def __init_subclass__(cls, **kwargs):
+        runtime_info_model_cls = get_typing_args(
+            cls,
+            max_depth=2,
+            bound=ImmutableBaseModel,
+            unique=True,
+        )
+        # this is needed to replace the model cls with default_factory.
         config_model_cls = create_model(
             "ConfigModel",
-            __base__=cls._ConfigModelBase,
+            __base__=_ConfigModelBase[runtime_info_model_cls],
             runtime_info=(
                 runtime_info_model_cls,
                 Field(
@@ -45,7 +57,9 @@ class ConfigBackendBase:
                 ),
             ),
         )
+        cls.runtime_info_model_cls = runtime_info_model_cls
         cls.config_model_cls = config_model_cls
+        super().__init_subclass__(**kwargs)
 
     def __init__(self, config=None):
         self._config_sources = self._make_config_sources(config)
@@ -142,7 +156,7 @@ class ConfigBackendBase:
         self._invalidate_cache("source_config")
         return self.sources.load()
 
-    def load(self, reload_source_config=True) -> Any:
+    def load(self, reload_source_config=True):
         """Compose and return the config object.
 
         Parameters
@@ -162,7 +176,7 @@ class ConfigBackendBase:
             context=config["runtime_info"]["validation_context"],
         )
 
-    def dict(self, exclude_runtime_info=False) -> Any:
+    def dict(self, exclude_runtime_info=False):
         """Return the config as dict.
 
         Parameters
@@ -173,7 +187,7 @@ class ConfigBackendBase:
         kw = {"exclude": ("runtime_info",)} if exclude_runtime_info else {}
         return self.config.model_dump(**kw)
 
-    def yaml(self, exclude_runtime_info=False) -> Any:
+    def yaml(self, exclude_runtime_info=False):
         """Dump the config as YAML.
 
         Parameters
@@ -237,7 +251,10 @@ class ConfigBackendBase:
         return self.config.runtime_info
 
 
-class RuntimeContextBase:
+ConfigBackendT = TypeVar("ConfigBackendT", bound=ConfigBackendBase)
+
+
+class RuntimeContextBase(Generic[ConfigBackendT, RuntimeInfoModelT]):
     """A base class to manage runtime context.
 
     This class acts as a proxy of an underlying runtime config backend
@@ -255,18 +272,27 @@ class RuntimeContextBase:
         to the `_config_backend_cls` constructor.
     """
 
-    config_backend_cls: ClassVar[type[ConfigBackend]]
+    config_backend_cls: ClassVar[type[ConfigBackendT]]
+    _config_backend: ConfigBackendT
 
     def __init_subclass__(
         cls,
-        config_backend_cls,
         **kwargs,
     ):
+        cls.config_backend_cls = get_typing_args(
+            cls,
+            max_depth=2,
+            bound=ConfigBackendBase,
+            unique=True,
+        )
         super().__init_subclass__(**kwargs)
-        cls.config_backend_cls = config_backend_cls
 
     def __init__(self, *args, **kwargs):
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], ConfigBackend):
+        if (
+            len(args) == 1
+            and len(kwargs) == 0
+            and isinstance(args[0], self.config_backend_cls)
+        ):
             cb = args[0]
         else:
             cb = self.config_backend_cls(*args, **kwargs)
@@ -278,7 +304,7 @@ class RuntimeContextBase:
         return self._config_backend
 
     @property
-    def runtime_info(self):
+    def runtime_info(self) -> RuntimeInfoModelT:
         """The runtime info of the context."""
         return self.config_backend.runtime_info
 
@@ -310,9 +336,9 @@ class RuntimeInfo(ImmutableBaseModel):
     )
 
 
-class ConfigBackend(ConfigBackendBase, runtime_info_model_cls=RuntimeInfo):
+class ConfigBackend(ConfigBackendBase[RuntimeInfo]):
     """A default config backend."""
 
 
-class RuntimeContext(RuntimeContextBase, config_backend_cls=ConfigBackend):
+class RuntimeContext(RuntimeContextBase[ConfigBackend, RuntimeInfo]):
     """A default runtime context."""

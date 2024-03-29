@@ -1,7 +1,8 @@
 import os
 from enum import Enum
-from io import IOBase, StringIO
+from io import StringIO, TextIOBase
 from pathlib import Path, PosixPath
+from typing import TextIO, overload
 
 import astropy.units as u
 import numpy as np
@@ -74,14 +75,22 @@ YamlDumper.add_representer(np.int32, lambda s, d: s.represent_int(d))
 YamlDumper.add_representer(np.int64, lambda s, d: s.represent_int(d))
 
 
-def yaml_dump(data, output=None, **kwargs):
+@overload
+def yaml_dump(data, output: None = None, **kwargs) -> str: ...
+
+
+@overload
+def yaml_dump(data, output: TextIO, **kwargs) -> None: ...
+
+
+def yaml_dump(data, output=None, **kwargs) -> None | str:
     """Dump `data` as YAML to `output`.
 
     Parameters
     ----------
     data : dict
         The data to write.
-    output : io.StringIO, optional
+    output : TextIO, optional
         The object to write to. If None, return the YAML as string.
     """
     out = StringIO() if output is None else output
@@ -89,13 +98,13 @@ def yaml_dump(data, output=None, **kwargs):
     if isinstance(out, str | os.PathLike):
         ctx = Path(out).open("w")  # noqa: SIM115
         out = ctx.__enter__()
-    if not isinstance(out, IOBase):
+    if not isinstance(out, TextIOBase):
         raise TypeError("output has to be stream object.")
     yaml.dump(data, out, Dumper=YamlDumper, **kwargs)
     if ctx is not None:
         ctx.close()
-    if output is None:
-        return out.getvalue()  # type: ignore
+    if isinstance(output, StringIO):
+        return out.getvalue()
     return None
 
 

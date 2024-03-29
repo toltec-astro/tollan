@@ -2,8 +2,13 @@ import tempfile
 from pathlib import Path
 
 from tollan.config.models.system_info import SystemInfo
-from tollan.config.runtime_context import ConfigBackend, RuntimeContext
+from tollan.config.runtime_context import ConfigBackend, RuntimeContext, RuntimeInfo
 from tollan.utils.log import logger
+
+
+def test_class_vars():
+    assert ConfigBackend.runtime_info_model_cls is RuntimeInfo
+    assert RuntimeContext.config_backend_cls is ConfigBackend
 
 
 def test_runtime_config_backend_null_config():

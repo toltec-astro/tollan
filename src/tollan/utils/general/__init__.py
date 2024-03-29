@@ -6,12 +6,15 @@ import collections.abc
 import contextlib
 import functools
 import importlib.util
+import inspect
 import itertools
 import os
 import re
 import sys
 from collections import OrderedDict
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 import scalpl
 import wrapt
@@ -21,6 +24,7 @@ __all__ = [
     "ensure_abspath",
     "ensure_readable_fileobj",
     "getobj",
+    "getname",
     "module_from_path",
     "rreload",
     "rgetattr",
@@ -75,6 +79,20 @@ def getobj(name, *args):
     if not attr:
         return module
     return rgetattr(module, attr)
+
+
+def getname(obj, sep=":"):
+    """Return specifier name of python object.
+
+    This is the opposite of `getobj`.
+    """
+    if not hasattr(obj, "__qualname__"):
+        raise TypeError("invalid object type.")
+    module = obj.__module__
+    name = obj.__qualname__
+    if module is None or module == str.__class__.__module__:
+        module = ""
+    return f"{module}{sep}{name}"
 
 
 def module_from_path(filepath, name=None):
@@ -381,3 +399,34 @@ def dict_from_regex_match(pattern, string, type_dispatcher=None):
         else:
             result[k] = v
     return result
+
+
+def ignore_unexpected_kwargs(func: Callable[..., Any]) -> Callable[..., Any]:
+    """Return a decorated function to allow passing extra kwargs."""
+    # https://stackoverflow.com/a/63685135
+
+    def filter_kwargs(kwargs: dict) -> dict:
+        sig = inspect.signature(func)
+        # Parameter.VAR_KEYWORD - a dict of keyword arguments that aren't bound
+        # to any other
+        if any(
+            p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values()
+        ):
+            # if **kwargs exist, return directly
+            return kwargs
+
+        def _f(p):
+            return p.kind in {
+                inspect.Parameter.KEYWORD_ONLY,
+                inspect.Parameter.POSITIONAL_OR_KEYWORD,
+            }
+
+        _params = filter(_f, sig.parameters.values())
+        return {p.name: kwargs[p.name] for p in _params if p.name in kwargs}
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs) -> Any:
+        kwargs = filter_kwargs(kwargs)
+        return func(*args, **kwargs)
+
+    return wrapper
