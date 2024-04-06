@@ -1,6 +1,6 @@
 import functools
 import inspect
-from typing import get_args
+from typing import Any, get_args
 
 import astropy.units as u
 from typing_extensions import assert_never
@@ -12,7 +12,7 @@ def get_typing_args(  # noqa: C901
     bound=None,
     type=None,
     unique=False,
-):
+) -> Any:
     """Return a list of typing args from cls."""
 
     def _get_args(bases, depth=0):

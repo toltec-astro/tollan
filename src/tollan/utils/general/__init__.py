@@ -36,6 +36,8 @@ __all__ = [
     "fcompose",
     "ObjectProxy",
     "add_to_dict",
+    "ignore_unexpected_kwargs",
+    "slugify",
 ]
 
 
@@ -138,7 +140,11 @@ def rgetattr(obj, attr, *args):
     return functools.reduce(_getattr, [obj] + attr.split("."))
 
 
-def rupdate(d, u, copy_subdict=True):
+MT = collections.abc.Mapping
+ST = collections.abc.Sequence
+
+
+def rupdate(d, u, copy_subdict=True):  # noqa: C901
     r"""Update dict recursively.
 
     This will update `d` with items in `u` in a recursive fashion.
@@ -146,8 +152,8 @@ def rupdate(d, u, copy_subdict=True):
     `d` can be either list or dict. `u` has to be dict where int
     keys can be used to identify list items.
 
-    When updating list, the special key matches ``<<\d+`` can be used to
-    append item to the list.
+    When updating list, the special key matches ``+(\d+(:\d+)?)?`` can be used to
+    extend list to the list.
 
     Parameters
     ----------
@@ -176,26 +182,44 @@ def rupdate(d, u, copy_subdict=True):
     .. [1] https://stackoverflow.com/a/52099238/1824372
 
     """
-    re_list_append_key = re.compile(r"\+(?P<index>\d+)?")
+    re_list_dsl = re.compile(r"^\+(?P<start>\d+)?(?:(?P<is_slice>:)(?P<end>\d+)?)?$")
     stack = [(d, u)]
 
-    def _handle_list_append(d, k, default):
-        if not isinstance(d, collections.abc.Sequence):
-            return d, k, d.setdefault(k, default)
-        m = re.match(re_list_append_key, str(k))
+    def _handle_list_dsl(d, k, default):
+        m = re.match(re_list_dsl, str(k))
         if m is not None:
-            k = int(m.groupdict().get("index", None) or len(d))
-            # print(m.groupdict())
-            # print(f"insert to d {k=}")
-            d.insert(k, default)  # type: ignore
-        else:
-            try:
-                k = int(k)
-            except ValueError as e:
-                raise ValueError(f"invalid key {k} for list assignment.") from e
-        return d, k, d[k]
+            md = m.groupdict()
+            start = md.get("start", None)
+            start = int(start) if start is not None else None
+            end = md.get("end", None)
+            end = int(end) if end is not None else None
+            is_slice = md.get("is_slice", None)
+            if start is None and is_slice is None:
+                # by design end should be none
+                assert end is None
+                # this is just <<
+                # extend to the end
+                d.append(default)
+                k = slice(-1, None)
+            elif is_slice is None:
+                # this is <<1 without the end specified
+                # this is to insert a list between start and start+1
+                k = slice(start, start)
+            else:
+                # this is full slice syntax 1:3, replaces the
+                # sliced list with new list
+                k = slice(start, end)
+            # the slice is returned to handle list extend.
+            return k, default
+        try:
+            k = int(k)
+        except ValueError as e:
+            raise ValueError(f"invalid key {k} for list update.") from e
+        dv = d[k]
+        return k, dv
 
     while stack:
+        # here d can only be list or dict
         d, u = stack.pop(0)
         for k, v in u.items():
             # print(f"processing {d=} {u=} {k=} {v=}")
@@ -203,21 +227,38 @@ def rupdate(d, u, copy_subdict=True):
                 default = {}  # subdicts in u will get copied to this
             else:
                 default = None  # subdicts in u will be assigned to it.
-            # This checks the special key +0 for append new item
-            d, k, dv = _handle_list_append(d, k, default)  # noqa: PLW2901
-            if not isinstance(v, collections.abc.Mapping):
+            if isinstance(d, MT):
+                # handle d as dict
+                dv = d.setdefault(k, default)
+            elif isinstance(d, ST):
+                # list
+                # dv here can be a slice object or a leaf value
+                k, dv = _handle_list_dsl(d, k, default)  # noqa: PLW2901
+                if isinstance(k, slice):
+                    # handle slice extend syntax
+                    if not isinstance(v, ST):
+                        # wrap as a sequence
+                        v = [v]  # noqa: PLW2901
+                    # now u[k] is a list, and d[k] is a slice
+                    # do the extending. there is no merging allowed here.
+                    # TODO: dict in v is not copied in this case.
+                    # print(f"{d=} {k=} {v=} {dv=}")
+                    d[k] = v
+                    continue
+            # now k is a proper index to d, and dv is d[k]
+            if not isinstance(v, MT):
                 # u[k] is not a dict, nothing to merge, so just set it,
                 # regardless if d[k] *was* a dict
-                d[k] = v  # type: ignore
+                d[k] = v
                 continue
             # now v = u[k] is dict
-            if not isinstance(dv, collections.abc.Mapping | collections.abc.Sequence):
-                # d[k] is not a dict, so just set it to u[k],
+            if not isinstance(dv, MT | ST):
+                # d[k] is not a container, so just set it to u[k],
                 # overriding whatever it was
                 d[k] = v  # type: ignore
             else:
-                # both d[k] and u[k] are dicts, push them on the stack
-                # to merge
+                # both d[k] and u[k] are containers, push them on the stack
+                # to merge further
                 stack.append((dv, v))
 
 
@@ -430,3 +471,11 @@ def ignore_unexpected_kwargs(func: Callable[..., Any]) -> Callable[..., Any]:
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def slugify(value):
+    """Convert string to a short form."""
+    # https://github.com/django/django/blob/master/django/utils/text.py
+    value = str(value)
+    value = re.sub(r"[^\w\s-]", "", value.lower())
+    return re.sub(r"[-\s]+", "-", value).strip("-_")

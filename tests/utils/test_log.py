@@ -49,17 +49,38 @@ def test_logged_closing():
     log.assert_regex(r".+test_log:test_logged_closing:\d+ -")
 
 
+@timeit
+def some_func():
+    pass
+
+
 def test_timeit():
     log = LogHelper()
 
     with timeit("foo"):
         pass
 
-    log.assert_regex(r".+test_log:test_timeit:\d+ - ")
-
-    @timeit
-    def some_func():
-        pass
+    log.assert_regex(r".+test_log:test_timeit:\d+ - foo ")
 
     some_func()
-    log.assert_regex(r".+test_log:test_timeit:\d+ - ")
+    log.assert_regex(r".+test_log.some_func:\d+ - some_func ")
+
+    @timeit
+    def some_func1():
+        pass
+
+    some_func1()
+    log.assert_regex(r".+test_log:test_timeit.<locals>.some_func1:\d+ - some_func1 ")
+
+    def outer():
+        some_func()
+
+    outer()
+    log.assert_regex(r".+test_log.some_func:\d+ - some_func ")
+
+    @timeit("my_message")
+    def some_func2():
+        pass
+
+    some_func2()
+    log.assert_regex(r".+test_log:test_timeit.<locals>.some_func2:\d+ - my_message ")

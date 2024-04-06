@@ -27,6 +27,20 @@ def test_rupdate():
     assert d == {"a": [{"p": "q"}, {"b": True}, 1], "b": "value"}
 
 
+def test_rupdate_extend():
+    d = {"a": [{}, -1]}
+    d1 = {"a": {"0": {"b": True}, "1": 1, "+": {"p": "q"}}, "b": "value"}
+    rupdate(d, d1)
+    assert d == {"a": [{"b": True}, 1, {"p": "q"}], "b": "value"}
+
+
+def test_rupdate_replace():
+    d = {"a": [{}, -1]}
+    d1 = {"a": {"0": {"b": True}, "1": 1, "+:": ["p", "q"]}, "b": "value"}
+    rupdate(d, d1)
+    assert d == {"a": ["p", "q"], "b": "value"}
+
+
 def test_rupdate2():
     d = {}
     u0 = {"a": {"b": {"c": 1}}}

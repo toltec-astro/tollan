@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import functools
 import time
 from contextlib import AbstractContextManager, ContextDecorator
 
@@ -82,43 +83,53 @@ class logged_closing(AbstractContextManager):  # noqa: N801
 
 
 class timeit(ContextDecorator):  # noqa: N801
-    """Context decorator that logs the execution time of the decorated item.
-
-    Parameters
-    ----------
-    arg: object or str
-        If `arg` type is `str`, a new decorator is returned which uses `arg`
-        in the generated message in places of the name of the decorated object.
-    """
+    """Context decorator that logs the execution time of the decorated item."""
 
     _logger = _loguru_logger.patch(
-        lambda r: r.update(name=f'timeit: {r["name"]}'),
-    )
+        lambda r: r.update(name=f"timeit: {r['name']}"),
+    ).opt(depth=1)
 
     def __new__(cls, arg, **kwargs):
         if callable(arg):
             return cls(arg.__name__, **kwargs)(arg)
         return super().__new__(cls)
 
-    def __init__(self, msg, level="DEBUG"):
-        self.msg = msg
+    def __init__(self, message, level="DEBUG"):
+        self._message = message
         self._level = level
-        self._logger = self._logger.opt(depth=1)
+        self._logger = _loguru_logger.patch(
+            lambda r: r.update(name=f"timeit: {r['name']}"),
+        ).opt(depth=1)
 
     def __enter__(self):
-        self._logger.log(self._level, f"{self.msg} ...")
+        self._logger.log(self._level, f"{self._message} ...")
         self._start = time.time()
 
     def __exit__(self, *args):
         elapsed = time.time() - self._start
         self._logger.log(
             self._level,
-            f"{self.msg} done in {self._format_time(elapsed)}",
+            f"{self._message} done in {self._format_time(elapsed)}",
         )
 
-    def __call__(self, *args, **kwargs):
-        self._logger = self._logger.opt(depth=2)
-        return super().__call__(*args, **kwargs)
+    @staticmethod
+    @functools.lru_cache
+    def _make_logger_for_ctx(logger_ctx):
+        name = logger_ctx.__module__
+        fname = logger_ctx.__qualname__
+        line = logger_ctx.__code__.co_firstlineno
+
+        return _loguru_logger.patch(
+            lambda r: r.update(
+                name=f"timeit: {name}",
+                function=fname,
+                line=line,
+            ),
+        )
+
+    def __call__(self, func):
+        self._logger = self._make_logger_for_ctx(func)
+        return super().__call__(func)
 
     @staticmethod
     def _format_time(time):

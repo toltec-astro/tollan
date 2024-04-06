@@ -1,4 +1,5 @@
 import dataclasses
+import functools
 import numbers
 from collections.abc import Callable, Iterator, Sequence
 from functools import cached_property
@@ -39,6 +40,7 @@ __all__ = [
     "AbsFilePath",
     "AbsDirectoryPath",
     "GenerateJsonSchema",
+    "FieldDefaults",
 ]
 
 
@@ -174,6 +176,7 @@ class TimeValidator(_SimpleTypeValidatorMixin):
         "Time or datatime string is required, got {type}."
     )
     _field_value_types: ClassVar = {numbers.Number, str}
+    __hash__ = object.__hash__
 
     @cached_property
     def _field_formats(self):
@@ -263,6 +266,8 @@ class QuantityValidator(_SimpleTypeValidatorMixin):
     )
     _field_value_types: ClassVar = {numbers.Number, str}
 
+    __hash__ = object.__hash__
+
     @cached_property
     def _field_physical_types(self):
         pts = self.physical_types_allowed
@@ -314,6 +319,10 @@ LengthQuantityField = Annotated[
 AngleQuantityField = Annotated[
     Quantity,
     QuantityValidator("angler"),
+]
+FrequencyQuantityField = Annotated[
+    Quantity,
+    QuantityValidator("frequency"),
 ]
 TimeQuantityField = Annotated[
     Quantity,
@@ -461,3 +470,26 @@ def _to_str_serializer(v):
 
 GenerateJsonSchema.register_default_serializers(Time, _to_str_serializer)
 GenerateJsonSchema.register_default_serializers(Quantity, _to_str_serializer)
+
+
+class _FieldDefaultAccessor:
+
+    _model_cls: BaseModel
+
+    def __init__(self, model_cls):
+        self._model_cls = model_cls
+
+    def __getitem__(self, name):
+        return self._model_cls.model_fields[name].get_default()
+
+
+@functools.lru_cache
+def _get_field_default_accessor(cls):
+    return _FieldDefaultAccessor(cls)
+
+
+class FieldDefaults:
+    """A descritor to access model field defaults."""
+
+    def __get__(self, obj, cls):
+        return _get_field_default_accessor(cls)
