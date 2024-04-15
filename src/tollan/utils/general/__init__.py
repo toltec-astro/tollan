@@ -38,6 +38,8 @@ __all__ = [
     "add_to_dict",
     "ignore_unexpected_kwargs",
     "slugify",
+    "list_from_filtered",
+    "list_not_none",
 ]
 
 
@@ -479,3 +481,13 @@ def slugify(value):
     value = str(value)
     value = re.sub(r"[^\w\s-]", "", value.lower())
     return re.sub(r"[-\s]+", "-", value).strip("-_")
+
+
+def list_from_filtered(flt, gen):
+    """Return a list from filtering the iterable."""
+    return list(filter(flt, gen))
+
+
+def list_not_none(gen):
+    """Return a list containing only not None."""
+    return list(filter(lambda item: item is not None, gen))

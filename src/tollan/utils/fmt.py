@@ -43,6 +43,9 @@ def pformat_fancy_index(arg):
         return result
     if isinstance(arg, np.ndarray):
         return f"<mask {np.sum(arg)}/{arg.size}>"
+    if isinstance(arg, list):
+        s = ", ".join(pformat_fancy_index(a) for a in arg)
+        return f"[{s}]"
     return arg
 
 

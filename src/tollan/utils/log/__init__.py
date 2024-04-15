@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import time
 from contextlib import AbstractContextManager, ContextDecorator
+from typing import TypeVar, overload
 
 from astropy.utils.console import human_time
 from loguru import logger as _loguru_logger
@@ -82,12 +83,21 @@ class logged_closing(AbstractContextManager):  # noqa: N801
             self.thing.close()
 
 
+F = TypeVar("F")
+
+
 class timeit(ContextDecorator):  # noqa: N801
     """Context decorator that logs the execution time of the decorated item."""
 
     _logger = _loguru_logger.patch(
         lambda r: r.update(name=f"timeit: {r['name']}"),
     ).opt(depth=1)
+
+    @overload
+    def __new__(cls, arg: str, **kwargs) -> timeit: ...
+
+    @overload
+    def __new__(cls, arg: F) -> F: ...
 
     def __new__(cls, arg, **kwargs):
         if callable(arg):

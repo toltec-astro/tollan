@@ -1,8 +1,11 @@
+import functools
+
+import astropy.units as u
 import numpy as np
 
 from .log import logger
 
-__all__ = ["flex_reshape", "make_complex"]
+__all__ = ["flex_reshape", "make_complex", "strip_unit", "attach_unit", "preserve_unit"]
 
 
 def flex_reshape(arr, shape, trim_option="end"):
@@ -46,3 +49,40 @@ def make_complex(real_part, imag_part):
     result.real = real_part
     result.imag = imag_part
     return result
+
+
+def strip_unit(arr):
+    """Remove unit from array."""
+    if isinstance(arr, u.Quantity):
+        return arr.value, arr.unit
+    if isinstance(arr, np.ma.MaskedArray):
+        return np.ma.array(arr.data.value, mask=arr.mask), arr.data.unit
+    return arr, None
+
+
+def attach_unit(arr, unit):
+    """Attach unit to array."""
+    if unit is not None:
+        if isinstance(arr, np.ma.MaskedArray):
+            return np.ma.array(arr.data << unit, mask=arr.mask)
+        return arr << unit
+    return arr
+
+
+def preserve_unit(f):
+    """Preserve unit of first argument passed to function."""
+
+    @functools.wraps(f)
+    def wrapper(d, *a, **k):
+        dv, unit = strip_unit(d)
+        v = f(dv, *a, **k)
+        return attach_unit(v, unit)
+
+    return wrapper
+
+
+def ensure_unit(arr, unit) -> u.Quantity:
+    """Ensure the data have given unit."""
+    if arr is None:
+        return arr
+    return arr << unit
