@@ -1,5 +1,9 @@
 from typing import ClassVar, Generic, TypeVar
 
+from astropy.utils.decorators import classproperty
+
+from ..utils.general import getname
+
 KeyT = TypeVar("KeyT", bound=str)
 ContextT = TypeVar("ContextT")
 
@@ -7,8 +11,11 @@ ContextT = TypeVar("ContextT")
 class ContextHandlerMixinBase(Generic[KeyT, ContextT]):
     """A base class to access context stored in dict."""
 
-    _context_handler_key: ClassVar[KeyT]
     _context_handler_context_cls: ClassVar[ContextT]
+
+    @classproperty
+    def _context_handler_key(cls) -> KeyT:
+        return getname(cls)
 
     @classmethod
     def set_context(cls, data, context_obj) -> ContextT:
