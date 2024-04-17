@@ -34,6 +34,11 @@ dependencies = [
   "tabulate",
   "netcdf4",
   "wrapt",
+  "plotly",
+  "dash",
+  "dash_bootstrap_components",
+  "dash_component_template",
+  "click",
 ]
 
 [project.scripts]
