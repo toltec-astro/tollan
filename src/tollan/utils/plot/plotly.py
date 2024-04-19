@@ -264,14 +264,21 @@ def adjust_subplot_colorbars(fig: go.Figure, size=1.0):
         xdom = layout[f"xaxis{xax}"]["domain"]
         ydom = layout[f"yaxis{yax}"]["domain"]
         ysize = ydom[1] - ydom[0]
-        fig.update_traces(
-            {
-                "colorbar": {
-                    "len": size * ysize,
-                    "x": xdom[-1] + 0.01,
-                    "y": ydom[-1] - 0.5 * ysize,
-                },
+        cdata = {
+            "colorbar": {
+                "len": size * ysize,
+                "x": xdom[-1] + 0.01,
+                "y": ydom[-1] - 0.5 * ysize,
             },
+        }
+        if trace["type"] not in [
+            "heatmap",
+        ]:
+            if "colorbar" not in trace:
+                continue
+            cdata = {"marker": cdata}
+        fig.update_traces(
+            cdata,
             selector=i,
         )
     return fig

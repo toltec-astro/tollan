@@ -5,7 +5,14 @@ import numpy as np
 
 from .log import logger
 
-__all__ = ["flex_reshape", "make_complex", "strip_unit", "attach_unit", "preserve_unit"]
+__all__ = [
+    "flex_reshape",
+    "make_complex",
+    "strip_unit",
+    "attach_unit",
+    "preserve_unit",
+    "qrange",
+]
 
 
 def flex_reshape(arr, shape, trim_option="end"):
@@ -86,3 +93,15 @@ def ensure_unit(arr, unit) -> u.Quantity:
     if arr is None:
         return arr
     return arr << unit
+
+
+def qrange(x0, x1, step):
+    """Return arange for quantity."""
+    x0_value, x_unit = strip_unit(x0)
+    if x_unit is None:
+        x1_value = x1
+        step_value = step
+    else:
+        x1_value = x1.to_value(x_unit)
+        step_value = step.to_value(step)
+    return attach_unit(np.arange(x0_value, x1_value, step_value), x_unit)
