@@ -438,7 +438,10 @@ def show_in_dash(data_items, title_text=None, host=None, port=None, **kwargs):
     keep_alive = True
 
     server_app = Flask(__name__)
-    server = make_server(host or "localhost", port or 8050, server_app)
+    host = host or "localhost"
+    port = port or 8050
+    server = make_server(host, port, server_app)
+    logger.debug(f"created server {host=} {port=}")
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
 

@@ -1,6 +1,8 @@
+from dataclasses import is_dataclass
 from typing import ClassVar, Generic, TypeVar
 
 from astropy.utils.decorators import classproperty
+from pydantic import BaseModel
 
 from ..utils.general import getname
 
@@ -65,7 +67,18 @@ class DictContextHandlerMixin(ContextHandlerMixinBase[KeyT, ContextT]):
     @classmethod
     def get_context(cls, data) -> ContextT:
         """Get context."""
-        return cls.get_context_dict(data)[cls._context_handler_key]
+        context_data = cls.get_context_dict(data)[cls._context_handler_key]
+        ctx_cls = cls._context_handler_context_cls
+        if isinstance(context_data, ctx_cls):
+            return context_data
+        if isinstance(ctx_cls, BaseModel):
+            context_obj = ctx_cls.model_validate(context_data)
+        elif is_dataclass(ctx_cls):
+            context_obj = ctx_cls(**context_data)
+        else:
+            context_obj = ctx_cls(context_data)
+        cls.get_context_dict(data)[cls._context_handler_key] = context_obj
+        return context_obj
 
     @classmethod
     def has_context(cls, data) -> bool:

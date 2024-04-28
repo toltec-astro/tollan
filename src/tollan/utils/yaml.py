@@ -1,4 +1,5 @@
 import os
+from dataclasses import asdict, is_dataclass
 from enum import Enum
 from io import StringIO, TextIOBase
 from pathlib import Path, PosixPath
@@ -21,9 +22,11 @@ class YamlDumper(SafeDumper):
     """Yaml dumper that handles common types."""
 
     def represent_data(self, data):
-        """Represent data handling skycoords."""
+        """Represent data handling some common types."""
         if isinstance(data, BaseCoordinateFrame):
             return self.represent_data(data.name)
+        if is_dataclass(data):
+            return self.represent_data(asdict(data))
         return super().represent_data(data)
 
     _str_block_style_min_length = 100
@@ -103,7 +106,7 @@ def yaml_dump(data, output=None, **kwargs) -> None | str:
     yaml.dump(data, out, Dumper=YamlDumper, **kwargs)
     if ctx is not None:
         ctx.close()
-    if isinstance(output, StringIO):
+    if output is None:
         return out.getvalue()
     return None
 
@@ -120,3 +123,8 @@ def yaml_load(source):
 def yaml_loads(stream):
     """Load yaml data from string or stream."""
     return yaml.safe_load(stream)
+
+
+def yaml_sanitize(data):
+    """Sanitize data by dumping and loading."""
+    return yaml_loads(yaml_dump(data))
