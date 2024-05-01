@@ -1,41 +1,50 @@
 from dataclasses import dataclass
 
+import pandas as pd
 from astropy.table import QTable, Table
+from typing_extensions import assert_never
+
+TableType = Table | QTable | pd.DataFrame
 
 
 @dataclass
 class TableValidator:
     """A validator for table."""
 
-    table_cls: type[Table] = Table | QTable
+    def _get_colnames(self, tbl: TableType):
+        if isinstance(tbl, Table):
+            return tbl.colnames
+        if isinstance(tbl, pd.DataFrame):
+            return tbl.columns
+        assert_never()
 
-    def validate_cols(self, tbl: Table, cols):
+    def validate_cols(self, tbl, cols):
         """Return existing cols in the table."""
-        return [c for c in cols if c in tbl.colnames]
+        return [c for c in cols if c in self._get_colnames(tbl)]
 
-    def has_any_col(self, tbl: Table, cols: list[str]):
+    def has_any_col(self, tbl, cols: list[str]):
         """Return true if table has any cols."""
         return len(self.validate_cols(tbl, cols)) > 0
 
-    def has_all_cols(self, tbl: Table, cols: list[str]):
+    def has_all_cols(self, tbl, cols: list[str]):
         """Return true if table has all cols."""
         return len(self.validate_cols(tbl, cols)) == len(cols)
 
-    def get_first_col(self, tbl: Table, cols: list[str]):
+    def get_first_col(self, tbl, cols: list[str]):
         """Return the first existing col."""
         cols = self.validate_cols(tbl, cols)
         if len(cols) == 0:
             return None
         return cols[0]
 
-    def get_first_col_data(self, tbl: Table, cols):
+    def get_first_col_data(self, tbl, cols):
         """Return column data for cols."""
         col = self.get_first_col(tbl, cols)
         return tbl[col] if col is not None else None
 
-    def get_col_data(self, tbl: Table, cols):
+    def get_col_data(self, tbl, cols):
         """Return column data for cols."""
-        return [tbl[c] if c in tbl.colnames else None for c in cols]
+        return [tbl[c] if c in self._get_colnames(tbl) else None for c in cols]
 
     def validate_meta(self, meta: dict, keys):
         """Return existing keys in the table metadata."""

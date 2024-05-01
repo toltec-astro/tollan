@@ -39,6 +39,8 @@ dependencies = [
   "dash_bootstrap_components",
   "dash_component_template",
   "click",
+  "sqlalchemy",
+  "matplotlib",
 ]
 
 [project.scripts]
