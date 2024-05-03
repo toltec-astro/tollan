@@ -162,6 +162,38 @@ b:
     logger.debug(f"config:\n{cb.yaml()}")
 
 
+def test_runtime_config_backend_enable_if():
+    sources = [
+        {
+            "order": 0,
+            "source": {"a": 1},
+        },
+        {
+            "order": 1,
+            "source": {"a": "updated"},
+            "enable_if": "flag == 2",
+        },
+    ]
+    cb = ConfigBackend(sources)
+    assert cb.dict() == {
+        "a": 1,
+        "runtime_info": cb.runtime_info.model_dump(),
+    }
+    logger.debug(f"config:\n{cb.yaml()}")
+    with cb.set_context({"flag": 1}):
+        assert cb.context == {"flag": 1}
+        assert cb.dict() == {
+            "a": 1,
+            "runtime_info": cb.runtime_info.model_dump(),
+        }
+    assert cb.context is None
+    with cb.set_context({"flag": 2}):
+        assert cb.dict() == {
+            "a": "updated",
+            "runtime_info": cb.runtime_info.model_dump(),
+        }
+
+
 def test_runtime_context():
     with tempfile.TemporaryDirectory() as _tmp:
         tmp = Path(_tmp)

@@ -3,9 +3,10 @@ from __future__ import annotations
 import collections.abc
 import os
 import re
+from contextlib import contextmanager
 from functools import cached_property
 from pathlib import Path
-from typing import ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 from pydantic import Field, create_model
 
@@ -128,6 +129,23 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
     _config_sources: ConfigSourceList
     """The config source list to load config from."""
 
+    _config_context: None | dict[str, Any] = None
+    """The context used for loading config from config source list."""
+
+    @contextmanager
+    def set_context(self, context):
+        self._config_context = context
+        logger.debug(f"set config {context=}")
+        self._invalidate_config_cache()
+        yield self
+        logger.debug("config context cleared")
+        self._config_context = None
+        self._invalidate_config_cache()
+
+    @property
+    def context(self):
+        return self._config_context
+
     @cached_property
     def sources(self) -> ConfigSourceList:
         """The config dict loaded from config source."""
@@ -182,10 +200,19 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
         for attr in attrs:
             _invalidate(attr)
 
+    def _invalidate_source_config_cache(self):
+        self._invalidate_cache("source_config")
+
+    def _invalidate_config_cache(self, invalidate_source_config_cache=True):
+        attrs = ["config"]
+        if invalidate_source_config_cache:
+            attrs.append("source_config")
+        self._invalidate_cache(*attrs)
+
     def load_source_config(self):
         """Load source config."""
-        self._invalidate_cache("source_config")
-        return self.sources.load()
+        self._invalidate_source_config_cache()
+        return self.sources.load(context=self.context)
 
     def load(self, reload_source_config=True):
         """Compose and return the config object.
@@ -196,9 +223,9 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
             If True, the :attr:`source_config` cache is invalidated and
             triggers the reload of the source config.
         """
-        self._invalidate_cache("config")
-        if reload_source_config:
-            self._invalidate_cache("source_config")
+        self._invalidate_config_cache(
+            invalidate_source_config_cache=reload_source_config,
+        )
         config = self._make_config()
         # validate the config agains config model
         return self.config_model_cls.model_validate(

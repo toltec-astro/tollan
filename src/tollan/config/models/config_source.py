@@ -3,13 +3,14 @@ from __future__ import annotations
 import collections.abc
 import functools
 import os
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, ClassVar, Literal, get_args
 
 import numpy as np
 import pandas as pd
 from astropy.io.registry import UnifiedIORegistry
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 
 from ...utils import envfile
 from ...utils.cli import dict_from_cli_args
@@ -49,9 +50,9 @@ class ConfigSource(ImmutableBaseModel):
         description="The config source name.",
     )
     enabled: bool = Field(default=True, description="Wether this config is enabled.")
-    enable_if: bool | str = Field(
-        default=True,
-        description="Enable this config when this evaluates to True.",
+    enable_if: None | str = Field(
+        default=None,
+        description="If set, this config is conditional depends on the context.",
     )
 
     @model_validator(mode="before")
@@ -120,12 +121,19 @@ class ConfigSource(ImmutableBaseModel):
             )
         return self
 
-    def is_enabled_for(self, context: dict[str, Any]):
+    def is_enabled_for(self, context: None | dict[str, Any]):
         """Check if the config source is enabled for given context."""
         if not self.enabled:
             return False
-        if isinstance(self.enable_if, bool):
+        if self.enable_if is None:
             return self.enabled
+        # enable_if is something. In this case we require context to be also present
+        if context is None:
+            logger.debug(
+                "enable_if is set but no context is provided, config is disabled.",
+            )
+            return False
+        # invoke enable_if
         result = pd.eval(
             self.enable_if,
             local_dict={},
@@ -170,11 +178,16 @@ class ConfigSourceList(ImmutableBaseModel):
 
     @field_validator("data", mode="before")
     @classmethod
-    def _check_data_order_and_sort(cls, data):
+    def _check_data_order_and_sort(cls, data, info: ValidationInfo):
         if not isinstance(data, collections.abc.Sequence):
             # note this has to raise type error to signal failed validation
             # which is required when this class is used in a union type.
             raise ValueError("invalid sources type.")  # noqa: TRY004
+        implicit_order = (info.context or {}).get("config_source_implicit_order", False)
+        if implicit_order:
+            data = deepcopy(data)
+            for i, source in enumerate(data):
+                source.setdefault("order", i)
         orders = [source["order"] for source in data]
         if len(set(orders)) != len(orders):
             raise ValueError(f"order of config sources is ambiguous:\n{data}")
@@ -194,17 +207,20 @@ class ConfigSourceList(ImmutableBaseModel):
             if not cs.enabled:
                 logger.debug(f"config source {cs.name} is disabled.")
                 continue
-            if context is None or cs.is_enabled_for(context=context):
+            if cs.is_enabled_for(context=context):
                 d = cs.load(context=context, **kwargs)
                 # logger.debug(f"merge {d} to {data}")
                 rupdate(data, d)
+                msg = "enabled"
             else:
+                msg = "disabled"
+            enable_if = cs.enable_if
+            if enable_if is not None:
                 name = cs.name or "<unnamed>"
                 order = cs.order
-                enable_if = cs.enable_if
                 logger.debug(
                     f"config source of {name=} {order=} at {i=} "
-                    f"is disabled by {enable_if=}",
+                    f"is {msg} by {enable_if=} {context=}",
                 )
             continue
         return data
@@ -263,7 +279,10 @@ def _pyobj_load(data, context=None, format: None | _PyObjSourceFormat = None):
         return dict_from_flat_dict(data)
     if format == "config_source_list":
         if not isinstance(data, ConfigSourceList):
-            data = ConfigSourceList.model_validate(data)
+            data = ConfigSourceList.model_validate(
+                data,
+                context={"config_source_implicit_order": True},
+            )
         logger.debug(f"load config from source list {data}")
         return data.load(context=context)
     if format == "cli_args":

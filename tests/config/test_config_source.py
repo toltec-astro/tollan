@@ -52,7 +52,7 @@ def test_config_source_file():
         assert cs.source == f0.resolve()
         assert cs.format == "yaml"
         assert cs.enabled
-        assert cs.enable_if
+        assert cs.enable_if is None
         assert cs.is_file()
         assert cs.load() == _yaml_content_dict
         # f1 = Path(tmp) / "b.yaml"
@@ -71,7 +71,7 @@ def test_config_source_dict():
     assert cs.source == data
     assert cs.format == "dict"
     assert cs.enabled
-    assert cs.enable_if
+    assert cs.enable_if is None
     assert not cs.is_file()
     assert cs.load() == data
     cs.dump({"updated": True})
@@ -87,7 +87,7 @@ def test_config_source_cli_args():
     assert cs.source == data
     assert cs.format == "cli_args"
     assert cs.enabled
-    assert cs.enable_if
+    assert cs.enable_if is None
     assert not cs.is_file()
     assert cs.load() == {"in_memory": True, "nested": [1, 2]}
     cs.dump({"updated": True})
@@ -110,7 +110,7 @@ def test_config_source_config_source_list():
     assert cs.source == csl0
     assert cs.format == "config_source_list"
     assert cs.enabled
-    assert cs.enable_if
+    assert cs.enable_if is None
     assert not cs.is_file()
     assert cs.load() == data
     cs.dump({"updated": True})
@@ -175,9 +175,9 @@ def test_config_source_list_enable_if():
         assert cl[1].enable_if == enabled_if_str
         data = cl.load()
         assert data == {
-            "a": "updated",
+            "a": "b",
             "c": {"d": 1},
-            "e": [0, "updated", {"new": "newvalue"}],
+            "e": [0, True],
         }
 
         data = cl.load(context={"flag": 2})
