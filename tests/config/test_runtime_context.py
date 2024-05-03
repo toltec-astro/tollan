@@ -12,7 +12,7 @@ def test_class_vars():
 
 
 def test_runtime_config_backend_null_config():
-    cb = ConfigBackend(None)
+    cb = ConfigBackend()
 
     assert cb.source_config == {}
     assert list(cb.dict().keys()) == ["runtime_info"]
@@ -122,6 +122,41 @@ b:
         assert cb.dict() == {
             "a": 1,
             "b": {"c": "some_value"},
+            "runtime_info": cb.runtime_info.model_dump(),
+        }
+    logger.debug(f"config:\n{cb.yaml()}")
+
+
+def test_runtime_config_backend_dir_config():
+    with tempfile.TemporaryDirectory() as _tmp:
+        tmp = Path(_tmp)
+        config_dir = tmp / "some_config.d"
+        config_dir.mkdir()
+        f0 = config_dir / "10_base.yaml"
+        with f0.open("w") as fo:
+            fo.write(
+                """
+---
+a: 1
+b:
+  c: 'some_value'
+""",
+            )
+        f1 = config_dir / "20_override.yaml"
+        with f1.open("w") as fo:
+            fo.write(
+                """
+---
+a: 1
+b:
+  c: 'updated'
+""",
+            )
+
+        cb = ConfigBackend(config_dir)
+        assert cb.dict() == {
+            "a": 1,
+            "b": {"c": "updated"},
             "runtime_info": cb.runtime_info.model_dump(),
         }
     logger.debug(f"config:\n{cb.yaml()}")

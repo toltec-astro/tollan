@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import collections.abc
 import os
+import re
 from functools import cached_property
+from pathlib import Path
 from typing import ClassVar, Generic, TypeVar
 
 from pydantic import Field, create_model
 
-from ..utils.general import rupdate
+from ..utils.general import dict_from_regex_match, rupdate
 from ..utils.log import logger
 from ..utils.typing import get_typing_args
 from .models.config_source import ConfigSourceList
@@ -32,7 +34,7 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
     ``source_config``, and ``override_config``, to allow manipulating
     config dict at runtime.
     This class shall be customized via subclassing by specifying
-    the ``runtime_info_model`` keyword argument.
+    the ``RuntimeInfoModelT``.
     """
 
     runtime_info_model_cls: ClassVar[type[RuntimeInfoModelT]]
@@ -62,8 +64,57 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
         super().__init_subclass__(**kwargs)
 
     def __init__(self, config=None):
-        self._config_sources = self._make_config_sources(config)
+        self._config_sources = self._resolve_config_sources(config)
         self._update_info_config()
+
+    @classmethod
+    def _resolve_config_sources(cls, arg):
+        if isinstance(arg, ConfigSourceList):
+            return arg
+        if arg is None or isinstance(arg, collections.abc.Mapping):
+            sources = [{"source": arg or {}, "order": 0}]
+        elif isinstance(arg, str | os.PathLike):
+            path = Path(arg)
+            if path.is_dir():
+                sources = cls._resolve_config_sources_from_dir(path)
+            else:
+                sources = [
+                    {
+                        "source": path,
+                        "order": 0,
+                    },
+                ]
+        elif isinstance(arg, collections.abc.Sequence):
+            sources = list(arg)
+        else:
+            raise TypeError(f"invalid config source arg type: {arg}.")
+        logger.debug(f"load config sources from {len(sources)} items")
+        csl = ConfigSourceList.model_validate(sources)
+        logger.debug(f"loaded config sources:\n{csl.model_dump_yaml()}")
+        return csl
+
+    _re_dir_config_source: ClassVar = re.compile(r"^(?P<order>\d+)(_.*)?\.ya?ml$")
+
+    def _get_dir_config_source_order(path, path_info):  # noqa: N805
+        return int(path_info["order"])
+
+    @classmethod
+    def _resolve_config_sources_from_dir(cls, path: Path):
+        sources = []
+        for p in path.iterdir():
+            m = dict_from_regex_match(
+                cls._re_dir_config_source,
+                p.name,
+            )
+            if m is None:
+                continue
+            sources.append(
+                {
+                    "source": p,
+                    "order": cls._get_dir_config_source_order(p, m),
+                },
+            )
+        return sources
 
     _default_config: None | dict = None
     """The dict to hold default config entires."""
@@ -113,26 +164,6 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
                 },
             },
         )
-
-    @classmethod
-    def _make_config_sources(cls, config):
-        if config is None:
-            sources = [{"source": {}, "order": 0}]
-        elif isinstance(config, str | os.PathLike | collections.abc.Mapping):
-            sources = [
-                {
-                    "source": config,
-                    "order": 0,
-                },
-            ]
-        elif isinstance(config, collections.abc.Sequence):
-            sources = list(config)
-        else:
-            raise TypeError(f"invalid config source type: {config}.")
-        logger.debug(f"load config sources from {len(sources)} items")
-        csl = ConfigSourceList.model_validate(sources)
-        logger.debug(f"loaded config sources:\n{csl.model_dump_yaml()}")
-        return csl
 
     def _make_config(self):
         config = {}
@@ -288,15 +319,17 @@ class RuntimeContextBase(Generic[ConfigBackendT, RuntimeInfoModelT]):
         super().__init_subclass__(**kwargs)
 
     def __init__(self, *args, **kwargs):
+        self._config_backend = self.get_or_create_config_backend(*args, **kwargs)
+
+    @classmethod
+    def get_or_create_config_backend(cls, *args, **kwargs):
         if (
             len(args) == 1
             and len(kwargs) == 0
-            and isinstance(args[0], self.config_backend_cls)
+            and isinstance(args[0], cls.config_backend_cls)
         ):
-            cb = args[0]
-        else:
-            cb = self.config_backend_cls(*args, **kwargs)
-        self._config_backend = cb
+            return args[0]
+        return cls.config_backend_cls(*args, **kwargs)
 
     @property
     def config_backend(self):
