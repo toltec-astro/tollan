@@ -305,7 +305,7 @@ for fmt in get_args(_PyObjSourceFormat):
 
 # config source file IO
 # these are know format that we check to by pass content check in identify
-_config_file_path_exts: [_FileSourceFormat, set[str]] = {
+_config_file_path_exts: dict[_FileSourceFormat, set[str]] = {
     "yaml": {
         ".yaml",
         ".yml",
