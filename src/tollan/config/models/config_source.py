@@ -7,7 +7,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, ClassVar, Literal, get_args
 
-import numpy as np
+# import numpy as np
 import pandas as pd
 from astropy.io.registry import UnifiedIORegistry
 from pydantic import Field, ValidationInfo, field_validator, model_validator
@@ -134,16 +134,23 @@ class ConfigSource(ImmutableBaseModel):
             )
             return False
         # invoke enable_if
-        result = pd.eval(
+        if isinstance(context, dict):
+            # wrap this in a pandas dataframe
+            tbl_context = pd.DataFrame.from_records([context])
+        elif isinstance(context, pd.DataFrame):
+            tbl_context = context
+        else:
+            raise TypeError("invalid context type.")
+        result = tbl_context.query(
             self.enable_if,
             local_dict={},
             global_dict={},
-            resolvers=(context,),
         )
-        # the pd eval returns np bool
-        if isinstance(result, bool | np.bool_):
-            return result
-        raise ValueError(f"ambiguous enabled_if result: {result}")
+        return len(result) > 0
+        # # the pd eval returns np bool
+        # if isinstance(result, bool | np.bool_):
+        #     return result
+        # raise ValueError(f"ambiguous enabled_if result: {result}")
 
 
 class ConfigSourceList(ImmutableBaseModel):
