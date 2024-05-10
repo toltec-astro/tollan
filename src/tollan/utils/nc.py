@@ -1,7 +1,8 @@
 import textwrap
+from collections import UserDict
 from contextlib import ExitStack, nullcontext
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import netCDF4
 import numpy as np
@@ -10,7 +11,7 @@ from tabulate import tabulate
 from .fileloc import FileLoc
 from .log import logged_closing, logger
 
-__all__ = ["ncopen", "ncinfo", "NcNodeMapper"]
+__all__ = ["ncopen", "ncinfo", "NcNodeMapper", "NcNodeMapperTree"]
 
 
 def _bytes_to_str(s):
@@ -325,7 +326,7 @@ class NcNodeMapper(ExitStack, NcNodeMapperMixin):
         else:
             # netCDF dataset
             pass
-        self._nc_node = self.enter_context(ncopen(source, **kwargs))
+        self.set_nc_node(self.enter_context(ncopen(source, **kwargs)))
         return self
 
     def __exit__(self, *args):
@@ -349,3 +350,57 @@ class NcNodeMapper(ExitStack, NcNodeMapperMixin):
     def sync(self):
         """Sync the underlying file."""
         return self.nc_node.sync()
+
+
+class NcNodeMapperTree(UserDict[str, dict | NcNodeMapper]):
+    """A help container to hold a collection of nc node mappers."""
+
+    _root_node_key: ClassVar[str] = "__root__"
+
+    def __init__(self, nc_node_map: dict[str, dict]):
+        nc_node_map = nc_node_map.copy()
+        # ensure root node
+        nc_node_map.setdefault(self._root_node_key, {})
+        super().__init__(self._create_nc_node_mappers(nc_node_map))
+
+    @property
+    def nc_node(self):
+        """The mapped netCDF data node."""
+        return self[self._root_node_key].nc_node
+
+    @staticmethod
+    def _create_nc_node_mappers(nc_node_map) -> dict:
+        """Create node mappers for the inner most level of dict of node_maps."""
+
+        def _get_sub_node(n) -> Any:
+            if all(not isinstance(v, dict) for v in n.values()):
+                return NcNodeMapper(nc_node_map=n)
+            return {k: _get_sub_node(v) for k, v in n.items()}
+
+        return _get_sub_node(nc_node_map)
+
+    def open(self, filepath, exitstack: None | ExitStack = None):
+        """Open the nc node mapper tree."""
+        # we just use one of the node_mapper to open the dataset, and
+        # set the rest via set_nc_node
+        # the node_mapper.open will handle the different types of source
+
+        nc_node = None
+
+        def _open_sub_node(n: dict):
+            nonlocal nc_node
+            for v in n.values():
+                if isinstance(v, NcNodeMapper):
+                    if nc_node is None:
+                        v.open(filepath)
+                        nc_node = v.nc_node
+                    else:
+                        v.set_nc_node(nc_node)
+                    # push to the exit stack
+                    if exitstack is not None:
+                        exitstack.enter_context(v)
+                else:
+                    _open_sub_node(v)
+
+        _open_sub_node(self)
+        return nc_node

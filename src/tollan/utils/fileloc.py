@@ -93,7 +93,6 @@ class FileLocData:
     netloc: str = ""
     local_parent_path: None | Path = None
     remote_parent_path: None | Path = None
-    url_resolved: None | FileLocUrl = None
 
     @field_validator("path", "local_parent_path", "remote_parent_path", mode="before")
     @classmethod
@@ -217,27 +216,6 @@ class FileLocData:
             )
         return ArgsKwargs(args=(), kwargs=kwargs)
 
-    @model_validator(mode="after")
-    def validate_url_resolved(self):
-        """Ensure one of URL and path is given, and compute resolved URL."""
-        if sum([self.url is not None, self.path is not None]) == 0:
-            raise ValueError("url or path required in file loc data.")
-        p = self._resolve_path(
-            self.netloc,
-            self.path,
-            local_parent_path=self.local_parent_path,
-            remote_parent_path=self.remote_parent_path,
-        )
-        if self.url is not None:
-            url_resolved = _url_replace(self.url, path=p)
-        else:
-            url_resolved = _url_replace(
-                _validate_file_loc_url(p.as_uri()),
-                host=self.netloc,
-            )
-        self.url_resolved = url_resolved
-        return self
-
     @classmethod
     def _resolve_local_path(
         cls,
@@ -284,6 +262,27 @@ class FileLocData:
         if hostname and hostname != "localhost":
             return cls._resolve_remote_path(path, remote_parent_path=remote_parent_path)
         return cls._resolve_local_path(path, local_parent_path=local_parent_path)
+
+    @computed_field
+    @cached_property
+    def url_resolved(self) -> None | FileLocUrl:
+        """Ensure one of URL and path is given, and compute resolved URL."""
+        if sum([self.url is not None, self.path is not None]) == 0:
+            raise ValueError("url or path required in file loc data.")
+        p = self._resolve_path(
+            self.netloc,
+            self.path,
+            local_parent_path=self.local_parent_path,
+            remote_parent_path=self.remote_parent_path,
+        )
+        if self.url is not None:
+            url_resolved = _url_replace(self.url, path=p)
+        else:
+            url_resolved = _url_replace(
+                _validate_file_loc_url(p.as_uri()),
+                host=self.netloc,
+            )
+        return url_resolved
 
     @computed_field
     @cached_property
