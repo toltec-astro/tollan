@@ -214,6 +214,7 @@ class FileLocData:
                 context["remote_parent_path"],
                 raise_on_conflict=False,
             )
+
         return ArgsKwargs(args=(), kwargs=kwargs)
 
     @classmethod
@@ -262,6 +263,11 @@ class FileLocData:
         if hostname and hostname != "localhost":
             return cls._resolve_remote_path(path, remote_parent_path=remote_parent_path)
         return cls._resolve_local_path(path, local_parent_path=local_parent_path)
+
+    @model_validator(mode="after")
+    def _validate_resolved(self):
+        _ = self.url_resolved
+        return self
 
     @computed_field
     @cached_property

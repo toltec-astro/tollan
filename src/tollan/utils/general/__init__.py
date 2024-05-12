@@ -22,6 +22,7 @@ from astropy.utils.data import get_readable_fileobj
 
 __all__ = [
     "ensure_abspath",
+    "resolve_symlink",
     "ensure_readable_fileobj",
     "getobj",
     "getname",
@@ -46,6 +47,28 @@ __all__ = [
 def ensure_abspath(p: str | Path) -> Path:
     """Return the fullUnion[Uni,[y e,]anded] path."""
     return Path(p).expanduser().resolve()
+
+
+def resolve_symlink(p: str | Path, n_iter_max=None, match_parent=None) -> Path:
+    """Return resolved symlink."""
+    p = p0 = Path(p)
+    n_iter = 0
+    while True:
+        if not p.is_symlink():
+            break
+        if match_parent is not None and p.parent == match_parent:
+            break
+        _p = p
+        p = _p.readlink()
+        # relative symlink is relative to current _p.parent
+        if not p.is_absolute():
+            p = (_p.parent / p).resolve()
+        n_iter += 1
+        if n_iter_max is not None and n_iter > n_iter_max:
+            raise ValueError(
+                f"maximum iteration exceeded when resolving symlink for {p0}",
+            )
+    return p
 
 
 def ensure_readable_fileobj(arg, *args, **kwargs):
@@ -437,7 +460,7 @@ def dict_from_regex_match(pattern, string, type_dispatcher=None):
 
     result = {}
     for k, v in m.groupdict().items():
-        if k in type_dispatcher:
+        if k in type_dispatcher and v is not None:
             result[k] = type_dispatcher[k](v)
         else:
             result[k] = v

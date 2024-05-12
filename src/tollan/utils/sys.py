@@ -1,7 +1,11 @@
 import os
+import pty
 import pwd
+import shlex
 import socket
 from pathlib import Path
+
+from .log import logger
 
 """System related helpers."""
 
@@ -52,3 +56,15 @@ def get_or_create_dir(dirpath, on_exist=None, on_create=None):
     if on_create is not None:
         on_create(dirpath)
     return dirpath
+
+
+def pty_run(cmd):
+    """Run command in pty."""
+    if isinstance(cmd, str):
+        cmd = shlex.split(cmd)
+    cmd = list(map(str, cmd))
+    cmd_str = shlex.join(cmd)
+    logger.info("run {cmd_str} ...")
+    returncode = pty.spawn(cmd)
+    logger.info(f"{returncode=}: {cmd_str}")
+    return returncode

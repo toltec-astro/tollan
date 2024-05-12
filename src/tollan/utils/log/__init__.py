@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import functools
+import sys
 import time
 from contextlib import AbstractContextManager, ContextDecorator
 from typing import TypeVar, overload
@@ -10,7 +11,12 @@ from typing import TypeVar, overload
 from astropy.utils.console import human_time
 from loguru import logger as _loguru_logger
 
-__all__ = ["logger", "logit"]
+__all__ = [
+    "logger",
+    "logit",
+    "timeit",
+    "reset_logger",
+]
 
 
 logger = _loguru_logger
@@ -100,6 +106,7 @@ class timeit(ContextDecorator):  # noqa: N801
     def __new__(cls, arg: F) -> F: ...
 
     def __new__(cls, arg, **kwargs):
+        """Return timeit instance."""
         if callable(arg):
             return cls(arg.__name__, **kwargs)(arg)
         return super().__new__(cls)
@@ -138,6 +145,7 @@ class timeit(ContextDecorator):  # noqa: N801
         )
 
     def __call__(self, func):
+        """Return decorated func that logger the execution time."""
         self._logger = self._make_logger_for_ctx(func)
         return super().__call__(func)
 
@@ -147,3 +155,11 @@ class timeit(ContextDecorator):  # noqa: N801
         if time < max_ms:
             return f"{time * 1e3:.0f}ms"
         return f"{human_time(time).strip()}"
+
+
+def reset_logger(sink=sys.stderr, verbose=True, level="DEBUG", **kwargs):
+    """Reset the default logger with given init options."""
+    if verbose:
+        logger.debug(f"reset logger with {sink=} {level=}")
+    logger.remove()
+    logger.add(sink, level=level, **kwargs)

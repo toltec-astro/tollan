@@ -67,6 +67,8 @@ def test_fileloc():
     assert fl2.path.name == "b.c"
     assert fl2.is_remote()
 
+
+def test_fileloc_context():
     # fileloc helper to pass the context
     fl = fileloc(("a", "b.c"), remote_parent_path="/")
     assert fl.url == "file://a/b.c"
@@ -98,11 +100,13 @@ def test_fileloc():
     fl2 = fileloc(fl, local_parent_path="/parent", revalidate=True)
     assert fl2.url == "file:///parent/b.c"
 
+
+def test_fileloc_relative_remote():
     with pytest.raises(ValueError, match="remote path shall be absolute"):
-        fl = fileloc(("a", "b.c"))
+        fileloc(("a", "b.c"))
 
     with pytest.raises(ValueError, match="remote path shall be absolute"):
-        fl = fileloc("a:b.c")
+        fileloc("a:b.c")
 
     # TODO: this is tricky, and may need some special logic to
     # avoid resolving to remote host root /
