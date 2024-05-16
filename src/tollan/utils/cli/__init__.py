@@ -24,6 +24,7 @@ def dict_from_cli_args(args):
     parser = argparse.ArgumentParser()
     re_arg = re.compile(r"^--(?P<key>[a-zA-Z_]([a-zA-z0-9_.\[\]+])*)")
     n_args = len(args)
+    known_args = set()
     for i, arg in enumerate(args):
         # collect all items that are argument keys.
         m = re_arg.match(arg)
@@ -37,7 +38,9 @@ def dict_from_cli_args(args):
         else:
             # parse the item with config yaml loader
             arg_kwargs["type"] = yaml_loads
-        parser.add_argument(arg, **arg_kwargs)
+        if arg not in known_args:
+            parser.add_argument(arg, **arg_kwargs)
+        known_args.add(arg)
     d = parser.parse_args(args)
     logger.debug(f"dict parsed from cli args: {pformat_yaml(d)}")
     return dict_from_flat_dict(d.__dict__)
