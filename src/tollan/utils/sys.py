@@ -64,7 +64,7 @@ def pty_run(cmd):
         cmd = shlex.split(cmd)
     cmd = list(map(str, cmd))
     cmd_str = shlex.join(cmd)
-    logger.info("run {cmd_str} ...")
+    logger.info(f"run {cmd_str} ...")
     returncode = pty.spawn(cmd)
     logger.info(f"{returncode=}: {cmd_str}")
     return returncode
