@@ -212,6 +212,8 @@ def update_subplot_layout(fig: go.Figure, fig_layout: dict, row=None, col=None):
     n_rows, n_cols = len(grid_ref), len(grid_ref[0])
     xaxes = fig_layout.pop("xaxis", {})
     yaxes = fig_layout.pop("yaxis", {})
+    shapes = fig_layout.pop("shapes", [])
+    annos = fig_layout.pop("annotations", [])
     fig.update_layout(**fig_layout)
 
     def _resolve_rowcol(d, n):
@@ -227,6 +229,10 @@ def update_subplot_layout(fig: go.Figure, fig_layout: dict, row=None, col=None):
         for col in cols:
             fig.update_xaxes(row=row, col=col, **xaxes)
             fig.update_yaxes(row=row, col=col, **yaxes)
+            for s in shapes:
+                fig.add_shape(row=row, col=col, **s)
+            for a in annos:
+                fig.add_annotation(row=row, col=col, **a)
     _fix_scale_anchor(fig["layout"])
 
 
@@ -243,6 +249,13 @@ def make_subplot_layout(fig: go.Figure, layout: dict, row, col):
         result[f"xaxis{xax}"] = x
     if y is not None:
         result[f"yaxis{yax}"] = y
+    annos = result.pop("annotations", None)
+    if annos is not None:
+        for anno in annos:
+            for k, a in [("x", xax), ("y", yax)]:
+                if f"{k}ref" in anno:
+                    anno[f"{k}ref"] = anno[f"{k}ref"].replace(k, f"{k}{a}")
+        result["annotations"] = annos
     _fix_scale_anchor(result)
     return result
 
