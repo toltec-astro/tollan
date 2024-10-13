@@ -72,10 +72,10 @@ YamlDumper.add_multi_representer(Time, _astropy_time_representer)
 YamlDumper.add_multi_representer(PosixPath, _path_representer)
 YamlDumper.add_multi_representer(Enum, _enum_representer)
 YamlDumper.add_multi_representer(FileLoc, _fileloc_representer)
-YamlDumper.add_representer(np.float64, lambda s, d: s.represent_float(d))
-YamlDumper.add_representer(np.float32, lambda s, d: s.represent_float(d))
-YamlDumper.add_representer(np.int32, lambda s, d: s.represent_int(d))
-YamlDumper.add_representer(np.int64, lambda s, d: s.represent_int(d))
+YamlDumper.add_representer(np.float64, lambda s, d: s.represent_float(d.item()))
+YamlDumper.add_representer(np.float32, lambda s, d: s.represent_float(d.item()))
+YamlDumper.add_representer(np.int32, lambda s, d: s.represent_int(d.item()))
+YamlDumper.add_representer(np.int64, lambda s, d: s.represent_int(d.item()))
 
 
 @overload
