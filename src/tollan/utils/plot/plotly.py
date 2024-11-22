@@ -112,8 +112,8 @@ class SubplotGrid:
         **kwargs,
     ):
         """Return figure composed from subplots."""
-        sxax = kwargs.get("shared_xaxes", None)
-        syax = kwargs.get("shared_yaxes", None)
+        sxax = kwargs.get("shared_xaxes")
+        syax = kwargs.get("shared_yaxes")
         if sxax:
             kwargs.setdefault("vertical_spacing", 0.02)
         if syax:
@@ -225,14 +225,14 @@ def update_subplot_layout(fig: go.Figure, fig_layout: dict, row=None, col=None):
 
     rows = _resolve_rowcol(row, n_rows)
     cols = _resolve_rowcol(col, n_cols)
-    for row in rows:
-        for col in cols:
-            fig.update_xaxes(row=row, col=col, **xaxes)
-            fig.update_yaxes(row=row, col=col, **yaxes)
+    for r in rows:
+        for c in cols:
+            fig.update_xaxes(row=r, col=c, **xaxes)
+            fig.update_yaxes(row=r, col=c, **yaxes)
             for s in shapes:
-                fig.add_shape(row=row, col=col, **s)
+                fig.add_shape(row=r, col=c, **s)
             for a in annos:
-                fig.add_annotation(row=row, col=col, **a)
+                fig.add_annotation(row=r, col=c, **a)
     _fix_scale_anchor(fig["layout"])
 
 
@@ -430,9 +430,7 @@ class ShowInDash(ComponentTemplate):
         def _is_figure_like(data):
             if isinstance(data, go.Figure):
                 return True
-            if isinstance(data, dict) and "data" in data and "layout" in data:
-                return True
-            return False
+            return bool(isinstance(data, dict) and "data" in data and "layout" in data)
 
         if _is_figure_like(data):
             # graph_style = {"minWidth": "600px"}
