@@ -63,7 +63,9 @@ def strip_unit(arr):
     if isinstance(arr, u.Quantity):
         return arr.value, arr.unit
     if isinstance(arr, np.ma.MaskedArray):
-        return np.ma.array(arr.data.value, mask=arr.mask), arr.data.unit
+        if hasattr(arr.data, "value"):
+            return np.ma.array(arr.data.value, mask=arr.mask), arr.data.unit
+        return arr, None
     return arr, None
 
 
