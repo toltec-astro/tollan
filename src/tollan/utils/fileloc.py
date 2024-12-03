@@ -17,7 +17,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic.dataclasses import dataclass
-from pydantic.networks import Url, UrlConstraints
+from pydantic.networks import AnyUrl, UrlConstraints
 from pydantic_core import ArgsKwargs
 
 from .general import ensure_abspath
@@ -36,7 +36,7 @@ def _url_unquote(
 ):
     if isinstance(v, str):
         _v = v
-    elif isinstance(v, Url):
+    elif isinstance(v, AnyUrl):
         _v = v.unicode_string()
     else:
         raise TypeError(f"unable to unquote type {type(v)}")
@@ -72,11 +72,11 @@ def _url_replace(url, **kwargs):
         elif attr in ["path"]:
             v = _to_str(v, null_value=None)
         kwargs[attr] = v
-    return Url.build(**kwargs)
+    return AnyUrl.build(**kwargs)
 
 
 FileLocUrl = Annotated[
-    Url,
+    AnyUrl,
     UrlConstraints(allowed_schemes=["file", "http", "https"]),
     BeforeValidator(_url_unquote),
 ]

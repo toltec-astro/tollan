@@ -1,13 +1,17 @@
 import dataclasses
 import functools
 import numbers
+import warnings
 from collections.abc import Callable, Iterator, Sequence
 from functools import cached_property
 from pathlib import Path
 from typing import Annotated, Any, ClassVar, Generic, Literal, TypeVar
 
+from astropy.coordinates import SkyCoord
 from astropy.time import Time
 from astropy.units import Quantity
+from astroquery.exceptions import InputWarning
+from astroquery.utils import parse_coordinates
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -17,7 +21,7 @@ from pydantic import (
     ValidationInfo,
 )
 from pydantic.json_schema import GenerateJsonSchema as _GenerateJsonSchema
-from pydantic.json_schema import JsonSchemaValue, update_json_schema
+from pydantic.json_schema import JsonSchemaValue
 from pydantic.types import PathType as _PathType
 from pydantic_core import CoreSchema, core_schema
 
@@ -41,6 +45,7 @@ __all__ = [
     "AbsDirectoryPath",
     "GenerateJsonSchema",
     "FieldDefaults",
+    "SkyCoordField",
 ]
 
 
@@ -116,7 +121,7 @@ class _SimpleTypeValidatorMixin:
         handler: GetJsonSchemaHandler,
     ) -> JsonSchemaValue:
         js = handler(core_schema.str_schema())
-        update_json_schema(js, self._field_value_schema_stub)
+        js.update(self._field_value_schema_stub)
         return js
 
     def __get_pydantic_core_schema__(
@@ -493,3 +498,52 @@ class FieldDefaults:
 
     def __get__(self, obj, cls):
         return _get_field_default_accessor(cls)
+
+
+@dataclasses.dataclass
+class SkyCoordValidator(_SimpleTypeValidatorMixin):
+    """The constraints for validating `astropy.coordinates.SkyCoord`."""
+
+    _field_type: ClassVar = SkyCoord
+    _field_type_name: ClassVar = "SkyCoord"
+    _field_type_error_message: ClassVar = (
+        "SkyCoord or sky coordinate string is required, got {type}."
+    )
+    _field_value_types: ClassVar = {str}
+    __hash__ = object.__hash__
+
+    _skycoord_name_attr = "_tollan_skycoord_name__"
+    """This helps helps round-trip the coordinate by name."""
+
+    @cached_property
+    def _field_value_schema_stub(self):
+        schema: dict[str, Any] = {
+            "type": "string",
+            "format": "sky_coord",
+        }
+        return schema
+
+    def _field_serialize(self, value):
+        name_attr = self._skycoord_name_attr
+        if hasattr(value, name_attr):
+            return getattr(value, name_attr)
+        return value.to_string(style="hmsdms").replace(" ", "")
+
+    @cached_property
+    def _field_value_error_message(self):
+        return "SkyCoord required, got {value}"
+
+    def _field_construct_value(self, value, *_args, **_kwargs):
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=InputWarning)
+                coord = parse_coordinates(value)
+        except ValueError as e:
+            raise ValueError(
+                self._field_value_error_message.format(value=value),
+            ) from e
+        setattr(coord, self._skycoord_name_attr, value)
+        return coord
+
+
+SkyCoordField = Annotated[SkyCoord, SkyCoordValidator()]
