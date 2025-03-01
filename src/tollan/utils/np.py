@@ -105,5 +105,5 @@ def qrange(x0, x1, step):
         step_value = step
     else:
         x1_value = x1.to_value(x_unit)
-        step_value = step.to_value(step)
+        step_value = step.to_value(x_unit)
     return attach_unit(np.arange(x0_value, x1_value, step_value), x_unit)

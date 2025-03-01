@@ -141,11 +141,15 @@ class ConfigSource(ImmutableBaseModel):
             tbl_context = context
         else:
             raise TypeError("invalid context type.")
-        result = tbl_context.query(
-            self.enable_if,
-            local_dict={},
-            global_dict={},
-        )
+        try:
+            result = tbl_context.query(
+                self.enable_if,
+                local_dict={},
+                global_dict={},
+            )
+        except pd.errors.UndefinedVariableError as e:
+            logger.debug(f"enable_if={self.enable_if} ignored: {e}")
+            return False
         return len(result) > 0
         # # the pd eval returns np bool
         # if isinstance(result, bool | np.bool_):

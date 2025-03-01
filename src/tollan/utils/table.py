@@ -4,6 +4,9 @@ import pandas as pd
 from astropy.table import QTable, Table
 from typing_extensions import assert_never
 
+__all__ = ["TableType", "TableValidator"]
+
+
 TableType = Table | QTable | pd.DataFrame
 
 
@@ -73,3 +76,20 @@ class TableValidator:
     def get_meta_values(self, meta: dict, keys):
         """Return metadata for keys."""
         return [meta.get(k) for k in keys]
+
+    def eval(self, tbl, expr, **kwargs):
+        """Return evaluation of expression on table columns."""
+        if isinstance(tbl, Table):
+            local_dict = kwargs.pop("local_dict", {}) | dict(tbl.columns)
+            return pd.eval(expr, local_dict=local_dict, **kwargs)
+        if isinstance(tbl, pd.DataFrame):
+            return tbl.eval(expr, **kwargs)
+        assert_never()
+
+    def query(self, tbl, expr, **kwargs):
+        """Return sub-table by expression."""
+        if isinstance(tbl, Table):
+            return tbl[self.eval(tbl, expr, **kwargs)]
+        if isinstance(tbl, pd.DataFrame):
+            return tbl.query(expr, **kwargs)
+        assert_never()
