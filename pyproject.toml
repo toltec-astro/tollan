@@ -132,7 +132,7 @@ lint.extend-ignore = [
   "TD002",
   "TD003",
   "FIX002", # TODO
-  "TCH003", # standard lib typing import
+  "TC003",  # standard lib typing import
 ]
 
 [tool.ruff.lint.per-file-ignores]
