@@ -134,6 +134,7 @@ lint.extend-ignore = [
   "FIX002", # TODO
   "TC003",  # standard lib typing import
 ]
+lint.flake8-builtins.builtins-strict-checking = false
 
 [tool.ruff.lint.per-file-ignores]
 "test_*.py" = ["D", "PLR0915", "PLR2004"]
