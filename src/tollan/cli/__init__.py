@@ -8,11 +8,12 @@ from .. import _version
 from ..utils.cli.multi_action_argument_parser import MultiActionArgumentParser
 from ..utils.general import ObjectProxy
 
+__all__ = ["main", "main_parser"]
+
+
 main_parser = ObjectProxy(MultiActionArgumentParser)
-"""
-A proxy to the
-`tollan.utils.cli.multi_action_argument_parser.MultiActionArgumentParser`
-instance, which is made available when `tolteca.cli.main` is invoked.
+"""A proxy to a global parser instance, which is made available
+when `tollan.cli.main` is invoked.
 """
 
 

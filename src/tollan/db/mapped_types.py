@@ -10,15 +10,15 @@ from sqlalchemy_utils import TimezoneType
 from .func import utcnow
 
 __all__ = [
-    "Pk",
+    "Created_at",
+    "Desc",
     "Label",
     "Name",
-    "Desc",
-    "Created_at",
-    "Updated_at",
-    "Timezone",
-    "fk",
+    "Pk",
     "TimestampMixin",
+    "Timezone",
+    "Updated_at",
+    "fk",
 ]
 
 Pk = Annotated[int, mapped_column(Integer, primary_key=True, comment="The primary key")]

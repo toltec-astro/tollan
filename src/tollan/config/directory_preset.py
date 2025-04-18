@@ -13,7 +13,7 @@ from ..utils.general import ensure_abspath, rgetattr
 from ..utils.log import logger, logit
 from .types import ImmutableBaseModel
 
-__all__ = ["PathValidationError", "validate_path", "PathItem", "DirectoryPresetMixin"]
+__all__ = ["DirectoryPresetMixin", "PathItem", "PathValidationError", "validate_path"]
 
 
 class PathValidationError(RuntimeError):

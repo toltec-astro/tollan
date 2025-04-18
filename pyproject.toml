@@ -79,6 +79,7 @@ dev = [
   "myst_parser",
   "sphinx-book-theme",
   "sphinx-automodapi",
+  "autodoc_pydantic[erdantic]",
 ]
 
 [tool.pytest.ini_options]

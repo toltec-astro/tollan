@@ -4,12 +4,19 @@ API References
 .. automodapi:: tollan
 
 .. automodapi:: tollan.cli
+    :include-all-objects:
+    :include: main_parser
+    :include: main
 
 .. automodapi:: tollan.config
 
 .. automodapi:: tollan.config.models.config_snapshot
 
 .. automodapi:: tollan.config.models.config_source
+    :include-all-objects:
+    :include: config_source_io_registry
+    :include: ConfigSource
+    :include: ConfigSourceList
 
 .. automodapi:: tollan.config.models.system_info
 

@@ -9,7 +9,7 @@ def cmd_config(option, unknown_args=None):
     logger.info(f"option: {option}, unknown_args: {unknown_args}")
 
 
-if main_parser.__wrapped__ is not None:
+if main_parser.proxy_initialized():
     main_parser.add_action_parser(
         "config",
         help="Example subcommand show case the config module.",

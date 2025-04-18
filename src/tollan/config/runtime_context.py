@@ -17,7 +17,7 @@ from .models.config_source import ConfigSourceList
 from .models.system_info import SystemInfo
 from .types import ImmutableBaseModel, TimeField
 
-__all__ = ["RuntimeInfo", "ConfigBackend", "RuntimeContext"]
+__all__ = ["ConfigBackend", "RuntimeContext", "RuntimeInfo"]
 
 
 RuntimeInfoModelT = TypeVar("RuntimeInfoModelT", bound=ImmutableBaseModel)

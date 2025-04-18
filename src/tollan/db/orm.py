@@ -44,9 +44,10 @@ class BetterDeclarativeBase(_DeclarativeBase, MappedAsDataclass):
     @classproperty
     def session(cls):
         """The active session."""
-        if cls._session is not None:
-            return cls._session
-        raise ValueError("session is not set.")
+        if cls._session is None:
+            logger.warning("no active session found.")
+        return cls._session
+        # raise ValueError("session is not set.")
 
     @classmethod
     def query(cls, session: None | Session_cls = None):

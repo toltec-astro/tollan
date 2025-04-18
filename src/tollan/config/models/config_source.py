@@ -18,7 +18,7 @@ from ...utils.general import dict_from_flat_dict, rupdate
 from ...utils.log import logger
 from ..types import AbsFilePath, ImmutableBaseModel
 
-__all__ = ["config_source_io_registry", "ConfigSource", "ConfigSourceList"]
+__all__ = ["ConfigSource", "ConfigSourceList", "config_source_io_registry"]
 
 config_source_io_registry = UnifiedIORegistry()
 """An unified IO registry for load and dump config files."""
@@ -348,11 +348,11 @@ def _get_config_file_path(path, fileobj):
     return Path(path)
 
 
-def _identify_yaml(origin, path, fileobj, *args, **_kwargs):  # noqa: ARG001
+def _identify_yaml(origin, path, fileobj, *args, **kwargs):  # noqa: ARG001
     path = _get_config_file_path(path, fileobj)
     if path is None:
         return False
-    if path.suffix in _config_file_path_exts["yaml"]:
+    if path.suffix in _config_file_path_exts["yaml"]:  # noqa: SIM103
         return True
     # here we skip content check for all cases
     return False
@@ -383,7 +383,7 @@ config_source_io_registry.register_writer(
 
 
 # systemd env file IO
-def _identify_envfile(origin, path, fileobj, *args, **_kwargs):  # noqa: ARG001
+def _identify_envfile(origin, path, fileobj, *args, **kwargs):  # noqa: ARG001
     path = _get_config_file_path(path, fileobj)
     if path is None:
         return False

@@ -3,8 +3,8 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql import expression
 
 __all__ = [
-    "utcnow",
     "create_datetime",
+    "utcnow",
 ]
 
 
