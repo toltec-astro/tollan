@@ -115,7 +115,7 @@ class ConfigBackendBase(Generic[RuntimeInfoModelT]):
                     "order": cls._get_dir_config_source_order(p, m),
                 },
             )
-        return sources
+        return {"data": sources, "name": path.resolve().as_posix()}
 
     _default_config: None | dict = None
     """The dict to hold default config entires."""

@@ -21,26 +21,26 @@ import wrapt
 from astropy.utils.data import get_readable_fileobj
 
 __all__ = [
-    "ensure_abspath",
-    "resolve_symlink",
-    "ensure_readable_fileobj",
-    "getobj",
-    "getname",
-    "module_from_path",
-    "rreload",
-    "rgetattr",
-    "rupdate",
-    "odict_from_list",
-    "dict_product",
-    "dict_from_flat_dict",
-    "dict_to_flat_dict",
-    "fcompose",
     "ObjectProxy",
     "add_to_dict",
+    "dict_from_flat_dict",
+    "dict_product",
+    "dict_to_flat_dict",
+    "ensure_abspath",
+    "ensure_readable_fileobj",
+    "fcompose",
+    "getname",
+    "getobj",
     "ignore_unexpected_kwargs",
-    "slugify",
     "list_from_filtered",
     "list_not_none",
+    "module_from_path",
+    "odict_from_list",
+    "resolve_symlink",
+    "rgetattr",
+    "rreload",
+    "rupdate",
+    "slugify",
 ]
 
 
@@ -99,7 +99,7 @@ def getobj(name, *args):
     module, attr = name.split(sep, 1)
     try:
         module = importlib.import_module(module)
-    except Exception:  # noqa: BLE001
+    except Exception:
         if not args:
             raise
         return args[0]  # return the default if specified

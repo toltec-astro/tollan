@@ -8,7 +8,7 @@ from ..general import dict_from_flat_dict
 from ..log import logger
 from ..yaml import yaml_loads
 
-__all__ = ["split_cli_args", "dict_from_cli_args"]
+__all__ = ["dict_from_cli_args", "split_cli_args"]
 
 
 _re_arg = re.compile(r"^--(?P<key>[a-zA-Z_]([a-zA-z0-9_.\[\]+])*)")

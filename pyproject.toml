@@ -44,6 +44,7 @@ dependencies = [
   "sqlalchemy",
   "sqlalchemy_utils",
   "matplotlib",
+  "typer",
 ]
 
 [project.scripts]

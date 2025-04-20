@@ -174,3 +174,32 @@ class MultiActionArgumentParser(wrapt.ObjectProxy):
                 action(option, unknown_args=unknown_args)
         else:
             self.print_help()
+
+
+class ActionParserRegistry:
+    """A class to register subcommand actions."""
+
+    _actions: dict
+
+    def __init__(self):
+        self._actions = {}
+
+    def add(self, *args, **kwargs):
+        """Register a new action parser.
+
+        This is a decorator that registers a new action parser.
+        """
+
+        def decorator(func):
+            self._actions[func] = {"args": args, "kwargs": kwargs}
+            return func
+
+        return decorator
+
+    def init_parser(self, parser: MultiActionArgumentParser):
+        """Create and setup all parsers for registered actions."""
+        for func, ctx in self._actions.items():
+            parser.register_action_parser(
+                *ctx["args"],
+                **ctx["kwargs"],
+            )(func)
