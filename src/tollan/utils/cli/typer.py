@@ -54,7 +54,7 @@ def _reset_logger_callback(
     if ctx.resilient_parsing:
         return
     reset_logger(level=value, verbose=False)
-    logger.debug(f"reset looger: level={value}")
+    logger.debug(f"reset logger: level={value}")
 
 
 class _Group(typer.core.TyperGroup):
@@ -74,7 +74,7 @@ class _Group(typer.core.TyperGroup):
         )
         log_level_opt = typer.core.TyperOption(
             param_decls=["--log_level", "-l"],
-            type=str,
+            type=click.Choice(["DEBUG", "INFO", "WARNING"]),
             default="INFO",
             show_default=True,
             callback=_reset_logger_callback,
