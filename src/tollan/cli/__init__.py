@@ -2,46 +2,23 @@
 
 import sys
 
-from loguru import logger
-
 from .. import _version
-from ..utils.cli.multi_action_argument_parser import MultiActionArgumentParser
-from ..utils.general import ObjectProxy
+from ..utils.cli.argparse import MultiActionCli
 
-__all__ = ["main", "main_parser"]
-
-
-main_parser = ObjectProxy(MultiActionArgumentParser)
-"""A proxy to a global parser instance, which is made available
-when `tollan.cli.main` is invoked.
-"""
+__all__ = ["app"]
 
 
-def main(args=None):
-    """Console script for tollan."""
-    parser = main_parser.proxy_init(description="Tollan is a utility library.")
+app = MultiActionCli(version=_version.__version__)
+"""The CLI app entry point."""
 
-    parser.add_argument("--version", "-v", action="version", version=_version.version)
-    parser.add_argument(
-        "-g",
-        "--debug",
-        help="Show debug logging messages.",
-        action="store_true",
-    )
 
-    # load subcommands
-    from . import config as _  # noqa: F401
+@app.register_main("tollan")
+def _main(parser):
+    """Tollan is a utility libraray."""
 
-    option, unknown_args = parser.parse_known_args(args)
-    parser.parse_args(args)
 
-    loglevel = "DEBUG" if option.debug else "INFO"
-    logger.remove()
-    logger.add(sys.stderr, level=loglevel)
-    logger.debug(f"{option=} {unknown_args=}")
-    # invoke subcommands
-    parser.bootstrap_actions(option, unknown_args=unknown_args)
-
+# import subcommands
+from . import check  # noqa: E402, F401
 
 if __name__ == "__main__":
-    sys.exit(main())  # pragma: no cover
+    sys.exit(app())  # pragma: no cover

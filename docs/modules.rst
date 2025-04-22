@@ -5,8 +5,7 @@ API References
 
 .. automodapi:: tollan.cli
     :include-all-objects:
-    :include: main_parser
-    :include: main
+    :include: app
 
 .. automodapi:: tollan.config
 
@@ -38,7 +37,9 @@ API References
 
 .. automodapi:: tollan.utils.cli
 
-.. automodapi:: tollan.utils.cli.multi_action_argument_parser
+.. automodapi:: tollan.utils.cli.argparse
+
+.. automodapi:: tollan.utils.cli.typer
 
 .. automodapi:: tollan.utils.general
 

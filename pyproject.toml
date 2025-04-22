@@ -48,7 +48,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tollan = "tollan.cli:main"
+tollan = "tollan.cli:app"
 
 [tool.setuptools.package-data]
 "*" = [

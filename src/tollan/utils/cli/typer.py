@@ -9,21 +9,21 @@ import typer.utils
 
 from ..log import logger, reset_logger
 
+__all__ = ["create_cli"]
 
-def create_cli(version=None) -> tuple[typer.Typer, Callable]:
-    """Return a new CLI app."""
+
+def create_cli(version="dev") -> tuple[typer.Typer, Callable]:
+    """Return a new CLI app with reasonable defaults."""
     app = typer.Typer(
         context_settings={"help_option_names": ["-h", "--help"]},
     )
 
     app.callback = functools.partial(app.callback, cls=_Group)
 
-    if version is not None:
-
-        @app.command("version", add_help_option=False)
-        def _version():
-            """Print version."""
-            typer.echo(f"{version}")
+    @app.command("version", add_help_option=False)
+    def _version():
+        """Print version."""
+        typer.echo(f"{version}")
 
     return app
 
