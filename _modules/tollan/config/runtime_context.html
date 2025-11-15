@@ -1,0 +1,1130 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.config.runtime_context &#8212; tollan 0.1.dev71+g3366451f4.d20251115 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=57a336ce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/tollan/config/runtime_context';</script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev71+g3366451f4.d20251115 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../modules.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for tollan.config.runtime_context</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Runtime context for managing configuration lifecycle.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.cli</span><span class="w"> </span><span class="kn">import</span> <span class="n">dict_from_cli_args</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.dict</span><span class="w"> </span><span class="kn">import</span> <span class="n">rupdate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.log</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span><span class="p">,</span> <span class="n">logit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_cls_attr_from_type_args</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">FrozenBaseModel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.runtime_info</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.sources</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConfigSourceList</span><span class="p">,</span>
+    <span class="n">DictConfigSource</span><span class="p">,</span>
+    <span class="n">resolve_config_sources</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Generator</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.handler</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigHandler</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigSource</span><span class="p">,</span> <span class="n">DictConfigT</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;RuntimeConfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RuntimeContext&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="RuntimeConfig">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeConfig.html#tollan.config.RuntimeConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RuntimeConfig</span><span class="p">[</span><span class="n">RuntimeInfoT</span><span class="p">:</span> <span class="n">RuntimeInfo</span> <span class="o">=</span> <span class="n">RuntimeInfo</span><span class="p">](</span><span class="n">FrozenBaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base configuration model with runtime info.</span>
+
+<span class="sd">    This is the base model for runtime configurations.</span>
+
+<span class="sd">    Type Parameters</span>
+<span class="sd">    ---------------</span>
+<span class="sd">        RuntimeInfoT: Runtime info model class (subclass of RuntimeInfo)</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">        &gt;&gt;&gt; # Use default RuntimeConfig</span>
+<span class="sd">        &gt;&gt;&gt; config = RuntimeConfig.model_validate({</span>
+<span class="sd">        ...     &quot;database&quot;: {&quot;host&quot;: &quot;localhost&quot;},</span>
+<span class="sd">        ...     &quot;runtime_info&quot;: {&quot;env&quot;: &quot;dev&quot;}</span>
+<span class="sd">        ... })</span>
+
+<span class="sd">        &gt;&gt;&gt; # Subclass for domain-specific config</span>
+<span class="sd">        &gt;&gt;&gt; class AppConfig(RuntimeConfig[RuntimeInfo]):</span>
+<span class="sd">        ...     database_url: str</span>
+<span class="sd">        ...     debug: bool = False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span>
+        <span class="n">extra</span><span class="o">=</span><span class="s2">&quot;allow&quot;</span><span class="p">,</span>  <span class="c1"># to store extra items pending validation</span>
+    <span class="p">)</span>
+
+    <span class="n">runtime_info</span><span class="p">:</span> <span class="n">RuntimeInfoT</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="c1"># this get validated to the actual RuntimeInfoT</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">,</span>  <span class="c1"># type: ignore[arg-type]</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Runtime information&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="RuntimeContext">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RuntimeContext</span><span class="p">[</span><span class="n">RuntimeConfigT</span><span class="p">:</span> <span class="n">RuntimeConfig</span> <span class="o">=</span> <span class="n">RuntimeConfig</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Entry point for runtime-aware configuration management.</span>
+
+<span class="sd">    RuntimeContext manages a ConfigSourceList with a four-tier architecture:</span>
+<span class="sd">    1. Default tier (order=-1) - Base defaults, lowest priority</span>
+<span class="sd">    2. User sources (order=0+) - From config files/dicts</span>
+<span class="sd">    3. Info tier (order=1000) - Runtime info dict data</span>
+<span class="sd">    4. Override tier (order=1001) - Runtime overrides, highest priority</span>
+
+<span class="sd">    It provides:</span>
+<span class="sd">    - Lazy-loaded, cached config model object via `.config` cached property</span>
+<span class="sd">    - Cached config dict via `.config_dict` cached property</span>
+<span class="sd">    - Context management for temporary config overrides</span>
+<span class="sd">    - Registration system for ConfigHandler subclasses</span>
+<span class="sd">    - Factory methods for common setups (from_cli, etc.)</span>
+
+<span class="sd">    Type Parameters</span>
+<span class="sd">    ---------------</span>
+<span class="sd">        RuntimeConfigT: Runtime config class (subclass of RuntimeConfig)</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">        &gt;&gt;&gt; # Basic usage</span>
+<span class="sd">        &gt;&gt;&gt; rc = RuntimeContext(</span>
+<span class="sd">        ...     config_sources=[</span>
+<span class="sd">        ...         {&quot;format&quot;: &quot;dict&quot;, &quot;source&quot;: {&quot;app&quot;: &quot;test&quot;}, &quot;order&quot;: 0},</span>
+<span class="sd">        ...         {&quot;format&quot;: &quot;dict&quot;, &quot;source&quot;: {&quot;debug&quot;: True}, &quot;order&quot;: 1}</span>
+<span class="sd">        ...     ]</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; config = rc.config  # Validated RuntimeConfig model</span>
+<span class="sd">        &gt;&gt;&gt; rc.config_dict[&#39;app&#39;]</span>
+<span class="sd">        &#39;test&#39;</span>
+
+<span class="sd">        &gt;&gt;&gt; # Temporary context override</span>
+<span class="sd">        &gt;&gt;&gt; with rc.set_context({&quot;env&quot;: &quot;production&quot;}):</span>
+<span class="sd">        ...     prod_config = rc.config_dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Tier configuration constants</span>
+    <span class="n">_USER_ORDER_MIN</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">_USER_ORDER_MAX</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">999</span>
+    <span class="n">TIERS</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span>
+        <span class="nb">dict</span><span class="p">[</span><span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;override&quot;</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="n">_USER_ORDER_MIN</span> <span class="o">-</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="s2">&quot;info&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="n">_USER_ORDER_MAX</span> <span class="o">+</span> <span class="mi">1</span><span class="p">},</span>
+        <span class="s2">&quot;override&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;override&quot;</span><span class="p">,</span> <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="n">_USER_ORDER_MAX</span> <span class="o">+</span> <span class="mi">2</span><span class="p">},</span>
+    <span class="p">}</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tier configurations with name and order.&quot;&quot;&quot;</span>
+
+    <span class="n">runtime_config_cls</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">RuntimeConfigT</span><span class="p">]]</span> <span class="o">=</span> <span class="n">RuntimeConfig</span>  <span class="c1"># type: ignore[assignment]</span>
+
+    <span class="n">config_handler_cls_registry</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">set</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">ConfigHandler</span><span class="p">]]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Registry of ConfigHandler classes for this RuntimeContext.&quot;&quot;&quot;</span>
+
+    <span class="n">_config_sources</span><span class="p">:</span> <span class="n">ConfigSourceList</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Automatically infer runtime_config_cls from RuntimeConfigT type parameter.</span>
+
+<span class="sd">        Always infers from the type parameter, ensuring consistency. If you need</span>
+<span class="sd">        a different RuntimeConfig, specify it in the type parameter:</span>
+
+<span class="sd">            class MyContext(RuntimeContext[MyConfig]):</span>
+<span class="sd">                pass</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            **kwargs: Additional keyword arguments</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">            TypeError: If runtime_config_cls is explicitly set (use type param instead)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ensure_cls_attr_from_type_args</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="p">,</span>
+            <span class="s2">&quot;runtime_config_cls&quot;</span><span class="p">,</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">bound</span><span class="o">=</span><span class="n">RuntimeConfig</span><span class="p">,</span>
+            <span class="n">skip_on_exist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_sources</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span> <span class="o">|</span> <span class="n">ConfigSourceList</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Build four-tier ConfigSourceList with granular caching</span>
+        <span class="c1"># Default and override tiers are NOT cached (they&#39;re mutable)</span>
+        <span class="c1"># User sources ARE cached (they&#39;re typically from immutable files)</span>
+
+        <span class="c1"># Create tier sources from TIERS dict</span>
+        <span class="n">tier_sources</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">ConfigSource</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">tier_config</span> <span class="o">|</span> <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;dict&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">tier_config</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIERS</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Add user sources if provided (order=0...N, cached)</span>
+        <span class="k">if</span> <span class="n">config_sources</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">user_sources</span> <span class="o">=</span> <span class="n">resolve_config_sources</span><span class="p">(</span>
+                <span class="n">config_sources</span><span class="p">,</span>
+                <span class="n">order_min</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_USER_ORDER_MIN</span><span class="p">,</span>
+                <span class="n">order_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_USER_ORDER_MAX</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">user_sources</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2"> user config source(s)&quot;</span><span class="p">)</span>
+            <span class="n">tier_sources</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">user_sources</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Create ConfigSourceList with caching (sources will be sorted by order)</span>
+        <span class="c1"># Don&#39;t cache default, info, and override tiers</span>
+        <span class="n">config_source_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_sources</span> <span class="o">=</span> <span class="n">ConfigSourceList</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+            <span class="n">tier_sources</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">config_source_list</span><span class="o">.</span><span class="n">enable_cache</span><span class="p">(</span>
+            <span class="n">exclude</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span>
+            <span class="ow">in</span> <span class="p">{</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">TIERS</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">TIERS</span><span class="p">[</span><span class="s2">&quot;info&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">TIERS</span><span class="p">[</span><span class="s2">&quot;override&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">],</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Inject runtime_info dict into info tier</span>
+        <span class="c1"># This must happen after _config_sources is set</span>
+        <span class="n">info_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tier</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="p">)</span>
+        <span class="n">info_source</span><span class="o">.</span><span class="n">source</span><span class="p">[</span><span class="s2">&quot;runtime_info&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;config_sources&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_sources</span><span class="p">,</span>
+            <span class="s2">&quot;validation_context&quot;</span><span class="p">:</span> <span class="p">{},</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="RuntimeContext.from_cli">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.from_cli">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_cli</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">env_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cli_args</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RuntimeContext</span><span class="p">[</span><span class="n">RuntimeConfigT</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create RuntimeContext from CLI arguments.</span>
+
+<span class="sd">        This factory method creates a standard CLI configuration layout:</span>
+<span class="sd">        - Config path (file or directory) at order=0</span>
+<span class="sd">        - Env files at order=100+</span>
+<span class="sd">        - CLI args converted to overrides env files at order=200</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config_path : Path | None, optional</span>
+<span class="sd">            Main config file or directory path. If directory,</span>
+<span class="sd">            loads numbered YAML files (e.g., 00_base.yaml, 01_dev.yaml),</span>
+<span class="sd">            by default None</span>
+<span class="sd">        env_files : list[Path] | None, optional</span>
+<span class="sd">            List of .env file paths, by default None</span>
+<span class="sd">        cli_args : list[str] | None, optional</span>
+<span class="sd">            CLI arguments in &quot;--key=value&quot; or &quot;--key value&quot; format.</span>
+<span class="sd">            Converted to nested dict (e.g., [&quot;--db.host&quot;, &quot;localhost&quot;] →</span>
+<span class="sd">            {&quot;db&quot;: {&quot;host&quot;: &quot;localhost&quot;}}), by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        RuntimeContext[RuntimeConfigT]</span>
+<span class="sd">            RuntimeContext instance configured for CLI usage</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from pathlib import Path</span>
+<span class="sd">            &gt;&gt;&gt; # Create from CLI args</span>
+<span class="sd">            &gt;&gt;&gt; rc = RuntimeContext.from_cli(</span>
+<span class="sd">            ...     cli_args=[&quot;--debug&quot;, &quot;true&quot;, &quot;--port&quot;, &quot;8080&quot;]</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; &#39;debug&#39; in rc.config_dict</span>
+<span class="sd">            True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sources</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">n_override_orders_max</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">env_file_base_order</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_USER_ORDER_MAX</span> <span class="o">-</span> <span class="n">n_override_orders_max</span>
+        <span class="c1"># Add main config path (file or directory)</span>
+        <span class="k">if</span> <span class="n">config_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">logit</span><span class="p">(</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Loading config from path: </span><span class="si">{</span><span class="n">config_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+                <span class="c1"># config_sources handles both files and directories</span>
+                <span class="n">config_source_list</span> <span class="o">=</span> <span class="n">resolve_config_sources</span><span class="p">(</span>
+                    <span class="n">config_path</span><span class="p">,</span>
+                    <span class="n">order_min</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">_USER_ORDER_MIN</span><span class="p">,</span>
+                    <span class="n">order_max</span><span class="o">=</span><span class="n">env_file_base_order</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">config_source_list</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Add env files</span>
+        <span class="k">if</span> <span class="n">env_files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">env_files</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">n_override_orders_max</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Too many env files.&quot;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">env_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">env_files</span><span class="p">):</span>
+                <span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;envfile&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">env_file</span><span class="p">,</span>
+                        <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="n">env_file_base_order</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">)</span>
+
+        <span class="c1"># Parse and add CLI args as overrides</span>
+        <span class="k">if</span> <span class="n">cli_args</span><span class="p">:</span>
+            <span class="n">cli_overrides</span> <span class="o">=</span> <span class="n">dict_from_cli_args</span><span class="p">(</span><span class="n">cli_args</span><span class="p">)</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;dict&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="n">cli_overrides</span><span class="p">,</span>
+                    <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_USER_ORDER_MAX</span><span class="p">,</span>
+                    <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;cli_overrides&quot;</span><span class="p">,</span>
+                <span class="p">},</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">config_sources</span><span class="o">=</span><span class="n">sources</span> <span class="k">if</span> <span class="n">sources</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.register_config_handler_cls">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.register_config_handler_cls">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">register_config_handler_cls</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">ConfigHandler</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register a ConfigHandler class.</span>
+
+<span class="sd">        Types registered can be instantiated via the `__getitem__` interface.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config_handler_cls : type[ConfigHandler]</span>
+<span class="sd">            ConfigHandler subclass to register</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">config_handler_cls_registry</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">config_handler_cls</span><span class="p">)</span></div>
+
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">[</span><span class="n">T</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">T</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">[</span><span class="n">T0</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T0</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T0</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">[</span><span class="n">T0</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span> <span class="n">T1</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T0</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T1</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">[</span><span class="n">T0</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span> <span class="n">T1</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span> <span class="n">T2</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T0</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T1</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T2</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">,</span> <span class="n">T2</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">[</span>
+        <span class="n">T0</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span>
+        <span class="n">T1</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span>
+        <span class="n">T2</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span>
+        <span class="n">T3</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span>
+    <span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">T0</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T1</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T2</span><span class="p">],</span> <span class="nb">type</span><span class="p">[</span><span class="n">T3</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T0</span><span class="p">,</span> <span class="n">T1</span><span class="p">,</span> <span class="n">T2</span><span class="p">,</span> <span class="n">T3</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="nd">@overload</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">[</span>
+        <span class="n">Ts</span><span class="p">:</span> <span class="n">ConfigHandler</span><span class="p">,</span>
+    <span class="p">](</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Ts</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Ts</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span> <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">config_handler_cls</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get config handler instance(s) configured by this runtime context.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config_handler_cls: ConfigHandler class or tuple of classes</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            ConfigHandler instance or tuple of instances</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">            TypeError: If class is not a ConfigHandler or not registered</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from tollan.config import ConfigHandler</span>
+<span class="sd">            &gt;&gt;&gt; # Assuming MyConfigHandler is registered</span>
+<span class="sd">            &gt;&gt;&gt; # handler = rc[MyConfigHandler]</span>
+<span class="sd">            &gt;&gt;&gt; # handlers = rc[Handler1, Handler2, Handler3]</span>
+<span class="sd">            ... # doctest: +SKIP</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config_handler_cls</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">config_handler_cls</span><span class="p">)</span>
+
+        <span class="c1"># avoid circular import</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.handler</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigHandler</span>  <span class="c1"># noqa: PLC0415</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">config_handler_cls</span><span class="p">,</span> <span class="n">ConfigHandler</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_handler_cls</span><span class="si">}</span><span class="s2"> is not a config handler class.&quot;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">config_handler_cls</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_handler_cls_registry</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">config_handler_cls</span><span class="si">}</span><span class="s2"> is not registered to the runtime context.&quot;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">config_handler_cls</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">config_sources</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigSourceList</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the ConfigSourceList.</span>
+
+<span class="sd">        This is the underlying source list that can be used to access</span>
+<span class="sd">        individual sources, inspect the configuration pipeline, or</span>
+<span class="sd">        load configuration with different contexts.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            ConfigSourceList instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_sources</span>
+
+<div class="viewcode-block" id="RuntimeContext.config_dict">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.config_dict">[docs]</a>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">config_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfigT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the loaded and merged configuration as a dictionary.</span>
+
+<span class="sd">        This loads config with the current context and caches the result.</span>
+<span class="sd">        Cache is invalidated when context changes or when update_*_config</span>
+<span class="sd">        methods are called.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Merged configuration dictionary (DictConfigT)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get context from info tier&#39;s validation_context dict</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_validation_context</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_sources</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">context</span><span class="o">=</span><span class="n">context</span> <span class="ow">or</span> <span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.config">[docs]</a>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RuntimeConfigT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the validated configuration model.</span>
+
+<span class="sd">        This validates the merged config dict using the RuntimeConfig model</span>
+<span class="sd">        (or a subclass defined in runtime_config_cls). The result is cached.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Validated RuntimeConfig instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="s2">&quot;RuntimeConfigT&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">runtime_config_cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_dict</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">runtime_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RuntimeInfo</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get runtime info from the validated config.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Runtime info instance from config.runtime_info</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">runtime_info</span>
+
+<div class="viewcode-block" id="RuntimeContext.set_context">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.set_context">[docs]</a>
+    <span class="nd">@contextmanager</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_context</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="kc">None</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Context manager to temporarily override validation context.</span>
+
+<span class="sd">        This is useful for testing different scenarios or loading config</span>
+<span class="sd">        under different runtime conditions without permanent changes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        context : dict[str, Any]</span>
+<span class="sd">            Context dictionary for enable_if expressions. Values are</span>
+<span class="sd">            merged with existing context (doesn&#39;t replace entirely).</span>
+
+<span class="sd">        Yields</span>
+<span class="sd">        ------</span>
+<span class="sd">        None</span>
+<span class="sd">            Context is set for duration of with block</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; rc = RuntimeContext(</span>
+<span class="sd">            ...     config_sources=[</span>
+<span class="sd">            ...         {&quot;format&quot;: &quot;dict&quot;, &quot;source&quot;: {&quot;app&quot;: &quot;test&quot;}, &quot;order&quot;: 0}</span>
+<span class="sd">            ...     ]</span>
+<span class="sd">            ... )</span>
+<span class="sd">            &gt;&gt;&gt; with rc.set_context({&quot;env&quot;: &quot;production&quot;}):</span>
+<span class="sd">            ...     config = rc.config_dict</span>
+<span class="sd">            &gt;&gt;&gt; rc.config_dict[&#39;app&#39;]</span>
+<span class="sd">            &#39;test&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get validation_context dict from info tier</span>
+        <span class="n">validation_context</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_validation_context</span><span class="p">()</span>
+
+        <span class="c1"># Save previous context</span>
+        <span class="n">previous_context</span> <span class="o">=</span> <span class="n">validation_context</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Save cached properties by invalidating (returns saved cache)</span>
+        <span class="n">saved_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_config_cache</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Update context (merge, don&#39;t replace)</span>
+            <span class="n">validation_context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Set config context: </span><span class="si">{</span><span class="n">context</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">yield</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># Restore previous context</span>
+            <span class="n">validation_context</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">validation_context</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">previous_context</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Config context cleared&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Invalidate caches and restore saved values</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_config_cache</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">saved_cache</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.set_config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.set_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_config</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">,</span>
+        <span class="n">tier</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;override&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Replace a named tier&#39;s configuration entirely.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            New configuration for the tier</span>
+<span class="sd">        tier : Literal[&quot;default&quot;, &quot;override&quot;]</span>
+<span class="sd">            Tier to set (&quot;default&quot; or &quot;override&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;override&quot;</span><span class="p">}:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid update tier&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">tier_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tier</span><span class="p">(</span><span class="n">tier</span><span class="p">)</span>
+        <span class="n">tier_source</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="n">tier_source</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_config_cache</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.update_config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.update_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_config</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">,</span>
+        <span class="n">tier</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;override&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge configuration into a named tier.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            Configuration to merge into the tier</span>
+<span class="sd">        tier : Literal[&quot;default&quot;, &quot;override&quot;]</span>
+<span class="sd">            Tier to update (&quot;default&quot; or &quot;override&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tier</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;override&quot;</span><span class="p">}:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Invalid update tier&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">tier_source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tier</span><span class="p">(</span><span class="n">tier</span><span class="p">)</span>
+        <span class="n">rupdate</span><span class="p">(</span><span class="n">tier_source</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">cfg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_config_cache</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.set_default_config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.set_default_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_default_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set default configuration (order=-1 tier).</span>
+
+<span class="sd">        This only invalidates RuntimeContext caches, not ConfigSourceList</span>
+<span class="sd">        source caches (since default tier is not cached in sources).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            New default configuration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.set_override_config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.set_override_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_override_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set override configuration (order=1001 tier).</span>
+
+<span class="sd">        This only invalidates RuntimeContext caches, not ConfigSourceList</span>
+<span class="sd">        source caches (since override tier is not cached in sources).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            New override configuration</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;override&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.update_default_config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.update_default_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_default_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge default configuration (order=-1 tier).</span>
+
+<span class="sd">        This only invalidates RuntimeContext caches, not ConfigSourceList</span>
+<span class="sd">        source caches (since default tier is not cached in sources).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            Configuration to merge into default tier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.update_override_config">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.update_override_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_override_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Merge override configuration (order=1001 tier).</span>
+
+<span class="sd">        This only invalidates RuntimeContext caches, not ConfigSourceList</span>
+<span class="sd">        source caches (since override tier is not cached in sources).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            Configuration to merge into override tier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;override&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RuntimeContext.reload">
+<a class="viewcode-back" href="../../../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext.reload">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reload</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reload configuration, invalidating all caches.</span>
+
+<span class="sd">        This forces a full reload of all config sources, including file-based</span>
+<span class="sd">        sources that are normally cached.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Reloaded configuration dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Invalidate ConfigSourceList cache</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_sources</span><span class="o">.</span><span class="n">invalidate_cache</span><span class="p">()</span>
+
+        <span class="c1"># Invalidate RuntimeContext caches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_invalidate_config_cache</span><span class="p">()</span>
+
+        <span class="c1"># Return fresh config</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_dict</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_tier</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tier_name</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">,</span> <span class="s2">&quot;override&quot;</span><span class="p">,</span> <span class="s2">&quot;info&quot;</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfigSource</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a named tier as a DictConfigSource.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            tier_name: Name of tier to get (&quot;default&quot;, &quot;override&quot;, or &quot;info&quot;)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Named tier as DictConfigSource</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tier_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">TIERS</span><span class="p">[</span><span class="n">tier_name</span><span class="p">]</span>
+        <span class="n">tier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_sources</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">tier_config</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="n">tier</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tier_name</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2"> tier must exist&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tier</span><span class="p">,</span> <span class="n">DictConfigSource</span><span class="p">),</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tier_name</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span><span class="si">}</span><span class="s2"> tier must be DictConfigSource&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">tier</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_validation_context</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the validation_context dict from info tier.</span>
+
+<span class="sd">        The validation_context dict is guaranteed to exist because it&#39;s</span>
+<span class="sd">        created during initialization by _inject_runtime_state().</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            The validation_context dict that can be mutated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">info_tier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tier</span><span class="p">(</span><span class="s2">&quot;info&quot;</span><span class="p">)</span>
+        <span class="n">runtime_info_dict</span> <span class="o">=</span> <span class="n">info_tier</span><span class="o">.</span><span class="n">source</span><span class="p">[</span><span class="s2">&quot;runtime_info&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">runtime_info_dict</span><span class="p">[</span><span class="s2">&quot;validation_context&quot;</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_invalidate_config_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Invalidate RuntimeContext config caches.</span>
+
+<span class="sd">        This clears the cached_property values for config_dict and config,</span>
+<span class="sd">        forcing them to be recomputed on next access.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Dictionary of invalidated cache entries {attr_name: value}</span>
+<span class="sd">            that can be used to restore the cache later</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Save and clear cached properties</span>
+        <span class="n">saved_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;config_dict&quot;</span><span class="p">,</span> <span class="s2">&quot;config&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                <span class="n">saved_cache</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">attr</span><span class="si">}</span><span class="s2"> cache invalidated&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">saved_cache</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

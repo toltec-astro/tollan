@@ -1,0 +1,727 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>EnvFileConfigSource &#8212; tollan 0.1.dev73+ged1eba6ad documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css?v=a0a71c94" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=1dc1a498"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=30646c52"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/tollan.config.sources.EnvFileConfigSource';</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ListConfigSource" href="tollan.config.sources.ListConfigSource.html" />
+    <link rel="prev" title="DictConfigSource" href="tollan.config.sources.DictConfigSource.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev73+ged1eba6ad documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../modules.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/tollan.config.sources.EnvFileConfigSource.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>EnvFileConfigSource</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.encoding"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.encoding</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.format"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.format</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.interpolate"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.interpolate</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.source"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.source</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.load"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.load()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="envfileconfigsource">
+<h1>EnvFileConfigSource<a class="headerlink" href="#envfileconfigsource" title="Link to this heading">#</a></h1>
+<dl class="py class pydantic_model">
+<dt class="sig sig-object py" id="tollan.config.sources.EnvFileConfigSource">
+<em class="property"><span class="pre">pydantic</span> <span class="pre">model</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tollan.config.sources.</span></span><span class="sig-name descname"><span class="pre">EnvFileConfigSource</span></span><a class="reference internal" href="../_modules/tollan/config/sources/envfile.html#EnvFileConfigSource"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.sources.EnvFileConfigSource" title="Link to this definition">#</a></dt>
+<dd><p>Configuration source from .env file.</p>
+<p>Uses python-dotenv to parse .env files. Supports variable expansion
+and default values.</p>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">tollan.config.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnvFileConfigSource</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic usage (requires actual .env file)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">src</span> <span class="o">=</span> <span class="n">EnvFileConfigSource</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;.env&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">src</span><span class="o">.</span><span class="n">format</span>
+<span class="go">&#39;envfile&#39;</span>
+</pre></div>
+</div>
+<p>Create a new model by parsing and validating input data from keyword arguments.</p>
+<p>Raises [<code class="xref py py-obj docutils literal notranslate"><span class="pre">ValidationError</span></code>][pydantic_core.ValidationError] if the input data cannot be
+validated to form a valid model.</p>
+<p><code class="xref py py-obj docutils literal notranslate"><span class="pre">self</span></code> is explicitly positional-only to allow <code class="xref py py-obj docutils literal notranslate"><span class="pre">self</span></code> as a field name.</p>
+<p><details  class="autodoc_pydantic_collapsable_json">
+<summary>Show JSON schema</summary><div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">   </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;EnvFileConfigSource&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;description&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Configuration source from .env file.\n\nUses python-dotenv to parse .env files. Supports variable expansion\nand default values.\n\nExamples\n--------\n&gt;&gt;&gt; from pathlib import Path\n&gt;&gt;&gt; from tollan.config.sources import EnvFileConfigSource\n&gt;&gt;&gt; # Basic usage (requires actual .env file)\n&gt;&gt;&gt; src = EnvFileConfigSource(order=0, source=Path(\&quot;.env\&quot;))  # doctest: +SKIP\n&gt;&gt;&gt; src.format  # doctest: +SKIP\n&#39;envfile&#39;&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;object&quot;</span><span class="p">,</span>
+<span class="w">   </span><span class="nt">&quot;properties&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;order&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Order&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;integer&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;null&quot;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">         </span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Name&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;enabled&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Enabled&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;boolean&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;enable_if&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;anyOf&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">               </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;null&quot;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">         </span><span class="p">],</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Enable If&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;const&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;envfile&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;envfile&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Format&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;format&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;path&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Source&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;encoding&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Encoding&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;string&quot;</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="nt">&quot;interpolate&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="nt">&quot;default&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;title&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Interpolate&quot;</span><span class="p">,</span>
+<span class="w">         </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;boolean&quot;</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">   </span><span class="p">},</span>
+<span class="w">   </span><span class="nt">&quot;required&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s2">&quot;order&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;source&quot;</span>
+<span class="w">   </span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</details></p><dl class="field-list simple">
+<dt class="field-odd">Config<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>frozen</strong>: <em>bool = True</em></p></li>
+</ul>
+</dd>
+<dt class="field-even">Fields<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference internal" href="#tollan.config.sources.EnvFileConfigSource.encoding" title="tollan.config.sources.envfile.EnvFileConfigSource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">encoding</span> <span class="pre">(str)</span></code></a></p></li>
+<li><p><a class="reference internal" href="#tollan.config.sources.EnvFileConfigSource.format" title="tollan.config.sources.envfile.EnvFileConfigSource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format</span> <span class="pre">(Literal['envfile'])</span></code></a></p></li>
+<li><p><a class="reference internal" href="#tollan.config.sources.EnvFileConfigSource.interpolate" title="tollan.config.sources.envfile.EnvFileConfigSource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate</span> <span class="pre">(bool)</span></code></a></p></li>
+<li><p><a class="reference internal" href="#tollan.config.sources.EnvFileConfigSource.source" title="tollan.config.sources.envfile.EnvFileConfigSource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source</span> <span class="pre">(pathlib.Path)</span></code></a></p></li>
+</ul>
+</dd>
+<dt class="field-odd">Validators<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_name</span></code> » <code class="xref py py-obj docutils literal notranslate"><span class="pre">all</span> <span class="pre">fields</span></code></p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_source</span></code> » <a class="reference internal" href="#tollan.config.sources.EnvFileConfigSource.source" title="tollan.config.sources.envfile.EnvFileConfigSource"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source</span></code></a></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="tollan.config.sources.EnvFileConfigSource.encoding">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">encoding</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'utf-8'</span></em><a class="headerlink" href="#tollan.config.sources.EnvFileConfigSource.encoding" title="Link to this definition">#</a></dt>
+<dd><p>File encoding</p>
+<dl class="field-list simple">
+<dt class="field-odd">Validated by<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_name</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="tollan.config.sources.EnvFileConfigSource.format">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">format</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'envfile'</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'envfile'</span></em><a class="headerlink" href="#tollan.config.sources.EnvFileConfigSource.format" title="Link to this definition">#</a></dt>
+<dd><p>Format identifier, always ‘envfile’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Validated by<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_name</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="tollan.config.sources.EnvFileConfigSource.interpolate">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">interpolate</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#tollan.config.sources.EnvFileConfigSource.interpolate" title="Link to this definition">#</a></dt>
+<dd><p>Enable variable expansion</p>
+<dl class="field-list simple">
+<dt class="field-odd">Validated by<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_name</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute pydantic_field">
+<dt class="sig sig-object py" id="tollan.config.sources.EnvFileConfigSource.source">
+<em class="property"><span class="pre">field</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">source</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Path</span></em><em class="property"> <span class="pre">[Required]</span></em><a class="headerlink" href="#tollan.config.sources.EnvFileConfigSource.source" title="Link to this definition">#</a></dt>
+<dd><p>Path to .env file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Validated by<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_name</span></code></p></li>
+<li><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">_validate_source</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.sources.EnvFileConfigSource.load">
+<span class="sig-name descname"><span class="pre">load</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DictConfigT</span></span></span><a class="reference internal" href="../_modules/tollan/config/sources/envfile.html#EnvFileConfigSource.load"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.sources.EnvFileConfigSource.load" title="Link to this definition">#</a></dt>
+<dd><p>Load configuration from .env file.</p>
+<p>Uses python-dotenv’s dotenv_values() to parse the file.
+Returns a dictionary with all key-value pairs from the file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>context</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – Context dictionary (unused, for signature compatibility)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Configuration dictionary with string values</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)">dict</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)">str</a>, Any]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If source is not enabled for context</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.14)"><strong>FileNotFoundError</strong></a> – If .env file doesn’t exist</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>All values are returned as strings (as they appear in the .env file).
+Type conversion should be handled by the consumer.</p>
+<p>Variable expansion is supported if interpolate=True:
+- ${VAR} expands to the value of VAR
+- ${VAR:-default} expands to value of VAR or “default” if not set</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="tollan.config.sources.DictConfigSource.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">DictConfigSource</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="tollan.config.sources.ListConfigSource.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">ListConfigSource</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.encoding"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.encoding</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.format"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.format</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.interpolate"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.interpolate</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.source"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.source</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.sources.EnvFileConfigSource.load"><code class="docutils literal notranslate"><span class="pre">EnvFileConfigSource.load()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

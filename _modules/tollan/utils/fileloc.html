@@ -1,0 +1,1071 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.fileloc &#8212; tollan 0.1.dev71+g3366451f4.d20251115 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=57a336ce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/tollan/utils/fileloc';</script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev71+g3366451f4.d20251115 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../modules.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for tollan.utils.fileloc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;File location handling utilities.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">pathlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">urllib.parse</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Annotated</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BeforeValidator</span><span class="p">,</span>
+    <span class="n">ConfigDict</span><span class="p">,</span>
+    <span class="n">RootModel</span><span class="p">,</span>
+    <span class="n">TypeAdapter</span><span class="p">,</span>
+    <span class="n">ValidationError</span><span class="p">,</span>
+    <span class="n">computed_field</span><span class="p">,</span>
+    <span class="n">field_validator</span><span class="p">,</span>
+    <span class="n">model_validator</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic.networks</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnyUrl</span><span class="p">,</span> <span class="n">UrlConstraints</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic_core</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArgsKwargs</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.file</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_abspath</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">ValidationInfo</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;FileLoc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FileLocData&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FileLocUrl&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fileloc&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_url_unquote</span><span class="p">(</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">_v</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyUrl</span><span class="p">):</span>
+        <span class="n">_v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">unicode_string</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;unable to unquote type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="n">_v</span><span class="p">)</span>
+
+
+<span class="n">_url_attrs</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;scheme&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;username&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;port&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;path&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;query&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fragment&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_url_replace</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_to_str</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">null_value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">null_value</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">_url_attrs</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">&quot;port&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">validate_python</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;scheme&quot;</span><span class="p">,</span> <span class="s2">&quot;host&quot;</span><span class="p">]:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">_to_str</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">null_value</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;path&quot;</span><span class="p">]:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">_to_str</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">null_value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">AnyUrl</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<span class="n">FileLocUrl</span> <span class="o">=</span> <span class="n">Annotated</span><span class="p">[</span>
+    <span class="n">AnyUrl</span><span class="p">,</span>
+    <span class="n">UrlConstraints</span><span class="p">(</span><span class="n">allowed_schemes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;file&quot;</span><span class="p">,</span> <span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">]),</span>
+    <span class="n">BeforeValidator</span><span class="p">(</span><span class="n">_url_unquote</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">_validate_file_loc_url</span> <span class="o">=</span> <span class="n">TypeAdapter</span><span class="p">(</span><span class="n">FileLocUrl</span><span class="p">)</span><span class="o">.</span><span class="n">validate_python</span>
+
+
+<div class="viewcode-block" id="FileLocData">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData">[docs]</a>
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">ConfigDict</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FileLocData</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A helper model for storing file loc data.&quot;&quot;&quot;</span>
+
+    <span class="n">url</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">FileLocUrl</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">netloc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="n">local_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">remote_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+
+        <span class="nd">@overload</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">netloc</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+            <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span>
+            <span class="n">local_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">remote_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+        <span class="nd">@overload</span>
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="n">arg</span><span class="p">:</span> <span class="kc">None</span>
+            <span class="o">|</span> <span class="n">FileLocUrl</span>
+            <span class="o">|</span> <span class="n">FileLocData</span>
+            <span class="o">|</span> <span class="nb">str</span>
+            <span class="o">|</span> <span class="n">Path</span>
+            <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+            <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+            <span class="n">local_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">remote_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+<div class="viewcode-block" id="FileLocData.validate_path">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData.validate_path">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="s2">&quot;local_parent_path&quot;</span><span class="p">,</span> <span class="s2">&quot;remote_parent_path&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_path</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure path is Path instance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        v : str | Path</span>
+<span class="sd">            Path value to validate</span>
+<span class="sd">        info : ValidationInfo</span>
+<span class="sd">            Pydantic validation context</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Path</span>
+<span class="sd">            Validated Path instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="FileLocData.validate_netloc">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData.validate_netloc">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;netloc&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_netloc</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalize netloc to string.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        v : str | None</span>
+<span class="sd">            Network location value</span>
+<span class="sd">        info : ValidationInfo</span>
+<span class="sd">            Pydantic validation context</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Normalized netloc (empty string for localhost/None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">==</span> <span class="s2">&quot;localhost&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="FileLocData.validate_arg">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData.validate_arg">[docs]</a>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_arg</span><span class="p">(</span>  <span class="c1"># noqa: C901, PLR0912, PLR0915</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">ArgsKwargs</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">info</span><span class="p">:</span> <span class="n">ValidationInfo</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArgsKwargs</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return file loc data from any compatible input.</span>
+
+<span class="sd">        Valid forms of inputs are:</span>
+<span class="sd">        * dict contains keys ``url``, ``path``, ``netloc``;</span>
+<span class="sd">        * tuple consists of ``(netloc, path)``;</span>
+<span class="sd">        * str or `Path` instance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        values : ArgsKwargs | dict[str, Any]</span>
+<span class="sd">            Input values to validate (args/kwargs or dict)</span>
+<span class="sd">        info : ValidationInfo</span>
+<span class="sd">            Pydantic validation context</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ArgsKwargs</span>
+<span class="sd">            Validated file location data as ArgsKwargs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">ArgsKwargs</span><span class="p">):</span>
+            <span class="c1"># this is invoked with dataclass __init__</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">args</span> <span class="ow">or</span> <span class="p">()</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># this is inovked as sub model by pydantic</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="p">(</span><span class="n">values</span><span class="p">,)</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># this will bypass the arg handling and data will be from the kwargs</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># this is single argument, unpack</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># ty: ignore[index-out-of-bounds]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+            <span class="c1"># 2-tuple of (netloc, path), will be handled by the code below</span>
+            <span class="n">arg</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;expect at most 2 positional arguments.&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># make sure kwargs does not conflict with arg</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_set_kwarg</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">raise_on_conflict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="ow">and</span> <span class="n">raise_on_conflict</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;keyword argument </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not allowed.&quot;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="c1"># handle input arg forms</span>
+        <span class="k">if</span> <span class="n">arg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># do nothing</span>
+            <span class="k">pass</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">arg</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;File location cannot be an empty string&quot;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="c1"># try validate as URL</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">url</span> <span class="o">=</span> <span class="n">_validate_file_loc_url</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^[A-Z]:</span><span class="se">\\</span><span class="s2">\w&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">):</span>
+                    <span class="c1"># local window path</span>
+                    <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="s2">&quot;:&quot;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+                    <span class="c1"># remote path</span>
+                    <span class="n">netloc</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                    <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;netloc&quot;</span><span class="p">,</span> <span class="n">netloc</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>  <span class="c1"># local path</span>
+                    <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># valid url</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;url&quot;</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;netloc&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">.</span><span class="n">unicode_host</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">Path</span><span class="p">):</span>
+            <span class="c1"># local path</span>
+            <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="c1"># path with netloc</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># noqa: PLR2004</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;path&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># ty: ignore[index-out-of-bounds]</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="s2">&quot;netloc&quot;</span><span class="p">,</span> <span class="n">arg</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># ty: ignore[index-out-of-bounds]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;file loc tuple requires (netloc, path), got tuple of size&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span><span class="si">}</span><span class="s2">.&quot;</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">msg</span><span class="p">),</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">arg</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="bp">cls</span> <span class="o">|</span> <span class="n">FileLoc</span><span class="p">):</span>
+            <span class="c1"># handle validated instance, just extrtact the fields</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">FileLoc</span><span class="p">):</span>
+                <span class="n">arg</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">root</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">arg</span><span class="o">.</span><span class="n">__pydantic_fields__</span><span class="p">:</span>  <span class="c1"># type: ignore[attr-defined]</span>
+                <span class="n">_set_kwarg</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;unknown file loc data type.&quot;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># update context</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">context</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="s2">&quot;local_parent_path&quot;</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">_set_kwarg</span><span class="p">(</span>
+                <span class="s2">&quot;local_parent_path&quot;</span><span class="p">,</span>
+                <span class="n">context</span><span class="p">[</span><span class="s2">&quot;local_parent_path&quot;</span><span class="p">],</span>
+                <span class="n">raise_on_conflict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;remote_parent_path&quot;</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span>
+            <span class="n">_set_kwarg</span><span class="p">(</span>
+                <span class="s2">&quot;remote_parent_path&quot;</span><span class="p">,</span>
+                <span class="n">context</span><span class="p">[</span><span class="s2">&quot;remote_parent_path&quot;</span><span class="p">],</span>
+                <span class="n">raise_on_conflict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ArgsKwargs</span><span class="p">(</span><span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_local_path</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">local_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">p</span>
+        <span class="c1"># relative path</span>
+        <span class="k">if</span> <span class="n">local_parent_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ensure_abspath</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">local_parent_path</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ensure_abspath</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_remote_path</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">remote_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">WindowsPath</span><span class="p">):</span>
+            <span class="c1"># remote window path</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;file loc does not support remote windows path&quot;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+            <span class="c1"># TODO: revisit this. may need to resolve anyways</span>
+            <span class="k">return</span> <span class="n">p</span>
+        <span class="c1"># relative path</span>
+        <span class="k">if</span> <span class="n">remote_parent_path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">Path</span><span class="p">(</span><span class="n">remote_parent_path</span><span class="p">)</span><span class="o">.</span><span class="n">is_absolute</span><span class="p">():</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;remote path shall be absolute if no remote_parent_path is set.&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="n">msg</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="c1"># TODO: note that this may not be fully absolute...</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="n">remote_parent_path</span><span class="p">)</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_path</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">hostname</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+        <span class="n">local_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">remote_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">hostname</span> <span class="ow">and</span> <span class="n">hostname</span> <span class="o">!=</span> <span class="s2">&quot;localhost&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_remote_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">remote_parent_path</span><span class="o">=</span><span class="n">remote_parent_path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_resolve_local_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">local_parent_path</span><span class="o">=</span><span class="n">local_parent_path</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_validate_resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_resolved</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+<div class="viewcode-block" id="FileLocData.url_resolved">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData.url_resolved">[docs]</a>
+    <span class="nd">@computed_field</span>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">url_resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileLocUrl</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Ensure one of URL and path is given, and compute resolved URL.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        FileLocUrl</span>
+<span class="sd">            Fully resolved file location URL</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;url or path required in file loc data.&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
+        <span class="k">assert</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_path</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">local_parent_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">local_parent_path</span><span class="p">,</span>
+            <span class="n">remote_parent_path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">remote_parent_path</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">url_resolved</span> <span class="o">=</span> <span class="n">_url_replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">url_resolved</span> <span class="o">=</span> <span class="n">_url_replace</span><span class="p">(</span>
+                <span class="n">_validate_file_loc_url</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">as_uri</span><span class="p">()),</span>
+                <span class="n">host</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">url_resolved</span></div>
+
+
+<div class="viewcode-block" id="FileLocData.netloc_resolved">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData.netloc_resolved">[docs]</a>
+    <span class="nd">@computed_field</span>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">netloc_resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The resolved netloc.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Resolved network location (empty for localhost)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_resolved</span><span class="o">.</span><span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="FileLocData.path_resolved">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLocData.html#tollan.utils.fileloc.FileLocData.path_resolved">[docs]</a>
+    <span class="nd">@computed_field</span>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">path_resolved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The resolved path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Path</span>
+<span class="sd">            Fully resolved file path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">url_resolved</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">Path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">url_resolved</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data_unresolved</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The unresolved data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str | tuple[str, Path]</span>
+<span class="sd">            Original unresolved URL string or (netloc, path) tuple</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="o">.</span><span class="n">encoded_string</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">netloc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="FileLoc">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLoc.html#tollan.utils.fileloc.FileLoc">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FileLoc</span><span class="p">(</span><span class="n">RootModel</span><span class="p">[</span><span class="n">FileLocData</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A model to hold file location info.</span>
+
+<span class="sd">    This is a simple wrapper around ``FileLocData``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">url</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The resolved URL string.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Full resolved URL as string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">url_resolved</span><span class="o">.</span><span class="n">unicode_string</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">scheme</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The URL scheme.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            URL scheme (e.g., &#39;file&#39;, &#39;http&#39;, &#39;https&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">url_resolved</span><span class="o">.</span><span class="n">scheme</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">host</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The host.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Host name or empty string for local</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">url_resolved</span><span class="o">.</span><span class="n">unicode_host</span><span class="p">()</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">netloc</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The host.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Network location (alias for host)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Path</span>
+<span class="sd">            Resolved file path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path_resolved</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">path_orig</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The original unresolved path.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Path | None</span>
+<span class="sd">            Original path before resolution, or None if not set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">path</span>
+
+<div class="viewcode-block" id="FileLoc.is_remote">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLoc.html#tollan.utils.fileloc.FileLoc.is_remote">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_remote</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if file is remote.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if file is on a remote host</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">netloc</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;localhost&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="FileLoc.is_local">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLoc.html#tollan.utils.fileloc.FileLoc.is_local">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_local</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return True if file is local.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if file is on localhost</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_remote</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="FileLoc.exists">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLoc.html#tollan.utils.fileloc.FileLoc.exists">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if file is local and exists.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if file is local and exists on filesystem</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_local</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="FileLoc.as_rsync_arg">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.FileLoc.html#tollan.utils.fileloc.FileLoc.as_rsync_arg">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_rsync_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a string suitable to use as rsync argument.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            Rsync-compatible path string (local path or &#39;host:path&#39;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_local</span><span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">as_posix</span><span class="p">()</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">netloc</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">as_rsync_arg</span><span class="p">()</span><span class="si">}</span><span class="s2">)&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="fileloc">
+<a class="viewcode-back" href="../../../api/tollan.utils.fileloc.fileloc.html#tollan.utils.fileloc.fileloc">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fileloc</span><span class="p">(</span>
+    <span class="n">loc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="nb">dict</span> <span class="o">|</span> <span class="n">FileLoc</span><span class="p">,</span>
+    <span class="n">remote_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">local_parent_path</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">revalidate</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FileLoc</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a validated `FileLoc` object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    loc : str, `~pathlib.Path`, tuple, dict, `FileLoc`</span>
+
+<span class="sd">        The file location, either remote or local.</span>
+<span class="sd">        It can take the form of the follows:</span>
+
+<span class="sd">        * URL format string. This is parsed as URL.</span>
+
+<span class="sd">        * Non-URL format string.  In this case, `loc` is interpreted as a local path,</span>
+<span class="sd">          or a remote path similar to sftp syntax: ``&lt;hostname&gt;:&lt;abspath&gt;``.</span>
+<span class="sd">          A remote relative path is not valid.</span>
+
+<span class="sd">        * `~pathlib.Path`. It is a local path.</span>
+
+<span class="sd">        * Tuple of ``(&lt;hostname&gt;, &lt;path&gt;)``. It is a remote path, unless</span>
+<span class="sd">          ``hostname`` is &quot;localhost&quot;. A remote relative path is not</span>
+<span class="sd">          valid.</span>
+
+<span class="sd">        * `FileLoc`. It is used as-is if `revalidate` is false, and re-validated with</span>
+<span class="sd">          the ``data`` attribute otherwise.</span>
+
+<span class="sd">    local_parent_path : str, `~pathlib.Path`, None</span>
+
+<span class="sd">        If not None, this is used as the parent of local</span>
+<span class="sd">        relative path. Otherwise, the current path (``pwd``) is used.</span>
+<span class="sd">        Ignored if `loc` is `~tollan.utils.FileLoc`.</span>
+
+<span class="sd">    remote_parent_path : str, `~pathlib.Path`, None</span>
+
+<span class="sd">        If not None and is absolute, this is used as the parent of remote</span>
+<span class="sd">        relative path. Otherwise, `ValueError` will be raised if a remote</span>
+<span class="sd">        relative path is given.</span>
+<span class="sd">        Ignored if `loc` is `~tollan.utils.FileLoc`.</span>
+
+<span class="sd">    revalidate : bool</span>
+<span class="sd">        If True and ``loc`` is `FileLoc` object, the data gets re-validated with new</span>
+<span class="sd">        context.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">FileLoc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">revalidate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">loc</span>
+        <span class="n">_loc</span> <span class="o">=</span> <span class="n">loc</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">data_unresolved</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_loc</span> <span class="o">=</span> <span class="n">loc</span>
+    <span class="k">return</span> <span class="n">FileLoc</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+        <span class="n">_loc</span><span class="p">,</span>
+        <span class="n">context</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;remote_parent_path&quot;</span><span class="p">:</span> <span class="n">remote_parent_path</span><span class="p">,</span>
+            <span class="s2">&quot;local_parent_path&quot;</span><span class="p">:</span> <span class="n">local_parent_path</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="129pt" height="119pt" viewBox="0.00 0.00 129.00 119.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 115)">
+<ns0:title>inheritancee7957ed3b0</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>FieldDefaults</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="../api/tollan.config.types.FieldDefaults.html#tollan.config.types.FieldDefaults" ns1:title="Descriptor for accessing model field defaults." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="101,-19 20,-19 20,0 101,0 101,-19" />
+<ns0:text text-anchor="middle" x="60.5" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">FieldDefaults</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>GenerateJsonSchema</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="../api/tollan.config.types.GenerateJsonSchema.html#tollan.config.types.GenerateJsonSchema" ns1:title="Custom JSON schema generator with type-specific serializers." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="121,-56 0,-56 0,-37 121,-37 121,-56" />
+<ns0:text text-anchor="middle" x="60.5" y="-44" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">GenerateJsonSchema</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>GenerateJsonSchema-&gt;GenerateJsonSchema</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M42,-56.08C33.01,-64.73 39.17,-74 60.5,-74 78.5,-74 85.7,-67.4 82.1,-60.15" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="83.42,-58.99 79,-56.08 80.64,-61.12 83.42,-58.99" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>PathValidator</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../api/tollan.config.types.PathValidator.html#tollan.config.types.PathValidator" ns1:title="Validator for Path types with rootpath context support." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="101,-111 20,-111 20,-92 101,-92 101,-111" />
+<ns0:text text-anchor="middle" x="60.5" y="-99" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">PathValidator</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+</ns0:g>
+</ns0:svg>

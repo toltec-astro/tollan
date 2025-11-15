@@ -1,0 +1,999 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.dict &#8212; tollan 0.1.dev71+g3366451f4.d20251115 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=57a336ce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/tollan/utils/dict';</script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev71+g3366451f4.d20251115 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../modules.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for tollan.utils.dict</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Dictionary and nested container utilities.</span>
+
+<span class="sd">This module provides utilities for working with dictionaries and nested</span>
+<span class="sd">container structures (dicts and lists), including recursive updates,</span>
+<span class="sd">flattening/unflattening, and container manipulation.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">collections.abc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">MutableSequence</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;add_to_dict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dict_from_flat_dict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dict_from_regex_match&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dict_product&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dict_to_flat_dict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rupdate&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">MT</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">MutableMapping</span>
+<span class="n">ST</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">MutableSequence</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ListOperation</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List update operations for rupdate DSL.&quot;&quot;&quot;</span>
+
+    <span class="n">UPDATE</span> <span class="o">=</span> <span class="s2">&quot;update&quot;</span>  <span class="c1"># Update existing item at index</span>
+    <span class="n">SLICE</span> <span class="o">=</span> <span class="s2">&quot;slice&quot;</span>  <span class="c1"># Slice-based modification</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ListDSL</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parsed list DSL command.</span>
+
+<span class="sd">    DSL Syntax:</span>
+<span class="sd">        Integer keys (0, 1, -1)    -&gt; Update value at index</span>
+<span class="sd">        &quot;[start:stop:step]&quot;        -&gt; Replace slice with new values</span>
+<span class="sd">        &quot;[:]&quot;                      -&gt; Replace entire list</span>
+<span class="sd">        &quot;[]&quot;                       -&gt; Extend list at end (special case)</span>
+
+<span class="sd">    Python list natively supports slice-based modification:</span>
+<span class="sd">        a = [1, 2, 3]</span>
+<span class="sd">        a[:0] = [0]      # a is [0, 1, 2, 3] (prepend)</span>
+<span class="sd">        a[1:3] = []      # Delete elements at [1:3]</span>
+<span class="sd">        a[2:2] = [10]    # Insert at position 2</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; ListDSL.parse(&quot;[:]&quot;)  # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">    ListDSL(operation=&lt;ListOperation.SLICE: &#39;slice&#39;&gt;,</span>
+<span class="sd">            slice_obj=slice(None, None, None), index=None)</span>
+<span class="sd">    &gt;&gt;&gt; ListDSL.parse(&quot;[:0]&quot;)  # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">    ListDSL(operation=&lt;ListOperation.SLICE: &#39;slice&#39;&gt;,</span>
+<span class="sd">            slice_obj=slice(None, 0, None), index=None)</span>
+<span class="sd">    &gt;&gt;&gt; ListDSL.parse(&quot;[1:3]&quot;)  # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">    ListDSL(operation=&lt;ListOperation.SLICE: &#39;slice&#39;&gt;,</span>
+<span class="sd">            slice_obj=slice(1, 3, None), index=None)</span>
+<span class="sd">    &gt;&gt;&gt; ListDSL.parse(&quot;[]&quot;)</span>
+<span class="sd">    ListDSL(operation=&lt;ListOperation.SLICE: &#39;slice&#39;&gt;, slice_obj=None, index=None)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Pattern for DSL: [start:stop:step], [], [N], [-N]</span>
+    <span class="c1"># Matches: [N], [-N], [N:M], [:M], [N:], [:], [N:M:S], []</span>
+    <span class="n">_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;^\[(?:(?P&lt;index&gt;-?\d+)|(?P&lt;start&gt;-?\d*):(?P&lt;stop&gt;-?\d*)?(?::(?P&lt;step&gt;-?\d*))?)?\]$&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">operation</span><span class="p">:</span> <span class="n">ListOperation</span>
+    <span class="n">slice_obj</span><span class="p">:</span> <span class="nb">slice</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># None means extend at end ([])</span>
+    <span class="n">index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># For UPDATE operation</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">key_str</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ListDSL</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse DSL pattern or integer index from key string.</span>
+
+<span class="sd">        Handles:</span>
+<span class="sd">        - Slice notation: &#39;[:]&#39;, &#39;[:0]&#39;, &#39;[N:M]&#39;, &#39;[N:M:S]&#39;</span>
+<span class="sd">        - Append: &#39;[]&#39;</span>
+<span class="sd">        - Integer indices: &#39;[0]&#39;, &#39;[1]&#39;, &#39;[-1]&#39; (bracket-wrapped)</span>
+<span class="sd">        - Plain integers: &#39;0&#39;, &#39;1&#39;, &#39;-1&#39;, 0, 1, -1</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key_str : str | int</span>
+<span class="sd">            Key string or integer to parse</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ListDSL | None</span>
+<span class="sd">            Parsed DSL command, or None if not recognized</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If DSL pattern is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert to string for consistent processing</span>
+        <span class="n">key_str</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span>
+
+        <span class="c1"># Try matching bracket patterns first</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_PATTERN</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Extract match groups</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()</span>
+
+            <span class="c1"># Check if it&#39;s [N] format (single integer captured by index group)</span>
+            <span class="n">index_str</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">index_str</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ListOperation</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">index_str</span><span class="p">))</span>
+
+            <span class="c1"># Otherwise it&#39;s a slice pattern</span>
+            <span class="n">start_str</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">stop_str</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">step_str</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;step&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="c1"># Check for empty brackets [] - special case for extend</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">start_str</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span>
+                <span class="ow">and</span> <span class="n">stop_str</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span>
+                <span class="ow">and</span> <span class="n">step_str</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span>
+                <span class="ow">and</span> <span class="s2">&quot;:&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">key_str</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ListOperation</span><span class="o">.</span><span class="n">SLICE</span><span class="p">,</span> <span class="n">slice_obj</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="c1"># Convert to integers for slice (empty string means None)</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">start_str</span><span class="p">)</span> <span class="k">if</span> <span class="n">start_str</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">stop_str</span><span class="p">)</span> <span class="k">if</span> <span class="n">stop_str</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">step_str</span><span class="p">)</span> <span class="k">if</span> <span class="n">step_str</span> <span class="k">else</span> <span class="kc">None</span>
+
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ListOperation</span><span class="o">.</span><span class="n">SLICE</span><span class="p">,</span> <span class="n">slice_obj</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">step</span><span class="p">))</span>
+
+        <span class="c1"># Not a bracket pattern - try as plain integer</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">ListOperation</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># Not recognized as any valid pattern</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_key</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">lst</span><span class="p">:</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+        <span class="n">default</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ListDSL</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create ListDSL from key and return value to use.</span>
+
+<span class="sd">        Delegates parsing to parse() method and validates integer indices.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        key : str | int</span>
+<span class="sd">            Key that could be slice DSL pattern or integer index.</span>
+<span class="sd">            Accepts: int (0, 1, -1), str with int (&#39;[0]&#39;, &#39;[1]&#39;, &#39;[-1]&#39;),</span>
+<span class="sd">            or slice notation (&#39;[:]&#39;, &#39;[:0]&#39;, &#39;[N:M]&#39;, &#39;[]&#39;)</span>
+<span class="sd">        lst : MutableSequence[Any]</span>
+<span class="sd">            The list being updated</span>
+<span class="sd">        default : Any</span>
+<span class="sd">            Default value to use for new items</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[ListDSL, object]</span>
+<span class="sd">            (ListDSL instance, value to use for merging)</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If key is invalid (not DSL pattern or integer)</span>
+<span class="sd">        IndexError</span>
+<span class="sd">            If integer index is out of range</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Delegate parsing to parse()</span>
+        <span class="n">dsl</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dsl</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid list key: </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">. Use integer index or slice notation &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(&#39;[:]&#39;, &#39;[:0]&#39;, &#39;[N:M]&#39;, &#39;[]&#39;)&quot;</span>
+            <span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="c1"># For UPDATE operations (integer indices), validate range and get existing value</span>
+        <span class="k">if</span> <span class="n">dsl</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">ListOperation</span><span class="o">.</span><span class="n">UPDATE</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">dsl</span><span class="o">.</span><span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># UPDATE operation always has index</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">existing_value</span> <span class="o">=</span> <span class="n">lst</span><span class="p">[</span><span class="n">dsl</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;List index </span><span class="si">{</span><span class="n">dsl</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s2"> out of range (length: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">dsl</span><span class="p">,</span> <span class="n">existing_value</span>
+
+        <span class="c1"># For SLICE operations, return default value</span>
+        <span class="k">return</span> <span class="n">dsl</span><span class="p">,</span> <span class="n">default</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lst</span><span class="p">:</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply operation to list.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lst : MutableSequence[Any]</span>
+<span class="sd">            The list to modify</span>
+<span class="sd">        value : Any</span>
+<span class="sd">            The value to apply</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if this was a slice operation (no further merging needed),</span>
+<span class="sd">            False if this was an UPDATE operation (may need further merging)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">==</span> <span class="n">ListOperation</span><span class="o">.</span><span class="n">SLICE</span><span class="p">:</span>
+            <span class="c1"># Handle slice assignment</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Special case: [] means extend at end</span>
+                <span class="n">slice_obj</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">slice_obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_obj</span>
+
+            <span class="c1"># Wrap scalar as sequence for slice assignment</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">ST</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span><span class="p">]</span>
+            <span class="n">lst</span><span class="p">[</span><span class="n">slice_obj</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">return</span> <span class="kc">True</span>  <span class="c1"># Slice operation complete, no merging</span>
+
+        <span class="c1"># UPDATE operation - don&#39;t modify list here, just return False</span>
+        <span class="c1"># The value will be merged in rupdate</span>
+        <span class="k">return</span> <span class="kc">False</span>  <span class="c1"># May need merging</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">list_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">slice</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert DSL operation to slice for list access.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        list_length : int</span>
+<span class="sd">            Current length of the list being updated</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        slice</span>
+<span class="sd">            Slice object for list modification</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Special case: [] means extend at end</span>
+            <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="n">list_length</span><span class="p">,</span> <span class="n">list_length</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">slice_obj</span>
+
+
+<div class="viewcode-block" id="rupdate">
+<a class="viewcode-back" href="../../../api/tollan.utils.dict.rupdate.html#tollan.utils.dict.rupdate">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rupdate</span><span class="p">(</span>
+    <span class="n">d</span><span class="p">:</span> <span class="n">MutableMapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">MutableSequence</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
+    <span class="n">u</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">copy_subdict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Update dict recursively.</span>
+
+<span class="sd">    This will update `d` with items in `u` in a recursive fashion.</span>
+
+<span class="sd">    `d` can be either list or dict. `u` has to be dict where int</span>
+<span class="sd">    keys can be used to identify list items.</span>
+
+<span class="sd">    When updating list, slice notation in brackets can be used for</span>
+<span class="sd">    slice-based modifications following Python&#39;s native list slice syntax.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    d : dict, list</span>
+<span class="sd">        The container to be updated</span>
+
+<span class="sd">    u : dict</span>
+<span class="sd">        The update dict.</span>
+
+<span class="sd">    copy_subdict : bool</span>
+<span class="sd">        If True, subdicts in `u` will get copied to `d`, such that</span>
+<span class="sd">        further change in `d` will not propagate back to `u`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+<span class="sd">        Dict `d` is updated in place.</span>
+
+<span class="sd">    List DSL Syntax</span>
+<span class="sd">    ---------------</span>
+<span class="sd">    Integer keys (0, 1, -1):</span>
+<span class="sd">        Update value at index (e.g., {0: &#39;new&#39;} replaces first item)</span>
+
+<span class="sd">    Slice notation keys:</span>
+<span class="sd">        &quot;[:]&quot;      : Replace entire list</span>
+<span class="sd">        &quot;[:0]&quot;     : Prepend to list</span>
+<span class="sd">        &quot;[N:M]&quot;    : Replace slice [N:M] (empty list deletes elements)</span>
+<span class="sd">        &quot;[N:N]&quot;    : Insert at position N</span>
+<span class="sd">        &quot;[]&quot;       : Extend list at end (special case)</span>
+
+<span class="sd">    Chaining Operations:</span>
+<span class="sd">        Multiple operations can be combined in a single rupdate call.</span>
+<span class="sd">        Operations are applied in dict iteration order (Python 3.7+).</span>
+<span class="sd">        Index-based operations refer to the current state after previous</span>
+<span class="sd">        operations have been applied.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; d = {&quot;items&quot;: [1, 2, 3]}</span>
+<span class="sd">    &gt;&gt;&gt; rupdate(d, {&quot;items&quot;: {&quot;[]&quot;: 4}})  # Extend at end</span>
+<span class="sd">    &gt;&gt;&gt; d[&quot;items&quot;]</span>
+<span class="sd">    [1, 2, 3, 4]</span>
+
+<span class="sd">    &gt;&gt;&gt; d = {&quot;items&quot;: [1, 2, 3]}</span>
+<span class="sd">    &gt;&gt;&gt; rupdate(d, {&quot;items&quot;: {&quot;[:0]&quot;: 0}})  # Prepend</span>
+<span class="sd">    &gt;&gt;&gt; d[&quot;items&quot;]</span>
+<span class="sd">    [0, 1, 2, 3]</span>
+
+<span class="sd">    &gt;&gt;&gt; d = {&quot;items&quot;: [1, 2, 3, 4]}</span>
+<span class="sd">    &gt;&gt;&gt; rupdate(d, {&quot;items&quot;: {&quot;[1:3]&quot;: [10, 20]}})  # Replace slice</span>
+<span class="sd">    &gt;&gt;&gt; d[&quot;items&quot;]</span>
+<span class="sd">    [1, 10, 20, 4]</span>
+
+<span class="sd">    &gt;&gt;&gt; d = {&quot;items&quot;: [1, 2, 3, 4]}</span>
+<span class="sd">    &gt;&gt;&gt; rupdate(d, {&quot;items&quot;: {&quot;[1:3]&quot;: []}})  # Delete slice</span>
+<span class="sd">    &gt;&gt;&gt; d[&quot;items&quot;]</span>
+<span class="sd">    [1, 4]</span>
+
+<span class="sd">    &gt;&gt;&gt; d = {&quot;items&quot;: [1, 2, 3]}</span>
+<span class="sd">    &gt;&gt;&gt; rupdate(d, {&quot;items&quot;: {0: 10}})  # Update at index</span>
+<span class="sd">    &gt;&gt;&gt; d[&quot;items&quot;]</span>
+<span class="sd">    [10, 2, 3]</span>
+
+<span class="sd">    &gt;&gt;&gt; d = {&quot;items&quot;: [1, 2, 3]}</span>
+<span class="sd">    &gt;&gt;&gt; rupdate(d, {&quot;items&quot;: {&quot;[]&quot;: [4, 5], -1: 10}})  # Chain: extend then update</span>
+<span class="sd">    &gt;&gt;&gt; d[&quot;items&quot;]</span>
+<span class="sd">    [1, 2, 3, 4, 10]</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Follows Python&#39;s native list slice assignment behavior.</span>
+
+<span class="sd">    **Operation Ordering**: Since Python 3.7+, dict insertion order is preserved.</span>
+<span class="sd">    Operations are applied in the order they appear in the update dict. When</span>
+<span class="sd">    chaining operations, index-based operations (like -1) refer to the list</span>
+<span class="sd">    state after previous operations have been applied.</span>
+
+<span class="sd">    See [1]_.</span>
+
+<span class="sd">    .. [1] https://stackoverflow.com/a/52099238/1824372</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">u</span><span class="p">)]</span>
+
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="c1"># here d can only be list or dict</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">u</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">u</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># determine default for new subdicts</span>
+            <span class="c1"># when copy_subdict is True, we create new dicts for subdicts in u</span>
+            <span class="c1"># when copy_subdict is False, we assign subdicts in u directly</span>
+            <span class="n">default</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">copy_subdict</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">MT</span><span class="p">):</span>
+                <span class="c1"># handle d as dict</span>
+                <span class="n">dv</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>  <span class="c1"># ty: ignore[no-matching-overload]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">ST</span><span class="p">):</span>
+                <span class="c1"># handle d as list - use ListDSL for all list key handling</span>
+                <span class="n">dsl</span><span class="p">,</span> <span class="n">dv</span> <span class="o">=</span> <span class="n">ListDSL</span><span class="o">.</span><span class="n">from_key</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+                <span class="c1"># Apply operation and check if merging is needed</span>
+                <span class="k">if</span> <span class="n">dsl</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                    <span class="c1"># Slice operation - no further merging needed</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># UPDATE operation - dsl.index has the index, dv has current value</span>
+                <span class="c1"># We&#39;ll use dsl.index as k for the merging logic below</span>
+                <span class="k">assert</span> <span class="n">dsl</span><span class="o">.</span><span class="n">index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># UPDATE operation always has index</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">dsl</span><span class="o">.</span><span class="n">index</span>  <span class="c1"># noqa: PLW2901</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Cannot update </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with rupdate&quot;</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="c1"># now dv is the current value at the key</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">MT</span><span class="p">):</span>
+                <span class="c1"># u[k] is not a dict, nothing to merge, so just set it</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># now v = u[k] is dict</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dv</span><span class="p">,</span> <span class="n">MT</span> <span class="o">|</span> <span class="n">ST</span><span class="p">):</span>
+                <span class="c1"># d[k] is not a container, so just set it to u[k]</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># both d[k] and u[k] are containers, push them on the stack</span>
+                <span class="c1"># to merge further</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dv</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="dict_product">
+<a class="viewcode-back" href="../../../api/tollan.utils.dict.dict_product.html#tollan.utils.dict.dict_product">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dict_product</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Cartesian product of dicts.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">x</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="dict_from_flat_dict">
+<a class="viewcode-back" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html#tollan.utils.dict.dict_from_flat_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dict_from_flat_dict</span><span class="p">(</span><span class="n">dct</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert flat dict with dotted keys to nested dict structure.</span>
+
+<span class="sd">    Uses rupdate to merge each key one at a time, handling conflicts</span>
+<span class="sd">    automatically through rupdate&#39;s merging logic.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; dict_from_flat_dict({&#39;a.b&#39;: 1, &#39;a.c&#39;: 2})</span>
+<span class="sd">    {&#39;a&#39;: {&#39;b&#39;: 1, &#39;c&#39;: 2}}</span>
+
+<span class="sd">    &gt;&gt;&gt; dict_from_flat_dict({&#39;items.0&#39;: 1, &#39;items.1&#39;: 2})</span>
+<span class="sd">    {&#39;items&#39;: {&#39;0&#39;: 1, &#39;1&#39;: 2}}</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dct : dict</span>
+<span class="sd">        Flat dictionary with dotted keys</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Nested dict with rupdate DSL patterns applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dct</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="c1"># Split on dots to create nested structure</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Build nested dict for this key</span>
+        <span class="n">nested</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">nested</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">current</span><span class="p">[</span><span class="n">part</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">current</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+        <span class="n">current</span><span class="p">[</span><span class="n">parts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="c1"># Merge using rupdate (handles ListDSL automatically)</span>
+        <span class="n">rupdate</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">nested</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="dict_to_flat_dict">
+<a class="viewcode-back" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html#tollan.utils.dict.dict_to_flat_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dict_to_flat_dict</span><span class="p">(</span>  <span class="c1"># noqa: C901</span>
+    <span class="n">dct</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">key_prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">list_index_as_key</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return dict from dict with nested dicts.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_dk</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lk</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">list_index_as_key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_dk</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">]&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_nested_kvs</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">kvs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="p">((</span><span class="n">_lk</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">items</span> <span class="o">=</span> <span class="p">((</span><span class="n">_dk</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">])</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">_nested_kvs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span> <span class="o">|</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="n">kvs</span><span class="o">.</span><span class="n">extend</span><span class="p">([(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">result</span><span class="p">])</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                    <span class="n">kvs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">pass</span>
+            <span class="k">return</span> <span class="n">kvs</span>
+        <span class="c1"># leaf</span>
+        <span class="k">return</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dct</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;only dict is allowed as input.&quot;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">kvs</span> <span class="o">=</span> <span class="n">_nested_kvs</span><span class="p">(</span><span class="n">dct</span><span class="p">)</span>
+    <span class="c1"># build the dict</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kvs</span><span class="p">:</span>
+        <span class="n">_k</span> <span class="o">=</span> <span class="n">key_prefix</span> <span class="o">+</span> <span class="n">k</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">_k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<div class="viewcode-block" id="add_to_dict">
+<a class="viewcode-back" href="../../../api/tollan.utils.dict.add_to_dict.html#tollan.utils.dict.add_to_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_to_dict</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="n">MutableMapping</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">exist_ok</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a decorator to add decorated item to dict.</span>
+
+<span class="sd">    When key is callable, it generate the actual key by</span>
+<span class="sd">    invoking it with the decorated item.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">thing</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="n">_key</span> <span class="o">=</span> <span class="n">key</span><span class="p">(</span><span class="n">thing</span><span class="p">)</span> <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">else</span> <span class="n">key</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">exist_ok</span> <span class="ow">and</span> <span class="n">_key</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;key=</span><span class="si">{</span><span class="n">_key</span><span class="si">}</span><span class="s2"> exist.&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">thing</span>
+        <span class="k">return</span> <span class="n">thing</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="dict_from_regex_match">
+<a class="viewcode-back" href="../../../api/tollan.utils.dict.dict_from_regex_match.html#tollan.utils.dict.dict_from_regex_match">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">dict_from_regex_match</span><span class="p">(</span>
+    <span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">Pattern</span><span class="p">,</span>
+    <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">type_dispatcher</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a dict from matching `pattern` to `string`.</span>
+
+<span class="sd">    If match failed, returns None.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pattern : str, `re.Pattern`</span>
+<span class="sd">        The regex that matches to the `input_`.</span>
+
+<span class="sd">    input_ : str</span>
+<span class="sd">        The string to be matched.</span>
+
+<span class="sd">    type_dispatcher : dict</span>
+<span class="sd">        This specifies how the matched group values are handled after being</span>
+<span class="sd">        extracted.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">type_dispatcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">type_dispatcher</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">string</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">m</span><span class="o">.</span><span class="n">groupdict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">type_dispatcher</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">type_dispatcher</span><span class="p">[</span><span class="n">k</span><span class="p">](</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

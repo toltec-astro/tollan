@@ -1,0 +1,815 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.utils.yaml &#8212; tollan 0.1.dev71+g3366451f4.d20251115 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=57a336ce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/tollan/utils/yaml';</script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev71+g3366451f4.d20251115 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../modules.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for tollan.utils.yaml</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">YAML utilities for tollan.</span>
+
+<span class="sd">This module provides custom YAML dumpers and loaders with support for</span>
+<span class="sd">astronomy-specific types (Time, Quantity, SkyCoord).</span>
+
+<span class="sd">Examples</span>
+<span class="sd">--------</span>
+<span class="sd">&gt;&gt;&gt; from tollan.utils.yaml import yaml_dump</span>
+<span class="sd">&gt;&gt;&gt; from astropy.time import Time</span>
+<span class="sd">&gt;&gt;&gt; from astropy import units as u</span>
+<span class="sd">&gt;&gt;&gt; data = {&#39;time&#39;: Time(&#39;2020-01-01&#39;), &#39;length&#39;: 5.0 * u.m}</span>
+<span class="sd">&gt;&gt;&gt; yaml_str = yaml_dump(data)</span>
+<span class="sd">&gt;&gt;&gt; print(yaml_str)</span>
+<span class="sd">length: 5.0 m</span>
+<span class="sd">time: &#39;2020-01-01T00:00:00.000&#39;</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">contextlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">is_dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">overload</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">astropy.units</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">u</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.coordinates</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseCoordinateFrame</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.time</span><span class="w"> </span><span class="kn">import</span> <span class="n">Time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">yaml.dumper</span><span class="w"> </span><span class="kn">import</span> <span class="n">SafeDumper</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">io</span><span class="w"> </span><span class="kn">import</span> <span class="n">TextIOBase</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">yaml.nodes</span><span class="w"> </span><span class="kn">import</span> <span class="n">Node</span><span class="p">,</span> <span class="n">ScalarNode</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;YamlDumper&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;add_numpy_scalar_representers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yaml_dump&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yaml_load&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yaml_loads&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="YamlDumper">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.YamlDumper.html#tollan.utils.yaml.YamlDumper">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">YamlDumper</span><span class="p">(</span><span class="n">SafeDumper</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    YAML dumper with support for astronomy types and common scientific objects.</span>
+
+<span class="sd">    This dumper extends PyYAML&#39;s SafeDumper to handle:</span>
+
+<span class="sd">    - Astropy Time objects (serialized as ISO-8601 strings)</span>
+<span class="sd">    - Astropy Quantity objects (serialized as strings with units, only scalar supported)</span>
+<span class="sd">    - Coordinate frames (serialized as frame names)</span>
+<span class="sd">    - Path-like objects (serialized as strings)</span>
+<span class="sd">    - Enums (serialized as strings)</span>
+<span class="sd">    - NumPy numeric types (as native Python types)</span>
+<span class="sd">    - Dataclasses (serialized as dicts)</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If a non-scalar Quantity or Time is encountered.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="YamlDumper.represent_data">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.YamlDumper.html#tollan.utils.yaml.YamlDumper.represent_data">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">represent_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Node</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Represent data for YAML serialization, handling astronomy and scientific types.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : object</span>
+<span class="sd">            The data to represent.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Node</span>
+<span class="sd">            YAML node representation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">BaseCoordinateFrame</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">represent_data</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_dataclass</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">represent_data</span><span class="p">(</span><span class="n">asdict</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">represent_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+    <span class="n">_str_block_style_min_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimum length of str to format as block.&quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_should_use_block</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determine if a string should be represented in block style.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        value : str</span>
+<span class="sd">            The string to check.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            True if block style should be used, otherwise False.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">value</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_str_block_style_min_length</span>
+
+<div class="viewcode-block" id="YamlDumper.represent_scalar">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.YamlDumper.html#tollan.utils.yaml.YamlDumper.represent_scalar">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">represent_scalar</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">style</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScalarNode</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Represent a scalar value, using block style for long or multiline strings.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        tag : str</span>
+<span class="sd">            YAML tag.</span>
+<span class="sd">        value : str</span>
+<span class="sd">            Scalar value.</span>
+<span class="sd">        style : str, optional</span>
+<span class="sd">            YAML style indicator. If None, block style is used for</span>
+<span class="sd">            long/multiline strings.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ScalarNode</span>
+<span class="sd">            Scalar node for YAML output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">style</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_use_block</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_style</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">represent_scalar</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="YamlDumper.ignore_aliases">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.YamlDumper.html#tollan.utils.yaml.YamlDumper.ignore_aliases">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ignore_aliases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Avoid generating YAML aliases (anchors).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : object</span>
+<span class="sd">            The data object (unused)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            Always True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scalar_quantity_representer</span><span class="p">(</span><span class="n">dumper</span><span class="p">:</span> <span class="n">YamlDumper</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScalarNode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represent a scalar astropy Quantity as a string with units.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dumper : YamlDumper</span>
+<span class="sd">        The YAML dumper instance.</span>
+<span class="sd">    q : astropy.units.Quantity</span>
+<span class="sd">        The quantity to represent. Must be scalar.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ScalarNode</span>
+<span class="sd">        YAML scalar node with string representation.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the quantity is not scalar.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">():</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Quantity is not scalar: </span><span class="si">{</span><span class="n">q</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dumper</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">to_string</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_scalar_astropy_time_representer</span><span class="p">(</span><span class="n">dumper</span><span class="p">:</span> <span class="n">YamlDumper</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Time</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScalarNode</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Represent a scalar astropy Time as an ISO-8601 string.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dumper : YamlDumper</span>
+<span class="sd">        The YAML dumper instance.</span>
+<span class="sd">    t : astropy.time.Time</span>
+<span class="sd">        The time to represent. Must be scalar.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ScalarNode</span>
+<span class="sd">        YAML scalar node with ISO-8601 string.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the time is not scalar.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">isot</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Time is not scalar: </span><span class="si">{</span><span class="n">t</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>  <span class="c1"># noqa: TRY004</span>
+    <span class="k">return</span> <span class="n">dumper</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">isot</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_path_representer</span><span class="p">(</span><span class="n">dumper</span><span class="p">:</span> <span class="n">YamlDumper</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScalarNode</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">dumper</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_enum_representer</span><span class="p">(</span><span class="n">dumper</span><span class="p">:</span> <span class="n">YamlDumper</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="n">Enum</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ScalarNode</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">dumper</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+
+
+<span class="n">YamlDumper</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="n">u</span><span class="o">.</span><span class="n">Quantity</span><span class="p">,</span> <span class="n">_scalar_quantity_representer</span><span class="p">)</span>
+<span class="n">YamlDumper</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="n">Time</span><span class="p">,</span> <span class="n">_scalar_astropy_time_representer</span><span class="p">)</span>
+<span class="n">YamlDumper</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="n">Path</span><span class="p">,</span> <span class="n">_path_representer</span><span class="p">)</span>
+<span class="n">YamlDumper</span><span class="o">.</span><span class="n">add_multi_representer</span><span class="p">(</span><span class="n">Enum</span><span class="p">,</span> <span class="n">_enum_representer</span><span class="p">)</span>
+
+
+<span class="c1"># from astropy: https://github.com/astropy/astropy/blob/main/astropy/io/misc/yaml.py</span>
+<div class="viewcode-block" id="add_numpy_scalar_representers">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html#tollan.utils.yaml.add_numpy_scalar_representers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_numpy_scalar_representers</span><span class="p">(</span><span class="n">dumper_cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">SafeDumper</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add representers for numpy types to the given dumper class.&quot;&quot;&quot;</span>
+    <span class="n">dumper_cls</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_bool</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span>
+    <span class="n">dumper_cls</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">str_</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_str</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span>
+    <span class="k">for</span> <span class="n">np_type</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">intc</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">intp</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">,</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">uint64</span><span class="p">,</span>
+    <span class="p">]:</span>
+        <span class="n">dumper_cls</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span>
+            <span class="n">np_type</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_int</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">item</span><span class="p">()),</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">np_type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">longdouble</span><span class="p">]:</span>
+        <span class="n">dumper_cls</span><span class="o">.</span><span class="n">add_representer</span><span class="p">(</span><span class="n">np_type</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">represent_float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span></div>
+
+
+
+<span class="n">add_numpy_scalar_representers</span><span class="p">(</span><span class="n">YamlDumper</span><span class="p">)</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">yaml_dump</span><span class="p">(</span><span class="n">data</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">yaml_dump</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">TextIOBase</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="yaml_dump">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.yaml_dump.html#tollan.utils.yaml.yaml_dump">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">yaml_dump</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+    <span class="n">output</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">TextIOBase</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Serialize data as YAML and write to a file, stream, or return as string.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data : object</span>
+<span class="sd">        The data to serialize.</span>
+<span class="sd">    output : str or os.PathLike or TextIOBase or None, optional</span>
+<span class="sd">        Output destination:</span>
+<span class="sd">        - None: return YAML as string</span>
+<span class="sd">        - str or PathLike: write to file</span>
+<span class="sd">        - TextIOBase: write to stream</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">        Additional keyword arguments passed to `yaml.dump`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str or None</span>
+<span class="sd">        YAML string if output is None, otherwise None.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If output is not a valid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">)):</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;w&quot;</span><span class="p">)</span>  <span class="c1"># noqa: SIM115</span>
+    <span class="k">elif</span> <span class="n">output</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">):</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">nullcontext</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;output has to be str, PathLike, TextIO, or None.&quot;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">ctx</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">Dumper</span><span class="o">=</span><span class="n">YamlDumper</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+
+
+
+<div class="viewcode-block" id="yaml_load">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.yaml_load.html#tollan.utils.yaml.yaml_load">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">yaml_load</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span> <span class="o">|</span> <span class="n">TextIOBase</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load YAML data from a file, stream, or string.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    source : str or os.PathLike or TextIOBase</span>
+<span class="sd">        The YAML source. Can be:</span>
+<span class="sd">        - File path: read from file</span>
+<span class="sd">        - File object: read from stream</span>
+<span class="sd">        - String: parse as YAML</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    object</span>
+<span class="sd">        Parsed YAML data.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError</span>
+<span class="sd">        If source is not a valid type.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Handle file objects</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;read&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">yaml_loads</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_read_filepath</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">Path</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="o">.</span><span class="n">open</span><span class="p">()</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">yaml_loads</span><span class="p">(</span><span class="n">fo</span><span class="p">)</span>
+
+    <span class="c1"># Try as file path if it&#39;s a Path or looks like a file</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">PathLike</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_read_filepath</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="c1"># For strings, check if it&#39;s a file that exists</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span> <span class="ow">and</span> <span class="n">path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">_read_filepath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="c1"># Not a valid path, treat as YAML string</span>
+        <span class="k">return</span> <span class="n">yaml_loads</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+    <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;source has to be PathLike, TextIO, or str.&quot;</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="yaml_loads">
+<a class="viewcode-back" href="../../../api/tollan.utils.yaml.yaml_loads.html#tollan.utils.yaml.yaml_loads">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">yaml_loads</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">TextIOBase</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load YAML data from a string or stream.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    stream : str or TextIOBase</span>
+<span class="sd">        YAML string or stream to parse.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    object</span>
+<span class="sd">        Parsed YAML data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

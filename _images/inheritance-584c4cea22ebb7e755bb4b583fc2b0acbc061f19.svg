@@ -1,0 +1,119 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="396pt" height="138pt" viewBox="0.00 0.00 396.00 138.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 134)">
+<ns0:title>inheritance1c2e4d6574</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>BaseModel</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="!!! abstract &quot;Usage Documentation&quot;">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="71,-111 0,-111 0,-92 71,-92 71,-111" />
+<ns0:text text-anchor="middle" x="35.5" y="-99" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">BaseModel</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>FrozenBaseModel</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../api/tollan.config.FrozenBaseModel.html#tollan.config.FrozenBaseModel" ns1:title="Base model class with immutability and YAML support." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="210,-130 107,-130 107,-111 210,-111 210,-130" />
+<ns0:text text-anchor="middle" x="158.5" y="-118" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">FrozenBaseModel</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>BaseModel-&gt;FrozenBaseModel</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M71.17,-106.94C80.66,-108.43 91.18,-110.09 101.53,-111.71" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="101.38,-113.46 106.59,-112.51 101.92,-110 101.38,-113.46" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>RuntimeInfo</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="../api/tollan.config.RuntimeInfo.html#tollan.config.RuntimeInfo" ns1:title="Runtime environment information." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="197,-93 120,-93 120,-74 197,-74 197,-93" />
+<ns0:text text-anchor="middle" x="158.5" y="-81" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RuntimeInfo</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>BaseModel-&gt;RuntimeInfo</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M71.17,-96.34C84.73,-94.32 100.42,-91.99 114.68,-89.87" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="115.17,-91.57 119.86,-89.1 114.65,-88.1 115.17,-91.57" />
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>ConfigHandler</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler" ns1:title="Base class for domain-specific configuration handlers." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="360,-93 274,-93 274,-74 360,-74 360,-93" />
+<ns0:text text-anchor="middle" x="317" y="-81" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConfigHandler</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>Generic</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="https://docs.python.org/3/library/typing.html#typing.Generic" ns1:title="Abstract base class for generic types." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="185.5,-56 131.5,-56 131.5,-37 185.5,-37 185.5,-56" />
+<ns0:text text-anchor="middle" x="158.5" y="-44" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Generic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>Generic-&gt;ConfigHandler</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M185.69,-52.69C208.8,-58.15 242.97,-66.23 270.53,-72.75" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="270.33,-74.5 275.59,-73.95 271.13,-71.09 270.33,-74.5" />
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>RuntimeConfig</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="../api/tollan.config.RuntimeConfig.html#tollan.config.RuntimeConfig" ns1:title="Base configuration model with runtime info." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="361.5,-130 272.5,-130 272.5,-111 361.5,-111 361.5,-130" />
+<ns0:text text-anchor="middle" x="317" y="-118" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RuntimeConfig</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>Generic-&gt;RuntimeConfig</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M185.72,-53.9C193.87,-56.84 202.63,-60.68 210,-65.5 229.2,-78.06 226.15,-90.99 246,-102.5 252.53,-106.28 259.85,-109.28 267.23,-111.66" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="267.05,-113.43 272.35,-113.2 268.07,-110.08 267.05,-113.43" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>RuntimeContext</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="../api/tollan.config.RuntimeContext.html#tollan.config.RuntimeContext" ns1:title="Entry point for runtime-aware configuration management." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="365,-56 269,-56 269,-37 365,-37 365,-56" />
+<ns0:text text-anchor="middle" x="317" y="-44" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">RuntimeContext</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>Generic-&gt;RuntimeContext</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M185.69,-46.5C206.9,-46.5 237.45,-46.5 263.64,-46.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="263.82,-48.25 268.82,-46.5 263.82,-44.75 263.82,-48.25" />
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>SubConfigKeyTransformer</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:href="../api/tollan.config.SubConfigKeyTransformer.html#tollan.config.SubConfigKeyTransformer" ns1:title="Mixin for handlers that extract a subkey from runtime config." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="388,-19 246,-19 246,0 388,0 388,-19" />
+<ns0:text text-anchor="middle" x="317" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">SubConfigKeyTransformer</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>Generic-&gt;SubConfigKeyTransformer</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M185.69,-40.31C208.8,-34.85 242.97,-26.77 270.53,-20.25" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="271.13,-21.91 275.59,-19.05 270.33,-18.5 271.13,-21.91" />
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>FrozenBaseModel-&gt;RuntimeConfig</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M210.31,-120.5C228.59,-120.5 249.15,-120.5 267.24,-120.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="267.28,-122.25 272.28,-120.5 267.28,-118.75 267.28,-122.25" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

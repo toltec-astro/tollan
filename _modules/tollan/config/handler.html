@@ -1,0 +1,866 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.config.handler &#8212; tollan 0.1.dev71+g3366451f4.d20251115 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=57a336ce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/tollan/config/handler';</script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev71+g3366451f4.d20251115 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../modules.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for tollan.config.handler</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Configuration handler classes for domain-specific config management.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">ClassVar</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">LiteralString</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">ensure_cls_attr_from_type_args</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.runtime_context</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeContext</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime_context</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeConfig</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.sources</span><span class="w"> </span><span class="kn">import</span> <span class="n">DictConfigT</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ConfigHandler&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SubConfigKeyTransformer&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="ConfigHandler">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfigHandler</span><span class="p">[</span>
+    <span class="n">ConfigModelT</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span>
+    <span class="n">RuntimeContextT</span><span class="p">:</span> <span class="n">RuntimeContext</span> <span class="o">=</span> <span class="n">RuntimeContext</span><span class="p">,</span>
+<span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for domain-specific configuration handlers.</span>
+
+<span class="sd">    ConfigHandler provides a pattern for consuming RuntimeContext and validating</span>
+<span class="sd">    its raw config against domain-specific models. It offers:</span>
+
+<span class="sd">    - Lazy-loaded, cached domain config via `.config` property</span>
+<span class="sd">    - Auto-reset cached properties when config updates</span>
+<span class="sd">    - Unified interface for specialized config management</span>
+<span class="sd">    - Subconfig extraction via SubConfigKeyTransformer pattern</span>
+
+<span class="sd">    Type Parameters:</span>
+<span class="sd">        ConfigModelT: Domain config model class (Pydantic BaseModel)</span>
+<span class="sd">        RuntimeContextT: RuntimeContext for type hint only (default: RuntimeContext)</span>
+
+<span class="sd">    Subclasses must:</span>
+<span class="sd">        - Define ConfigModelT type parameter</span>
+<span class="sd">        - Implement prepare_config_data() to extract config from runtime config</span>
+<span class="sd">        - Implement prepare_runtime_config_data() to wrap config for updates</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from pydantic import BaseModel</span>
+<span class="sd">        &gt;&gt;&gt; from tollan.config import ConfigHandler, RuntimeContext</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; class MyConfigModel(BaseModel):</span>
+<span class="sd">        ...     database_url: str</span>
+<span class="sd">        ...     max_connections: int = 10</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; class MyConfigHandler(ConfigHandler[MyConfigModel]):</span>
+<span class="sd">        ...     @classmethod</span>
+<span class="sd">        ...     def prepare_config_data(cls, runtime_config):</span>
+<span class="sd">        ...         return {</span>
+<span class="sd">        ...             &quot;database_url&quot;: &quot;postgresql://localhost/db&quot;,</span>
+<span class="sd">        ...             &quot;max_connections&quot;: 20,</span>
+<span class="sd">        ...         }</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; rc = RuntimeContext(config_sources={&quot;format&quot;: &quot;dict&quot;, &quot;source&quot;: {}})</span>
+<span class="sd">        &gt;&gt;&gt; handler = MyConfigHandler(rc)</span>
+<span class="sd">        &gt;&gt;&gt; handler.config.database_url</span>
+<span class="sd">        &#39;postgresql://localhost/db&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">config_model_cls</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">type</span><span class="p">[</span><span class="n">ConfigModelT</span><span class="p">]]</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">_auto_cache_reset_registry</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">_rc</span><span class="p">:</span> <span class="n">RuntimeContextT</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runtime_context</span><span class="p">:</span> <span class="n">RuntimeContextT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize config handler.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        runtime_context : RuntimeContext</span>
+<span class="sd">            RuntimeContext instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rc</span> <span class="o">=</span> <span class="n">runtime_context</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Register subclass and infer config_model_cls from Generic parameter.</span>
+
+<span class="sd">        This automatically:</span>
+<span class="sd">        - Extracts ConfigModelT from Generic[ConfigModelT]</span>
+<span class="sd">        - Registers the handler class with RuntimeContext</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ensure_cls_attr_from_type_args</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="p">,</span>
+            <span class="s2">&quot;config_model_cls&quot;</span><span class="p">,</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">bound</span><span class="o">=</span><span class="n">BaseModel</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Register with RuntimeContext (avoid circular import)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">.runtime_context</span><span class="w"> </span><span class="kn">import</span> <span class="n">RuntimeContext</span>  <span class="c1"># noqa: PLC0415</span>
+
+        <span class="n">RuntimeContext</span><span class="o">.</span><span class="n">register_config_handler_cls</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="c1"># Initialize auto cache registry for this class with base &quot;config&quot; property</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_auto_cache_reset_registry</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;config&quot;</span><span class="p">}</span>
+        <span class="c1"># Scan for properties marked with auto_cache_reset decorator</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">cached_property</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span>
+                <span class="n">value</span><span class="p">,</span>
+                <span class="s2">&quot;_auto_cache_reset_marker&quot;</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_auto_cache_reset_registry</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ConfigHandler.auto_cache_reset">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.auto_cache_reset">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">auto_cache_reset</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">prop</span><span class="p">:</span> <span class="n">cached_property</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">cached_property</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mark cached property for auto-reset on config reload.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prop : cached_property</span>
+<span class="sd">            Cached property to mark</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cached_property</span>
+<span class="sd">            Same cached property (for chaining)</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            If prop is not a cached_property</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            &gt;&gt;&gt; from functools import cached_property</span>
+<span class="sd">            &gt;&gt;&gt; from pydantic import BaseModel</span>
+<span class="sd">            &gt;&gt;&gt; class MyConfig(BaseModel):</span>
+<span class="sd">            ...     value: str = &quot;test&quot;</span>
+<span class="sd">            &gt;&gt;&gt; class MyHandler(ConfigHandler[MyConfig]):</span>
+<span class="sd">            ...     @classmethod</span>
+<span class="sd">            ...     def prepare_config_data(cls, runtime_config):</span>
+<span class="sd">            ...         return {&quot;value&quot;: &quot;test&quot;}</span>
+<span class="sd">            ...     @ConfigHandler.auto_cache_reset</span>
+<span class="sd">            ...     @cached_property</span>
+<span class="sd">            ...     def expensive_computation(self):</span>
+<span class="sd">            ...         return &quot;computed&quot;</span>
+<span class="sd">            &gt;&gt;&gt; # Property will auto-reset when config updates</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prop</span><span class="p">,</span> <span class="n">cached_property</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;auto_cache_reset can only be used on cached_property.&quot;</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="c1"># Mark the property for auto-reset by adding an attribute</span>
+        <span class="c1"># The actual registration happens in __init_subclass__</span>
+        <span class="c1"># when we know the owner class</span>
+        <span class="n">prop</span><span class="o">.</span><span class="n">_auto_cache_reset_marker</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="k">return</span> <span class="n">prop</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the underlying runtime context.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            RuntimeContext instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rc</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">runtime_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the underlying runtime config model.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            RuntimeConfig instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rc</span><span class="o">.</span><span class="n">config</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">runtime_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the runtime info.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Runtime info instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rc</span><span class="o">.</span><span class="n">runtime_info</span>
+
+    <span class="c1"># note the cache is auto-reset as registered in __init_subclass__</span>
+<div class="viewcode-block" id="ConfigHandler.config">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.config">[docs]</a>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigModelT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Lazy-loaded, cached domain config.</span>
+
+<span class="sd">        Calls load_config() on first access and caches the result.</span>
+<span class="sd">        Cache is cleared when update_config() is called.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Validated config model instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_config</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="ConfigHandler.prepare_config_data">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.prepare_config_data">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_config_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">runtime_config</span><span class="p">:</span> <span class="n">RuntimeConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare config data from runtime config.</span>
+
+<span class="sd">        Subclasses must implement this to extract their specific config</span>
+<span class="sd">        from the runtime config model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        runtime_config : RuntimeConfig</span>
+<span class="sd">            RuntimeConfig model instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Config data dict for validation</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotImplementedError</span>
+<span class="sd">            If not overridden by subclass</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> must implement prepare_config_data()&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConfigHandler.prepare_runtime_config_data">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.prepare_runtime_config_data">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_runtime_config_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_data</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DictConfigT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare runtime config data from config data.</span>
+
+<span class="sd">        Subclasses must implement this to wrap their config data</span>
+<span class="sd">        for updating the runtime config.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config_data : DictConfigT</span>
+<span class="sd">            Domain config data</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        DictConfigT</span>
+<span class="sd">            Runtime config data dict</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        NotImplementedError</span>
+<span class="sd">            If not overridden by subclass</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> must implement prepare_runtime_config_data()&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="n">msg</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConfigHandler.load_config">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.load_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">load_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ConfigModelT</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Load and validate config from runtime config.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">            Validated config model instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">config_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_config_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime_config</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">config_model_cls</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span>
+            <span class="n">config_data</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime_info</span><span class="o">.</span><span class="n">validation_context</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConfigHandler.update_config">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.update_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_config</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">,</span>
+        <span class="n">tier</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;override&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;override&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update config with provided config dict.</span>
+
+<span class="sd">        This wraps the config under the appropriate runtime config key</span>
+<span class="sd">        and calls update_runtime_config().</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : dict</span>
+<span class="sd">            Config data to apply</span>
+<span class="sd">        tier : Literal[&quot;override&quot;, &quot;default&quot;], optional</span>
+<span class="sd">            Update tier (&quot;override&quot; or &quot;default&quot;), by default &quot;override&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">runtime_cfg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_runtime_config_data</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_runtime_config</span><span class="p">(</span><span class="n">runtime_cfg</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ConfigHandler.update_runtime_config">
+<a class="viewcode-back" href="../../../api/tollan.config.ConfigHandler.html#tollan.config.ConfigHandler.update_runtime_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_runtime_config</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">cfg</span><span class="p">:</span> <span class="n">DictConfigT</span><span class="p">,</span>
+        <span class="n">tier</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;override&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;override&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update runtime config with provided dict.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cfg : DictConfigT</span>
+<span class="sd">            Runtime config data to apply</span>
+<span class="sd">        tier : Literal[&quot;override&quot;, &quot;default&quot;], optional</span>
+<span class="sd">            Update tier, by default &quot;override&quot;:</span>
+<span class="sd">            - &quot;override&quot;: Override existing values</span>
+<span class="sd">            - &quot;default&quot;: Use as default for unspecified values</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If tier is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rc</span><span class="o">.</span><span class="n">update_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
+        <span class="c1"># Clear auto-reset cached properties</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="k">if</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_auto_cache_reset_registry</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">prop</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_auto_cache_reset_registry</span><span class="p">[</span><span class="bp">cls</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">prop</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="n">prop</span><span class="p">]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SubConfigKeyTransformer">
+<a class="viewcode-back" href="../../../api/tollan.config.SubConfigKeyTransformer.html#tollan.config.SubConfigKeyTransformer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubConfigKeyTransformer</span><span class="p">[</span><span class="n">KeyT</span><span class="p">:</span> <span class="n">LiteralString</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mixin for handlers that extract a subkey from runtime config.</span>
+
+<span class="sd">    This provides a convenient pattern for handlers that manage a specific</span>
+<span class="sd">    section of the runtime config identified by a key.</span>
+
+<span class="sd">    The subconfig_key is automatically inferred from Literal type parameters.</span>
+
+<span class="sd">    Type Parameters:</span>
+<span class="sd">        KeyT: Literal type specifying the subconfig key</span>
+<span class="sd">            (e.g., Literal[&quot;database&quot;])</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; from typing import Literal</span>
+<span class="sd">        &gt;&gt;&gt; from pydantic import BaseModel</span>
+<span class="sd">        &gt;&gt;&gt; from tollan.config import (</span>
+<span class="sd">        ...     ConfigHandler,</span>
+<span class="sd">        ...     SubConfigKeyTransformer,</span>
+<span class="sd">        ...     RuntimeContext,</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; class DatabaseConfig(BaseModel):</span>
+<span class="sd">        ...     url: str</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; class DatabaseHandler(</span>
+<span class="sd">        ...     SubConfigKeyTransformer[Literal[&quot;database&quot;]],</span>
+<span class="sd">        ...     ConfigHandler[DatabaseConfig]</span>
+<span class="sd">        ... ):</span>
+<span class="sd">        ...     pass</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; rc = RuntimeContext(</span>
+<span class="sd">        ...     config_sources=[</span>
+<span class="sd">        ...         {</span>
+<span class="sd">        ...             &quot;format&quot;: &quot;dict&quot;,</span>
+<span class="sd">        ...             &quot;source&quot;: {&quot;database&quot;: {&quot;url&quot;: &quot;postgresql://localhost&quot;}},</span>
+<span class="sd">        ...             &quot;order&quot;: 0,</span>
+<span class="sd">        ...         }</span>
+<span class="sd">        ...     ]</span>
+<span class="sd">        ... )</span>
+<span class="sd">        &gt;&gt;&gt; handler = DatabaseHandler(rc)</span>
+<span class="sd">        &gt;&gt;&gt; handler.config.url</span>
+<span class="sd">        &#39;postgresql://localhost&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">subconfig_key</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract subconfig_key from Generic parameter.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">ensure_cls_attr_from_type_args</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="p">,</span>
+            <span class="s2">&quot;subconfig_key&quot;</span><span class="p">,</span>
+            <span class="n">max_depth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">type_filter</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SubConfigKeyTransformer.prepare_config_data">
+<a class="viewcode-back" href="../../../api/tollan.config.SubConfigKeyTransformer.html#tollan.config.SubConfigKeyTransformer.prepare_config_data">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_config_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">runtime_config</span><span class="p">:</span> <span class="n">RuntimeConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract subconfig data by key.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        runtime_config : RuntimeConfig</span>
+<span class="sd">            RuntimeConfig model instance</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Subconfig data dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract the subkey from extra fields</span>
+        <span class="c1"># RuntimeConfig uses extra=&quot;allow&quot;, so extra fields are in __pydantic_extra__</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">hasattr</span><span class="p">(</span><span class="n">runtime_config</span><span class="p">,</span> <span class="s2">&quot;__pydantic_extra__&quot;</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">runtime_config</span><span class="o">.</span><span class="n">__pydantic_extra__</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">runtime_config</span><span class="o">.</span><span class="n">__pydantic_extra__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">subconfig_key</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="c1"># Fallback: try getattr (for regular fields)</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">runtime_config</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">subconfig_key</span><span class="p">,</span> <span class="p">{})</span></div>
+
+
+<div class="viewcode-block" id="SubConfigKeyTransformer.prepare_runtime_config_data">
+<a class="viewcode-back" href="../../../api/tollan.config.SubConfigKeyTransformer.html#tollan.config.SubConfigKeyTransformer.prepare_runtime_config_data">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_runtime_config_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap config data under subconfig key.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        config_data : dict</span>
+<span class="sd">            Domain config data</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">            Runtime config data with subkey</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">subconfig_key</span><span class="p">:</span> <span class="n">config_data</span><span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

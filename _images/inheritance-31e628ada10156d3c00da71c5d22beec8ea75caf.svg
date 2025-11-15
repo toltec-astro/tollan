@@ -1,0 +1,98 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="470pt" height="138pt" viewBox="0.00 0.00 470.00 138.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 134)">
+<ns0:title>inheritance0ecc9ba6d5</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>BaseRepresenter</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="100,-130 0,-130 0,-111 100,-111 100,-130" />
+<ns0:text text-anchor="middle" x="50" y="-118" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">BaseRepresenter</ns0:text>
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>SafeRepresenter</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="234,-130 136,-130 136,-111 234,-111 234,-130" />
+<ns0:text text-anchor="middle" x="185" y="-118" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">SafeRepresenter</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>BaseRepresenter-&gt;SafeRepresenter</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M100.15,-120.5C110.1,-120.5 120.62,-120.5 130.71,-120.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="130.94,-122.25 135.94,-120.5 130.94,-118.75 130.94,-122.25" />
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>BaseResolver</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="91.5,-56 8.5,-56 8.5,-37 91.5,-37 91.5,-56" />
+<ns0:text text-anchor="middle" x="50" y="-44" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">BaseResolver</ns0:text>
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>Resolver</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="214.5,-56 155.5,-56 155.5,-37 214.5,-37 214.5,-56" />
+<ns0:text text-anchor="middle" x="185" y="-44" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Resolver</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>BaseResolver-&gt;Resolver</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M91.63,-46.5C110.32,-46.5 132.24,-46.5 150.04,-46.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="150.42,-48.25 155.42,-46.5 150.42,-44.75 150.42,-48.25" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>Emitter</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="212,-93 158,-93 158,-74 212,-74 212,-93" />
+<ns0:text text-anchor="middle" x="185" y="-81" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Emitter</ns0:text>
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>SafeDumper</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="347,-74 270,-74 270,-55 347,-55 347,-74" />
+<ns0:text text-anchor="middle" x="308.5" y="-62" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">SafeDumper</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>Emitter-&gt;SafeDumper</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M212.06,-79.42C227.36,-77.03 247.06,-73.95 264.59,-71.21" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="265.28,-72.87 269.95,-70.37 264.74,-69.42 265.28,-72.87" />
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>Resolver-&gt;SafeDumper</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M214.79,-50.77C229.68,-52.97 248.13,-55.7 264.65,-58.15" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="264.51,-59.9 269.71,-58.9 265.02,-56.44 264.51,-59.9" />
+</ns0:g>
+
+<ns0:g id="node8" class="node">
+<ns0:title>YamlDumper</ns0:title>
+<ns0:g id="a_node8"><ns0:a ns1:href="../api/tollan.utils.yaml.YamlDumper.html#tollan.utils.yaml.YamlDumper" ns1:title="YAML dumper with support for astronomy types and common scientific objects." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="462,-74 383,-74 383,-55 462,-55 462,-74" />
+<ns0:text text-anchor="middle" x="422.5" y="-62" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">YamlDumper</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge7" class="edge">
+<ns0:title>SafeDumper-&gt;YamlDumper</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M347.11,-64.5C356.85,-64.5 367.42,-64.5 377.46,-64.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="377.65,-66.25 382.65,-64.5 377.65,-62.75 377.65,-66.25" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>Serializer</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="216,-19 154,-19 154,0 216,0 216,-19" />
+<ns0:text text-anchor="middle" x="185" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Serializer</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>Serializer-&gt;SafeDumper</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M213.11,-19.09C219.99,-21.68 227.31,-24.57 234,-27.5 251.52,-35.17 270.81,-44.93 285.24,-52.51" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="284.69,-54.2 289.93,-54.99 286.33,-51.1 284.69,-54.2" />
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>SafeRepresenter-&gt;SafeDumper</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M213.14,-110.96C220.01,-108.37 227.33,-105.46 234,-102.5 251.69,-94.64 271.13,-84.53 285.56,-76.71" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="286.71,-78.08 290.26,-74.15 285.03,-75.01 286.71,-78.08" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

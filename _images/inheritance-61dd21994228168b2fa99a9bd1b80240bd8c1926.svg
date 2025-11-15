@@ -1,0 +1,104 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="371pt" height="138pt" viewBox="0.00 0.00 371.00 138.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 134)">
+<ns0:title>inheritanceca8209a93a</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>BaseModel</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:title="!!! abstract &quot;Usage Documentation&quot;">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="71,-55 0,-55 0,-36 71,-36 71,-55" />
+<ns0:text text-anchor="middle" x="35.5" y="-43" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">BaseModel</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>ConfigSourceBase</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:title="Base class for configuration sources.">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="211,-74 107,-74 107,-55 211,-55 211,-74" />
+<ns0:text text-anchor="middle" x="159" y="-62" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConfigSourceBase</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>BaseModel-&gt;ConfigSourceBase</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M71.32,-50.94C80.84,-52.43 91.41,-54.09 101.8,-55.71" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="101.67,-57.46 106.88,-56.51 102.21,-54 101.67,-57.46" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>ConfigSourceList</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../api/tollan.config.sources.ConfigSourceList.html#tollan.config.sources.ConfigSourceList" ns1:title="A list of configuration sources with conditional loading." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="208,-37 110,-37 110,-18 208,-18 208,-37" />
+<ns0:text text-anchor="middle" x="159" y="-25" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ConfigSourceList</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>BaseModel-&gt;ConfigSourceList</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M71.32,-40.34C81.65,-38.81 93.23,-37.1 104.46,-35.43" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="104.91,-37.13 109.6,-34.67 104.39,-33.67 104.91,-37.13" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>DictConfigSource</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../api/tollan.config.sources.DictConfigSource.html#tollan.config.sources.DictConfigSource" ns1:title="Configuration source from dictionary." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="355,-130 255,-130 255,-111 355,-111 355,-130" />
+<ns0:text text-anchor="middle" x="305" y="-118" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">DictConfigSource</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>ConfigSourceBase-&gt;DictConfigSource</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M180.14,-74.02C197.62,-82.11 223.7,-93.76 247,-102.5 253.35,-104.88 260.17,-107.22 266.81,-109.38" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="266.54,-111.14 271.84,-111 267.62,-107.8 266.54,-111.14" />
+</ns0:g>
+
+<ns0:g id="node5" class="node">
+<ns0:title>EnvFileConfigSource</ns0:title>
+<ns0:g id="a_node5"><ns0:a ns1:href="../api/tollan.config.sources.EnvFileConfigSource.html#tollan.config.sources.EnvFileConfigSource" ns1:title="Configuration source from .env file." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="363,-93 247,-93 247,-74 363,-74 363,-93" />
+<ns0:text text-anchor="middle" x="305" y="-81" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">EnvFileConfigSource</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>ConfigSourceBase-&gt;EnvFileConfigSource</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M211.17,-71.25C221.04,-72.55 231.48,-73.93 241.65,-75.27" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="241.43,-77.01 246.62,-75.93 241.89,-73.54 241.43,-77.01" />
+</ns0:g>
+
+<ns0:g id="node6" class="node">
+<ns0:title>ListConfigSource</ns0:title>
+<ns0:g id="a_node6"><ns0:a ns1:href="../api/tollan.config.sources.ListConfigSource.html#tollan.config.sources.ListConfigSource" ns1:title="Configuration source from nested list of sources." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="354,-56 256,-56 256,-37 354,-37 354,-56" />
+<ns0:text text-anchor="middle" x="305" y="-44" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ListConfigSource</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>ConfigSourceBase-&gt;ListConfigSource</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M211.17,-58.1C224.02,-56.5 237.83,-54.77 250.78,-53.15" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="251.14,-54.87 255.88,-52.51 250.7,-51.4 251.14,-54.87" />
+</ns0:g>
+
+<ns0:g id="node7" class="node">
+<ns0:title>YamlConfigSource</ns0:title>
+<ns0:g id="a_node7"><ns0:a ns1:href="../api/tollan.config.sources.YamlConfigSource.html#tollan.config.sources.YamlConfigSource" ns1:title="Configuration source from YAML file." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="357,-19 253,-19 253,0 357,0 357,-19" />
+<ns0:text text-anchor="middle" x="305" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">YamlConfigSource</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge6" class="edge">
+<ns0:title>ConfigSourceBase-&gt;YamlConfigSource</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M189.1,-54.93C196.32,-52.37 204,-49.47 211,-46.5 227.47,-39.51 230.47,-35.35 247,-28.5 253.66,-25.74 260.87,-23.09 267.85,-20.69" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="268.47,-22.33 272.64,-19.07 267.35,-19.01 268.47,-22.33" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

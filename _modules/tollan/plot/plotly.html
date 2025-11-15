@@ -1,0 +1,1382 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>tollan.plot.plotly &#8212; tollan 0.1.dev71+g3366451f4.d20251115 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../../../_static/documentation_options.js?v=57a336ce"></script>
+    <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=30646c52"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/tollan/plot/plotly';</script>
+    <link rel="icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev71+g3366451f4.d20251115 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../modules.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeContext.html">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../api/tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for tollan.plot.plotly</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Plotly utilities for multi-panel figures and Dash applications.</span>
+
+<span class="sd">Key features:</span>
+<span class="sd">- SubplotGrid: Stateful builder for complex multi-panel layouts with rowspan/colspan</span>
+<span class="sd">- adjust_subplot_colorbars: Fix colorbar positioning in subplots</span>
+<span class="sd">- ColorPalette: Color scaling and cycling for consistent plot styling</span>
+<span class="sd">- show_in_dash: Quick interactive data visualization in Dash with tabs</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">itertools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">cached_property</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypedDict</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">wsgiref.simple_server</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_server</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">click</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dash_mantine_components</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dmc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.express</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">px</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dash</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dash</span><span class="p">,</span> <span class="n">dcc</span><span class="p">,</span> <span class="n">html</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotly.subplots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_subplots</span> <span class="k">as</span> <span class="n">_make_subplots</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.dict</span><span class="w"> </span><span class="kn">import</span> <span class="n">rupdate</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.fmt</span><span class="w"> </span><span class="kn">import</span> <span class="n">pformat_yaml</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.log</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ColorPalette&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ShowInDash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SubplotGrid&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adjust_subplot_colorbars&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_empty_figure&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_range&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_subplot_layout&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_subplots&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;show_in_dash&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;update_subplot_layout&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_SubplotSpec</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">rowspan</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">colspan</span><span class="p">:</span> <span class="nb">int</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_Subplot</span><span class="p">(</span><span class="n">TypedDict</span><span class="p">):</span>
+    <span class="n">row</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">col</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span>
+    <span class="n">spec</span><span class="p">:</span> <span class="n">_SubplotSpec</span>
+    <span class="n">row_height</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">float</span>
+    <span class="n">col_width</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">float</span>
+    <span class="n">title</span><span class="p">:</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">str</span>
+
+
+<div class="viewcode-block" id="SubplotGrid">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.SubplotGrid.html#tollan.plot.plotly.SubplotGrid">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SubplotGrid</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A helper class to build multi panel figure.&quot;&quot;&quot;</span>
+
+    <span class="n">subplots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Subplot</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">fig_layout</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SubplotGrid.add_subplot">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.SubplotGrid.html#tollan.plot.plotly.SubplotGrid.add_subplot">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_subplot</span><span class="p">(</span>  <span class="c1"># noqa: PLR0913</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">row</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">fig</span><span class="p">:</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">spec</span><span class="p">:</span> <span class="n">_SubplotSpec</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">row_height</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">col_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">title</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add figure to the subplots.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        row : int</span>
+<span class="sd">            Row index (1-based).</span>
+<span class="sd">        col : int</span>
+<span class="sd">            Column index (1-based).</span>
+<span class="sd">        fig : go.Figure, optional</span>
+<span class="sd">            Plotly figure to add to this subplot.</span>
+<span class="sd">        spec : dict, optional</span>
+<span class="sd">            Subplot specification with type, rowspan, colspan.</span>
+<span class="sd">        row_height : float, optional</span>
+<span class="sd">            Relative height of this row.</span>
+<span class="sd">        col_width : float, optional</span>
+<span class="sd">            Relative width of this column.</span>
+<span class="sd">        title : str, optional</span>
+<span class="sd">            Title for this subplot.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;row&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">,</span>
+                <span class="s2">&quot;col&quot;</span><span class="p">:</span> <span class="n">col</span><span class="p">,</span>
+                <span class="s2">&quot;fig&quot;</span><span class="p">:</span> <span class="n">fig</span><span class="p">,</span>
+                <span class="s2">&quot;spec&quot;</span><span class="p">:</span> <span class="n">spec</span> <span class="ow">or</span> <span class="n">_SubplotSpec</span><span class="p">({}),</span>
+                <span class="s2">&quot;row_height&quot;</span><span class="p">:</span> <span class="n">row_height</span><span class="p">,</span>
+                <span class="s2">&quot;col_width&quot;</span><span class="p">:</span> <span class="n">col_width</span><span class="p">,</span>
+                <span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="n">title</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+        <span class="c1"># invalid the cache</span>
+        <span class="k">if</span> <span class="s2">&quot;grid&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s2">&quot;grid&quot;</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="SubplotGrid.grid">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.SubplotGrid.html#tollan.plot.plotly.SubplotGrid.grid">[docs]</a>
+    <span class="nd">@cached_property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">_Subplot</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The grid specifications and subplot locations.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[Any, list[tuple[slice, slice, _Subplot]]]</span>
+<span class="sd">            Grid array and list of (row_slice, col_slice, subplot) tuples</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_grid</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The shape of the grid as (n_rows, n_cols).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[int, int]</span>
+<span class="sd">            (n_rows, n_cols) dimensions of the subplot grid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_build_grid</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">subplots</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">_Subplot</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">slice</span><span class="p">,</span> <span class="nb">slice</span><span class="p">,</span> <span class="n">_Subplot</span><span class="p">]]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build grid specifications from subplot definitions.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        subplots : list[_Subplot]</span>
+<span class="sd">            List of subplot definitions.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            Grid array and list of (row_slice, col_slice, subplot) tuples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_get_grid_indices</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="c1"># this convert spec dict to grid slices in x and y.</span>
+            <span class="n">rs</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">re</span> <span class="o">=</span> <span class="n">rs</span> <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;spec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;rowspan&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">cs</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">ce</span> <span class="o">=</span> <span class="n">cs</span> <span class="o">+</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;spec&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;colspan&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rs</span><span class="p">,</span> <span class="n">re</span><span class="p">,</span> <span class="n">cs</span><span class="p">,</span> <span class="n">ce</span>
+
+        <span class="n">subplot_locs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">n_rows</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">n_cols</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">subplots</span><span class="p">:</span>
+            <span class="n">rs</span><span class="p">,</span> <span class="n">re</span><span class="p">,</span> <span class="n">cs</span><span class="p">,</span> <span class="n">ce</span> <span class="o">=</span> <span class="n">_get_grid_indices</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="n">subplot_locs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="nb">slice</span><span class="p">(</span><span class="n">rs</span><span class="p">,</span> <span class="n">re</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="n">cs</span><span class="p">,</span> <span class="n">ce</span><span class="p">),</span> <span class="n">s</span><span class="p">))</span>
+            <span class="n">n_rows</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">re</span><span class="p">)</span>
+            <span class="n">n_cols</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_cols</span><span class="p">,</span> <span class="n">ce</span><span class="p">)</span>
+        <span class="n">gs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">),</span> <span class="p">{},</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">xslice</span><span class="p">,</span> <span class="n">yslice</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="n">subplot_locs</span><span class="p">:</span>
+            <span class="n">gs</span><span class="p">[</span><span class="n">xslice</span><span class="p">,</span> <span class="n">yslice</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">gs</span><span class="p">[</span><span class="n">xslice</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">yslice</span><span class="o">.</span><span class="n">start</span><span class="p">]</span> <span class="o">=</span> <span class="n">subplot</span><span class="p">[</span><span class="s2">&quot;spec&quot;</span><span class="p">]</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">gs</span><span class="p">,</span> <span class="n">subplot_locs</span>
+
+<div class="viewcode-block" id="SubplotGrid.make_figure">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.SubplotGrid.html#tollan.plot.plotly.SubplotGrid.make_figure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_figure</span><span class="p">(</span>  <span class="c1"># noqa: C901, PLR0912</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fig_layout</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a figure composed from all subplots.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fig_layout : dict, optional</span>
+<span class="sd">            Layout dictionary to merge with default layout.</span>
+<span class="sd">        **kwargs : dict</span>
+<span class="sd">            Additional arguments passed to make_subplots (e.g., shared_xaxes,</span>
+<span class="sd">            shared_yaxes, horizontal_spacing, vertical_spacing).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        go.Figure</span>
+<span class="sd">            Plotly figure with all subplots arranged.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sxax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shared_xaxes&quot;</span><span class="p">)</span>
+        <span class="n">syax</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;shared_yaxes&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sxax</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;vertical_spacing&quot;</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">syax</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;horizontal_spacing&quot;</span><span class="p">,</span> <span class="mf">0.02</span><span class="p">)</span>
+        <span class="n">gs</span><span class="p">,</span> <span class="n">subplot_locs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
+        <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span> <span class="o">=</span> <span class="n">gs</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">_fig_layout</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fig_layout</span><span class="p">)</span>
+        <span class="n">rupdate</span><span class="p">(</span><span class="n">_fig_layout</span><span class="p">,</span> <span class="n">fig_layout</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="c1"># collate args</span>
+        <span class="n">collated_kw</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Collect all subplot info</span>
+        <span class="c1"># (subplot_locs is list of (row_slice, col_slice, subplot_dict))</span>
+        <span class="n">subplot_titles</span> <span class="o">=</span> <span class="p">[</span><span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">subplot_dict</span> <span class="ow">in</span> <span class="n">subplot_locs</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">subplot_titles</span><span class="p">):</span>
+            <span class="n">collated_kw</span><span class="p">[</span><span class="s2">&quot;subplot_titles&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">subplot_titles</span>
+
+        <span class="c1"># Aggregate row heights and column widths per row/col (not per subplot)</span>
+        <span class="n">row_heights_map</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># row_idx -&gt; height</span>
+        <span class="n">col_widths_map</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># col_idx -&gt; width</span>
+
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">subplot_dict</span> <span class="ow">in</span> <span class="n">subplot_locs</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;row&quot;</span><span class="p">]</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;col&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;row_height&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">row_heights_map</span><span class="p">[</span><span class="n">row</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;row_height&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;col_width&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">col_widths_map</span><span class="p">[</span><span class="n">col</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">subplot_dict</span><span class="p">[</span><span class="s2">&quot;col_width&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Only set if all rows/cols have values</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">row_heights_map</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_rows</span><span class="p">:</span>
+            <span class="n">collated_kw</span><span class="p">[</span><span class="s2">&quot;row_heights&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">row_heights_map</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_rows</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">col_widths_map</span><span class="p">)</span> <span class="o">==</span> <span class="n">n_cols</span><span class="p">:</span>
+            <span class="n">collated_kw</span><span class="p">[</span><span class="s2">&quot;column_widths&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">col_widths_map</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_cols</span><span class="p">)]</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span>
+            <span class="n">n_rows</span><span class="p">,</span>
+            <span class="n">n_cols</span><span class="p">,</span>
+            <span class="n">specs</span><span class="o">=</span><span class="n">gs</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+            <span class="n">fig_layout</span><span class="o">=</span><span class="n">_fig_layout</span><span class="p">,</span>
+            <span class="o">**</span><span class="p">(</span><span class="n">collated_kw</span> <span class="o">|</span> <span class="n">kwargs</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># now populate the figure with figure in subplots</span>
+        <span class="k">for</span> <span class="n">xslice</span><span class="p">,</span> <span class="n">yslice</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="n">subplot_locs</span><span class="p">:</span>
+            <span class="n">row</span> <span class="o">=</span> <span class="n">xslice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">yslice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">panel_kw</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;row&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">,</span>
+                <span class="s2">&quot;col&quot;</span><span class="p">:</span> <span class="n">col</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">sfig</span> <span class="o">=</span> <span class="n">subplot</span><span class="p">[</span><span class="s2">&quot;fig&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">sfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># update trace</span>
+            <span class="k">for</span> <span class="n">trace</span> <span class="ow">in</span> <span class="n">sfig</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]:</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+                    <span class="n">trace</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">panel_kw</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="c1"># copy over axis info</span>
+            <span class="n">slayout</span> <span class="o">=</span> <span class="n">sfig</span><span class="p">[</span><span class="s2">&quot;layout&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to_plotly_json</span><span class="p">()</span>
+            <span class="n">xax</span> <span class="o">=</span> <span class="n">slayout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;xaxis&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">yax</span> <span class="o">=</span> <span class="n">slayout</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;yaxis&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;anchor&quot;</span><span class="p">,</span> <span class="s2">&quot;domain&quot;</span><span class="p">):</span>
+                <span class="n">xax</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="n">yax</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">xax</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">sxax</span> <span class="ow">or</span> <span class="n">row</span> <span class="o">==</span> <span class="n">n_rows</span><span class="p">):</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">xax</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">panel_kw</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">yax</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">syax</span> <span class="ow">or</span> <span class="n">col</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">yax</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">panel_kw</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="c1"># adjust colorbars</span>
+        <span class="n">adjust_subplot_colorbars</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fig</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="make_subplots">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.make_subplots.html#tollan.plot.plotly.make_subplots">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_subplots</span><span class="p">(</span>
+    <span class="n">n_rows</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_cols</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">fig_layout</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a multi-panel figure with sensible defaults.</span>
+
+<span class="sd">    This is a wrapper around plotly.subplots.make_subplots that applies</span>
+<span class="sd">    project-specific defaults like uirevision, showlegend, and autorange.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n_rows : int</span>
+<span class="sd">        Number of rows in the subplot grid.</span>
+<span class="sd">    n_cols : int</span>
+<span class="sd">        Number of columns in the subplot grid.</span>
+<span class="sd">    fig_layout : dict, optional</span>
+<span class="sd">        Layout dictionary to merge with defaults.</span>
+<span class="sd">    **kwargs : dict</span>
+<span class="sd">        Additional arguments passed to plotly.subplots.make_subplots.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    go.Figure</span>
+<span class="sd">        Plotly figure with subplot grid.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; fig = make_subplots(2, 2, shared_xaxes=True)</span>
+<span class="sd">    &gt;&gt;&gt; _ = fig.add_trace(go.Scatter(x=[1,2,3], y=[4,5,6]), row=1, col=1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_fig_layout</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;uirevision&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;showlegend&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="s2">&quot;xaxis&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;autorange&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="s2">&quot;yaxis&quot;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">&quot;autorange&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">fig_layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rupdate</span><span class="p">(</span><span class="n">_fig_layout</span><span class="p">,</span> <span class="n">fig_layout</span><span class="p">)</span>
+    <span class="c1"># this is to allow later updating the titles</span>
+    <span class="n">n_panels</span> <span class="o">=</span> <span class="n">n_rows</span> <span class="o">*</span> <span class="n">n_cols</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;subplot_titles&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot; &quot;</span> <span class="o">*</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_panels</span><span class="p">)])</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">_make_subplots</span><span class="p">(</span><span class="n">rows</span><span class="o">=</span><span class="n">n_rows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">n_cols</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">update_subplot_layout</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">_fig_layout</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="update_subplot_layout">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.update_subplot_layout.html#tollan.plot.plotly.update_subplot_layout">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_subplot_layout</span><span class="p">(</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span>
+    <span class="n">fig_layout</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">row</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Update layout for all subplots or specific subplot.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fig : go.Figure</span>
+<span class="sd">        Plotly figure with subplots.</span>
+<span class="sd">    fig_layout : dict</span>
+<span class="sd">        Layout dictionary with xaxis, yaxis, shapes, annotations, etc.</span>
+<span class="sd">    row : int, optional</span>
+<span class="sd">        Target row (1-based). If None, updates all rows.</span>
+<span class="sd">    col : int, optional</span>
+<span class="sd">        Target column (1-based). If None, updates all columns.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function extracts xaxis, yaxis, shapes, and annotations from</span>
+<span class="sd">    fig_layout and applies them to each subplot using update_xaxes/update_yaxes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="s2">&quot;_grid_ref&quot;</span><span class="p">):</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="o">**</span><span class="n">fig_layout</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">grid_ref</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;list[list]&quot;</span><span class="p">,</span> <span class="n">fig</span><span class="o">.</span><span class="n">_grid_ref</span><span class="p">)</span>
+
+    <span class="n">n_rows</span><span class="p">,</span> <span class="n">n_cols</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid_ref</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">grid_ref</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">xaxes</span> <span class="o">=</span> <span class="n">fig_layout</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;xaxis&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">yaxes</span> <span class="o">=</span> <span class="n">fig_layout</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;yaxis&quot;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">shapes</span> <span class="o">=</span> <span class="n">fig_layout</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;shapes&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">annos</span> <span class="o">=</span> <span class="n">fig_layout</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;annotations&quot;</span><span class="p">,</span> <span class="p">[])</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span><span class="o">**</span><span class="n">fig_layout</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_rowcol</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">d</span><span class="p">]</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;invalid row/col.&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">_resolve_rowcol</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">n_rows</span><span class="p">)</span>
+    <span class="n">cols</span> <span class="o">=</span> <span class="n">_resolve_rowcol</span><span class="p">(</span><span class="n">col</span><span class="p">,</span> <span class="n">n_cols</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">xaxes</span><span class="p">)</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">yaxes</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">:</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">add_shape</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">annos</span><span class="p">:</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span><span class="n">row</span><span class="o">=</span><span class="n">r</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="o">**</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">_fix_scale_anchor</span><span class="p">(</span><span class="n">fig</span><span class="p">[</span><span class="s2">&quot;layout&quot;</span><span class="p">])</span>  <span class="c1"># type: ignore[arg-type]</span></div>
+
+
+
+<div class="viewcode-block" id="make_subplot_layout">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.make_subplot_layout.html#tollan.plot.plotly.make_subplot_layout">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_subplot_layout</span><span class="p">(</span>
+    <span class="n">fig</span><span class="p">:</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span>
+    <span class="n">layout</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">row</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">col</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create layout dict with correct axis references for a specific subplot.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fig : go.Figure</span>
+<span class="sd">        Plotly figure with subplots.</span>
+<span class="sd">    layout : dict</span>
+<span class="sd">        Layout dictionary to adapt for the subplot.</span>
+<span class="sd">    row : int</span>
+<span class="sd">        Target row (1-based).</span>
+<span class="sd">    col : int</span>
+<span class="sd">        Target column (1-based).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Layout dictionary with axis references updated for the subplot.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Converts xaxis/yaxis to xaxis2/yaxis2 etc. based on subplot position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Scatter</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">_set_trace_grid_position</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+    <span class="n">xax</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;xaxis&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+    <span class="n">yax</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="n">t</span><span class="p">[</span><span class="s2">&quot;yaxis&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;xaxis&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;yaxis&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;xaxis</span><span class="si">{</span><span class="n">xax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+    <span class="k">if</span> <span class="n">y</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;yaxis</span><span class="si">{</span><span class="n">yax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span>
+    <span class="n">annos</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;annotations&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">annos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">anno</span> <span class="ow">in</span> <span class="n">annos</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">[(</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="n">xax</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="n">yax</span><span class="p">)]:</span>
+                <span class="k">if</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">ref&quot;</span> <span class="ow">in</span> <span class="n">anno</span><span class="p">:</span>
+                    <span class="n">anno</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">ref&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">anno</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">ref&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}{</span><span class="n">a</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">&quot;annotations&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">annos</span>
+    <span class="n">_fix_scale_anchor</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fix_scale_anchor</span><span class="p">(</span><span class="n">layout</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">go</span><span class="o">.</span><span class="n">Layout</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">go</span><span class="o">.</span><span class="n">Layout</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fix scale anchor references in layout.&quot;&quot;&quot;</span>
+    <span class="n">_layout</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">to_plotly_json</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">go</span><span class="o">.</span><span class="n">Layout</span><span class="p">)</span> <span class="k">else</span> <span class="n">layout</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">_layout</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;xaxis&quot;</span><span class="p">,</span> <span class="s2">&quot;yaxis&quot;</span><span class="p">))</span> <span class="ow">and</span> <span class="s2">&quot;scaleanchor&quot;</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="n">layout</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="s2">&quot;scaleanchor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;anchor&quot;</span><span class="p">]</span>  <span class="c1"># type: ignore[index]</span>
+    <span class="k">return</span> <span class="n">layout</span>
+
+
+<div class="viewcode-block" id="adjust_subplot_colorbars">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.adjust_subplot_colorbars.html#tollan.plot.plotly.adjust_subplot_colorbars">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">adjust_subplot_colorbars</span><span class="p">(</span><span class="n">fig</span><span class="p">:</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">,</span> <span class="n">size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjust colorbar positions to align with subplot axes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fig : go.Figure</span>
+<span class="sd">        Plotly figure with subplots and colorbars.</span>
+<span class="sd">    size : float, default 1.0</span>
+<span class="sd">        Fraction of subplot height for colorbar length.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    go.Figure</span>
+<span class="sd">        Figure with adjusted colorbar positions.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function repositions colorbars to align with their corresponding</span>
+<span class="sd">    subplot&#39;s vertical extent, which is particularly useful for multi-panel</span>
+<span class="sd">    figures where default colorbar positioning can be problematic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">fig</span><span class="p">[</span><span class="s2">&quot;layout&quot;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">trace</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">fig</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]):</span>
+        <span class="n">xax</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s2">&quot;xaxis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">yax</span> <span class="o">=</span> <span class="n">trace</span><span class="p">[</span><span class="s2">&quot;yaxis&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore[attr-defined]</span>
+        <span class="n">xdom</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;list[float]&quot;</span><span class="p">,</span> <span class="n">layout</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;xaxis</span><span class="si">{</span><span class="n">xax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;domain&quot;</span><span class="p">])</span>
+        <span class="n">ydom</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">&quot;list[float]&quot;</span><span class="p">,</span> <span class="n">layout</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;yaxis</span><span class="si">{</span><span class="n">yax</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="s2">&quot;domain&quot;</span><span class="p">])</span>
+        <span class="n">ysize</span> <span class="o">=</span> <span class="n">ydom</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">ydom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">cdata</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;colorbar&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;len&quot;</span><span class="p">:</span> <span class="n">size</span> <span class="o">*</span> <span class="n">ysize</span><span class="p">,</span>
+                <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">xdom</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">,</span>
+                <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">ydom</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">ysize</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">trace</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span>  <span class="c1"># type: ignore[attr-defined]</span>
+            <span class="s2">&quot;heatmap&quot;</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="k">if</span> <span class="s2">&quot;colorbar&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">trace</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">cdata</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;marker&quot;</span><span class="p">:</span> <span class="n">cdata</span><span class="p">}</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_traces</span><span class="p">(</span>
+            <span class="n">cdata</span><span class="p">,</span>
+            <span class="n">selector</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="make_range">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.make_range.html#tollan.plot.plotly.make_range">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_range</span><span class="p">(</span>
+    <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">pad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">pad_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calculate data range with padding.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    v : array-like</span>
+<span class="sd">        Data values to compute range from.</span>
+<span class="sd">    pad : float, optional</span>
+<span class="sd">        Absolute padding to add. If None, uses pad_frac.</span>
+<span class="sd">    pad_frac : float, default 0.05</span>
+<span class="sd">        Fractional padding (fraction of data range). Ignored if pad is given.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple[float, float]</span>
+<span class="sd">        (min_value - padding, max_value + padding)</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If both pad and pad_frac are specified.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; vmin, vmax = make_range([1, 2, 3, 4, 5])</span>
+<span class="sd">    &gt;&gt;&gt; (float(vmin), float(vmax))</span>
+<span class="sd">    (0.8, 5.2)</span>
+<span class="sd">    &gt;&gt;&gt; vmin, vmax = make_range([1, 2, 3, 4, 5], pad=1.0)</span>
+<span class="sd">    &gt;&gt;&gt; (float(vmin), float(vmax))</span>
+<span class="sd">    (0.0, 6.0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="n">pad_frac</span> <span class="o">*</span> <span class="p">(</span><span class="n">vmax</span> <span class="o">-</span> <span class="n">vmin</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">vmin</span> <span class="o">-</span> <span class="n">pad</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">+</span> <span class="n">pad</span></div>
+
+
+
+<div class="viewcode-block" id="make_empty_figure">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.make_empty_figure.html#tollan.plot.plotly.make_empty_figure">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_empty_figure</span><span class="p">(</span><span class="n">place_holder_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an empty figure with optional placeholder text.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    place_holder_text : str, optional</span>
+<span class="sd">        Text to display in the center of the empty figure.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    go.Figure</span>
+<span class="sd">        Empty Plotly figure with hidden axes.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; fig = make_empty_figure(&quot;No data available&quot;)</span>
+<span class="sd">    &gt;&gt;&gt; fig.show()  # doctest: +SKIP</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;layout&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;xaxis&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;visible&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+                <span class="s2">&quot;yaxis&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;visible&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+            <span class="p">},</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_annotations</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">place_holder_text</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">place_holder_text</span><span class="p">,</span>
+            <span class="n">xref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span>
+            <span class="n">yref</span><span class="o">=</span><span class="s2">&quot;paper&quot;</span><span class="p">,</span>
+            <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">font</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;size&quot;</span><span class="p">:</span> <span class="mi">28</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<span class="nd">@functools</span><span class="o">.</span><span class="n">lru_cache</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_scaled_colors</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get scaled colors from a named palette (cached).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str</span>
+<span class="sd">        Name of the color sequence from plotly.express.colors.qualitative.</span>
+<span class="sd">    scale : float</span>
+<span class="sd">        Scaling factor. 1.0 returns original colors, values &lt; 1.0</span>
+<span class="sd">        blend colors towards white.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple[str, ...]</span>
+<span class="sd">        Tuple of hex color codes.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the color sequence name is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">colors</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">qualitative</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">colors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;invalid color sequence name: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">scale</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">colors</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
+        <span class="s2">&quot;#</span><span class="si">{:02x}{:02x}{:02x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+                    <span class="n">px</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">find_intermediate_color</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">px</span><span class="o">.</span><span class="n">colors</span><span class="o">.</span><span class="n">hex_to_rgb</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="o">/</span> <span class="mf">255.0</span><span class="p">,</span>
+                        <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="n">scale</span><span class="p">,</span>
+                    <span class="p">),</span>
+                <span class="p">)</span>
+                <span class="o">*</span> <span class="mf">255.0</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">colors</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="ColorPalette">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ColorPalette.html#tollan.plot.plotly.ColorPalette">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ColorPalette</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class to manage colors from a named palette.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Dark24&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">colors</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tuple of hex color codes in the palette.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[str, ...]</span>
+<span class="sd">            Original colors from the palette.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_get_scaled_colors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ColorPalette.get_scaled">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ColorPalette.html#tollan.plot.plotly.ColorPalette.get_scaled">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get colors scaled by blending with white.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scale : float</span>
+<span class="sd">            Scaling factor. 1.0 returns original colors, values &lt; 1.0</span>
+<span class="sd">            blend colors towards white.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple[str, ...]</span>
+<span class="sd">            Tuple of hex color codes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_get_scaled_colors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ColorPalette.cycle">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ColorPalette.html#tollan.plot.plotly.ColorPalette.cycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an infinite iterator cycling through colors.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scale : float, default 1.0</span>
+<span class="sd">            Scaling factor for colors (see get_scaled).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Iterator[str]</span>
+<span class="sd">            Infinite iterator of hex color codes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">cycle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_scaled</span><span class="p">(</span><span class="n">scale</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ColorPalette.cycles">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ColorPalette.html#tollan.plot.plotly.ColorPalette.cycles">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cycles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create iterator cycling through color tuples at different scales.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *scales : float</span>
+<span class="sd">            Multiple scaling factors.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Iterator[tuple[str, ...]]</span>
+<span class="sd">            Iterator of color tuples, one color per scale.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">cycle</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span>
+                <span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_scaled</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">),</span>
+                <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ColorPalette.cycle_alternated">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ColorPalette.html#tollan.plot.plotly.ColorPalette.cycle_alternated">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cycle_alternated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">scales</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create iterator alternating between colors at different scales.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *scales : float</span>
+<span class="sd">            Multiple scaling factors.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Iterator[str]</span>
+<span class="sd">            Iterator alternating through colors: scale1_color1, scale2_color1,</span>
+<span class="sd">            scale1_color2, scale2_color2, ...</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">cycle</span><span class="p">(</span>
+            <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span>
+                    <span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_scaled</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span> <span class="k">for</span> <span class="n">scale</span> <span class="ow">in</span> <span class="n">scales</span><span class="p">),</span>
+                    <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ShowInDash">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ShowInDash.html#tollan.plot.plotly.ShowInDash">[docs]</a>
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ShowInDash</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dash layout component for displaying data items in tabs.</span>
+
+<span class="sd">    This class creates a Dash Mantine Components (DMC) layout with a header</span>
+<span class="sd">    and tabbed interface for displaying multiple data items (figures or other data).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+    <span class="n">title_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">container_props</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">container_props</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;fluid&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ShowInDash.layout">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.ShowInDash.html#tollan.plot.plotly.ShowInDash.layout">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">layout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dmc</span><span class="o">.</span><span class="n">Container</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the data viewer layout with DMC components.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dmc.Container</span>
+<span class="sd">            Dash Mantine Components container with header and tabbed content.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Creates a layout with:</span>
+<span class="sd">        - Header section with title (dmc.Paper with dmc.Title)</span>
+<span class="sd">        - Tabbed body section (dmc.Tabs) with one tab per data item</span>
+<span class="sd">        - Each tab displays either a Plotly figure or formatted YAML</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Create header with title</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="n">dmc</span><span class="o">.</span><span class="n">Paper</span><span class="p">(</span>
+            <span class="n">dmc</span><span class="o">.</span><span class="n">Title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_text</span> <span class="ow">or</span> <span class="s2">&quot;Show in Dash&quot;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+            <span class="n">p</span><span class="o">=</span><span class="s2">&quot;md&quot;</span><span class="p">,</span>
+            <span class="n">shadow</span><span class="o">=</span><span class="s2">&quot;sm&quot;</span><span class="p">,</span>
+            <span class="n">mb</span><span class="o">=</span><span class="s2">&quot;md&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Create tabs for data items</span>
+        <span class="n">tab_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tab_panel_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data_item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_items</span><span class="p">):</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="n">data_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;title_text&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Tab </span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">tab_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;tab-</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="c1"># Create tab</span>
+            <span class="n">tab_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">dmc</span><span class="o">.</span><span class="n">TabsTab</span><span class="p">(</span>
+                    <span class="n">title_text</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">tab_id</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Create tab panel with content</span>
+            <span class="n">tab_panel_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">dmc</span><span class="o">.</span><span class="n">TabsPanel</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_make_content</span><span class="p">(</span><span class="n">data_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)),</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">tab_id</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create tabs component</span>
+        <span class="n">tabs</span> <span class="o">=</span> <span class="n">dmc</span><span class="o">.</span><span class="n">Tabs</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">dmc</span><span class="o">.</span><span class="n">TabsList</span><span class="p">(</span><span class="n">tab_list</span><span class="p">),</span>
+                <span class="o">*</span><span class="n">tab_panel_list</span><span class="p">,</span>
+            <span class="p">],</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">tab_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">tab_list</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Wrap everything in a container</span>
+        <span class="k">return</span> <span class="n">dmc</span><span class="o">.</span><span class="n">Container</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">header</span><span class="p">,</span> <span class="n">tabs</span><span class="p">],</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">container_props</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_make_content</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dcc</span><span class="o">.</span><span class="n">Graph</span> <span class="o">|</span> <span class="n">html</span><span class="o">.</span><span class="n">Pre</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create content component for a data item.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data : Any</span>
+<span class="sd">            Data to display. If it&#39;s a Plotly figure (go.Figure or dict with</span>
+<span class="sd">            &#39;data&#39; and &#39;layout&#39; keys), creates a dcc.Graph. Otherwise, displays</span>
+<span class="sd">            formatted YAML.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dcc.Graph or html.Pre</span>
+<span class="sd">            Dash component displaying the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_is_figure_like</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;data&quot;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="s2">&quot;layout&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_is_figure_like</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">dcc</span><span class="o">.</span><span class="n">Graph</span><span class="p">(</span>
+                <span class="n">figure</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+                <span class="n">style</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;height&quot;</span><span class="p">:</span> <span class="s2">&quot;600px&quot;</span><span class="p">},</span>
+            <span class="p">)</span>
+        <span class="c1"># Fall back to formatted YAML display</span>
+        <span class="k">return</span> <span class="n">html</span><span class="o">.</span><span class="n">Pre</span><span class="p">(</span>
+            <span class="n">pformat_yaml</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
+            <span class="n">style</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">&quot;backgroundColor&quot;</span><span class="p">:</span> <span class="s2">&quot;#f5f5f5&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;padding&quot;</span><span class="p">:</span> <span class="s2">&quot;1rem&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;borderRadius&quot;</span><span class="p">:</span> <span class="s2">&quot;4px&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;overflow&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="show_in_dash">
+<a class="viewcode-back" href="../../../api/tollan.plot.plotly.show_in_dash.html#tollan.plot.plotly.show_in_dash">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">show_in_dash</span><span class="p">(</span>
+    <span class="n">data_items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span>
+    <span class="n">title_text</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">host</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">port</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Display data items in an interactive Dash application.</span>
+
+<span class="sd">    Starts a local Flask server with a Dash app to display data items in tabs.</span>
+<span class="sd">    The server runs until the user confirms to stop it.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data_items : list[dict]</span>
+<span class="sd">        List of dictionaries, each containing:</span>
+<span class="sd">        - &#39;title_text&#39;: str - Tab label</span>
+<span class="sd">        - &#39;data&#39;: Any - Data to display (Plotly figure or other)</span>
+<span class="sd">    title_text : str, optional</span>
+<span class="sd">        Main title displayed at the top of the dashboard.</span>
+<span class="sd">    host : str, optional</span>
+<span class="sd">        Server host address. Defaults to &#39;localhost&#39;.</span>
+<span class="sd">    port : int, optional</span>
+<span class="sd">        Server port number. Defaults to 8050.</span>
+<span class="sd">    **kwargs : dict</span>
+<span class="sd">        Additional arguments passed to Dash constructor.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import plotly.graph_objects as go</span>
+<span class="sd">    &gt;&gt;&gt; fig = go.Figure(data=[go.Scatter(x=[1,2,3], y=[4,5,6])])</span>
+<span class="sd">    &gt;&gt;&gt; show_in_dash(  # doctest: +SKIP</span>
+<span class="sd">    ...     [{&#39;title_text&#39;: &#39;My Plot&#39;, &#39;data&#39;: fig}],</span>
+<span class="sd">    ...     title_text=&#39;Dashboard&#39;</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">keep_alive</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">server_app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+    <span class="n">host</span> <span class="o">=</span> <span class="n">host</span> <span class="ow">or</span> <span class="s2">&quot;localhost&quot;</span>
+    <span class="n">port</span> <span class="o">=</span> <span class="n">port</span> <span class="ow">or</span> <span class="mi">8050</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">make_server</span><span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="n">server_app</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;created server </span><span class="si">{</span><span class="n">host</span><span class="si">=}</span><span class="s2"> </span><span class="si">{</span><span class="n">port</span><span class="si">=}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">server_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">server</span><span class="o">.</span><span class="n">serve_forever</span><span class="p">)</span>
+    <span class="n">server_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="n">app</span> <span class="o">=</span> <span class="n">Dash</span><span class="p">(</span><span class="n">server</span><span class="o">=</span><span class="n">server_app</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">enable_dev_tools</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">show_in_dash</span> <span class="o">=</span> <span class="n">ShowInDash</span><span class="p">(</span><span class="n">data_items</span><span class="o">=</span><span class="n">data_items</span><span class="p">,</span> <span class="n">title_text</span><span class="o">=</span><span class="n">title_text</span><span class="p">)</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">show_in_dash</span><span class="o">.</span><span class="n">layout</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">stop_execution</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">nonlocal</span> <span class="n">keep_alive</span>
+        <span class="n">keep_alive</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="n">server_thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;flask server shutdown.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># start the Dash app in a separate thread</span>
+    <span class="c1"># def start_dash_app():</span>
+    <span class="c1">#     app.run_server(debug=False, use_reloader=False, **kwargs)</span>
+    <span class="c1"># dash_thread = threading.Thread(target=start_dash_app)</span>
+    <span class="c1"># dash_thread.start()</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">click</span><span class="o">.</span><span class="n">confirm</span><span class="p">(</span><span class="s2">&quot;Stop dash server and continue?&quot;</span><span class="p">):</span>
+            <span class="n">stop_execution</span><span class="p">()</span>
+            <span class="k">break</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;server has stopped.&quot;</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

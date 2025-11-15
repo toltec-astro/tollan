@@ -1,0 +1,41 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="174pt" height="63pt" viewBox="0.00 0.00 174.00 63.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 59)">
+<ns0:title>inheritanceffdc1a1fb2</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>Generic</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="https://docs.python.org/3/library/typing.html#typing.Generic" ns1:title="Abstract base class for generic types." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="54,-19 0,-19 0,0 54,0 54,-19" />
+<ns0:text text-anchor="middle" x="27" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Generic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>ObjectProxy</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="../api/tollan.utils.py.ObjectProxy.html#tollan.utils.py.ObjectProxy" ns1:title="A generic object proxy which forwards special methods as needed." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="166,-19 90,-19 90,0 166,0 166,-19" />
+<ns0:text text-anchor="middle" x="128" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ObjectProxy</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>Generic-&gt;ObjectProxy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M54.01,-9.5C63.46,-9.5 74.4,-9.5 84.89,-9.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="85,-11.25 90,-9.5 85,-7.75 85,-11.25" />
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>ObjectProxy-&gt;ObjectProxy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M120.29,-19.08C116.54,-27.73 119.11,-37 128,-37 135.22,-37 138.27,-30.88 137.15,-23.95" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="138.81,-23.38 135.71,-19.08 135.45,-24.37 138.81,-23.38" />
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>ObjectProxy-&gt;ObjectProxy</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M116.57,-19.33C103.88,-34.98 107.69,-55 128,-55 146.57,-55 151.34,-38.27 142.33,-23.45" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="143.74,-22.4 139.43,-19.33 140.88,-24.42 143.74,-22.4" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

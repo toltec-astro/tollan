@@ -1,0 +1,892 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>RuntimeContext &#8212; tollan 0.1.dev73+ged1eba6ad documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css?v=7f9a90b1" />
+    <link rel="stylesheet" type="text/css" href="../_static/autodoc_pydantic.css?v=a0a71c94" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../_static/jquery.js?v=5d32c60e"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+    <script src="../_static/documentation_options.js?v=1dc1a498"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=30646c52"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'api/tollan.config.RuntimeContext';</script>
+    <link rel="icon" href="../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="RuntimeInfo" href="tollan.config.RuntimeInfo.html" />
+    <link rel="prev" title="RuntimeConfig" href="tollan.config.RuntimeConfig.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+    <meta name="docbuild:last-update" content="14 Nov 2025"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+  
+    <p class="title logo__title">tollan 0.1.dev73+ged1eba6ad documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">tollan</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">tollan CLI</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../modules.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.ConfigHandler.html">ConfigHandler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.FrozenBaseModel.html">FrozenBaseModel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.RuntimeConfig.html">RuntimeConfig</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">RuntimeContext</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.RuntimeInfo.html">RuntimeInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.SubConfigKeyTransformer.html">SubConfigKeyTransformer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.resolve_config_sources.html">resolve_config_sources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.ConfigSourceList.html">ConfigSourceList</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.DictConfigSource.html">DictConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.EnvFileConfigSource.html">EnvFileConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.ListConfigSource.html">ListConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.sources.YamlConfigSource.html">YamlConfigSource</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.quantity_field.html">quantity_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.time_field.html">time_field</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.FieldDefaults.html">FieldDefaults</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.GenerateJsonSchema.html">GenerateJsonSchema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.config.types.PathValidator.html">PathValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.pipeline.ContextHandlerMixinBase.html">ContextHandlerMixinBase</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.pipeline.DictContextHandlerMixin.html">DictContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.pipeline.MetadataContextHandlerMixin.html">MetadataContextHandlerMixin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.mpl.move_axes.html">move_axes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.adjust_subplot_colorbars.html">adjust_subplot_colorbars</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_empty_figure.html">make_empty_figure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_range.html">make_range</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_subplot_layout.html">make_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.make_subplots.html">make_subplots</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.show_in_dash.html">show_in_dash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.update_subplot_layout.html">update_subplot_layout</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.ColorPalette.html">ColorPalette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.ShowInDash.html">ShowInDash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.plot.plotly.SubplotGrid.html">SubplotGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.cli.dict_from_cli_args.html">dict_from_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.cli.split_cli_args.html">split_cli_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.add_to_dict.html">add_to_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_from_flat_dict.html">dict_from_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_from_regex_match.html">dict_from_regex_match</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_product.html">dict_product</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.dict_to_flat_dict.html">dict_to_flat_dict</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.dict.rupdate.html">rupdate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.ensure_abspath.html">ensure_abspath</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.ensure_path_parent_exists.html">ensure_path_parent_exists</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.ensure_readable_fileobj.html">ensure_readable_fileobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.get_or_create_dir.html">get_or_create_dir</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.resolve_symlink.html">resolve_symlink</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.file.touch_file.html">touch_file</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fileloc.fileloc.html">fileloc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fileloc.FileLoc.html">FileLoc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fileloc.FileLocData.html">FileLocData</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.bitmask_stats.html">bitmask_stats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_bitmask.html">pformat_bitmask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_fancy_index.html">pformat_fancy_index</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_mask.html">pformat_mask</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.pformat_yaml.html">pformat_yaml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.fmt.BitmaskStats.html">BitmaskStats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.log.reset_logger.html">reset_logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.log.logit.html">logit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.log.timeit.html">timeit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.attach_unit.html">attach_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.ensure_unit.html">ensure_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.flex_reshape.html">flex_reshape</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.make_complex.html">make_complex</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.preserve_unit.html">preserve_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.qrange.html">qrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.np.strip_unit.html">strip_unit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.getname.html">getname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.getobj.html">getobj</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.module_from_path.html">module_from_path</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.rgetattr.html">rgetattr</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.rreload.html">rreload</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.py.ObjectProxy.html">ObjectProxy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.sys.get_hostname.html">get_hostname</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.sys.get_username.html">get_username</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.sys.pty_run.html">pty_run</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.table.TableValidator.html">TableValidator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typer.MultiOption.html">MultiOption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typer.create_cli.html">create_cli</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typer.MultiOptionInfo.html">MultiOptionInfo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typing.ensure_cls_attr_from_type_args.html">ensure_cls_attr_from_type_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.typing.get_typing_args.html">get_typing_args</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.add_numpy_scalar_representers.html">add_numpy_scalar_representers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.yaml_dump.html">yaml_dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.yaml_load.html">yaml_load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.yaml_loads.html">yaml_loads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tollan.utils.yaml.YamlDumper.html">YamlDumper</a></li>
+</ul>
+</details></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+
+
+<div class="dropdown dropdown-download-buttons">
+  <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Download this page">
+    <i class="fas fa-download"></i>
+  </button>
+  <ul class="dropdown-menu">
+      
+      
+      
+      <li><a href="../_sources/api/tollan.config.RuntimeContext.rst" target="_blank"
+   class="btn btn-sm btn-download-source-button dropdown-item"
+   title="Download source file"
+   data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file"></i>
+  </span>
+<span class="btn__text-container">.rst</span>
+</a>
+</li>
+      
+      
+      
+      
+      <li>
+<button onclick="window.print()"
+  class="btn btn-sm btn-download-pdf-button dropdown-item"
+  title="Print to PDF"
+  data-bs-placement="left" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-file-pdf"></i>
+  </span>
+<span class="btn__text-container">.pdf</span>
+</button>
+</li>
+      
+  </ul>
+</div>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>RuntimeContext</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext"><code class="docutils literal notranslate"><span class="pre">RuntimeContext</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.TIERS"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.TIERS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config_dict"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config_dict</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config_handler_cls_registry"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config_handler_cls_registry</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config_sources"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config_sources</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.runtime_info"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.runtime_info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.from_cli"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.from_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.register_config_handler_cls"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.register_config_handler_cls()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.reload"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.reload()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_context"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_context()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_default_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_default_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_override_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_override_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.update_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.update_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.update_default_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.update_default_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.update_override_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.update_override_config()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="runtimecontext">
+<h1>RuntimeContext<a class="headerlink" href="#runtimecontext" title="Link to this heading">#</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">tollan.config.</span></span><span class="sig-name descname"><span class="pre">RuntimeContext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_sources</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="tollan.config.sources.ConfigSourceList.html#tollan.config.sources.ConfigSourceList" title="tollan.config.sources.ConfigSourceList"><span class="pre">ConfigSourceList</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generic" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a></p>
+<p>Entry point for runtime-aware configuration management.</p>
+<p>RuntimeContext manages a ConfigSourceList with a four-tier architecture:
+1. Default tier (order=-1) - Base defaults, lowest priority
+2. User sources (order=0+) - From config files/dicts
+3. Info tier (order=1000) - Runtime info dict data
+4. Override tier (order=1001) - Runtime overrides, highest priority</p>
+<p>It provides:
+- Lazy-loaded, cached config model object via <a class="reference internal" href="#tollan.config.RuntimeContext.config" title="tollan.config.RuntimeContext.config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config</span></code></a> cached property
+- Cached config dict via <a class="reference internal" href="#tollan.config.RuntimeContext.config_dict" title="tollan.config.RuntimeContext.config_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_dict</span></code></a> cached property
+- Context management for temporary config overrides
+- Registration system for ConfigHandler subclasses
+- Factory methods for common setups (from_cli, etc.)</p>
+<section id="type-parameters">
+<h2>Type Parameters<a class="headerlink" href="#type-parameters" title="Link to this heading">#</a></h2>
+<blockquote>
+<div><p>RuntimeConfigT: Runtime config class (subclass of RuntimeConfig)</p>
+</div></blockquote>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic usage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rc</span> <span class="o">=</span> <span class="n">RuntimeContext</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">config_sources</span><span class="o">=</span><span class="p">[</span>
+<span class="gp">... </span>        <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;dict&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;app&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">},</span> <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+<span class="gp">... </span>        <span class="p">{</span><span class="s2">&quot;format&quot;</span><span class="p">:</span> <span class="s2">&quot;dict&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;debug&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span> <span class="s2">&quot;order&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<span class="gp">... </span>    <span class="p">]</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">config</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">config</span>  <span class="c1"># Validated RuntimeConfig model</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">rc</span><span class="o">.</span><span class="n">config_dict</span><span class="p">[</span><span class="s1">&#39;app&#39;</span><span class="p">]</span>
+<span class="go">&#39;test&#39;</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Temporary context override</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">with</span> <span class="n">rc</span><span class="o">.</span><span class="n">set_context</span><span class="p">({</span><span class="s2">&quot;env&quot;</span><span class="p">:</span> <span class="s2">&quot;production&quot;</span><span class="p">}):</span>
+<span class="gp">... </span>    <span class="n">prod_config</span> <span class="o">=</span> <span class="n">rc</span><span class="o">.</span><span class="n">config_dict</span>
+</pre></div>
+</div>
+<p class="rubric">Attributes Summary</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.TIERS" title="tollan.config.RuntimeContext.TIERS"><code class="xref py py-obj docutils literal notranslate"><span class="pre">TIERS</span></code></a></p></td>
+<td><p>Tier configurations with name and order.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.config" title="tollan.config.RuntimeContext.config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config</span></code></a></p></td>
+<td><p>Get the validated configuration model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.config_dict" title="tollan.config.RuntimeContext.config_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_dict</span></code></a></p></td>
+<td><p>Get the loaded and merged configuration as a dictionary.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.config_handler_cls_registry" title="tollan.config.RuntimeContext.config_handler_cls_registry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_handler_cls_registry</span></code></a></p></td>
+<td><p>Registry of ConfigHandler classes for this RuntimeContext.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.config_sources" title="tollan.config.RuntimeContext.config_sources"><code class="xref py py-obj docutils literal notranslate"><span class="pre">config_sources</span></code></a></p></td>
+<td><p>Get the ConfigSourceList.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.runtime_info" title="tollan.config.RuntimeContext.runtime_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">runtime_info</span></code></a></p></td>
+<td><p>Get runtime info from the validated config.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Methods Summary</p>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.from_cli" title="tollan.config.RuntimeContext.from_cli"><code class="xref py py-obj docutils literal notranslate"><span class="pre">from_cli</span></code></a>([config_path, env_files, cli_args])</p></td>
+<td><p>Create RuntimeContext from CLI arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.register_config_handler_cls" title="tollan.config.RuntimeContext.register_config_handler_cls"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_config_handler_cls</span></code></a>(config_handler_cls)</p></td>
+<td><p>Register a ConfigHandler class.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.reload" title="tollan.config.RuntimeContext.reload"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reload</span></code></a>()</p></td>
+<td><p>Reload configuration, invalidating all caches.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.set_config" title="tollan.config.RuntimeContext.set_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_config</span></code></a>(cfg, tier)</p></td>
+<td><p>Replace a named tier's configuration entirely.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.set_context" title="tollan.config.RuntimeContext.set_context"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_context</span></code></a>(context)</p></td>
+<td><p>Context manager to temporarily override validation context.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.set_default_config" title="tollan.config.RuntimeContext.set_default_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_default_config</span></code></a>(cfg)</p></td>
+<td><p>Set default configuration (order=-1 tier).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.set_override_config" title="tollan.config.RuntimeContext.set_override_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_override_config</span></code></a>(cfg)</p></td>
+<td><p>Set override configuration (order=1001 tier).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.update_config" title="tollan.config.RuntimeContext.update_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_config</span></code></a>(cfg, tier)</p></td>
+<td><p>Merge configuration into a named tier.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.update_default_config" title="tollan.config.RuntimeContext.update_default_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_default_config</span></code></a>(cfg)</p></td>
+<td><p>Merge default configuration (order=-1 tier).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#tollan.config.RuntimeContext.update_override_config" title="tollan.config.RuntimeContext.update_override_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_override_config</span></code></a>(cfg)</p></td>
+<td><p>Merge override configuration (order=1001 tier).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Attributes Documentation</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.TIERS">
+<span class="sig-name descname"><span class="pre">TIERS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'default'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'info'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'override'</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'default':</span> <span class="pre">{'name':</span> <span class="pre">'default',</span> <span class="pre">'order':</span> <span class="pre">-1},</span> <span class="pre">'info':</span> <span class="pre">{'name':</span> <span class="pre">'info',</span> <span class="pre">'order':</span> <span class="pre">1000},</span> <span class="pre">'override':</span> <span class="pre">{'name':</span> <span class="pre">'override',</span> <span class="pre">'order':</span> <span class="pre">1001}}</span></em><a class="headerlink" href="#tollan.config.RuntimeContext.TIERS" title="Link to this definition">#</a></dt>
+<dd><p>Tier configurations with name and order.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.config">
+<span class="sig-name descname"><span class="pre">config</span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.config" title="Link to this definition">#</a></dt>
+<dd><p>Get the validated configuration model.</p>
+<p>This validates the merged config dict using the RuntimeConfig model
+(or a subclass defined in runtime_config_cls). The result is cached.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Validated RuntimeConfig instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.config_dict">
+<span class="sig-name descname"><span class="pre">config_dict</span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.config_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.config_dict" title="Link to this definition">#</a></dt>
+<dd><p>Get the loaded and merged configuration as a dictionary.</p>
+<p>This loads config with the current context and caches the result.
+Cache is invalidated when context changes or when update_*_config
+methods are called.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Merged configuration dictionary (DictConfigT)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.config_handler_cls_registry">
+<span class="sig-name descname"><span class="pre">config_handler_cls_registry</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ClassVar</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#set" title="(in Python v3.14)"><span class="pre">set</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="tollan.config.ConfigHandler.html#tollan.config.ConfigHandler" title="tollan.config.ConfigHandler"><span class="pre">ConfigHandler</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#tollan.config.RuntimeContext.config_handler_cls_registry" title="Link to this definition">#</a></dt>
+<dd><p>Registry of ConfigHandler classes for this RuntimeContext.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.config_sources">
+<span class="sig-name descname"><span class="pre">config_sources</span></span><a class="headerlink" href="#tollan.config.RuntimeContext.config_sources" title="Link to this definition">#</a></dt>
+<dd><p>Get the ConfigSourceList.</p>
+<p>This is the underlying source list that can be used to access
+individual sources, inspect the configuration pipeline, or
+load configuration with different contexts.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ConfigSourceList instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.runtime_info">
+<span class="sig-name descname"><span class="pre">runtime_info</span></span><a class="headerlink" href="#tollan.config.RuntimeContext.runtime_info" title="Link to this definition">#</a></dt>
+<dd><p>Get runtime info from the validated config.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Runtime info instance from config.runtime_info</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Methods Documentation</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.from_cli">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_cli</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">env_files</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Path</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cli_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#tollan.config.RuntimeContext" title="tollan.config.RuntimeContext"><span class="pre">RuntimeContext</span></a><span class="p"><span class="pre">[</span></span><span class="pre">RuntimeConfigT</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.from_cli"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.from_cli" title="Link to this definition">#</a></dt>
+<dd><p>Create RuntimeContext from CLI arguments.</p>
+<p>This factory method creates a standard CLI configuration layout:
+- Config path (file or directory) at order=0
+- Env files at order=100+
+- CLI args converted to overrides env files at order=200</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_path</strong> (<em>Path</em><em> | </em><em>None</em><em>, </em><em>optional</em>) – Main config file or directory path. If directory,
+loads numbered YAML files (e.g., 00_base.yaml, 01_dev.yaml),
+by default None</p></li>
+<li><p><strong>env_files</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><em>Path</em><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – List of .env file paths, by default None</p></li>
+<li><p><strong>cli_args</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><em>list</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>] </em><em>| </em><em>None</em><em>, </em><em>optional</em>) – CLI arguments in “–key=value” or “–key value” format.
+Converted to nested dict (e.g., [”–db.host”, “localhost”] →
+{“db”: {“host”: “localhost”}}), by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>RuntimeContext[RuntimeConfigT]</em> – RuntimeContext instance configured for CLI usage</p></li>
+<li><p><em>Example</em> – &gt;&gt;&gt; from pathlib import Path
+&gt;&gt;&gt; # Create from CLI args
+&gt;&gt;&gt; rc = RuntimeContext.from_cli(
+…     cli_args=[”–debug”, “true”, “–port”, “8080”]
+… )
+&gt;&gt;&gt; ‘debug’ in rc.config_dict
+True</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.register_config_handler_cls">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register_config_handler_cls</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_handler_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><span class="pre">type</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="tollan.config.ConfigHandler.html#tollan.config.ConfigHandler" title="tollan.config.ConfigHandler"><span class="pre">ConfigHandler</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.register_config_handler_cls"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.register_config_handler_cls" title="Link to this definition">#</a></dt>
+<dd><p>Register a ConfigHandler class.</p>
+<p>Types registered can be instantiated via the <code class="xref py py-obj docutils literal notranslate"><span class="pre">__getitem__</span></code> interface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>config_handler_cls</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.14)"><em>type</em></a><em>[</em><a class="reference internal" href="tollan.config.ConfigHandler.html#tollan.config.ConfigHandler" title="tollan.config.ConfigHandler"><em>ConfigHandler</em></a><em>]</em>) – ConfigHandler subclass to register</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.reload">
+<span class="sig-name descname"><span class="pre">reload</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.14)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.reload"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.reload" title="Link to this definition">#</a></dt>
+<dd><p>Reload configuration, invalidating all caches.</p>
+<p>This forces a full reload of all config sources, including file-based
+sources that are normally cached.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Reloaded configuration dictionary</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.set_config">
+<span class="sig-name descname"><span class="pre">set_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfigT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'default'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'override'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.set_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.set_config" title="Link to this definition">#</a></dt>
+<dd><p>Replace a named tier’s configuration entirely.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> (<em>DictConfigT</em>) – New configuration for the tier</p></li>
+<li><p><strong>tier</strong> (<em>Literal</em><em>[</em><em>&quot;default&quot;</em><em>, </em><em>&quot;override&quot;</em><em>]</em>) – Tier to set (“default” or “override”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.set_context">
+<span class="sig-name descname"><span class="pre">set_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">context</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Generator</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.set_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.set_context" title="Link to this definition">#</a></dt>
+<dd><p>Context manager to temporarily override validation context.</p>
+<p>This is useful for testing different scenarios or loading config
+under different runtime conditions without permanent changes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>context</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a><em>[</em><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>Any</em><em>]</em>) – Context dictionary for enable_if expressions. Values are
+merged with existing context (doesn’t replace entirely).</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><em>None</em> – Context is set for duration of with block</p></li>
+<li><p><em>Example</em> – &gt;&gt;&gt; rc = RuntimeContext(
+…     config_sources=[
+…         {“format”: “dict”, “source”: {“app”: “test”}, “order”: 0}
+…     ]
+… )
+&gt;&gt;&gt; with rc.set_context({“env”: “production”}):
+…     config = rc.config_dict
+&gt;&gt;&gt; rc.config_dict[‘app’]
+‘test’</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.set_default_config">
+<span class="sig-name descname"><span class="pre">set_default_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfigT</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.set_default_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.set_default_config" title="Link to this definition">#</a></dt>
+<dd><p>Set default configuration (order=-1 tier).</p>
+<p>This only invalidates RuntimeContext caches, not ConfigSourceList
+source caches (since default tier is not cached in sources).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>DictConfigT</em>) – New default configuration</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.set_override_config">
+<span class="sig-name descname"><span class="pre">set_override_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfigT</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.set_override_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.set_override_config" title="Link to this definition">#</a></dt>
+<dd><p>Set override configuration (order=1001 tier).</p>
+<p>This only invalidates RuntimeContext caches, not ConfigSourceList
+source caches (since override tier is not cached in sources).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>DictConfigT</em>) – New override configuration</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.update_config">
+<span class="sig-name descname"><span class="pre">update_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfigT</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'default'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'override'</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.update_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.update_config" title="Link to this definition">#</a></dt>
+<dd><p>Merge configuration into a named tier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> (<em>DictConfigT</em>) – Configuration to merge into the tier</p></li>
+<li><p><strong>tier</strong> (<em>Literal</em><em>[</em><em>&quot;default&quot;</em><em>, </em><em>&quot;override&quot;</em><em>]</em>) – Tier to update (“default” or “override”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.update_default_config">
+<span class="sig-name descname"><span class="pre">update_default_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfigT</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.update_default_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.update_default_config" title="Link to this definition">#</a></dt>
+<dd><p>Merge default configuration (order=-1 tier).</p>
+<p>This only invalidates RuntimeContext caches, not ConfigSourceList
+source caches (since default tier is not cached in sources).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>DictConfigT</em>) – Configuration to merge into default tier</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="tollan.config.RuntimeContext.update_override_config">
+<span class="sig-name descname"><span class="pre">update_override_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DictConfigT</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="reference internal" href="../_modules/tollan/config/runtime_context.html#RuntimeContext.update_override_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#tollan.config.RuntimeContext.update_override_config" title="Link to this definition">#</a></dt>
+<dd><p>Merge override configuration (order=1001 tier).</p>
+<p>This only invalidates RuntimeContext caches, not ConfigSourceList
+source caches (since override tier is not cached in sources).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cfg</strong> (<em>DictConfigT</em>) – Configuration to merge into override tier</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="tollan.config.RuntimeConfig.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">RuntimeConfig</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="tollan.config.RuntimeInfo.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">RuntimeInfo</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext"><code class="docutils literal notranslate"><span class="pre">RuntimeContext</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.TIERS"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.TIERS</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config_dict"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config_dict</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config_handler_cls_registry"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config_handler_cls_registry</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.config_sources"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.config_sources</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.runtime_info"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.runtime_info</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.from_cli"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.from_cli()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.register_config_handler_cls"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.register_config_handler_cls()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.reload"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.reload()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_context"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_context()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_default_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_default_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.set_override_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.set_override_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.update_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.update_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.update_default_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.update_default_config()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#tollan.config.RuntimeContext.update_override_config"><code class="docutils literal notranslate"><span class="pre">RuntimeContext.update_override_config()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Zhiyuan Ma
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, Zhiyuan Ma.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+  Last updated on 14 Nov 2025.
+  <br/>
+</p>
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="326pt" height="27pt" viewBox="0.00 0.00 326.00 27.00">
+<ns0:g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(4 23)">
+<ns0:title>inheritance9ad3a3b212</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>MultiOptionInfo</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="../api/tollan.utils.typer.MultiOptionInfo.html#tollan.utils.typer.MultiOptionInfo" ns1:title="Extended OptionInfo for multi-argument options." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="318,-19 226,-19 226,0 318,0 318,-19" />
+<ns0:text text-anchor="middle" x="272" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">MultiOptionInfo</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>OptionInfo</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="190,-19 122,-19 122,0 190,0 190,-19" />
+<ns0:text text-anchor="middle" x="156" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">OptionInfo</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>OptionInfo-&gt;MultiOptionInfo</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M190.28,-9.5C199.77,-9.5 210.32,-9.5 220.59,-9.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="220.6,-11.25 225.6,-9.5 220.6,-7.75 220.6,-11.25" />
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>ParameterInfo</ns0:title>
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="86,-19 0,-19 0,0 86,0 86,-19" />
+<ns0:text text-anchor="middle" x="43" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ParameterInfo</ns0:text>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>ParameterInfo-&gt;OptionInfo</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M86.28,-9.5C96.3,-9.5 106.93,-9.5 116.75,-9.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="116.81,-11.25 121.81,-9.5 116.81,-7.75 116.81,-11.25" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>

@@ -1,0 +1,71 @@
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" xmlns:ns1="http://www.w3.org/1999/xlink" width="576pt" height="78pt" viewBox="0.00 0.00 576.00 77.91">
+<ns0:g id="graph0" class="graph" transform="scale(0.93 0.93) rotate(0) translate(4 80)">
+<ns0:title>inheritance96605820a3</ns0:title>
+
+<ns0:g id="node1" class="node">
+<ns0:title>ContextHandlerMixinBase</ns0:title>
+<ns0:g id="a_node1"><ns0:a ns1:href="../api/tollan.pipeline.ContextHandlerMixinBase.html#tollan.pipeline.ContextHandlerMixinBase" ns1:title="Base class for managing context objects in data containers." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="234,-76 90,-76 90,-57 234,-57 234,-76" />
+<ns0:text text-anchor="middle" x="162" y="-64" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">ContextHandlerMixinBase</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="node3" class="node">
+<ns0:title>DictContextHandlerMixin</ns0:title>
+<ns0:g id="a_node3"><ns0:a ns1:href="../api/tollan.pipeline.DictContextHandlerMixin.html#tollan.pipeline.DictContextHandlerMixin" ns1:title="A helper class to access context stored in dict." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="410,-38 270,-38 270,-19 410,-19 410,-38" />
+<ns0:text text-anchor="middle" x="340" y="-26" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">DictContextHandlerMixin</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge2" class="edge">
+<ns0:title>ContextHandlerMixinBase-&gt;DictContextHandlerMixin</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M207.41,-56.91C232.52,-51.49 263.96,-44.7 289.81,-39.12" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="290.39,-40.79 294.91,-38.02 289.65,-37.36 290.39,-40.79" />
+</ns0:g>
+
+<ns0:g id="node2" class="node">
+<ns0:title>Generic</ns0:title>
+<ns0:g id="a_node2"><ns0:a ns1:href="https://docs.python.org/3/library/typing.html#typing.Generic" ns1:title="Abstract base class for generic types." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="54,-38 0,-38 0,-19 54,-19 54,-38" />
+<ns0:text text-anchor="middle" x="27" y="-26" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">Generic</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge1" class="edge">
+<ns0:title>Generic-&gt;ContextHandlerMixinBase</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M54.28,-36.01C73.84,-41.6 100.85,-49.31 122.8,-55.59" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="122.4,-57.29 127.69,-56.98 123.36,-53.93 122.4,-57.29" />
+</ns0:g>
+
+<ns0:g id="edge3" class="edge">
+<ns0:title>Generic-&gt;DictContextHandlerMixin</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M54.25,-28.5C100.2,-28.5 196.8,-28.5 264.7,-28.5" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="264.94,-30.25 269.94,-28.5 264.94,-26.75 264.94,-30.25" />
+</ns0:g>
+
+<ns0:g id="node4" class="node">
+<ns0:title>MetadataContextHandlerMixin</ns0:title>
+<ns0:g id="a_node4"><ns0:a ns1:href="../api/tollan.pipeline.MetadataContextHandlerMixin.html#tollan.pipeline.MetadataContextHandlerMixin" ns1:title="A helper class to access context stored in metadata dict." target="_top">
+<ns0:polygon fill="white" stroke="black" stroke-width="0.5" points="613,-19 446,-19 446,0 613,0 613,-19" />
+<ns0:text text-anchor="middle" x="529.5" y="-7" font-family="Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans" font-size="10.00">MetadataContextHandlerMixin</ns0:text>
+</ns0:a>
+</ns0:g>
+</ns0:g>
+
+<ns0:g id="edge5" class="edge">
+<ns0:title>Generic-&gt;MetadataContextHandlerMixin</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M54.11,-25.95C98.44,-21.76 191.28,-13.58 270,-10.5 326.8,-8.28 390.66,-8.01 440.71,-8.31" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="440.8,-10.06 445.81,-8.34 440.82,-6.56 440.8,-10.06" />
+</ns0:g>
+
+<ns0:g id="edge4" class="edge">
+<ns0:title>DictContextHandlerMixin-&gt;MetadataContextHandlerMixin</ns0:title>
+<ns0:path fill="none" stroke="black" stroke-width="0.5" d="M410.02,-21.51C420.07,-20.49 430.53,-19.43 440.89,-18.38" />
+<ns0:polygon fill="black" stroke="black" stroke-width="0.5" points="441.16,-20.11 445.96,-17.86 440.81,-16.63 441.16,-20.11" />
+</ns0:g>
+</ns0:g>
+</ns0:svg>
