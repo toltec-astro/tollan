@@ -1,1 +1,1 @@
-"""Tests for `tollan.config`."""
+"""Configuration module tests."""

@@ -1,1 +1,1 @@
-"""Tests for `tollan.utils``."""
+"""Utilities module tests."""

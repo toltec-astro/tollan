@@ -6,8 +6,8 @@ Welcome to tollan's documentation!
    :caption: Contents:
 
    readme
+   cli
    modules
-   changelog
 
 Indices and tables
 ==================

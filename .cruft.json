@@ -1,0 +1,21 @@
+{
+  "template": "https://github.com/Jerry-Ma/cookiecutter-pypackage.git",
+  "commit": "eca1934d4b77cfbe8f6a93074c5ebb3852ba2644",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "full_name": "Zhiyuan Ma",
+      "email": "zhiyuanma@umass.edu",
+      "github_username": "toltec-astro",
+      "pypi_package_name": "tollan",
+      "project_name": "tollan",
+      "project_slug": "tollan",
+      "project_short_description": "TolTEC utility library.",
+      "pypi_username": "toltec-astro",
+      "__gh_slug": "toltec-astro/tollan",
+      "_template": "https://github.com/Jerry-Ma/cookiecutter-pypackage.git",
+      "_commit": "eca1934d4b77cfbe8f6a93074c5ebb3852ba2644"
+    }
+  },
+  "directory": null
+}

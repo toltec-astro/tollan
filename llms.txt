@@ -1,0 +1,62 @@
+# Tollan
+
+> Configuration management library for Python with validation, multi-source loading, caching, and astronomy-specific type support. Built on Pydantic v2 with a four-tier configuration architecture for flexible runtime configuration management.
+
+Tollan is a Python library designed for astronomy projects that require sophisticated configuration management. It provides a flexible multi-source configuration system with precedence control, conditional loading, validation, caching, and built-in support for astronomy types (Time, Quantity, SkyCoord). The library uses a four-tier architecture (default, user sources, info, override) that allows precise control over configuration precedence while maintaining immutability where needed.
+
+## Documentation
+
+- [README](README.md): Quick start guide, configuration system overview, and basic usage examples
+- [Project Configuration](pyproject.toml): Package metadata, dependencies, and development tool configuration
+- [Architecture](design/architecture.md): Complete system architecture with four-tier configuration design
+- [Implementation Status](design/implementation.md): Module status, test coverage, and production readiness
+- [Technology Stack](design/technology_stack.md): Technology choices and rationale
+
+## Core API
+
+- [Config Module](src/tollan/config/__init__.py): Main configuration exports including RuntimeContext, RuntimeConfig, and ConfigHandler
+- [Runtime Context](src/tollan/config/runtime_context.py): RuntimeContext class for managing configuration lifecycle with four-tier architecture
+- [Config Handler](src/tollan/config/handler.py): ConfigHandler base class for specialized configuration management
+- [Runtime Info](src/tollan/config/runtime_info.py): RuntimeInfo dataclass for runtime metadata
+
+## Configuration Sources
+
+- [Sources Module](src/tollan/config/sources/__init__.py): ConfigSourceList and resolve_config_sources for multi-source configuration loading
+- [Base Source](src/tollan/config/sources/base.py): Base configuration source interface and enable_if conditional loading
+- [YAML Source](src/tollan/config/sources/yaml.py): YAML file configuration source with safe loading
+- [Dict Source](src/tollan/config/sources/dict_.py): Dictionary-based configuration source
+- [EnvFile Source](src/tollan/config/sources/envfile.py): Environment file (.env) configuration source
+- [List Source](src/tollan/config/sources/list_.py): Nested configuration source lists
+
+## Custom Types
+
+- [Types Module](src/tollan/config/types/__init__.py): Astronomy-specific Pydantic types and validators
+- [Quantity Types](src/tollan/config/types/quantity.py): Astropy Quantity fields with unit validation (length, angle, etc.)
+- [Time Types](src/tollan/config/types/time.py): Astropy Time field with format support
+- [SkyCoord Types](src/tollan/config/types/skycoord.py): Astropy SkyCoord field for celestial coordinates
+- [Path Types](src/tollan/config/types/path.py): Enhanced path validation with existence checking
+
+## Utilities
+
+- [CLI Utilities](src/tollan/utils/cli.py): Command-line argument parsing with nested dict support
+- [Dict Utilities](src/tollan/utils/dict.py): Recursive update and dictionary manipulation
+- [YAML Utilities](src/tollan/utils/yaml.py): Custom YAML loading with safe defaults
+- [FileLoc Utility](src/tollan/utils/fileloc.py): File location tracking with source information
+
+## Testing
+
+- [Config Tests](tests/config/): Comprehensive test suite for configuration system
+- [Source Tests](tests/config/sources/test_sources_comprehensive.py): ConfigSourceList tests including caching, conditional loading, and merging
+- [Runtime Context Tests](tests/config/test_runtime_context_comprehensive.py): RuntimeContext tests including tier manipulation, CLI creation, and context management
+- [Handler Tests](tests/config/test_config_handler_comprehensive.py): ConfigHandler tests including auto-registration and cache invalidation
+- [Type Tests](tests/config/types/test_astronomy_types.py): Custom astronomy type field tests
+
+## Design Documents
+
+- [Architecture](design/architecture.md): Complete system architecture including four-tier configuration, RuntimeContext design, ConfigSourceList, conditional loading, custom types, and caching strategy
+- [Implementation Status](design/implementation.md): Current implementation details, module status, test coverage (522 tests), QA metrics (71% improvement), production readiness, and known limitations
+- [Technology Stack](design/technology_stack.md): Technology choices and rationale including Python 3.13+, Pydantic v2, dependencies, testing tools, development tools, and PEP 695 generics
+
+## Optional
+
+- [Development Justfile](justfile): Task automation for development, testing, and quality assurance
