@@ -114,12 +114,12 @@ class TimeValidator(_SimpleTypeValidatorMixin[Time]):
 
 
 _default_time_validator = TimeValidator()
-TimeField = Annotated[Time, _default_time_validator]
-IsoTimeField = Annotated[
+type TimeField = Annotated[Time, _default_time_validator]
+type IsoTimeField = Annotated[
     Time,
     TimeValidator(formats_allowed=["isot", "fits", "iso"]),
 ]
-UnixTimeField = Annotated[
+type UnixTimeField = Annotated[
     Time,
     TimeValidator(formats_allowed=("unix", "unix_tai")),
 ]

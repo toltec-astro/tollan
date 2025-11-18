@@ -84,7 +84,7 @@ class SkyCoordValidator(_SimpleTypeValidatorMixin[SkyCoord]):
 
 
 default_skycoord_validator = SkyCoordValidator()
-SkyCoordField = Annotated[SkyCoord, default_skycoord_validator]
+type SkyCoordField = Annotated[SkyCoord, default_skycoord_validator]
 
 GenerateJsonSchema.register_default_serializers(
     SkyCoord,

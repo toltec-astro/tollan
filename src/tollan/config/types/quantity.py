@@ -119,24 +119,24 @@ class QuantityValidator(_SimpleTypeValidatorMixin[Quantity]):
 
 
 _default_quantity_validator = QuantityValidator()
-QuantityField = Annotated[Quantity, _default_quantity_validator]
-LengthQuantityField = Annotated[
+type QuantityField = Annotated[Quantity, _default_quantity_validator]
+type LengthQuantityField = Annotated[
     Quantity,
     QuantityValidator(physical_types_allowed="length"),
 ]
-AngleQuantityField = Annotated[
+type AngleQuantityField = Annotated[
     Quantity,
     QuantityValidator(physical_types_allowed="angle"),
 ]
-FrequencyQuantityField = Annotated[
+type FrequencyQuantityField = Annotated[
     Quantity,
     QuantityValidator(physical_types_allowed="frequency"),
 ]
-TimeQuantityField = Annotated[
+type TimeQuantityField = Annotated[
     Quantity,
     QuantityValidator(physical_types_allowed="time"),
 ]
-DimensionlessQuantityField = Annotated[
+type DimensionlessQuantityField = Annotated[
     Quantity,
     QuantityValidator(physical_types_allowed="dimensionless"),
 ]
