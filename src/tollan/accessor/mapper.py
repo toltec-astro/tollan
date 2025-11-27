@@ -17,20 +17,13 @@ __all__ = [
 class Mapper[SchemaT: Schema]:
     """Resolve schema fields and provide data access interface.
 
-    Mapper is a resolved variant of a schema template.
+    Mapper resolves a schema's field mappings against a data source,
+    storing the resolved physical field names and optionally loading values.
 
     Type Parameters
     ---------------
     SchemaT : Schema
         Schema type for this mapper (auto-instantiated as class variable)
-
-    Attributes
-    ----------
-    data_source : Any, optional
-        Data source to resolve against (xarray.Dataset, pd.DataFrame, etc.)
-    default_values : dict[MappingBase, Any], optional
-        Default values for schema fields (mapping -> value).
-        Used as fallback when data_source doesn't have a field.
     """
 
     # Schema instance (auto-instantiated and cached via __init_subclass__)
@@ -41,7 +34,13 @@ class Mapper[SchemaT: Schema]:
 
     # Dataclass fields
     data_source: Any = None
+    """Data source to resolve against (xarray.Dataset, pd.DataFrame, etc.)"""
+
     default_values: dict[MappingBase, Any] = field(default_factory=dict)
+    """Default values for schema fields (mapping -> value).
+
+    Used as fallback when data_source doesn't have a field.
+    """
     mapped_fields: dict[MappingBase, MappedField] = field(
         default_factory=dict,
         init=False,
