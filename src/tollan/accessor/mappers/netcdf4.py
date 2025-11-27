@@ -2,23 +2,16 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
 
-# Suppress numpy ABI warning for netCDF4
-warnings.filterwarnings(
-    "ignore",
-    message="numpy.ndarray size changed",
-    category=RuntimeWarning,
-)
+from ..mapper import Mapper
+from ..schema import Schema
 
 if TYPE_CHECKING:
     import netCDF4 as nc  # noqa: N813
 
-from ..mapper import Mapper
-from ..schema import Schema
 
 __all__ = ["NetCDF4Mapper"]
 

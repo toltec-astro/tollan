@@ -150,10 +150,16 @@ class Mapper[SchemaT: Schema]:
         if self.data_source is not None:
             for name in field_mapping.names:
                 if self._has_field(name):
+                    # Only read value immediately if resolve_value is True
+                    value = (
+                        self._read_value(name)
+                        if field_mapping.resolve_value
+                        else MISSING
+                    )
                     return MappedField(
                         field_mapping=field_mapping,
                         name=name,
-                        value=self._read_value(name),
+                        value=value,
                         source=MappedFieldSource.DATA_SOURCE,
                         schema_path=schema_path,
                     )

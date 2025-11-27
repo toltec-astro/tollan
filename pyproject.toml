@@ -32,6 +32,8 @@ dependencies = [
   "plotly",
   "wrapt",
   "netcdf4",
+  "xarray",
+  "frozendict",
 ]
 
 [dependency-groups]

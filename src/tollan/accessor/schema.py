@@ -122,8 +122,11 @@ class Mapping(FieldMapping, MappingBase):
     Examples
     --------
     >>> Mapping('field')
+    Mapping(names=('field',), required=True, resolve_value=False)
     >>> Mapping('field', required=False)
+    Mapping(names=('field',), required=False, resolve_value=False)
     >>> Mapping(('field1', 'field2'))
+    Mapping(names=('field1', 'field2'), required=True, resolve_value=False)
     """
 
     def resolve(
@@ -176,8 +179,9 @@ class Schema:
 
     Examples
     --------
+    >>> from dataclasses import dataclass
     >>> @dataclass
-    >>> class MySchema(Schema):
+    ... class MySchema(Schema):
     ...     field1: Mapping = Mapping('physical_name')
     ...     field2: Mapping = Mapping(('alt1', 'alt2'))
     """

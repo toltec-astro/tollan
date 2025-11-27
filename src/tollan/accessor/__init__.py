@@ -5,14 +5,13 @@ data accessors. It resolves the challenge of accessing data variables that may h
 different names across datasets or depend on runtime conditions.
 
 Core Concepts:
-    - FieldDef: Field definition with resolution logic (candidates OR predicates),
-                value storage (resolved name + loaded value), and load control
-    - Schema: Dict-like mapping from logical names to FieldDef instances
-              Resolution happens in insertion order for sequential dependencies
-    - Mapper[SchemaT]: Generic translator that resolves schema against data,
-                       stores resolved names and values (if loaded)
-    - Context: Multi-mapper container propagating through operations
-    - ContextHandler: Storage/retrieval of context in data.attrs
+    - FieldMapping: Field definition with physical name candidates, resolution flags
+    - Mapping: Concrete FieldMapping for direct field access
+    - MappingBase: Abstract base for conditional field resolution
+    - Schema: Dataclass with Mapping fields defining logical→physical name mappings
+    - Mapper[SchemaT]: Generic translator that resolves schema against data source,
+                       stores resolved names and values (when requested)
+    - MappedField: Resolution result with name, value, and metadata
 
 Key Features:
     - Maximum flexibility with arbitrary Python predicates
@@ -24,43 +23,28 @@ Key Features:
     - Works with any data container: xarray, pandas, HDF5, NetCDF, etc.
 
 Example:
-    >>> from tollan.accessor import Schema, FieldDef, Mapper
+    >>> from dataclasses import dataclass
+    >>> from tollan.accessor import Schema, Mapping, Mapper
     >>>
-    >>> # Define schema with predicates
-    >>> SCHEMA = Schema(
-    ...     data_kind=FieldDef(
-    ...         names=("kind", "type"),
-    ...         load_value=True,  # Load immediately
-    ...         required=True
-    ...     ),
-    ...     temperature_raw=FieldDef(
-    ...         names=("temp_raw", "temperature"),
-    ...         predicate=lambda data, resolved: (
-    ...             resolved["data_kind"].value == "raw"
-    ...         ),
-    ...         load_value=False,  # Defer loading
-    ...         required=False
-    ...     ),
-    ...     temperature_calibrated=FieldDef(
-    ...         names=("temp_calibrated", "temp_cal"),
-    ...         predicate=lambda data, resolved: (
-    ...             resolved["data_kind"].value == "processed"
-    ...         ),
-    ...         load_value=False,
-    ...         required=False
-    ...     ),
-    ... )
+    >>> # Define schema with field mappings
+    >>> @dataclass
+    ... class MySchema(Schema):
+    ...     data_kind: Mapping = Mapping(
+    ...         ("kind", "type"),
+    ...         required=True,
+    ...         resolve_value=True  # Load immediately
+    ...     )
+    ...     temperature: Mapping = Mapping(
+    ...         ("temp_raw", "temperature", "temp_calibrated"),
+    ...         required=False,
+    ...         resolve_value=False  # Defer loading
+    ...     )
     >>>
-    >>> # Resolve against data
-    >>> mapper = Mapper.from_schema(SCHEMA, ds)
-    >>> kind = mapper.get_value("data_kind")  # Loaded value
-    >>>
-    >>> # Only one temperature field will be in mapper
-    >>> if mapper.has("temperature_raw"):
-    ...     temp_var = mapper.get_name("temperature_raw")
-    >>> elif mapper.has("temperature_calibrated"):
-    ...     temp_var = mapper.get_name("temperature_calibrated")
-    >>> temp_data = ds[temp_var]  # Load from dataset
+    >>> # Resolve against data (would use real data source)
+    >>> # mapper = Mapper(data_source, MySchema)
+    >>> # kind = mapper.get_value("data_kind")  # Loaded value
+    >>> # temp_name = mapper.get_name("temperature")  # Field name only
+    >>> # temp_data = data_source[temp_name]  # Load from source
 """
 
 from __future__ import annotations

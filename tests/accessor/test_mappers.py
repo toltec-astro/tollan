@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import tempfile
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -12,7 +13,15 @@ import xarray as xr
 from pydantic.dataclasses import dataclass
 
 from tollan.accessor.mappers import DataFrameMapper, NetCDF4Mapper, XarrayMapper
-from tollan.accessor.schema import MISSING, Mapping, Schema
+from tollan.accessor.schema import Mapping, Schema
+
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        message="numpy.ndarray size changed",
+        category=RuntimeWarning,
+    )
+    import netCDF4 as nc  # noqa: N813
 
 
 class TestDataFrameMapper:
@@ -111,7 +120,10 @@ class TestXarrayMapper:
     def test_from_dataset(self):
         """Create mapper from xarray Dataset."""
         ds = xr.Dataset(
-            {"temp": (["x"], [25.0, 26.0]), "pressure": (["x"], [101.3, 101.4])}
+            {
+                "temp": (["x"], [25.0, 26.0]),
+                "pressure": (["x"], [101.3, 101.4]),
+            },
         )
 
         @dataclass
@@ -204,7 +216,6 @@ class TestNetCDF4Mapper:
     @pytest.fixture
     def temp_netcdf(self):
         """Create temporary netCDF file."""
-        import netCDF4 as nc
 
         with tempfile.NamedTemporaryFile(suffix=".nc", delete=False) as tmp:
             path = Path(tmp.name)
@@ -222,7 +233,6 @@ class TestNetCDF4Mapper:
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_from_dataset(self, temp_netcdf):
         """Create mapper from netCDF4 Dataset."""
-        import netCDF4 as nc
 
         with nc.Dataset(temp_netcdf, "r") as ds:
 
@@ -241,7 +251,6 @@ class TestNetCDF4Mapper:
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_variable(self, temp_netcdf):
         """Read variable values."""
-        import netCDF4 as nc
 
         with nc.Dataset(temp_netcdf, "r") as ds:
 
@@ -262,7 +271,6 @@ class TestNetCDF4Mapper:
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_attrs(self, temp_netcdf):
         """Read values from Dataset attributes."""
-        import netCDF4 as nc
 
         with nc.Dataset(temp_netcdf, "r") as ds:
 
@@ -281,7 +289,6 @@ class TestNetCDF4Mapper:
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_missing_field(self, temp_netcdf):
         """Missing field raises KeyError."""
-        import netCDF4 as nc
 
         with nc.Dataset(temp_netcdf, "r") as ds:
 

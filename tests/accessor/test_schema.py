@@ -1,5 +1,11 @@
 """Tests for schema components: FieldMapping, Mapping, MappingBase, Schema."""
 
+# NOTE: Pylance type checking errors in this file are expected.
+# Pydantic dataclasses generate __init__ from field annotations and don't
+# respect TYPE_CHECKING overloads. The code works correctly at runtime
+# because Pydantic's field_validator handles str/list -> tuple conversion.
+# All tests pass successfully despite the type checking errors.
+
 from __future__ import annotations
 
 from typing import Any
@@ -63,19 +69,25 @@ class TestFieldMapping:
 
     def test_frozen(self):
         """FieldMapping is immutable."""
+        from pydantic_core import ValidationError
+
         fm = FieldMapping("field")
-        with pytest.raises(Exception):  # FrozenInstanceError
-            fm.required = False
+        with pytest.raises(
+            (AttributeError, ValidationError, TypeError),
+        ):  # FrozenInstanceError
+            fm.required = False  # type: ignore[misc]
 
     def test_invalid_names_type(self):
         """Invalid names type raises error."""
         with pytest.raises(ValueError, match="names must be str or tuple"):
-            FieldMapping(123)
+            FieldMapping(123)  # type: ignore[arg-type]
 
     def test_invalid_names_elements(self):
         """Non-string elements in names raises error."""
-        with pytest.raises(Exception):  # Validation error
-            FieldMapping([1, 2, 3])
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):  # Validation error
+            FieldMapping([1, 2, 3])  # type: ignore[arg-type]
 
 
 class TestMapping:
@@ -150,7 +162,7 @@ class TestMappingBase:
         """Custom mapping implementation."""
 
         class CustomMapping(MappingBase):
-            def __init__(self, primary: str, fallback: str):
+            def __init__(self, primary: str, fallback: str) -> None:
                 self.primary = primary
                 self.fallback = fallback
 
@@ -165,7 +177,8 @@ class TestMappingBase:
 
         # Mock context
         class Context:
-            data_source = {"alternative_name": 123}
+            def __init__(self) -> None:
+                self.data_source = {"alternative_name": 123}
 
         resolved = mapping.resolve(Context())
         assert resolved.names == ("alternative_name",)
@@ -187,7 +200,10 @@ class TestMappedField:
         """MappedField with MISSING value."""
         fm = FieldMapping("field")
         mf = MappedField(
-            field_mapping=fm, name="", value=MISSING, source=MappedFieldSource.MISSING
+            field_mapping=fm,
+            name="",
+            value=MISSING,
+            source=MappedFieldSource.MISSING,
         )
         assert mf.value is MISSING
         assert mf.source == MappedFieldSource.MISSING

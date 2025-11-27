@@ -262,7 +262,7 @@ def yaml_dump(
 
 def yaml_dump(
     data: object,
-    output: str | os.PathLike | TextIOBase | None = None,
+    output: str | os.PathLike[str] | TextIOBase | None = None,
     **kwargs: object,
 ) -> None | str:
     """
@@ -291,7 +291,7 @@ def yaml_dump(
         If output is not a valid type.
     """
     if isinstance(output, (str, os.PathLike)):
-        ctx = Path(output).open("w")  # noqa: SIM115
+        ctx = Path(output).open("w")  # noqa: SIM115 # ty: ignore[invalid-argument-type]
     elif output is None or hasattr(output, "write"):
         ctx = contextlib.nullcontext(output)
     else:

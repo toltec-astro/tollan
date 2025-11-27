@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, ClassVar
+
 import pytest
 from pydantic.dataclasses import dataclass
 
@@ -9,17 +11,17 @@ from tollan.accessor.mapper import Mapper
 from tollan.accessor.schema import (
     MISSING,
     FieldMapping,
-    MappedField,
     MappedFieldSource,
     Mapping,
+    MappingBase,
     Schema,
 )
 
 
-class MockMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
+class MockMapper[SchemaT: Schema](Mapper[SchemaT]):
     """Mock mapper for testing abstract base."""
 
-    data_source: dict[str, any]
+    data_source: dict[str, Any]
 
     def _has_field(self, name: str) -> bool:
         return name in self.data_source
@@ -49,7 +51,7 @@ class TestMapperCreation:
         assert isinstance(mapper.schema, TestSchema)
         assert len(mapper.mapped_fields) > 0
 
-    def test_with_default_schema(self):
+    def test_with_empty_schema(self):
         """Create mapper with explicit empty Schema."""
         data = {"field": 123}
 
@@ -141,7 +143,7 @@ class TestValueRetrieval:
     """Test value retrieval methods."""
 
     def test_get_value_lazy(self):
-        """Get value lazily (default)."""
+        """Get value lazily (not loaded during resolution)."""
         data = {"temp": 25.0}
 
         @dataclass
@@ -152,8 +154,13 @@ class TestValueRetrieval:
             pass
 
         mapper = TestMapper(data_source=data)
-        value = mapper.get_value(mapper.schema.temp)
+        mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
+        # Value should NOT be loaded yet (lazy loading)
+        assert mapped_field.value is MISSING
+
+        # Now get the value - this triggers loading
+        value = mapper.get_value(mapper.schema.temp)
         assert value == 25.0
 
     def test_get_value_eager(self):
@@ -188,22 +195,6 @@ class TestValueRetrieval:
 
         with pytest.raises(KeyError, match="Field not found"):
             mapper.get_value(mapper.schema.temp)
-
-    def test_get_value_with_empty_schema(self):
-        """Get value still works with empty schema via direct access."""
-        data = {"temperature": 25.0, "pressure": 101.3}
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
-
-        class TestMapper(MockMapper[TestSchema]):
-            pass
-
-        mapper = TestMapper(data_source=data)
-
-        value = mapper.get_value(mapper.schema.temp)
-        assert value == 25.0
 
 
 class TestMappedFields:
@@ -247,31 +238,35 @@ class TestMappedFields:
 class TestConditionalMapping:
     """Test conditional mapping resolution."""
 
-    @pytest.mark.skip(
-        reason="Pydantic limitation with local class ConditionalMapping __init__"
-    )
     def test_custom_mapping_base(self):
-        """Custom Mapping subclass with conditional logic."""
+        """Custom MappingBase using frozen RootModel organizing FieldMappings."""
+        from pydantic import Field
+        from pydantic.dataclasses import rebuild_dataclass
 
-        # Subclass Mapping and override resolve() for conditional behavior
-        class ConditionalMapping(Mapping):
-            def __init__(self, celsius_name: str, fahrenheit_name: str):
-                # Store in names tuple for lookup
-                super().__init__((celsius_name, fahrenheit_name))
-                self._celsius = celsius_name
-                self._fahrenheit = fahrenheit_name
+        # RootModel that organizes multiple FieldMapping options
+        @dataclass(frozen=True)
+        class ConditionalTempMapping(MappingBase):
+            root: ClassVar[dict[str, FieldMapping]] = {
+                "celsius": FieldMapping("temp_c"),
+                "fahrenheit": FieldMapping("temp_f"),
+            }
 
-            def resolve(self, context) -> FieldMapping:
-                # Check if fahrenheit version exists, otherwise fall back to celsius
-                if context._has_field(self._fahrenheit):
-                    return FieldMapping(self._fahrenheit)
-                return FieldMapping(self._celsius)
+            def resolve(self, context: TestMapper) -> FieldMapping:
+                # Check which variant exists in data source
+                if context._has_field("temp_f"):
+                    return self.root["fahrenheit"]
+                return self.root["celsius"]
 
         data = {"temp_c": 25.0, "temp_f": 77.0}
 
         @dataclass
         class TestSchema(Schema):
-            temp: ConditionalMapping = ConditionalMapping("temp_c", "temp_f")
+            temp: ConditionalTempMapping = Field(
+                default_factory=ConditionalTempMapping,
+            )
+
+        # Rebuild to handle forward reference
+        rebuild_dataclass(TestSchema)  # pyright: ignore[reportArgumentType]
 
         class TestMapper(MockMapper[TestSchema]):
             pass
