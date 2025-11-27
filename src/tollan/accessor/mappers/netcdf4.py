@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+
+# Suppress numpy ABI warning for netCDF4
+warnings.filterwarnings(
+    "ignore",
+    message="numpy.ndarray size changed",
+    category=RuntimeWarning,
+)
 
 if TYPE_CHECKING:
     import netCDF4 as nc  # noqa: N813

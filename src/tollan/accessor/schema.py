@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import StrEnum, auto
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass
@@ -56,9 +56,19 @@ class FieldMapping:
     required: bool = True
     resolve_value: bool = False
 
+    if TYPE_CHECKING:
+
+        def __init__(
+            self,
+            names: str | tuple[str, ...] | list[str],
+            *,
+            required: bool = True,
+            resolve_value: bool = False,
+        ) -> None: ...
+
     @field_validator("names", mode="before")
     @classmethod
-    def validate_names(cls, v: str | tuple[str, ...]) -> tuple[str, ...]:
+    def validate_names(cls, v: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
         """Normalize names to tuple."""
         # Handle string
         if isinstance(v, str):
@@ -66,7 +76,7 @@ class FieldMapping:
         # Handle list/tuple
         if isinstance(v, (list, tuple)):
             return tuple(v)
-        msg = f"names must be str or tuple[str, ...], got {type(v)}"
+        msg = f"names must be str or tuple[str, ...] or list[str], got {type(v)}"
         raise ValueError(msg)
 
 
