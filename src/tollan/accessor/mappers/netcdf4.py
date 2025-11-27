@@ -19,10 +19,6 @@ __all__ = ["NetCDF4Mapper"]
 class NetCDF4Mapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     """Mapper for netCDF4.Dataset.
 
-    Create via factory methods:
-    - NetCDF4Mapper.from_data_source(dataset)
-    - NetCDF4Mapper.from_resolved(resolved_dict)
-
     Type Parameters
     ---------------
     SchemaT : Schema
@@ -30,8 +26,10 @@ class NetCDF4Mapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
 
     Parameters
     ----------
-    resolved : dict[int, MappedField]
-        Pre-resolved field mappings
+    data_source : nc.Dataset
+        The netCDF4 Dataset to map fields from
+    default_values : dict[MappingBase, Any], optional
+        Default values for fields not found in the dataset
     """
 
     data_source: nc.Dataset

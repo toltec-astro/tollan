@@ -8,6 +8,13 @@ Core Package
 
 .. automodapi:: tollan.cli
 
+Data Accessors
+--------------
+
+.. automodapi:: tollan.accessor
+
+.. automodapi:: tollan.accessor.mappers
+
 Configuration System
 --------------------
 

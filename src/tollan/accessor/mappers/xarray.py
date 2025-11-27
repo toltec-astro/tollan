@@ -18,10 +18,6 @@ __all__ = ["XarrayMapper"]
 class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     """Mapper for xarray.Dataset.
 
-    Create via factory methods:
-    - XarrayMapper.from_data_source(dataset)
-    - XarrayMapper.from_resolved(resolved_dict)
-
     Type Parameters
     ---------------
     SchemaT : Schema
@@ -29,8 +25,10 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
 
     Parameters
     ----------
-    resolved : dict[int, MappedField]
-        Pre-resolved field mappings
+    data_source : xr.Dataset
+        The xarray Dataset to map fields from
+    default_values : dict[MappingBase, Any], optional
+        Default values for fields not found in the dataset
     """
 
     data_source: xr.Dataset

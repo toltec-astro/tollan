@@ -1,26 +1,25 @@
 """Infrastructure for schema-driven data accessors.
 
-This module provides a flexible, predicate-based framework for building type-safe
-data accessors. It resolves the challenge of accessing data variables that may have
-different names across datasets or depend on runtime conditions.
+This module provides a flexible framework for building type-safe data accessors.
+It resolves the challenge of accessing data variables that may have different names
+across datasets or depend on runtime conditions.
 
 Core Concepts:
-    - FieldMapping: Field definition with physical name candidates, resolution flags
+    - FieldMapping: Field definition with physical name candidates and resolution flags
     - Mapping: Concrete FieldMapping for direct field access
-    - MappingBase: Abstract base for conditional field resolution
+    - MappingBase: Base class for custom mapping strategies
     - Schema: Dataclass with Mapping fields defining logical→physical name mappings
     - Mapper[SchemaT]: Generic translator that resolves schema against data source,
                        stores resolved names and values (when requested)
     - MappedField: Resolution result with name, value, and metadata
 
 Key Features:
-    - Maximum flexibility with arbitrary Python predicates
-    - Sequential resolution: later predicates access earlier results
-    - Value storage: both resolved name AND loaded value (when requested)
-    - Load control: fine-grained control over immediate vs deferred loading
-    - No prescribed workflow: schema defines its own resolution logic
-    - Generic type safety: Mapper[SchemaT] for IDE support
-    - Works with any data container: xarray, pandas, HDF5, NetCDF, etc.
+    - Flexible resolution: Try multiple physical names per logical field
+    - Conditional mappings: Subclass MappingBase for context-dependent resolution
+    - Lazy loading: Fine-grained control over immediate vs deferred value loading
+    - Type safety: Generic Mapper[SchemaT] for IDE support and type checking
+    - Multiple backends: Built-in support for xarray, pandas, and NetCDF4
+    - Extensible: Implement _has_field() and _read_value() for custom data sources
 
 Example:
     >>> from dataclasses import dataclass

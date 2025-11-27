@@ -16,10 +16,6 @@ __all__ = ["DataFrameMapper"]
 class DataFrameMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     """Mapper for pandas.DataFrame.
 
-    Create via factory methods:
-    - DataFrameMapper.from_data_source(dataframe)
-    - DataFrameMapper.from_resolved(resolved_dict)
-
     Type Parameters
     ---------------
     SchemaT : Schema
@@ -27,8 +23,10 @@ class DataFrameMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
 
     Parameters
     ----------
-    resolved : dict[int, MappedField]
-        Pre-resolved field mappings
+    data_source : pd.DataFrame
+        The pandas DataFrame to map fields from
+    default_values : dict[MappingBase, Any], optional
+        Default values for fields not found in the dataframe
     """
 
     data_source: pd.DataFrame
