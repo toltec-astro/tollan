@@ -56,11 +56,9 @@ __all__ = [
     "Mapping",
     "MappingBase",
     "Schema",
-    "XarrayMapper",
 ]
 
 from .mapper import Mapper
-from .mappers import XarrayMapper
 from .schema import (
     MISSING,
     FieldMapping,
