@@ -10,7 +10,6 @@ from pydantic.dataclasses import dataclass
 from tollan.accessor.mapper import Mapper
 from tollan.accessor.schema import (
     MISSING,
-    FieldMapping,
     MappedFieldSource,
     Mapping,
     MappingBase,
@@ -88,7 +87,7 @@ class TestFieldResolution:
 
         assert mapped_field.name == "temperature"
         assert mapped_field.source == MappedFieldSource.DATA_SOURCE
-        assert mapped_field.field_mapping.names == ("temperature",)
+        assert mapped_field.mapping.names == ("temperature",)
 
     def test_resolve_field_alternative(self):
         """Resolve field using alternative name."""
@@ -239,19 +238,19 @@ class TestConditionalMapping:
     """Test conditional mapping resolution."""
 
     def test_custom_mapping_base(self):
-        """Custom MappingBase using frozen RootModel organizing FieldMappings."""
+        """Custom MappingBase using frozen RootModel organizing Mappings."""
         from pydantic import Field
         from pydantic.dataclasses import rebuild_dataclass
 
-        # RootModel that organizes multiple FieldMapping options
+        # RootModel that organizes multiple Mapping options
         @dataclass(frozen=True)
         class ConditionalTempMapping(MappingBase):
-            root: ClassVar[dict[str, FieldMapping]] = {
-                "celsius": FieldMapping("temp_c"),
-                "fahrenheit": FieldMapping("temp_f"),
+            root: ClassVar[dict[str, Mapping]] = {
+                "celsius": Mapping("temp_c"),
+                "fahrenheit": Mapping("temp_f"),
             }
 
-            def resolve(self, context: TestMapper) -> FieldMapping:
+            def resolve(self, context: TestMapper) -> Mapping:
                 # Check which variant exists in data source
                 if context._has_field("temp_f"):
                     return self.root["fahrenheit"]

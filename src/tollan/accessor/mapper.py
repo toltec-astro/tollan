@@ -110,7 +110,7 @@ class Mapper[SchemaT: Schema]:
             default_value = self.default_values.get(mapping, MISSING)
 
             # Resolve this field mapping
-            resolved_field = self._resolve_field_mapping(
+            resolved_field = self._resolve_mapping(
                 mapping=mapping,
                 default_value=default_value,
                 schema_path=schema_path,
@@ -119,7 +119,7 @@ class Mapper[SchemaT: Schema]:
             if resolved_field:
                 self.mapped_fields[mapping] = resolved_field
 
-    def _resolve_field_mapping(
+    def _resolve_mapping(
         self,
         mapping: MappingBase,
         default_value: Any,
@@ -143,20 +143,16 @@ class Mapper[SchemaT: Schema]:
         """
         # Get the FieldMapping from the MappingBase
         # Pass self (mapper) so resolve() can access data_source, mapped_fields, etc.
-        field_mapping = mapping.resolve(self)
+        mapping = mapping.resolve(self)
 
         # Try to resolve from data_source first
         if self.data_source is not None:
-            for name in field_mapping.names:
+            for name in mapping.names:
                 if self._has_field(name):
                     # Only read value immediately if resolve_value is True
-                    value = (
-                        self._read_value(name)
-                        if field_mapping.resolve_value
-                        else MISSING
-                    )
+                    value = self._read_value(name) if mapping.resolve_value else MISSING
                     return MappedField(
-                        field_mapping=field_mapping,
+                        mapping=mapping,
                         name=name,
                         value=value,
                         source=MappedFieldSource.DATA_SOURCE,
@@ -166,7 +162,7 @@ class Mapper[SchemaT: Schema]:
         # Not found in data_source, try default_value
         if default_value is not MISSING:
             return MappedField(
-                field_mapping=field_mapping,
+                mapping=mapping,
                 name="",
                 value=default_value,
                 source=MappedFieldSource.DEFAULT,
@@ -174,12 +170,12 @@ class Mapper[SchemaT: Schema]:
             )
 
         # No candidate found and no default value
-        if field_mapping.required:
-            msg = f"Required field not found (tried: {field_mapping.names})"
+        if mapping.required:
+            msg = f"Required field not found (tried: {mapping.names})"
             raise KeyError(msg)
 
         return MappedField(
-            field_mapping=field_mapping,
+            mapping=mapping,
             name="",
             value=MISSING,
             source=MappedFieldSource.MISSING,

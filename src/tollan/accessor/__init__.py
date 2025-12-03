@@ -5,8 +5,7 @@ It resolves the challenge of accessing data variables that may have different na
 across datasets or depend on runtime conditions.
 
 Core Concepts:
-    - FieldMapping: Field definition with physical name candidates and resolution flags
-    - Mapping: Concrete FieldMapping for direct field access
+    - Mapping: Field definition with physical name candidates and resolution flags
     - MappingBase: Base class for custom mapping strategies
     - Schema: Dataclass with Mapping fields defining logical→physical name mappings
     - Mapper[SchemaT]: Generic translator that resolves schema against data source,
@@ -50,7 +49,6 @@ from __future__ import annotations
 
 __all__ = [
     "MISSING",
-    "FieldMapping",
     "MappedField",
     "Mapper",
     "Mapping",
@@ -61,7 +59,6 @@ __all__ = [
 from .mapper import Mapper
 from .schema import (
     MISSING,
-    FieldMapping,
     MappedField,
     Mapping,
     MappingBase,

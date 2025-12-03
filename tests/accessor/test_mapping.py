@@ -1,16 +1,16 @@
-"""Test Mapping convenience syntax for creating FieldMapping instances."""
+"""Test Mapping convenience syntax for field mapping."""
 
 from __future__ import annotations
 
 import pytest
 
-from tollan.accessor.schema import FieldMapping, Mapping
+from tollan.accessor.schema import Mapping
 
 
 def test_mapping_from_string():
     """Test creating Mapping from a string field name."""
     m = Mapping("field_name")
-    assert isinstance(m, FieldMapping)
+    assert isinstance(m, Mapping)
     assert m.names == ("field_name",)
     assert m.required is True
     assert m.resolve_value is False
@@ -61,12 +61,12 @@ def test_mapping_equality():
 
 
 def test_mapping_resolve():
-    """Test that resolve() returns the Mapping itself (which is a FieldMapping)."""
+    """Test that resolve() returns the Mapping itself (which is a Mapping)."""
     m = Mapping("field", required=False)
     resolved = m.resolve(context=None)
 
     assert resolved is m
-    assert isinstance(resolved, FieldMapping)
+    assert isinstance(resolved, Mapping)
     assert resolved.names == ("field",)
     assert resolved.required is False
 

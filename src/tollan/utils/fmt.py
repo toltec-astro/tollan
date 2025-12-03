@@ -55,7 +55,7 @@ def pformat_yaml(obj: Any) -> str:
 
 
 def pformat_fancy_index(
-    arg: slice | npt.ArrayLike | list[slice],
+    arg: slice | npt.ArrayLike | list[slice | npt.ArrayLike],
 ) -> str:
     """
     Pretty-format a numpy fancy index, slice, or mask.
@@ -85,7 +85,7 @@ def pformat_fancy_index(
     if isinstance(arg, np.ndarray):
         return f"<mask {np.sum(arg)}/{arg.size}>"
     if isinstance(arg, list):
-        s = ", ".join(pformat_fancy_index(a) for a in arg)
+        s = ", ".join(pformat_fancy_index(a) for a in arg)  # ty: ignore[invalid-argument-type]
         return f"[{s}]"
     return str(arg)
 

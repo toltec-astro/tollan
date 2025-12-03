@@ -10,7 +10,6 @@ from pydantic.dataclasses import dataclass
 
 __all__ = [
     "MISSING",
-    "FieldMapping",
     "MappedField",
     "MappedFieldSource",
     "Mapping",
@@ -38,9 +37,46 @@ class MappedFieldSource(StrEnum):
     MISSING = auto()  # Field not found and no default value
 
 
+class MappingBase:
+    """Base class for custom field mapping resolution.
+
+    Subclass to implement conditional mappings based on data source
+    characteristics or runtime context.
+
+    Examples
+    --------
+    >>> class ConditionalMapping(MappingBase):
+    ...     def resolve(self, context):
+    ...         if context.data_source.attrs.get('version') == 2:
+    ...             return Mapping('field_v2')
+    ...         return Mapping('field_v1')
+    """
+
+    def resolve(
+        self,
+        context: Any,
+    ) -> Mapping:
+        """Return the mapping to use for this data source.
+
+        Parameters
+        ----------
+        context : Any
+            Mapper instance with data_source and mapped_fields.
+
+        Returns
+        -------
+        Mapping
+            Resolved mapping configuration.
+        """
+        msg = f"{self.__class__.__name__} must implement resolve()"
+        raise NotImplementedError(msg)
+
+
 @dataclass(frozen=True)
-class FieldMapping:
-    """Configuration for mapping a logical field to physical variable name(s).
+class Mapping(MappingBase):
+    """Field mapping configuration.
+
+    Maps a logical field name to one or more physical variable names in the data source.
 
     Parameters
     ----------
@@ -50,6 +86,17 @@ class FieldMapping:
         Whether to raise error if field not found.
     resolve_value : bool, default False
         Whether to load value immediately (True) or lazily (False).
+
+    Examples
+    --------
+    >>> Mapping('field')
+    Mapping(names=('field',), required=True, resolve_value=False)
+
+    >>> Mapping('field', required=False)
+    Mapping(names=('field',), required=False, resolve_value=False)
+
+    >>> Mapping(('field1', 'field2'))
+    Mapping(names=('field1', 'field2'), required=True, resolve_value=False)
     """
 
     names: tuple[str, ...]
@@ -79,70 +126,20 @@ class FieldMapping:
         msg = f"names must be str or tuple[str, ...] or list[str], got {type(v)}"
         raise ValueError(msg)
 
-
-class MappingBase:
-    """Base class for field mapping with custom resolution logic.
-
-    Subclass to implement conditional mappings based on data source
-    characteristics, context, or previously resolved fields.
-    """
-
     def resolve(
         self,
         context: Any,
-    ) -> FieldMapping:
-        """Return the FieldMapping to use for this data source.
+    ) -> Mapping:
+        """Return this mapping instance.
 
         Parameters
         ----------
         context : Any
-            Mapper instance with data_source and mapped_fields.
+            Mapper instance (unused for direct mappings).
 
         Returns
         -------
-        FieldMapping
-            Field mapping configuration.
-        """
-        msg = f"{self.__class__.__name__} must implement resolve()"
-        raise NotImplementedError(msg)
-
-
-class Mapping(FieldMapping, MappingBase):
-    """Direct field mapping with no conditional logic.
-
-    Parameters
-    ----------
-    names : str or tuple[str, ...]
-        Physical variable name(s) to try in order.
-    required : bool, default True
-        Whether to raise error if field not found.
-    resolve_value : bool, default False
-        Whether to load value immediately.
-
-    Examples
-    --------
-    >>> Mapping('field')
-    Mapping(names=('field',), required=True, resolve_value=False)
-    >>> Mapping('field', required=False)
-    Mapping(names=('field',), required=False, resolve_value=False)
-    >>> Mapping(('field1', 'field2'))
-    Mapping(names=('field1', 'field2'), required=True, resolve_value=False)
-    """
-
-    def resolve(
-        self,
-        context: Any,
-    ) -> FieldMapping:
-        """Return this FieldMapping instance.
-
-        Parameters
-        ----------
-        context : Any
-            Mapper instance.
-
-        Returns
-        -------
-        FieldMapping
+        Mapping
             This instance.
         """
         return self
@@ -154,7 +151,7 @@ class MappedField:
 
     Parameters
     ----------
-    field_mapping : FieldMapping
+    mapping : Mapping
         Configuration used for resolution.
     name : str
         Physical field name resolved from data source.
@@ -166,7 +163,7 @@ class MappedField:
         Dot-separated path in the schema.
     """
 
-    field_mapping: FieldMapping
+    mapping: Mapping
     name: str
     value: Any = MISSING
     source: MappedFieldSource = MappedFieldSource.DATA_SOURCE

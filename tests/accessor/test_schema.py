@@ -1,4 +1,4 @@
-"""Tests for schema components: FieldMapping, Mapping, MappingBase, Schema."""
+"""Tests for schema components: Mapping, MappingBase, Schema."""
 
 # NOTE: Pylance type checking errors in this file are expected.
 # Pydantic dataclasses generate __init__ from field annotations and don't
@@ -15,7 +15,6 @@ from pydantic.dataclasses import dataclass
 
 from tollan.accessor.schema import (
     MISSING,
-    FieldMapping,
     MappedField,
     MappedFieldSource,
     Mapping,
@@ -24,54 +23,54 @@ from tollan.accessor.schema import (
 )
 
 
-class TestFieldMapping:
-    """Test FieldMapping dataclass."""
+class TestMappingDataclass:
+    """Test Mapping dataclass."""
 
     def test_single_name_string(self):
         """Single name string is converted to tuple."""
-        fm = FieldMapping("temperature")
+        fm = Mapping("temperature")
         assert fm.names == ("temperature",)
         assert fm.required is True
         assert fm.resolve_value is False
 
     def test_single_name_tuple(self):
         """Single name tuple."""
-        fm = FieldMapping(("temperature",))
+        fm = Mapping(("temperature",))
         assert fm.names == ("temperature",)
 
     def test_multiple_names(self):
         """Multiple alternative names."""
-        fm = FieldMapping(("temp", "temperature", "T"))
+        fm = Mapping(("temp", "temperature", "T"))
         assert fm.names == ("temp", "temperature", "T")
 
     def test_list_converted_to_tuple(self):
         """List is converted to tuple."""
-        fm = FieldMapping(["temp", "temperature"])
+        fm = Mapping(["temp", "temperature"])
         assert fm.names == ("temp", "temperature")
         assert isinstance(fm.names, tuple)
 
     def test_optional_field(self):
         """Optional field (not required)."""
-        fm = FieldMapping("field", required=False)
+        fm = Mapping("field", required=False)
         assert fm.required is False
 
     def test_immediate_resolve(self):
         """Field marked for immediate value resolution."""
-        fm = FieldMapping("field", resolve_value=True)
+        fm = Mapping("field", resolve_value=True)
         assert fm.resolve_value is True
 
     def test_all_parameters(self):
         """All parameters specified."""
-        fm = FieldMapping(("alt1", "alt2"), required=False, resolve_value=True)
+        fm = Mapping(("alt1", "alt2"), required=False, resolve_value=True)
         assert fm.names == ("alt1", "alt2")
         assert fm.required is False
         assert fm.resolve_value is True
 
     def test_frozen(self):
-        """FieldMapping is immutable."""
+        """Mapping is immutable."""
         from pydantic_core import ValidationError
 
-        fm = FieldMapping("field")
+        fm = Mapping("field")
         with pytest.raises(
             (AttributeError, ValidationError, TypeError),
         ):  # FrozenInstanceError
@@ -80,23 +79,23 @@ class TestFieldMapping:
     def test_invalid_names_type(self):
         """Invalid names type raises error."""
         with pytest.raises(ValueError, match="names must be str or tuple"):
-            FieldMapping(123)  # type: ignore[arg-type]
+            Mapping(123)  # type: ignore[arg-type]
 
     def test_invalid_names_elements(self):
         """Non-string elements in names raises error."""
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):  # Validation error
-            FieldMapping([1, 2, 3])  # type: ignore[arg-type]
+            Mapping([1, 2, 3])  # type: ignore[arg-type]
 
 
 class TestMapping:
-    """Test Mapping class (FieldMapping + MappingBase)."""
+    """Test Mapping class (Mapping + MappingBase)."""
 
-    def test_is_field_mapping(self):
-        """Mapping is a FieldMapping."""
+    def test_is_mapping(self):
+        """Mapping is a Mapping."""
         m = Mapping("field")
-        assert isinstance(m, FieldMapping)
+        assert isinstance(m, Mapping)
         assert isinstance(m, MappingBase)
 
     def test_basic_creation(self):
@@ -118,17 +117,17 @@ class TestMapping:
         m = Mapping("field")
         resolved = m.resolve(context=None)
         assert resolved is m
-        assert isinstance(resolved, FieldMapping)
+        assert isinstance(resolved, Mapping)
 
     def test_subclass_can_override_resolve(self):
         """Subclass can override resolve() for conditional mapping."""
 
         class ConditionalMapping(Mapping):
-            def resolve(self, context: Any) -> FieldMapping:
-                # Return different FieldMapping based on context
+            def resolve(self, context: Any) -> Mapping:
+                # Return different Mapping based on context
                 if hasattr(context, "use_fahrenheit") and context.use_fahrenheit:
-                    return FieldMapping("temp_f")
-                return FieldMapping("temp_c")
+                    return Mapping("temp_f")
+                return Mapping("temp_c")
 
         mapping = ConditionalMapping("temp")
 
@@ -166,12 +165,12 @@ class TestMappingBase:
                 self.primary = primary
                 self.fallback = fallback
 
-            def resolve(self, context: Any) -> FieldMapping:
+            def resolve(self, context: Any) -> Mapping:
                 if hasattr(context, "data_source"):
                     if self.primary in context.data_source:
-                        return FieldMapping(self.primary)
-                    return FieldMapping(self.fallback)
-                return FieldMapping(self.primary)
+                        return Mapping(self.primary)
+                    return Mapping(self.fallback)
+                return Mapping(self.primary)
 
         mapping = CustomMapping("preferred_name", "alternative_name")
 
@@ -189,18 +188,18 @@ class TestMappedField:
 
     def test_basic_creation(self):
         """Basic MappedField creation."""
-        fm = FieldMapping("temp")
-        mf = MappedField(field_mapping=fm, name="temperature", value=25.0)
-        assert mf.field_mapping is fm
+        fm = Mapping("temp")
+        mf = MappedField(mapping=fm, name="temperature", value=25.0)
+        assert mf.mapping is fm
         assert mf.name == "temperature"
         assert mf.value == 25.0
         assert mf.source == MappedFieldSource.DATA_SOURCE
 
     def test_with_missing_value(self):
         """MappedField with MISSING value."""
-        fm = FieldMapping("field")
+        fm = Mapping("field")
         mf = MappedField(
-            field_mapping=fm,
+            mapping=fm,
             name="",
             value=MISSING,
             source=MappedFieldSource.MISSING,
@@ -210,9 +209,9 @@ class TestMappedField:
 
     def test_with_default_value(self):
         """MappedField with default value."""
-        fm = FieldMapping("field", required=False)
+        fm = Mapping("field", required=False)
         mf = MappedField(
-            field_mapping=fm,
+            mapping=fm,
             name="",
             value=0.0,
             source=MappedFieldSource.DEFAULT,
@@ -222,9 +221,9 @@ class TestMappedField:
 
     def test_with_schema_path(self):
         """MappedField with schema path."""
-        fm = FieldMapping("field")
+        fm = Mapping("field")
         mf = MappedField(
-            field_mapping=fm,
+            mapping=fm,
             name="physical_field",
             value=123,
             schema_path="MySchema.field",
@@ -310,6 +309,6 @@ class TestMissingSentinel:
 
     def test_missing_in_mapped_field(self):
         """MISSING can be used in MappedField."""
-        fm = FieldMapping("field")
-        mf = MappedField(field_mapping=fm, name="", value=MISSING)
+        fm = Mapping("field")
+        mf = MappedField(mapping=fm, name="", value=MISSING)
         assert mf.value is MISSING
