@@ -20,13 +20,11 @@ from tollan.accessor.schema import (
 class MockMapper[SchemaT: Schema](Mapper[SchemaT]):
     """Mock mapper for testing abstract base."""
 
-    data_source: dict[str, Any]
+    def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+        return name in data_source
 
-    def _has_field(self, name: str) -> bool:
-        return name in self.data_source
-
-    def _read_value(self, name: str):
-        return self.data_source[name]
+    def _read_value(self, data_source: dict[str, Any], name: str):
+        return data_source[name]
 
 
 class TestMapperCreation:
@@ -44,9 +42,8 @@ class TestMapperCreation:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
 
-        assert mapper.data_source is data
         assert isinstance(mapper.schema, TestSchema)
         assert len(mapper.mapped_fields) > 0
 
@@ -61,9 +58,8 @@ class TestMapperCreation:
         class TestMapper(MockMapper[EmptySchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
 
-        assert mapper.data_source == data
         assert isinstance(mapper.schema, Schema)
         assert len(mapper.mapped_fields) == 0
 
@@ -82,7 +78,7 @@ class TestFieldResolution:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         assert mapped_field.name == "temperature"
@@ -100,7 +96,7 @@ class TestFieldResolution:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         assert mapped_field.name == "temp_c"
@@ -117,7 +113,7 @@ class TestFieldResolution:
             pass
 
         with pytest.raises(KeyError, match="Required field not found"):
-            TestMapper(data_source=data)
+            TestMapper.from_data_source(data)
 
     def test_resolve_field_missing_optional(self):
         """Missing optional field marked as MISSING."""
@@ -130,7 +126,7 @@ class TestFieldResolution:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         assert mapped_field.name == ""
@@ -152,14 +148,14 @@ class TestValueRetrieval:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         # Value should NOT be loaded yet (lazy loading)
         assert mapped_field.value is MISSING
 
         # Now get the value - this triggers loading
-        value = mapper.get_value(mapper.schema.temp)
+        value = mapper.get_value(data, mapper.schema.temp)
         assert value == 25.0
 
     def test_get_value_eager(self):
@@ -173,7 +169,7 @@ class TestValueRetrieval:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         # Value should be loaded during resolution
@@ -190,10 +186,10 @@ class TestValueRetrieval:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
 
         with pytest.raises(KeyError, match="Field not found"):
-            mapper.get_value(mapper.schema.temp)
+            mapper.get_value(data, mapper.schema.temp)
 
 
 class TestMappedFields:
@@ -210,7 +206,7 @@ class TestMappedFields:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_fields = mapper.mapped_fields
 
         assert isinstance(mapped_fields, dict)
@@ -228,7 +224,7 @@ class TestMappedFields:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
+        mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         assert mapped_field.schema_path == "TestSchema.temp"
@@ -238,30 +234,37 @@ class TestConditionalMapping:
     """Test conditional mapping resolution."""
 
     def test_custom_mapping_base(self):
-        """Custom MappingBase using frozen RootModel organizing Mappings."""
+        """Custom MappingBase with conditional resolution based on schema state."""
         from pydantic import Field
         from pydantic.dataclasses import rebuild_dataclass
 
-        # RootModel that organizes multiple Mapping options
+        # Conditional mapping that checks a "version" field
         @dataclass(frozen=True)
-        class ConditionalTempMapping(MappingBase):
+        class ConditionalDataMapping(MappingBase):
             root: ClassVar[dict[str, Mapping]] = {
-                "celsius": Mapping("temp_c"),
-                "fahrenheit": Mapping("temp_f"),
+                "v1": Mapping("data_v1"),
+                "v2": Mapping("data_v2"),
             }
 
-            def resolve(self, context: TestMapper) -> Mapping:
-                # Check which variant exists in data source
-                if context._has_field("temp_f"):
-                    return self.root["fahrenheit"]
-                return self.root["celsius"]
+            def resolve(self, context: MockMapper) -> Mapping:
+                # Check mapper.mapped_fields for previously resolved "version" field
+                version_mapping = context.schema.version
+                if version_mapping in context.mapped_fields:
+                    version_field = context.mapped_fields[version_mapping]
+                    if version_field.value == 2:
+                        return self.root["v2"]
+                return self.root["v1"]
 
-        data = {"temp_c": 25.0, "temp_f": 77.0}
+        data = {"version": 2, "data_v1": "old", "data_v2": "new"}
 
         @dataclass
         class TestSchema(Schema):
-            temp: ConditionalTempMapping = Field(
-                default_factory=ConditionalTempMapping,
+            version: Mapping = Mapping(
+                "version",
+                resolve_value=True,
+            )  # Resolve value immediately
+            data: ConditionalDataMapping = Field(
+                default_factory=ConditionalDataMapping,
             )
 
         # Rebuild to handle forward reference
@@ -270,8 +273,11 @@ class TestConditionalMapping:
         class TestMapper(MockMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=data)
-        mapped_field = mapper.mapped_fields[mapper.schema.temp]
+        mapper = TestMapper.from_data_source(data)
 
-        # Should resolve to fahrenheit since it exists
-        assert mapped_field.name == "temp_f"
+        # Version should be resolved first
+        assert mapper.mapped_fields[mapper.schema.version].value == 2
+
+        # Data should resolve to v2 based on version
+        data_field = mapper.mapped_fields[mapper.schema.data]
+        assert data_field.name == "data_v2"

@@ -39,10 +39,9 @@ class TestDataFrameMapper:
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=df)
+        mapper = TestMapper.from_data_source(df)
 
         assert isinstance(mapper, DataFrameMapper)
-        assert mapper.data_source is df
 
     def test_read_column_values(self):
         """Read column values as numpy arrays."""
@@ -55,8 +54,8 @@ class TestDataFrameMapper:
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=df)
-        value = mapper.get_value(mapper.schema.temp)
+        mapper = TestMapper.from_data_source(df)
+        value = mapper.get_value(df, mapper.schema.temp)
 
         assert isinstance(value, np.ndarray)
         assert len(value) == 3
@@ -74,8 +73,8 @@ class TestDataFrameMapper:
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=df)
-        value = mapper.get_value(mapper.schema.meta)
+        mapper = TestMapper.from_data_source(df)
+        value = mapper.get_value(df, mapper.schema.meta)
 
         assert value == "metadata_value"
 
@@ -91,8 +90,8 @@ class TestDataFrameMapper:
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=df)
-        value = mapper.get_value(mapper.schema.field)
+        mapper = TestMapper.from_data_source(df)
+        value = mapper.get_value(df, mapper.schema.field)
 
         # attrs should be checked first
         assert value == "from_attrs"
@@ -108,10 +107,10 @@ class TestDataFrameMapper:
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=df)
+        mapper = TestMapper.from_data_source(df)
 
         with pytest.raises(KeyError, match="Field not found"):
-            mapper.get_value(mapper.schema.pressure)
+            mapper.get_value(df, mapper.schema.pressure)
 
 
 class TestXarrayMapper:
@@ -134,10 +133,9 @@ class TestXarrayMapper:
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=ds)
+        mapper = TestMapper.from_data_source(ds)
 
         assert isinstance(mapper, XarrayMapper)
-        assert mapper.data_source is ds
 
     def test_read_data_variable(self):
         """Read data variable values as numpy array."""
@@ -150,8 +148,8 @@ class TestXarrayMapper:
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=ds)
-        value = mapper.get_value(mapper.schema.temp)
+        mapper = TestMapper.from_data_source(ds)
+        value = mapper.get_value(ds, mapper.schema.temp)
 
         # XarrayMapper returns .values (numpy array), not DataArray
         assert isinstance(value, np.ndarray)
@@ -169,8 +167,8 @@ class TestXarrayMapper:
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=ds)
-        value = mapper.get_value(mapper.schema.time)
+        mapper = TestMapper.from_data_source(ds)
+        value = mapper.get_value(ds, mapper.schema.time)
 
         # XarrayMapper returns .values (numpy array), not DataArray
         assert isinstance(value, np.ndarray)
@@ -188,8 +186,8 @@ class TestXarrayMapper:
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=ds)
-        value = mapper.get_value(mapper.schema.meta)
+        mapper = TestMapper.from_data_source(ds)
+        value = mapper.get_value(ds, mapper.schema.meta)
 
         assert value == "metadata_value"
 
@@ -204,10 +202,10 @@ class TestXarrayMapper:
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
-        mapper = TestMapper(data_source=ds)
+        mapper = TestMapper.from_data_source(ds)
 
         with pytest.raises(KeyError, match="Field not found"):
-            mapper.get_value(mapper.schema.pressure)
+            mapper.get_value(ds, mapper.schema.pressure)
 
 
 class TestNetCDF4Mapper:
@@ -243,10 +241,9 @@ class TestNetCDF4Mapper:
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
 
-            mapper = TestMapper(data_source=ds)
+            mapper = TestMapper.from_data_source(ds)
 
             assert isinstance(mapper, NetCDF4Mapper)
-            assert mapper.data_source is ds
 
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_variable(self, temp_netcdf):
@@ -261,8 +258,8 @@ class TestNetCDF4Mapper:
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
 
-            mapper = TestMapper(data_source=ds)
-            value = mapper.get_value(mapper.schema.temp)
+            mapper = TestMapper.from_data_source(ds)
+            value = mapper.get_value(ds, mapper.schema.temp)
 
             assert isinstance(value, np.ndarray)
             assert len(value) == 3
@@ -281,8 +278,8 @@ class TestNetCDF4Mapper:
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
 
-            mapper = TestMapper(data_source=ds)
-            value = mapper.get_value(mapper.schema.meta)
+            mapper = TestMapper.from_data_source(ds)
+            value = mapper.get_value(ds, mapper.schema.meta)
 
             assert value == "metadata_value"
 
@@ -299,10 +296,10 @@ class TestNetCDF4Mapper:
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
 
-            mapper = TestMapper(data_source=ds)
+            mapper = TestMapper.from_data_source(ds)
 
             with pytest.raises(KeyError, match="Field not found"):
-                mapper.get_value(mapper.schema.pressure)
+                mapper.get_value(ds, mapper.schema.pressure)
 
 
 class TestMapperInteroperability:
@@ -320,7 +317,7 @@ class TestMapperInteroperability:
         class TestDFMapper(DataFrameMapper[EmptySchema]):
             pass
 
-        df_mapper = TestDFMapper(data_source=df)
+        df_mapper = TestDFMapper.from_data_source(df)
         assert hasattr(df_mapper, "get_value")
         assert hasattr(df_mapper, "schema")
 
@@ -330,7 +327,7 @@ class TestMapperInteroperability:
         class TestXRMapper(XarrayMapper[EmptySchema]):
             pass
 
-        xr_mapper = TestXRMapper(data_source=ds)
+        xr_mapper = TestXRMapper.from_data_source(ds)
         assert hasattr(xr_mapper, "get_value")
         assert hasattr(xr_mapper, "schema")
 
@@ -347,8 +344,8 @@ class TestMapperInteroperability:
         class TestDFMapper(DataFrameMapper[TestSchema]):
             pass
 
-        df_mapper = TestDFMapper(data_source=df)
-        df_value = df_mapper.get_value(df_mapper.schema.temp)
+        df_mapper = TestDFMapper.from_data_source(df)
+        df_value = df_mapper.get_value(df, df_mapper.schema.temp)
 
         # Xarray
         ds = xr.Dataset({"temp": (["x"], [25.0])})
@@ -356,8 +353,8 @@ class TestMapperInteroperability:
         class TestXRMapper(XarrayMapper[TestSchema]):
             pass
 
-        xr_mapper = TestXRMapper(data_source=ds)
-        xr_value = xr_mapper.get_value(xr_mapper.schema.temp)
+        xr_mapper = TestXRMapper.from_data_source(ds)
+        xr_value = xr_mapper.get_value(ds, xr_mapper.schema.temp)
 
         # Both should resolve successfully
         assert df_value[0] == 25.0

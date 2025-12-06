@@ -20,27 +20,18 @@ class DataFrameMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     ---------------
     SchemaT : Schema
         Schema type for this mapper (enables proper type hints)
-
-    Parameters
-    ----------
-    data_source : pd.DataFrame
-        The pandas DataFrame to map fields from
-    default_values : dict[MappingBase, Any], optional
-        Default values for fields not found in the dataframe
     """
 
-    data_source: pd.DataFrame
-
-    def _has_field(self, name: str) -> bool:
+    def _has_field(self, data_source: pd.DataFrame, name: str) -> bool:
         """Check if field exists as column or attribute."""
-        return name in self.data_source.columns or name in self.data_source.attrs
+        return name in data_source.columns or name in data_source.attrs
 
-    def _read_value(self, name: str) -> Any:
+    def _read_value(self, data_source: pd.DataFrame, name: str) -> Any:
         """Read column value or attribute from dataframe.
 
         Returns the underlying numpy array for columns,
         or the raw attribute value for attrs.
         """
-        if name in self.data_source.attrs:
-            return self.data_source.attrs[name]
-        return self.data_source[name].to_numpy()
+        if name in data_source.attrs:
+            return data_source.attrs[name]
+        return data_source[name].to_numpy()

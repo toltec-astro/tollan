@@ -9,6 +9,7 @@ A shared utility package for TolTEC project and astronomy pipeline in general.
 
 Tollan is a Python utility library designed for astronomy projects, providing:
 
+- **Accessor System**: Schema-based data access abstraction for xarray, pandas, and netCDF4
 - **Configuration System**: Multi-source configuration with validation
 - **Plotting Utilities**: Plotly helpers for multi-panel figures
 - **Pipeline Utilities**: Context handler mixins for pipeline
