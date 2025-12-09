@@ -101,27 +101,13 @@ class TestFieldResolution:
 
         assert mapped_field.name == "temp_c"
 
-    def test_resolve_field_missing_required(self):
-        """Missing required field raises error."""
-        data = {}
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature", required=True)
-
-        class TestMapper(MockMapper[TestSchema]):
-            pass
-
-        with pytest.raises(KeyError, match="Required field not found"):
-            TestMapper.from_data_source(data)
-
     def test_resolve_field_missing_optional(self):
-        """Missing optional field marked as MISSING."""
+        """Missing field marked as MISSING."""
         data = {}
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature", required=False)
+            temp: Mapping = Mapping("temperature")
 
         class TestMapper(MockMapper[TestSchema]):
             pass
@@ -181,7 +167,7 @@ class TestValueRetrieval:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp", required=False)
+            temp: Mapping = Mapping("temp")
 
         class TestMapper(MockMapper[TestSchema]):
             pass

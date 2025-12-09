@@ -30,7 +30,6 @@ class TestMappingDataclass:
         """Single name string is converted to tuple."""
         fm = Mapping("temperature")
         assert fm.names == ("temperature",)
-        assert fm.required is True
         assert fm.resolve_value is False
 
     def test_single_name_tuple(self):
@@ -49,11 +48,6 @@ class TestMappingDataclass:
         assert fm.names == ("temp", "temperature")
         assert isinstance(fm.names, tuple)
 
-    def test_optional_field(self):
-        """Optional field (not required)."""
-        fm = Mapping("field", required=False)
-        assert fm.required is False
-
     def test_immediate_resolve(self):
         """Field marked for immediate value resolution."""
         fm = Mapping("field", resolve_value=True)
@@ -61,9 +55,8 @@ class TestMappingDataclass:
 
     def test_all_parameters(self):
         """All parameters specified."""
-        fm = Mapping(("alt1", "alt2"), required=False, resolve_value=True)
+        fm = Mapping(("alt1", "alt2"), resolve_value=True)
         assert fm.names == ("alt1", "alt2")
-        assert fm.required is False
         assert fm.resolve_value is True
 
     def test_frozen(self):
@@ -74,7 +67,7 @@ class TestMappingDataclass:
         with pytest.raises(
             (AttributeError, ValidationError, TypeError),
         ):  # FrozenInstanceError
-            fm.required = False  # type: ignore[misc]
+            fm.names = ("other",)  # type: ignore[misc]
 
     def test_invalid_names_type(self):
         """Invalid names type raises error."""
@@ -102,14 +95,12 @@ class TestMapping:
         """Basic Mapping creation."""
         m = Mapping("field")
         assert m.names == ("field",)
-        assert m.required is True
         assert m.resolve_value is False
 
     def test_with_kwargs(self):
         """Mapping with keyword arguments."""
-        m = Mapping("field", required=False, resolve_value=True)
+        m = Mapping("field", resolve_value=True)
         assert m.names == ("field",)
-        assert m.required is False
         assert m.resolve_value is True
 
     def test_resolve_returns_self(self):
@@ -209,7 +200,7 @@ class TestMappedField:
 
     def test_with_default_value(self):
         """MappedField with default value."""
-        fm = Mapping("field", required=False)
+        fm = Mapping("field")
         mf = MappedField(
             mapping=fm,
             name="",
@@ -240,13 +231,12 @@ class TestSchema:
         @dataclass
         class TestSchema(Schema):
             temp: Mapping = Mapping("temperature")
-            pressure: Mapping = Mapping("pressure", required=False)
+            pressure: Mapping = Mapping("pressure")
 
         schema = TestSchema()
         assert isinstance(schema.temp, Mapping)
         assert isinstance(schema.pressure, Mapping)
         assert schema.temp.names == ("temperature",)
-        assert schema.pressure.required is False
 
     def test_schema_with_alternatives(self):
         """Schema with alternative field names."""

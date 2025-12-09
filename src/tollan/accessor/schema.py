@@ -82,25 +82,22 @@ class Mapping(MappingBase):
     ----------
     names : str or tuple[str, ...]
         Physical variable name(s) to try in order.
-    required : bool, default True
-        Whether to raise error if field not found.
     resolve_value : bool, default False
         Whether to load value immediately (True) or lazily (False).
 
     Examples
     --------
     >>> Mapping('field')
-    Mapping(names=('field',), required=True, resolve_value=False)
+    Mapping(names=('field',), resolve_value=False)
 
-    >>> Mapping('field', required=False)
-    Mapping(names=('field',), required=False, resolve_value=False)
+    >>> Mapping('field', resolve_value=True)
+    Mapping(names=('field',), resolve_value=True)
 
     >>> Mapping(('field1', 'field2'))
-    Mapping(names=('field1', 'field2'), required=True, resolve_value=False)
+    Mapping(names=('field1', 'field2'), resolve_value=False)
     """
 
     names: tuple[str, ...]
-    required: bool = True
     resolve_value: bool = False
 
     if TYPE_CHECKING:
@@ -109,7 +106,6 @@ class Mapping(MappingBase):
             self,
             names: str | tuple[str, ...] | list[str],
             *,
-            required: bool = True,
             resolve_value: bool = False,
         ) -> None: ...
 

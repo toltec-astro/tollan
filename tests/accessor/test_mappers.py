@@ -102,7 +102,7 @@ class TestDataFrameMapper:
 
         @dataclass
         class TestSchema(Schema):
-            pressure: Mapping = Mapping("pressure", required=False)
+            pressure: Mapping = Mapping("pressure")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
@@ -197,7 +197,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            pressure: Mapping = Mapping("pressure", required=False)
+            pressure: Mapping = Mapping("pressure")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -291,7 +291,7 @@ class TestNetCDF4Mapper:
 
             @dataclass
             class TestSchema(Schema):
-                pressure: Mapping = Mapping("pressure", required=False)
+                pressure: Mapping = Mapping("pressure")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass

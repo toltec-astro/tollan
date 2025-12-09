@@ -191,11 +191,7 @@ class Mapper[SchemaT: Schema]:
                 schema_path=schema_path,
             )
 
-        # No candidate found and no default value
-        if mapping.required:
-            msg = f"Required field not found (tried: {mapping.names})"
-            raise KeyError(msg)
-
+        # No candidate found and no default value - return MISSING
         return MappedField(
             mapping=mapping,
             name="",
