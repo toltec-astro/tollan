@@ -55,7 +55,7 @@ def pformat_yaml(obj: Any) -> str:
 
 
 def pformat_fancy_index(
-    arg: slice | npt.ArrayLike | list[slice | npt.ArrayLike],
+    arg: slice | npt.ArrayLike | list,
 ) -> str:
     """
     Pretty-format a numpy fancy index, slice, or mask.
