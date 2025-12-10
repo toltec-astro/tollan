@@ -120,6 +120,61 @@ class TestSetUnits:
         # Should be shallow copy - same underlying data
         assert da_no_units.data is da.data
 
+    def test_set_inplace(self):
+        """Test setting units in-place modifies original DataArray."""
+        da = xr.DataArray([1, 2, 3])
+        result = da.u.set("km", inplace=True)
+
+        # Should return the same object
+        assert result is da
+        # Units should be set on original
+        assert da.attrs["units"] == "km"
+
+    def test_set_inplace_preserves_data(self):
+        """Test that setting units in-place doesn't modify data."""
+        da = xr.DataArray([1, 2, 3])
+        original_data = da.values.copy()
+        da.u.set("km", inplace=True)
+
+        np.testing.assert_array_equal(da.values, original_data)
+
+    def test_set_inplace_same_units_noop(self):
+        """Test setting same units in-place is still a no-op."""
+        da = xr.DataArray([1, 2, 3])
+        da.u.set("km", inplace=True)
+        result = da.u.set("km", inplace=True)
+
+        assert result is da
+        assert da.attrs["units"] == "km"
+
+    def test_set_inplace_different_units_fails(self):
+        """Test setting different units in-place when units exist raises error."""
+        da = xr.DataArray([1, 2, 3])
+        da.u.set("km", inplace=True)
+
+        with pytest.raises(ValueError, match="Cannot set different unit"):
+            da.u.set("m", inplace=True)
+
+    def test_unset_inplace(self):
+        """Test removing units in-place modifies original DataArray."""
+        da = xr.DataArray([1, 2, 3])
+        da.attrs["units"] = "km"
+        result = da.u.unset(inplace=True)
+
+        # Should return the same object
+        assert result is da
+        # Units should be removed from original
+        assert "units" not in da.attrs
+
+    def test_unset_inplace_preserves_data(self):
+        """Test that unsetting units in-place doesn't modify data."""
+        da = xr.DataArray([1, 2, 3])
+        da.attrs["units"] = "km"
+        original_data = da.values.copy()
+        da.u.unset(inplace=True)
+
+        np.testing.assert_array_equal(da.values, original_data)
+
 
 class TestQuantityProperty:
     """Test quantity property for Astropy Quantity objects."""

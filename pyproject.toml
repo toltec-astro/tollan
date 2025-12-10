@@ -148,6 +148,7 @@ lint.ignore = [
   "G004",   # f-string in logging
   "N806",   # non-lowercase variable name
   "S101",   # use of assert; needed for narrowing types
+  "PD011",  # generate false positives for xarray about .values usage
 ]
 
 [tool.ruff.lint.per-file-ignores]

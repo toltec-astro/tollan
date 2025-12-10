@@ -192,7 +192,7 @@ class UnitsAccessor:
         # Use << operator to attach units without copying
         return self._obj.data << unit
 
-    def set(self, unit: str | Unit) -> xr.DataArray:
+    def set(self, unit: str | Unit, *, inplace: bool = False) -> xr.DataArray:
         """Set units on the DataArray.
 
         Only sets units if:
@@ -206,6 +206,9 @@ class UnitsAccessor:
         ----------
         unit : str or astropy.units.Unit
             Unit to set. If a string, will be validated as an Astropy unit.
+        inplace : bool, optional
+            If True, modify attrs in-place and return the original DataArray.
+            If False (default), create a shallow copy with new attrs.
 
         Returns
         -------
@@ -233,6 +236,15 @@ class UnitsAccessor:
         >>> da_km2 is da_km
         True
 
+        Set units in-place for mutation:
+
+        >>> da = xr.DataArray([1, 2, 3])
+        >>> result = da.u.set("Hz", inplace=True)
+        >>> result is da
+        True
+        >>> print(da.attrs["units"])
+        Hz
+
         Cannot set different units when units exist:
 
         >>> da_km.u.set("m")  # doctest: +SKIP
@@ -242,7 +254,8 @@ class UnitsAccessor:
         Set with Astropy Unit object:
 
         >>> from astropy import units as u
-        >>> da_m = da.u.set(u.m)
+        >>> da_fresh = xr.DataArray([10, 20, 30])
+        >>> da_m = da_fresh.u.set(u.m)
         >>> print(da_m.attrs["units"])
         m
         """
@@ -257,7 +270,10 @@ class UnitsAccessor:
         current_unit_str = self.unit_str
 
         if current_unit_str is None:
-            # No units set - set them (assign_attrs creates shallow copy)
+            # No units set - set them
+            if inplace:
+                self._obj.attrs["units"] = unit_str
+                return self._obj
             return self._obj.assign_attrs(units=unit_str)
         if current_unit_str == unit_str:
             # Same units - no-op
@@ -270,10 +286,16 @@ class UnitsAccessor:
         )
         raise ValueError(msg)
 
-    def unset(self) -> xr.DataArray:
+    def unset(self, *, inplace: bool = False) -> xr.DataArray:
         """Remove units from the DataArray.
 
         Does not modify data values, only removes the units attribute.
+
+        Parameters
+        ----------
+        inplace : bool, optional
+            If True, modify attrs in-place and return the original DataArray.
+            If False (default), create a shallow copy with units removed.
 
         Returns
         -------
@@ -287,7 +309,20 @@ class UnitsAccessor:
         >>> da_no_units = da.u.unset()
         >>> "units" in da_no_units.attrs
         False
+
+        Remove units in-place:
+
+        >>> da = xr.DataArray([1, 2, 3])
+        >>> da.attrs["units"] = "km"
+        >>> result = da.u.unset(inplace=True)
+        >>> result is da
+        True
+        >>> "units" in da.attrs
+        False
         """
+        if inplace:
+            self._obj.attrs.pop("units", None)
+            return self._obj
         result = self._obj.copy(data=self._obj.data)
         result.attrs.pop("units", None)
         return result

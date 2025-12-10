@@ -207,6 +207,194 @@ class TestXarrayMapper:
         with pytest.raises(KeyError, match="Field not found"):
             mapper.get_value(ds, mapper.schema.pressure)
 
+    def test_has_var(self):
+        """Test has_var checks for data variables only."""
+        ds = xr.Dataset(
+            {"temp": (["x"], [25.0, 26.0])},
+            coords={"x": [0, 1]},
+        )
+        ds.attrs["meta"] = "value"
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            x: Mapping = Mapping("x")
+            meta: Mapping = Mapping("meta")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # temp is a data variable
+        assert mapper.has_var(ds, mapper.schema.temp)
+        # x is a coordinate, not a data variable
+        assert not mapper.has_var(ds, mapper.schema.x)
+        # meta is an attribute, not a data variable
+        assert not mapper.has_var(ds, mapper.schema.meta)
+
+    def test_has_coord(self):
+        """Test has_coord checks for coordinates only."""
+        ds = xr.Dataset(
+            {"temp": (["x"], [25.0, 26.0])},
+            coords={"x": [0, 1]},
+        )
+        ds.attrs["meta"] = "value"
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            x: Mapping = Mapping("x")
+            meta: Mapping = Mapping("meta")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # x is a coordinate
+        assert mapper.has_coord(ds, mapper.schema.x)
+        # temp is a data variable, not a coordinate
+        assert not mapper.has_coord(ds, mapper.schema.temp)
+        # meta is an attribute, not a coordinate
+        assert not mapper.has_coord(ds, mapper.schema.meta)
+
+    def test_has_attr(self):
+        """Test has_attr checks for attributes only."""
+        ds = xr.Dataset(
+            {"temp": (["x"], [25.0, 26.0])},
+            coords={"x": [0, 1]},
+        )
+        ds.attrs["meta"] = "value"
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            x: Mapping = Mapping("x")
+            meta: Mapping = Mapping("meta")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # meta is an attribute
+        assert mapper.has_attr(ds, mapper.schema.meta)
+        # temp is a data variable, not an attribute
+        assert not mapper.has_attr(ds, mapper.schema.temp)
+        # x is a coordinate, not an attribute
+        assert not mapper.has_attr(ds, mapper.schema.x)
+
+    def test_get_arr_with_data_variable(self):
+        """Test get_arr retrieves DataArray for data variable."""
+        ds = xr.Dataset({"temp": (["x"], [25.0, 26.0, 27.0])})
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        arr = mapper.get_arr(ds, mapper.schema.temp)
+
+        assert isinstance(arr, xr.DataArray)
+        assert len(arr) == 3
+        assert arr.values[0] == 25.0
+
+    def test_get_arr_with_coordinate(self):
+        """Test get_arr retrieves DataArray for coordinate."""
+        ds = xr.Dataset(
+            {"data": (["x"], [1, 2, 3])},
+            coords={"x": [0.0, 1.0, 2.0]},
+        )
+
+        @dataclass
+        class TestSchema(Schema):
+            x: Mapping = Mapping("x")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        arr = mapper.get_arr(ds, mapper.schema.x)
+
+        assert isinstance(arr, xr.DataArray)
+        assert len(arr) == 3
+        assert arr.values[0] == 0.0
+
+    def test_get_arr_with_attribute_fails(self):
+        """Test get_arr raises error for attribute."""
+        ds = xr.Dataset({"data": (["x"], [1, 2])})
+        ds.attrs["meta"] = "value"
+
+        @dataclass
+        class TestSchema(Schema):
+            meta: Mapping = Mapping("meta")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError, match="not found in dataset"):
+            mapper.get_arr(ds, mapper.schema.meta)
+
+    def test_get_coord_success(self):
+        """Test get_coord retrieves coordinate DataArray."""
+        ds = xr.Dataset(
+            {"data": (["x"], [1, 2, 3])},
+            coords={"x": [0.0, 1.0, 2.0]},
+        )
+
+        @dataclass
+        class TestSchema(Schema):
+            x: Mapping = Mapping("x")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        coord = mapper.get_coord(ds, mapper.schema.x)
+
+        assert isinstance(coord, xr.DataArray)
+        assert len(coord) == 3
+        assert coord.values[0] == 0.0
+
+    def test_get_coord_with_data_variable_fails(self):
+        """Test get_coord raises error for data variable."""
+        ds = xr.Dataset({"temp": (["x"], [25.0, 26.0])})
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError, match="not found as coordinate"):
+            mapper.get_coord(ds, mapper.schema.temp)
+
+    def test_get_coord_with_attribute_fails(self):
+        """Test get_coord raises error for attribute."""
+        ds = xr.Dataset({"data": (["x"], [1, 2])})
+        ds.attrs["meta"] = "value"
+
+        @dataclass
+        class TestSchema(Schema):
+            meta: Mapping = Mapping("meta")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError, match="not found as coordinate"):
+            mapper.get_coord(ds, mapper.schema.meta)
+
 
 class TestNetCDF4Mapper:
     """Test NetCDF4Mapper for netCDF4.Dataset."""

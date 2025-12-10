@@ -34,6 +34,66 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             or name in data_source.attrs
         )
 
+    def has_var(self, data_source: xr.Dataset, field: Mapping) -> bool:
+        """Check if field exists as a data variable.
+
+        Parameters
+        ----------
+        data_source : xr.Dataset
+            Dataset to check
+        field : Mapping
+            Field mapping from schema
+
+        Returns
+        -------
+        bool
+            True if field exists as a data variable in dataset
+        """
+        name = self.get_name(field)
+        if name is None:
+            return False
+        return name in data_source.data_vars
+
+    def has_coord(self, data_source: xr.Dataset, field: Mapping) -> bool:
+        """Check if field exists as a coordinate.
+
+        Parameters
+        ----------
+        data_source : xr.Dataset
+            Dataset to check
+        field : Mapping
+            Field mapping from schema
+
+        Returns
+        -------
+        bool
+            True if field exists as a coordinate in dataset
+        """
+        name = self.get_name(field)
+        if name is None:
+            return False
+        return name in data_source.coords
+
+    def has_attr(self, data_source: xr.Dataset, field: Mapping) -> bool:
+        """Check if field exists as an attribute.
+
+        Parameters
+        ----------
+        data_source : xr.Dataset
+            Dataset to check
+        field : Mapping
+            Field mapping from schema
+
+        Returns
+        -------
+        bool
+            True if field exists as an attribute in dataset
+        """
+        name = self.get_name(field)
+        if name is None:
+            return False
+        return name in data_source.attrs
+
     def _read_value(self, data_source: xr.Dataset, name: str) -> Any:
         """Read field value from dataset.
 
@@ -64,7 +124,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         ValueError
             If field not found in dataset
         """
-        if not self.has(field):
+        if not (self.has_var(data_source, field) or self.has_coord(data_source, field)):
             msg = f"Field '{field.names[0]}' not found in dataset"
             raise ValueError(msg)
         name = self.get_name(field)
@@ -90,15 +150,11 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         ValueError
             If field not found or not a coordinate
         """
-        if not self.has(field):
-            msg = f"Field '{field.names[0]}' not found in dataset"
+        if not self.has_coord(data_source, field):
+            msg = f"Field '{field.names[0]}' not found as coordinate in dataset"
             raise ValueError(msg)
         name = self.get_name(field)
-        coord = data_source.coords.get(name, None)
-        if coord is None:
-            msg = f"Field '{field.names[0]}' is not a coordinate"
-            raise ValueError(msg)
-        return coord
+        return data_source.coords[name]
 
     def get_scalar(self, data_source: xr.Dataset, field: Mapping) -> Any:
         """Get scalar value for a schema field.
