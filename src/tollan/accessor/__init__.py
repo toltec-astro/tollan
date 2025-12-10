@@ -54,6 +54,7 @@ __all__ = [
     "Mapping",
     "MappingBase",
     "Schema",
+    "UnitsAccessor",
 ]
 
 from .mapper import Mapper
@@ -64,3 +65,4 @@ from .schema import (
     MappingBase,
     Schema,
 )
+from .units import UnitsAccessor
