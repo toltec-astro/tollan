@@ -93,6 +93,28 @@ class Mapper[SchemaT: Schema]:
         mapper._populate_from_schema(data_source, defaults or {})
         return mapper
 
+    @classmethod
+    def from_defaults(
+        cls,
+        defaults: dict[MappingBase, Any] | None = None,
+    ) -> Self:
+        """Create mapper resolved using only default values.
+
+        Parameters
+        ----------
+        defaults : dict[MappingBase, Any] | None
+            Default values for fields
+
+        Returns
+        -------
+        Self
+            Mapper with resolved field mappings
+        """
+        return cls.from_data_source(
+            data_source=None,
+            defaults=defaults,
+        )
+
     def _populate_from_schema(
         self,
         data_source: Any,
@@ -165,27 +187,28 @@ class Mapper[SchemaT: Schema]:
         mapping = mapping.resolve(self)
 
         # Try to resolve from data_source first
-        for name in mapping.names:
-            if self._has_field(data_source, name):
-                # Only read value immediately if resolve_value is True
-                value = (
-                    self._read_value(data_source, name)
-                    if mapping.resolve_value
-                    else MISSING
-                )
-                return MappedField(
-                    mapping=mapping,
-                    name=name,
-                    value=value,
-                    source=MappedFieldSource.DATA_SOURCE,
-                    schema_path=schema_path,
-                )
+        if data_source is not None:
+            for name in mapping.names:
+                if self._has_field(data_source, name):
+                    # Only read value immediately if resolve_value is True
+                    value = (
+                        self._read_value(data_source, name)
+                        if mapping.resolve_value
+                        else MISSING
+                    )
+                    return MappedField(
+                        mapping=mapping,
+                        name=name,
+                        value=value,
+                        source=MappedFieldSource.DATA_SOURCE,
+                        schema_path=schema_path,
+                    )
 
         # Not found in data_source, try default_value
         if default_value is not MISSING:
             return MappedField(
                 mapping=mapping,
-                name="",
+                name=mapping.names[0],
                 value=default_value,
                 source=MappedFieldSource.DEFAULT,
                 schema_path=schema_path,
@@ -194,7 +217,7 @@ class Mapper[SchemaT: Schema]:
         # No candidate found and no default value - return MISSING
         return MappedField(
             mapping=mapping,
-            name="",
+            name=mapping.names[0],
             value=MISSING,
             source=MappedFieldSource.MISSING,
             schema_path=schema_path,
@@ -275,7 +298,8 @@ class Mapper[SchemaT: Schema]:
     def _has_field(self, data_source: Any, name: str) -> bool:
         """Check if physical field exists in data source.
 
-        Subclasses must implement this method for their data source type.
+        Default implementation returns False (no fields exist).
+        Subclasses should override this method for their data source type.
 
         Parameters
         ----------
@@ -287,15 +311,15 @@ class Mapper[SchemaT: Schema]:
         Returns
         -------
         bool
-            True if field exists
+            True if field exists, False by default
         """
-        msg = f"{self.__class__.__name__} must implement _has_field()"
-        raise NotImplementedError(msg)
+        return False
 
     def _read_value(self, data_source: Any, name: str) -> Any:
         """Read physical field value from data source.
 
-        Subclasses must implement this method for their data source type.
+        Default implementation returns None (no value available).
+        Subclasses should override this method for their data source type.
 
         Parameters
         ----------
@@ -307,7 +331,6 @@ class Mapper[SchemaT: Schema]:
         Returns
         -------
         Any
-            Field value
+            Field value, None by default
         """
-        msg = f"{self.__class__.__name__} must implement _read_value()"
-        raise NotImplementedError(msg)
+        return None
