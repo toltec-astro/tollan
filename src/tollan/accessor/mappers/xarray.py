@@ -17,6 +17,10 @@ from ..schema import Schema
 __all__ = ["XarrayMapper"]
 
 
+# both dataset and datarray could have attrs and coords
+type DataSourceT = xr.Dataset | xr.DataArray
+
+
 class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     """Mapper for xarray.Dataset.
 
@@ -26,7 +30,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         Schema type for this mapper (enables proper type hints)
     """
 
-    def _has_field(self, data_source: xr.Dataset, name: str) -> bool:
+    def _has_field(self, data_source: DataSourceT, name: str) -> bool:
         """Check if field exists as data variable, coordinate, or attribute."""
         return (
             name in data_source.data_vars
@@ -34,13 +38,13 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             or name in data_source.attrs
         )
 
-    def has_var(self, data_source: xr.Dataset, field: Mapping) -> bool:
+    def has_var(self, data_source: DataSourceT, field: Mapping) -> bool:
         """Check if field exists as a data variable.
 
         Parameters
         ----------
-        data_source : xr.Dataset
-            Dataset to check
+        data_source : DataSourceT
+            Dataset or DataArray to check
         field : Mapping
             Field mapping from schema
 
@@ -54,13 +58,13 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             return False
         return name in data_source.data_vars
 
-    def has_coord(self, data_source: xr.Dataset, field: Mapping) -> bool:
+    def has_coord(self, data_source: DataSourceT, field: Mapping) -> bool:
         """Check if field exists as a coordinate.
 
         Parameters
         ----------
-        data_source : xr.Dataset
-            Dataset to check
+        data_source : DataSourceT
+            Dataset or DataArray to check
         field : Mapping
             Field mapping from schema
 
@@ -74,13 +78,13 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             return False
         return name in data_source.coords
 
-    def has_attr(self, data_source: xr.Dataset, field: Mapping) -> bool:
+    def has_attr(self, data_source: DataSourceT, field: Mapping) -> bool:
         """Check if field exists as an attribute.
 
         Parameters
         ----------
-        data_source : xr.Dataset
-            Dataset to check
+        data_source : DataSourceT
+            Dataset or DataArray to check
         field : Mapping
             Field mapping from schema
 
@@ -94,7 +98,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             return False
         return name in data_source.attrs
 
-    def _read_value(self, data_source: xr.Dataset, name: str) -> Any:
+    def _read_value(self, data_source: DataSourceT, name: str) -> Any:
         """Read field value from dataset.
 
         Returns the underlying numpy array for data variables/coords,
@@ -102,15 +106,15 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         """
         if name in data_source.attrs:
             return np.array(data_source.attrs[name])
-        return data_source[name].values
+        return data_source[name].values  # ty: ignore[invalid-argument-type]
 
-    def get_arr(self, data_source: xr.Dataset, field: Mapping) -> xr.DataArray:
+    def get_arr(self, data_source: DataSourceT, field: Mapping) -> xr.DataArray:
         """Get DataArray for a schema field.
 
         Parameters
         ----------
-        data_source : xr.Dataset
-            Dataset to read from
+        data_source : DataSourceT
+            Dataset or DataArray to read from
         field : Mapping
             Field mapping from schema
 
@@ -128,15 +132,15 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             msg = f"Field '{field.names[0]}' not found in dataset"
             raise ValueError(msg)
         name = self.get_name(field)
-        return data_source[name]
+        return data_source[name]  # ty: ignore[invalid-argument-type]
 
-    def get_coord(self, data_source: xr.Dataset, field: Mapping) -> xr.DataArray:
+    def get_coord(self, data_source: DataSourceT, field: Mapping) -> xr.DataArray:
         """Get coordinate DataArray for a schema field.
 
         Parameters
         ----------
-        data_source : xr.Dataset
-            Dataset to read from
+        data_source : DataSourceT
+            Dataset or DataArray to read from
         field : Mapping
             Field mapping from schema
 
@@ -156,13 +160,13 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         name = self.get_name(field)
         return data_source.coords[name]
 
-    def get_scalar(self, data_source: xr.Dataset, field: Mapping) -> Any:
+    def get_scalar(self, data_source: DataSourceT, field: Mapping) -> Any:
         """Get scalar value for a schema field.
 
         Parameters
         ----------
-        data_source : xr.Dataset
-            Dataset to read from
+        data_source : DataSourceT
+            Dataset or DataArray to read from
         field : Mapping
             Field mapping from schema
 
@@ -187,7 +191,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
 
         # Check if it's a variable
         if name in data_source:
-            var = data_source[name]
+            var = data_source[name]  # ty: ignore[invalid-argument-type]
             # If it's a scalar or 0-D, return the value
             if var.ndim == 0:
                 return var.item()
@@ -198,7 +202,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         msg = f"Field '{field.names[0]}' is not a scalar"
         raise ValueError(msg)
 
-    def get_shape(self, data_source: xr.Dataset, field: Mapping) -> tuple[int, ...]:
+    def get_shape(self, data_source: DataSourceT, field: Mapping) -> tuple[int, ...]:
         """Get shape of a field's data array.
 
         Parameters
