@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import functools
 import inspect
-from typing import TYPE_CHECKING, Any, get_args
+from typing import TYPE_CHECKING, Any, TypeVar, get_args
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -42,18 +42,20 @@ def get_typing_args(  # noqa: C901
         Filter results to only include instances of this type
     unique : bool, optional
         If True, expect exactly one result and return it directly (not a list).
-        Raises ValueError if multiple or no results found.
+        Returns None for generic base classes with unresolved TypeVars.
+        Raises ValueError if multiple results found or no results for concrete classes.
 
     Returns
     -------
-    list[Any] | Any
-        List of typing arguments found, or single argument if unique=True
+    list[Any] | Any | None
+        List of typing arguments found, single argument if unique=True,
+        or None if unique=True and class is a generic base with TypeVars
 
     Raises
     ------
     ValueError
         If both bound and type_filter are specified, or if unique=True but
-        result is not exactly one element
+        result is not exactly one element (unless generic base class)
 
     Examples
     --------
@@ -105,21 +107,31 @@ def get_typing_args(  # noqa: C901
             # else: root level with no args - skip
         return result
 
-    args = _get_args((cls,))
+    raw_args = _get_args((cls,))
+
+    # Check if this is a generic base class with unresolved type parameters
+
+    has_type_vars = any(isinstance(arg, TypeVar) for arg in raw_args)
+    # Always filter out TypeVars - they are placeholders, not concrete types
+    args = [arg for arg in raw_args if not isinstance(arg, TypeVar)]
 
     def _handle_unique(args: list[Any]) -> Any:
         """Handle unique result requirement."""
         if len(args) == 1:
             return args[0]
+        # For generic base classes with TypeVars, allow zero filtered results
+        if len(args) == 0 and has_type_vars:
+            return None
         msg = f"Expected exactly one typing arg, found {len(args)}"
         raise ValueError(msg)
 
-    # If no filtering requested, return all args
+    # If no additional filtering requested, return TypeVar-filtered args
     if bound is None and type_filter is None:
         if unique:
             return _handle_unique(args)
         return args
 
+    # Apply additional bound or type_filter if specified
     # Validate that only one filter is specified
     if bound is not None and type_filter is not None:
         msg = "Only one of 'bound' or 'type_filter' can be specified"

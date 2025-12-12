@@ -40,6 +40,19 @@ from astropy.units import Quantity
 if TYPE_CHECKING:
     from astropy.units import Unit
 
+    class QDataset(xr.Dataset):
+        """Typed wrapper for xarray Dataset with units accessor."""
+
+        u: UnitsAccessor
+
+    class QDataArray(xr.DataArray):
+        """Typed wrapper for xarray DataArray with units accessor."""
+
+        u: UnitsAccessor
+
+    type QDataSourceT = QDataset | QDataArray
+
+
 __all__ = [
     "UnitsAccessor",
 ]

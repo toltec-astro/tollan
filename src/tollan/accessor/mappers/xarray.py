@@ -4,12 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
-
 if TYPE_CHECKING:
     import xarray as xr
 
     from ..schema import Mapping
+    from ..units import QDataArray, QDataSourceT
+
+    type DataSourceT = xr.Dataset | xr.DataArray | QDataSourceT
 
 from ..mapper import Mapper
 from ..schema import Schema
@@ -17,17 +18,38 @@ from ..schema import Schema
 __all__ = ["XarrayMapper"]
 
 
-# both dataset and datarray could have attrs and coords
-type DataSourceT = xr.Dataset | xr.DataArray
-
-
 class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     """Mapper for xarray.Dataset.
+
+    This mapper provides a unified interface for accessing data from xarray
+    Datasets, supporting data variables, coordinates, and attributes.
 
     Type Parameters
     ---------------
     SchemaT : Schema
-        Schema type for this mapper (enables proper type hints)
+        Schema type for this mapper
+
+    Examples
+    --------
+    >>> import xarray as xr
+    >>> from dataclasses import dataclass
+    >>> from tollan.accessor.schema import Schema, Mapping
+    >>>
+    >>> @dataclass
+    ... class MySchema(Schema):
+    ...     temperature: Mapping = Mapping("temp")
+    ...     time: Mapping = Mapping("time")
+    >>>
+    >>> class MyMapper(XarrayMapper[MySchema]):
+    ...     pass
+    >>>
+    >>> ds = xr.Dataset(
+    ...     {"temp": (["time"], [20.0, 21.0, 22.0])},
+    ...     coords={"time": [0, 1, 2]}
+    ... )
+    >>> mapper = MyMapper.from_data_source(ds)
+    >>> mapper.get_value(ds, mapper.schema.temperature)
+    array([20., 21., 22.])
     """
 
     def _has_field(self, data_source: DataSourceT, name: str) -> bool:
@@ -38,8 +60,18 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             or name in data_source.attrs
         )
 
-    def has_var(self, data_source: DataSourceT, field: Mapping) -> bool:
-        """Check if field exists as a data variable.
+    def _read_value(self, data_source: DataSourceT, name: str) -> Any:
+        """Read field value from dataset.
+
+        Returns the underlying numpy array for data variables/coords,
+        or the raw attribute value for attributes.
+        """
+        if name in data_source.attrs:
+            return data_source.attrs[name]
+        return data_source[name].values  # ty: ignore[invalid-argument-type]
+
+    def has_arr(self, data_source: DataSourceT, field: Mapping) -> bool:
+        """Check if field exists as a data variable or coordinate.
 
         Parameters
         ----------
@@ -51,32 +83,13 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         Returns
         -------
         bool
-            True if field exists as a data variable in dataset
+            True if field exists as a data variable or coordinate in dataset
+
         """
         name = self.get_name(field)
         if name is None:
             return False
-        return name in data_source.data_vars
-
-    def has_coord(self, data_source: DataSourceT, field: Mapping) -> bool:
-        """Check if field exists as a coordinate.
-
-        Parameters
-        ----------
-        data_source : DataSourceT
-            Dataset or DataArray to check
-        field : Mapping
-            Field mapping from schema
-
-        Returns
-        -------
-        bool
-            True if field exists as a coordinate in dataset
-        """
-        name = self.get_name(field)
-        if name is None:
-            return False
-        return name in data_source.coords
+        return name in data_source
 
     def has_attr(self, data_source: DataSourceT, field: Mapping) -> bool:
         """Check if field exists as an attribute.
@@ -98,17 +111,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             return False
         return name in data_source.attrs
 
-    def _read_value(self, data_source: DataSourceT, name: str) -> Any:
-        """Read field value from dataset.
-
-        Returns the underlying numpy array for data variables/coords,
-        or the raw attribute value for attributes.
-        """
-        if name in data_source.attrs:
-            return np.array(data_source.attrs[name])
-        return data_source[name].values  # ty: ignore[invalid-argument-type]
-
-    def get_arr(self, data_source: DataSourceT, field: Mapping) -> xr.DataArray:
+    def get_arr(self, data_source: DataSourceT, field: Mapping) -> QDataArray:
         """Get DataArray for a schema field.
 
         Parameters
@@ -128,40 +131,17 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         ValueError
             If field not found in dataset
         """
-        if not (self.has_var(data_source, field) or self.has_coord(data_source, field)):
+        name = self.get_name(field)
+        if name not in data_source:
             msg = f"Field '{field.names[0]}' not found in dataset"
             raise ValueError(msg)
-        name = self.get_name(field)
-        return data_source[name]  # ty: ignore[invalid-argument-type]
-
-    def get_coord(self, data_source: DataSourceT, field: Mapping) -> xr.DataArray:
-        """Get coordinate DataArray for a schema field.
-
-        Parameters
-        ----------
-        data_source : DataSourceT
-            Dataset or DataArray to read from
-        field : Mapping
-            Field mapping from schema
-
-        Returns
-        -------
-        xr.DataArray
-            Coordinate DataArray
-
-        Raises
-        ------
-        ValueError
-            If field not found or not a coordinate
-        """
-        if not self.has_coord(data_source, field):
-            msg = f"Field '{field.names[0]}' not found as coordinate in dataset"
-            raise ValueError(msg)
-        name = self.get_name(field)
-        return data_source.coords[name]
+        return data_source[name]  # pyright: ignore[reportReturnType]  # ty:ignore[invalid-argument-type]
 
     def get_scalar(self, data_source: DataSourceT, field: Mapping) -> Any:
         """Get scalar value for a schema field.
+
+        Retrieves scalar values from attributes or 0-D arrays. This is useful
+        for metadata fields.
 
         Parameters
         ----------
@@ -178,7 +158,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         Raises
         ------
         ValueError
-            If field not found in dataset or is not a scalar
+            If field not found in dataset or is not a scalar (ndim != 0)
         """
         if not self.has(field):
             msg = f"Field '{field.names[0]}' not found in dataset"
@@ -192,14 +172,15 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         # Check if it's a variable
         if name in data_source:
             var = data_source[name]  # ty: ignore[invalid-argument-type]
-            # If it's a scalar or 0-D, return the value
+            # Only accept 0-D arrays (true scalars)
             if var.ndim == 0:
                 return var.item()
-            # If it's 1-D with one element, return that element
-            if var.size == 1:
-                return var.values.flat[0]
+            # Special case: 0-D string stored as variable
+            # xarray sometimes stores scalar strings with ndim > 0
+            if var.dtype.kind in ("U", "S", "O") and var.size == 1:
+                return var.item()
 
-        msg = f"Field '{field.names[0]}' is not a scalar"
+        msg = f"Field '{field.names[0]}' is not a scalar (ndim=0)"
         raise ValueError(msg)
 
     def get_shape(self, data_source: DataSourceT, field: Mapping) -> tuple[int, ...]:
@@ -207,7 +188,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
 
         Parameters
         ----------
-        data_source : xr.Dataset
+        data_source : DataSourceT
             Dataset to read from
         field : Mapping
             Field mapping from schema
@@ -215,7 +196,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         Returns
         -------
         tuple[int, ...]
-            Shape of the data array
+            Shape of the data array as (dim1_size, dim2_size, ...)
 
         Raises
         ------
@@ -224,3 +205,105 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         """
         arr = self.get_arr(data_source, field)
         return arr.shape
+
+    def validate_has_field(self, field: Mapping) -> None:
+        """Validate that a required field exists in the mapped schema.
+
+        This checks if the field is defined in the schema and has a valid
+        mapping. It does not check if the field exists in a particular dataset.
+
+        Parameters
+        ----------
+        field : Mapping
+            Field mapping to validate
+
+        Raises
+        ------
+        ValueError
+            If field is missing from the schema mapping
+        """
+        if not self.has(field):
+            field_name = field.names[0]
+            msg = f"Missing required field '{field_name}'"
+            raise ValueError(msg)
+
+    def validate_ndim(
+        self,
+        data_source: DataSourceT,
+        field: Mapping,
+        expected_ndim: int,
+    ) -> None:
+        """Validate that a field has the expected number of dimensions.
+
+        This is essential for ensuring data has the correct shape for
+        operations like sweeps (2-D) or timestreams (1-D or 2-D).
+
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Dataset or DataArray to validate
+        field : Mapping
+            Field mapping to validate
+        expected_ndim : int
+            Expected number of dimensions (1 for 1-D, 2 for 2-D, etc.)
+
+        Raises
+        ------
+        ValueError
+            If field has wrong dimensionality
+        """
+        shape = self.get_shape(data_source, field)
+        actual_ndim = len(shape)
+        if actual_ndim != expected_ndim:
+            field_name = self.get_name(field)
+            msg = f"Field '{field_name}' must be {expected_ndim}-D, got {actual_ndim}-D"
+            raise ValueError(msg)
+
+    def validate_has_physical_type(
+        self,
+        data_source: DataSourceT,
+        field: Mapping,
+        expected_physical_type: str,
+    ) -> None:
+        """Validate that a field has the expected physical type.
+
+        Uses the units accessor to check the physical type of the field's units
+        via astropy. This ensures dimensional consistency (e.g., frequency data
+        has frequency units like Hz or GHz, not time units).
+
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Dataset or DataArray to validate
+        field : Mapping
+            Field mapping to validate
+        expected_physical_type : str
+            Expected physical type (e.g., 'frequency', 'time', 'length')
+
+        Raises
+        ------
+        ValueError
+            If field has no units or wrong physical type
+
+        Notes
+        -----
+        The field must have a 'units' attribute that can be parsed by astropy.
+        Common physical types include 'frequency', 'time', 'length', 'angle',
+        'temperature', etc.
+        """
+        field_name = self.get_name(field)
+        da = self.get_arr(data_source, field)
+        unit = da.u.unit
+
+        if unit is None:
+            msg = f"Field '{field_name}' has no units set"
+            raise ValueError(msg)
+
+        # Check physical type
+        actual_physical_type = unit.physical_type
+        if actual_physical_type != expected_physical_type:
+            msg = (
+                f"Field '{field_name}' has physical type '{actual_physical_type}', "
+                f"expected '{expected_physical_type}'"
+            )
+            raise ValueError(msg)

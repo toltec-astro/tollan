@@ -289,7 +289,7 @@ class TestFromDefaults:
         assert pressure_field.source == MappedFieldSource.MISSING
 
     def test_from_defaults_get_name_returns_default(self):
-        """get_name returns None for MISSING/DEFAULT fields from from_defaults."""
+        """get_name returns default name for fields from from_defaults."""
 
         @dataclass
         class TestSchema(Schema):
@@ -300,8 +300,8 @@ class TestFromDefaults:
 
         mapper = TestMapper.from_defaults()
 
-        # get_name should return None since field is not from DATA_SOURCE
-        assert mapper.get_name(mapper.schema.temp) is None
+        # get_name should return default name (first in mapping.names)
+        assert mapper.get_name(mapper.schema.temp) == "temperature"
 
     def test_from_defaults_schema_names_accessible(self):
         """Schema default names are accessible via .names[0]."""

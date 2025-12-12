@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, fields
+from dataclasses import fields
 from typing import Any, ClassVar, Self
 
 from ..utils.typing import get_typing_args
@@ -13,7 +13,6 @@ __all__ = [
 ]
 
 
-@dataclass
 class Mapper[SchemaT: Schema]:
     """Resolve schema fields and provide data access interface.
 
@@ -34,40 +33,38 @@ class Mapper[SchemaT: Schema]:
     # Schema instances cache (shared across all Mapper classes)
     _schema_instances: ClassVar[dict[type[SchemaT], SchemaT]] = {}  # type: ignore[assignment]
 
-    # Dataclass fields - only store resolved mappings
-    mapped_fields: dict[MappingBase, MappedField] = field(
-        default_factory=dict,
-        init=False,
-        repr=False,
-    )
+    _mapped_fields: dict[MappingBase, MappedField]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Auto-instantiate schema from generic parameter."""
         super().__init_subclass__(**kwargs)
 
-        # Try to extract schema class from Mapper[SchemaT] generic parameter
-        # This will only succeed for concrete instantiations like XarrayMapper[MySchema]
-        # For generic bases like DataFrameMapper[SchemaT],
-        # this will find no concrete schemas
-        schema_classes = get_typing_args(
+        # Get schema class - returns None for generic base classes with TypeVars,
+        # or raises ValueError for concrete classes missing a schema
+        schema_cls = get_typing_args(
             cls,
             max_depth=2,
             bound=Schema,
-            unique=False,
+            unique=True,
         )
 
-        if len(schema_classes) > 1:
-            msg = (
-                f"Multiple schema classes found for {cls.__name__}: "
-                f"{schema_classes}. Cannot auto-instantiate."
-            )
-            raise TypeError(msg)
-        # If we found exactly one schema class, instantiate it (with caching)
-        if len(schema_classes) == 1:
-            schema_cls = schema_classes[0]
+        # Only set schema for concrete classes (generic base classes get None)
+        if schema_cls is not None:
             if schema_cls not in cls._schema_instances:
                 cls._schema_instances[schema_cls] = schema_cls()
             cls.schema = cls._schema_instances[schema_cls]
+
+    def __init__(
+        self,
+        mapped_fields: dict[MappingBase, MappedField] | None = None,
+    ) -> None:
+        """Initialize mapper with empty mapped_fields cache."""
+        self._mapped_fields: dict[MappingBase, MappedField] = mapped_fields or {}
+
+    @property
+    def mapped_fields(self) -> dict[MappingBase, MappedField]:
+        """Resolved mapped fields cache."""
+        return self._mapped_fields
 
     @classmethod
     def from_data_source(
@@ -223,8 +220,8 @@ class Mapper[SchemaT: Schema]:
             schema_path=schema_path,
         )
 
-    def has(self, mapping: MappingBase) -> bool:
-        """Check if field exists in data source.
+    def __contains__(self, mapping: MappingBase) -> bool:
+        """Check if field exists in data source (enables `mapping in mapper`).
 
         Parameters
         ----------
@@ -234,13 +231,35 @@ class Mapper[SchemaT: Schema]:
         Returns
         -------
         bool
-            True if field exists
+            True if field exists in data source
         """
         resolved = self.mapped_fields.get(mapping)
         return resolved.source == MappedFieldSource.DATA_SOURCE if resolved else False
 
+    def has(self, mapping: MappingBase) -> bool:
+        """Check if field exists in data source.
+
+        This is a convenience method that delegates to `__contains__`.
+        Prefer using the `in` operator: `mapping in mapper`.
+
+        Parameters
+        ----------
+        mapping : MappingBase
+            Schema field reference (e.g., schema.temp)
+
+        Returns
+        -------
+        bool
+            True if field exists in data source
+        """
+        return mapping in self
+
     def get_name(self, mapping: MappingBase) -> str | None:
         """Get resolved physical field name.
+
+        For fields resolved from a data source, returns the actual field name found.
+        For fields with default values or missing fields, returns the first name
+        from the mapping's name list (already set in resolved.name by _resolve_mapping).
 
         Parameters
         ----------
@@ -250,14 +269,10 @@ class Mapper[SchemaT: Schema]:
         Returns
         -------
         str | None
-            Physical field name, or None if not found
+            Physical field name, or None if mapping not resolved
         """
         resolved = self.mapped_fields.get(mapping)
-        return (
-            resolved.name
-            if resolved and resolved.source == MappedFieldSource.DATA_SOURCE
-            else None
-        )
+        return resolved.name if resolved else None
 
     def get_value(self, data_source: Any, mapping: MappingBase) -> Any:
         """Get field value, loading on demand if not already cached.

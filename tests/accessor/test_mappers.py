@@ -207,8 +207,8 @@ class TestXarrayMapper:
         with pytest.raises(KeyError, match="Field not found"):
             mapper.get_value(ds, mapper.schema.pressure)
 
-    def test_has_var(self):
-        """Test has_var checks for data variables only."""
+    def test_has_arr(self):
+        """Test has_arr checks for data variables and coordinates."""
         ds = xr.Dataset(
             {"temp": (["x"], [25.0, 26.0])},
             coords={"x": [0, 1]},
@@ -220,44 +220,20 @@ class TestXarrayMapper:
             temp: Mapping = Mapping("temp")
             x: Mapping = Mapping("x")
             meta: Mapping = Mapping("meta")
+            missing: Mapping = Mapping("missing")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
         mapper = TestMapper.from_data_source(ds)
 
-        # temp is a data variable
-        assert mapper.has_var(ds, mapper.schema.temp)
-        # x is a coordinate, not a data variable
-        assert not mapper.has_var(ds, mapper.schema.x)
-        # meta is an attribute, not a data variable
-        assert not mapper.has_var(ds, mapper.schema.meta)
-
-    def test_has_coord(self):
-        """Test has_coord checks for coordinates only."""
-        ds = xr.Dataset(
-            {"temp": (["x"], [25.0, 26.0])},
-            coords={"x": [0, 1]},
-        )
-        ds.attrs["meta"] = "value"
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            x: Mapping = Mapping("x")
-            meta: Mapping = Mapping("meta")
-
-        class TestMapper(XarrayMapper[TestSchema]):
-            pass
-
-        mapper = TestMapper.from_data_source(ds)
-
-        # x is a coordinate
-        assert mapper.has_coord(ds, mapper.schema.x)
-        # temp is a data variable, not a coordinate
-        assert not mapper.has_coord(ds, mapper.schema.temp)
-        # meta is an attribute, not a coordinate
-        assert not mapper.has_coord(ds, mapper.schema.meta)
+        # Both data vars and coords should return True
+        assert mapper.has_arr(ds, mapper.schema.temp)
+        assert mapper.has_arr(ds, mapper.schema.x)
+        # Attributes should return False
+        assert not mapper.has_arr(ds, mapper.schema.meta)
+        # Missing fields should return False
+        assert not mapper.has_arr(ds, mapper.schema.missing)
 
     def test_has_attr(self):
         """Test has_attr checks for attributes only."""
@@ -341,29 +317,57 @@ class TestXarrayMapper:
         with pytest.raises(ValueError, match="not found in dataset"):
             mapper.get_arr(ds, mapper.schema.meta)
 
-    def test_get_coord_success(self):
-        """Test get_coord retrieves coordinate DataArray."""
-        ds = xr.Dataset(
-            {"data": (["x"], [1, 2, 3])},
-            coords={"x": [0.0, 1.0, 2.0]},
-        )
+    def test_get_scalar_from_attrs(self):
+        """Test get_scalar retrieves scalar from attributes."""
+        ds = xr.Dataset({"data": (["x"], [1, 2])})
+        ds.attrs["obs_id"] = 12345
 
         @dataclass
         class TestSchema(Schema):
-            x: Mapping = Mapping("x")
+            obs_id: Mapping = Mapping("obs_id")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
         mapper = TestMapper.from_data_source(ds)
-        coord = mapper.get_coord(ds, mapper.schema.x)
+        value = mapper.get_scalar(ds, mapper.schema.obs_id)
 
-        assert isinstance(coord, xr.DataArray)
-        assert len(coord) == 3
-        assert coord.values[0] == 0.0
+        assert value == 12345
 
-    def test_get_coord_with_data_variable_fails(self):
-        """Test get_coord raises error for data variable."""
+    def test_get_scalar_from_0d_array(self):
+        """Test get_scalar retrieves scalar from 0-D array."""
+        ds = xr.Dataset({"count": xr.DataArray(42)})
+
+        @dataclass
+        class TestSchema(Schema):
+            count: Mapping = Mapping("count")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        value = mapper.get_scalar(ds, mapper.schema.count)
+
+        assert value == 42
+
+    def test_get_scalar_from_scalar_string(self):
+        """Test get_scalar retrieves scalar string."""
+        ds = xr.Dataset({"name": xr.DataArray("test_name")})
+
+        @dataclass
+        class TestSchema(Schema):
+            name: Mapping = Mapping("name")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        value = mapper.get_scalar(ds, mapper.schema.name)
+
+        assert value == "test_name"
+
+    def test_get_scalar_fails_for_non_scalar(self):
+        """Test get_scalar raises error for multi-element array."""
         ds = xr.Dataset({"temp": (["x"], [25.0, 26.0])})
 
         @dataclass
@@ -375,25 +379,142 @@ class TestXarrayMapper:
 
         mapper = TestMapper.from_data_source(ds)
 
-        with pytest.raises(ValueError, match="not found as coordinate"):
-            mapper.get_coord(ds, mapper.schema.temp)
+        with pytest.raises(ValueError, match=r"is not a scalar \(ndim=0\)"):
+            mapper.get_scalar(ds, mapper.schema.temp)
 
-    def test_get_coord_with_attribute_fails(self):
-        """Test get_coord raises error for attribute."""
-        ds = xr.Dataset({"data": (["x"], [1, 2])})
-        ds.attrs["meta"] = "value"
+    def test_get_shape(self):
+        """Test get_shape returns correct shape."""
+        ds = xr.Dataset({"temp": (["x", "y"], [[1, 2, 3], [4, 5, 6]])})
 
         @dataclass
         class TestSchema(Schema):
-            meta: Mapping = Mapping("meta")
+            temp: Mapping = Mapping("temp")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        shape = mapper.get_shape(ds, mapper.schema.temp)
+
+        assert shape == (2, 3)
+
+    def test_validate_has_field_success(self):
+        """Test validate_has_field passes for existing field."""
+        ds = xr.Dataset({"temp": (["x"], [25.0])})
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
 
         mapper = TestMapper.from_data_source(ds)
 
-        with pytest.raises(ValueError, match="not found as coordinate"):
-            mapper.get_coord(ds, mapper.schema.meta)
+        # Should not raise
+        mapper.validate_has_field(mapper.schema.temp)
+
+    def test_validate_has_field_fails(self):
+        """Test validate_has_field fails for missing field."""
+        ds = xr.Dataset({"temp": (["x"], [25.0])})
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            pressure: Mapping = Mapping("pressure")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError, match="Missing required field"):
+            mapper.validate_has_field(mapper.schema.pressure)
+
+    def test_validate_ndim_success(self):
+        """Test validate_ndim passes for correct dimensionality."""
+        ds = xr.Dataset({"data": (["chan", "freq"], [[1, 2], [3, 4]])})
+
+        @dataclass
+        class TestSchema(Schema):
+            data: Mapping = Mapping("data")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # Should not raise for 2-D data
+        mapper.validate_ndim(ds, mapper.schema.data, expected_ndim=2)
+
+    def test_validate_ndim_fails(self):
+        """Test validate_ndim fails for wrong dimensionality."""
+        ds = xr.Dataset({"data": (["chan"], [1, 2])})
+
+        @dataclass
+        class TestSchema(Schema):
+            data: Mapping = Mapping("data")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError, match="must be 2-D, got 1-D"):
+            mapper.validate_ndim(ds, mapper.schema.data, expected_ndim=2)
+
+    def test_validate_has_physical_type_success(self):
+        """Test validate_has_physical_type passes for correct type."""
+        ds = xr.Dataset({"freq": (["x"], [1.0, 2.0])})
+        ds["freq"].attrs["units"] = "GHz"
+
+        @dataclass
+        class TestSchema(Schema):
+            freq: Mapping = Mapping("freq")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # Should not raise for frequency units
+        mapper.validate_has_physical_type(ds, mapper.schema.freq, "frequency")
+
+    def test_validate_has_physical_type_fails_wrong_type(self):
+        """Test validate_has_physical_type fails for wrong type."""
+        ds = xr.Dataset({"t": (["x"], [1.0, 2.0])})
+        ds["t"].attrs["units"] = "s"
+
+        @dataclass
+        class TestSchema(Schema):
+            t: Mapping = Mapping("t")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(
+            ValueError,
+            match="has physical type 'time', expected 'frequency'",
+        ):
+            mapper.validate_has_physical_type(ds, mapper.schema.t, "frequency")
+
+    def test_validate_has_physical_type_fails_no_units(self):
+        """Test validate_has_physical_type fails when no units set."""
+        ds = xr.Dataset({"data": (["x"], [1.0, 2.0])})
+
+        @dataclass
+        class TestSchema(Schema):
+            data: Mapping = Mapping("data")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError, match="has no units set"):
+            mapper.validate_has_physical_type(ds, mapper.schema.data, "frequency")
 
 
 class TestNetCDF4Mapper:

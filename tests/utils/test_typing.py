@@ -209,6 +209,141 @@ class TestGetTypingArgs:
         assert str in result
         assert int in result
 
+    def test_generic_base_with_typevar_unique(self):
+        """Test that generic base classes with TypeVars return None."""
+        T = TypeVar("T")
+
+        class GenericBase(Generic[T]):
+            pass
+
+        # TypeVars are filtered out, so generic base returns None with unique=True
+        result = get_typing_args(GenericBase, unique=True)
+        assert result is None
+
+    def test_concrete_class_unique(self):
+        """Test that concrete classes with bound filter
+        return the type when unique=True."""
+
+        class Base:
+            pass
+
+        class Concrete(Base):
+            pass
+
+        T = TypeVar("T", bound=Base)
+
+        class GenericContainer(Generic[T]):
+            pass
+
+        class ConcreteContainer(GenericContainer[Concrete]):
+            pass
+
+        # Concrete instantiation should return the concrete type
+        result = get_typing_args(ConcreteContainer, bound=Base, unique=True)
+        assert result is Concrete
+
+    def test_generic_base_with_bound_unique(self):
+        """Test generic base with bound filter returns None."""
+
+        class Base:
+            pass
+
+        T = TypeVar("T", bound=Base)
+
+        class GenericContainer(Generic[T]):
+            pass
+
+        # TypeVar T is not a concrete subclass of Base
+        # With bound filter, TypeVar gets filtered out → 0 results
+        # With TypeVar present in raw args, should return None (not raise)
+        result = get_typing_args(GenericContainer, bound=Base, unique=True)
+        assert result is None
+
+    def test_concrete_missing_type_raises(self):
+        """Test that concrete class without type param
+        raises ValueError with unique=True."""
+
+        class Base:
+            pass
+
+        # Plain class with no type parameters
+        class PlainClass:
+            pass
+
+        # Should raise ValueError - no TypeVars, 0 results with bound filter
+        with pytest.raises(ValueError, match="Expected exactly one"):
+            get_typing_args(PlainClass, bound=Base, unique=True)
+
+    def test_typevar_detection_with_nested_generics(self):
+        """Test TypeVar detection in nested generic hierarchies."""
+
+        class Base:
+            pass
+
+        class Concrete(Base):
+            pass
+
+        T = TypeVar("T", bound=Base)
+
+        class Level1(Generic[T]):
+            pass
+
+        class Level2(Level1[T]):
+            pass
+
+        class Level3(Level2[Concrete]):
+            pass
+
+        # Level1 and Level2 are generic (have TypeVar) → None
+        assert get_typing_args(Level1, bound=Base, unique=True) is None
+        assert get_typing_args(Level2, bound=Base, unique=True) is None
+
+        # Level3 is concrete (no TypeVar, has Concrete) → Concrete
+        assert get_typing_args(Level3, bound=Base, unique=True) is Concrete
+
+    def test_multiple_bounds_with_typevar(self):
+        """Test that multiple concrete types raise error even with unique=True."""
+
+        class Base:
+            pass
+
+        class Type1(Base):
+            pass
+
+        class Type2(Base):
+            pass
+
+        T = TypeVar("T")
+        U = TypeVar("U")
+
+        class MultiParam(Generic[T, U]):
+            pass
+
+        class ConcreteMulti(MultiParam[Type1, Type2]):
+            pass
+
+        # Multiple concrete types matching bound should still raise
+        with pytest.raises(ValueError, match="Expected exactly one"):
+            get_typing_args(ConcreteMulti, bound=Base, unique=True)
+
+    def test_typevar_without_unique(self):
+        """Test that TypeVars are always filtered out, regardless of unique flag."""
+        T = TypeVar("T")
+
+        class GenericBase(Generic[T]):
+            pass
+
+        # Without unique=True, should return empty list (TypeVars filtered out)
+        result = get_typing_args(GenericBase, unique=False)
+        assert result == []
+
+        # With bound filter that excludes TypeVar, should return empty list
+        class Base:
+            pass
+
+        result = get_typing_args(GenericBase, bound=Base, unique=False)
+        assert result == []
+
 
 class TestQuantityPhysicalType:
     """Test physical type extraction from Quantity types."""
