@@ -180,7 +180,11 @@ def ensure_cls_attr_from_type_args(  # noqa: PLR0913
     """Ensure a class attribute is set from typing arguments.
 
     Extract typing arguments from the class's generic base classes and
-    set the specified class attribute to the first matching argument.
+    set the specified class attribute to the unique matching argument.
+
+    Handles intermediate generic classes gracefully: if the class still has
+    unresolved TypeVars (e.g., GenericBase[T] not yet specialized), the
+    function silently returns without setting the attribute.
 
     Parameters
     ----------
@@ -206,13 +210,17 @@ def ensure_cls_attr_from_type_args(  # noqa: PLR0913
     TypeError
         If disallow_explicit=True and attribute is explicitly set on cls.
     ValueError
-        If no matching typing argument is found, or if multiple are found.
+        If no matching typing argument is found for a concrete (non-generic) class,
+        or if multiple matching arguments are found.
 
     Notes
     -----
     This function is useful for automatically setting class attributes
     based on Generic[T] type parameters, particularly in frameworks that
     use generics for configuration or dependency injection.
+
+    For intermediate generic classes (with unresolved TypeVars), the function
+    gracefully returns without error, allowing subclasses to provide concrete types.
 
     Examples
     --------
@@ -242,19 +250,20 @@ def ensure_cls_attr_from_type_args(  # noqa: PLR0913
     attr_value_default = getattr(cls, attr_name, None)
     if attr_value_default is not None and skip_on_exist:
         return
-    # Automatically infer config_model_cls from Generic parameter if not set
-    attr_values = get_typing_args(
+
+    # Use get_typing_args with unique=True to get exactly one result
+    # Returns None for intermediate generic classes with unresolved TypeVars
+    attr_value = get_typing_args(
         cls,
         max_depth=max_depth,
         bound=bound,
         type_filter=type_filter,
-        unique=False,
+        unique=True,
     )
-    if not attr_values and attr_value_default is not None:
-        # use default
+
+    # If None returned, this is an intermediate generic class - skip gracefully
+    if attr_value is None:
         return
-    if len(attr_values) == 1:
-        setattr(cls, attr_name, attr_values[0])
-        return
-    msg = f"Expected exactly one typing arg for '{attr_name}', found {len(attr_values)}"
-    raise ValueError(msg)
+
+    # Set the attribute with the resolved type
+    setattr(cls, attr_name, attr_value)

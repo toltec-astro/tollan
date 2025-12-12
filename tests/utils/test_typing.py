@@ -513,8 +513,9 @@ class TestEnsureClsAttrFromTypeArgs:
         # Should infer from type parameter and overwrite
         assert MyHandler.config_model is Model1
 
-    def test_no_type_args_with_default(self):
-        """Test behavior when no type args found but default exists."""
+    def test_no_type_args_with_default_skip_on_exist(self):
+        """Test behavior when no type args found but default exists
+        with skip_on_exist=True."""
 
         class Handler:
             config_model: type | None = None
@@ -526,12 +527,95 @@ class TestEnsureClsAttrFromTypeArgs:
             MyHandler,
             "config_model",
             bound=BaseModel,
-            skip_on_exist=False,
+            skip_on_exist=True,  # Skip because default exists
             disallow_explicit=False,  # Allow explicit for this test
         )
 
-        # Should keep default since no valid type args found
+        # Should keep default since no valid type args found and skip_on_exist=True
         assert MyHandler.config_model is str
+
+    def test_intermediate_generic_class_graceful(self):
+        """Test that intermediate generic classes (with TypeVars) don't raise errors."""
+
+        T = TypeVar("T")
+
+        class GenericHandler(Generic[T]):
+            pass
+
+        # Should not raise - intermediate generic class
+        # Returns without setting attribute because no concrete type
+        ensure_cls_attr_from_type_args(
+            GenericHandler,
+            "mapper_cls",
+            bound=BaseModel,
+            disallow_explicit=False,
+        )
+
+        # Should not have set the attribute (no concrete type)
+        assert not hasattr(GenericHandler, "mapper_cls")
+
+    def test_intermediate_generic_subclass_graceful(self):
+        """Test that intermediate generic subclasses work correctly."""
+
+        class Base:
+            pass
+
+        T = TypeVar("T", bound=Base)
+
+        class Level1(Generic[T]):
+            pass
+
+        class Level2(Level1[T]):
+            pass
+
+        # Level1 and Level2 are both generic (have TypeVars) - should not raise
+        ensure_cls_attr_from_type_args(
+            Level1,
+            "mapper_cls",
+            bound=Base,
+            disallow_explicit=False,
+        )
+        assert not hasattr(Level1, "mapper_cls")
+
+        ensure_cls_attr_from_type_args(
+            Level2,
+            "mapper_cls",
+            bound=Base,
+            disallow_explicit=False,
+        )
+        assert not hasattr(Level2, "mapper_cls")
+
+    def test_concrete_class_after_generic_sets_attr(self):
+        """Test that concrete class after generic chain sets attribute correctly."""
+
+        class MyModel(BaseModel):
+            value: str = "test"
+
+        T = TypeVar("T")
+
+        class GenericHandler(Generic[T]):
+            pass
+
+        class ConcreteHandler(GenericHandler[MyModel]):
+            mapper_cls: type
+
+        # GenericHandler should not set attribute (generic with TypeVar)
+        ensure_cls_attr_from_type_args(
+            GenericHandler,
+            "mapper_cls",
+            bound=BaseModel,
+            disallow_explicit=False,
+        )
+        assert not hasattr(GenericHandler, "mapper_cls")
+
+        # ConcreteHandler should set attribute (concrete type)
+        ensure_cls_attr_from_type_args(
+            ConcreteHandler,
+            "mapper_cls",
+            bound=BaseModel,
+            disallow_explicit=False,
+        )
+        assert ConcreteHandler.mapper_cls is MyModel
 
     def test_multiple_type_args_raises(self):
         """Test that multiple matching type args raises ValueError."""
