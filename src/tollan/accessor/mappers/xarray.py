@@ -160,7 +160,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         ValueError
             If field not found in dataset or is not a scalar (ndim != 0)
         """
-        if not self.has(field):
+        if field not in self:
             msg = f"Field '{field.names[0]}' not found in dataset"
             raise ValueError(msg)
         name = self.get_name(field)
@@ -222,7 +222,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         ValueError
             If field is missing from the schema mapping
         """
-        if not self.has(field):
+        if field not in self:
             field_name = field.names[0]
             msg = f"Missing required field '{field_name}'"
             raise ValueError(msg)

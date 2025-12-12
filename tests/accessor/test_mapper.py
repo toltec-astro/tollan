@@ -347,6 +347,84 @@ class TestFromDefaults:
         assert coord_names == {"x": "x", "y": "y", "z": "z"}
 
 
+class TestContainsOperator:
+    """Test __contains__ (in operator) for field membership checking."""
+
+    def test_contains_existing_field(self):
+        """Field in mapper returns True for existing field."""
+        data = {"temp": 25.0, "pressure": 101.3}
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            pressure: Mapping = Mapping("pressure")
+
+        class TestMapper(Mapper[TestSchema]):
+            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+                return name in data_source
+
+        mapper = TestMapper.from_data_source(data)
+
+        assert mapper.schema.temp in mapper
+        assert mapper.schema.pressure in mapper
+
+    def test_contains_missing_field(self):
+        """Field in mapper returns False for missing field."""
+        data = {"temp": 25.0}
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            pressure: Mapping = Mapping("pressure")
+
+        class TestMapper(Mapper[TestSchema]):
+            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+                return name in data_source
+
+        mapper = TestMapper.from_data_source(data)
+
+        assert mapper.schema.temp in mapper
+        assert mapper.schema.pressure not in mapper
+
+    def test_contains_with_alternative_names(self):
+        """Field in mapper works with alternative name resolution."""
+        data = {"temp_c": 25.0}
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping(("temperature", "temp_c", "T"))
+
+        class TestMapper(Mapper[TestSchema]):
+            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+                return name in data_source
+
+        mapper = TestMapper.from_data_source(data)
+
+        # Should return True because alternative name "temp_c" exists
+        assert mapper.schema.temp in mapper
+
+    def test_contains_checks_mapped_fields(self):
+        """in operator checks mapped_fields source, not data_source."""
+        data = {"temp": 25.0}
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            computed: Mapping = Mapping("computed_value")
+
+        class TestMapper(Mapper[TestSchema]):
+            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+                return name in data_source
+
+        mapper = TestMapper.from_data_source(data)
+
+        # temp exists in data_source
+        assert mapper.schema.temp in mapper
+
+        # computed doesn't exist - should return False
+        assert mapper.schema.computed not in mapper
+
+
 class TestConditionalMapping:
     """Test conditional mapping resolution."""
 

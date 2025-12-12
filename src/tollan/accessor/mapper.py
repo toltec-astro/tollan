@@ -236,24 +236,6 @@ class Mapper[SchemaT: Schema]:
         resolved = self.mapped_fields.get(mapping)
         return resolved.source == MappedFieldSource.DATA_SOURCE if resolved else False
 
-    def has(self, mapping: MappingBase) -> bool:
-        """Check if field exists in data source.
-
-        This is a convenience method that delegates to `__contains__`.
-        Prefer using the `in` operator: `mapping in mapper`.
-
-        Parameters
-        ----------
-        mapping : MappingBase
-            Schema field reference (e.g., schema.temp)
-
-        Returns
-        -------
-        bool
-            True if field exists in data source
-        """
-        return mapping in self
-
     def get_name(self, mapping: MappingBase) -> str | None:
         """Get resolved physical field name.
 
