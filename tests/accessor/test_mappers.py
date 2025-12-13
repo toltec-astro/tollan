@@ -317,6 +317,102 @@ class TestXarrayMapper:
         with pytest.raises(ValueError, match="not found in dataset"):
             mapper.get_arr(ds, mapper.schema.meta)
 
+    def test_get_arr_from_dataarray_with_coordinate(self):
+        """Test get_arr retrieves coordinate from DataArray."""
+        ds = xr.Dataset(
+            {"temp": (["x", "y"], [[1, 2], [3, 4]])},
+            coords={"x": [0.0, 1.0], "y": [10.0, 20.0]},
+        )
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            x: Mapping = Mapping("x")
+            y: Mapping = Mapping("y")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # Get DataArray from Dataset
+        temp_da = mapper.get_arr(ds, mapper.schema.temp)
+        assert isinstance(temp_da, xr.DataArray)
+
+        # Now get coordinates from the DataArray itself
+        x_from_da = mapper.get_arr(temp_da, mapper.schema.x)
+        assert isinstance(x_from_da, xr.DataArray)
+        assert len(x_from_da) == 2
+        assert x_from_da.values[0] == 0.0
+        assert x_from_da.values[1] == 1.0
+
+        y_from_da = mapper.get_arr(temp_da, mapper.schema.y)
+        assert isinstance(y_from_da, xr.DataArray)
+        assert len(y_from_da) == 2
+        assert y_from_da.values[0] == 10.0
+        assert y_from_da.values[1] == 20.0
+
+    def test_get_arr_from_dataarray_fails_for_nonexistent_coord(self):
+        """Test get_arr raises error for non-existent coordinate in DataArray."""
+        ds = xr.Dataset(
+            {"temp": (["x"], [1, 2, 3])},
+            coords={"x": [0.0, 1.0, 2.0]},
+        )
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+            z: Mapping = Mapping("z")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+        temp_da = mapper.get_arr(ds, mapper.schema.temp)
+
+        # Should fail when trying to get non-existent coordinate from DataArray
+        with pytest.raises(ValueError, match="not found in data array coords"):
+            mapper.get_arr(temp_da, mapper.schema.z)
+
+    def test_get_arr_dataset_vs_dataarray_coordinate_access(self):
+        """Test get_arr works consistently for coords from Dataset vs DataArray."""
+        ds = xr.Dataset(
+            {"data": (["chan", "freq"], [[1, 2, 3], [4, 5, 6]])},
+            coords={
+                "chan": [0, 1],
+                "freq": [1.0e9, 2.0e9, 3.0e9],
+            },
+        )
+
+        @dataclass
+        class TestSchema(Schema):
+            data: Mapping = Mapping("data")
+            chan: Mapping = Mapping("chan")
+            freq: Mapping = Mapping("freq")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        # Get coordinate from Dataset
+        chan_from_ds = mapper.get_arr(ds, mapper.schema.chan)
+        freq_from_ds = mapper.get_arr(ds, mapper.schema.freq)
+
+        # Get DataArray, then get coordinates from it
+        data_da = mapper.get_arr(ds, mapper.schema.data)
+        chan_from_da = mapper.get_arr(data_da, mapper.schema.chan)
+        freq_from_da = mapper.get_arr(data_da, mapper.schema.freq)
+
+        # Both access methods should return equivalent arrays
+        assert isinstance(chan_from_ds, xr.DataArray)
+        assert isinstance(chan_from_da, xr.DataArray)
+        assert (chan_from_ds.values == chan_from_da.values).all()
+
+        assert isinstance(freq_from_ds, xr.DataArray)
+        assert isinstance(freq_from_da, xr.DataArray)
+        assert (freq_from_ds.values == freq_from_da.values).all()
+
     def test_get_scalar_from_attrs(self):
         """Test get_scalar retrieves scalar from attributes."""
         ds = xr.Dataset({"data": (["x"], [1, 2])})

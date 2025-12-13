@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    import xarray as xr
+import xarray as xr
 
+if TYPE_CHECKING:
     from ..schema import Mapping
     from ..units import QDataArray, QDataSourceT
 
@@ -132,10 +132,19 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             If field not found in dataset
         """
         name = self.get_name(field)
-        if name not in data_source:
-            msg = f"Field '{field.names[0]}' not found in dataset"
+
+        # Handle Dataset vs DataArray differently
+        if isinstance(data_source, xr.Dataset):
+            # For Dataset: check data_vars and coords using __contains__
+            if name not in data_source:
+                msg = f"Field '{field.names[0]}' not found in dataset"
+                raise ValueError(msg)
+            return data_source[name]  # pyright: ignore[reportReturnType]  # ty:ignore[invalid-return-type]
+        assert isinstance(data_source, xr.DataArray)
+        if name not in data_source.coords:
+            msg = f"Field '{field.names[0]}' not found in data array coords"
             raise ValueError(msg)
-        return data_source[name]  # pyright: ignore[reportReturnType]  # ty:ignore[invalid-argument-type]
+        return data_source.coords[name]  # pyright: ignore[reportReturnType]
 
     def get_scalar(self, data_source: DataSourceT, field: Mapping) -> Any:
         """Get scalar value for a schema field.
