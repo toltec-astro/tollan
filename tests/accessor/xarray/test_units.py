@@ -8,7 +8,7 @@ import xarray as xr
 from astropy import units as u
 from astropy.units import Quantity
 
-from tollan.accessor.units import UnitsAccessor
+from tollan.accessor.xarray import UnitsAccessor
 
 
 class TestUnitsAccessor:

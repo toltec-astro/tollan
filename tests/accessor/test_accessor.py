@@ -9,7 +9,7 @@ import xarray as xr
 from pydantic.dataclasses import dataclass
 
 from tollan.accessor import AccessorBase, Mapper, Mapping, Schema
-from tollan.accessor.mappers import XarrayMapper
+from tollan.accessor.xarray import XarrayMapper
 
 
 class TestAccessorBaseCreation:

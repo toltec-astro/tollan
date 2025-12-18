@@ -62,7 +62,7 @@ class FrozenBaseModel(BaseModel):
             YAML representation of model
         """
         d = self.model_dump(**kwargs)
-        return self.yaml_dump(d)
+        return self.yaml_dump(d)  # ty:ignore[invalid-return-type]
 
     @classmethod
     def model_validate_yaml(

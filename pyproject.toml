@@ -33,6 +33,8 @@ dependencies = [
   "wrapt",
   "netcdf4",
   "xarray",
+  "zarr",
+  "dask",
   "frozendict",
 ]
 
@@ -108,7 +110,10 @@ addopts = [
 ]
 log_cli_level = "INFO"
 xfail_strict = "true"
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  "ignore:Consolidated metadata is currently not part in the Zarr format 3:zarr.errors.ZarrUserWarning",
+]
 
 [tool.ty]
 # All rules are enabled as "error" by default; no need to specify unless overriding.
@@ -162,6 +167,7 @@ lint.ignore = [
   "RUF043",  # pytest regex
   "PLC0415", # not top level imports
   "ANN202",  # missing return type annotation
+  "F841",    # local variable assigned but never used
 ]
 
 "docs/conf.py" = [

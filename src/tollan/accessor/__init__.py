@@ -29,7 +29,7 @@ Basic mapper usage with xarray:
     >>> from dataclasses import dataclass
     >>> import xarray as xr
     >>> from tollan.accessor import Schema, Mapping, AccessorBase
-    >>> from tollan.accessor.mappers import XarrayMapper
+    >>> from tollan.accessor.xarray import XarrayMapper
     >>>
     >>> # Define schema with field mappings
     >>> @dataclass
@@ -145,7 +145,6 @@ from .schema import (
     MappingBase,
     Schema,
 )
-from .units import UnitsAccessor
 
 __all__ = [
     "MISSING",
@@ -155,5 +154,4 @@ __all__ = [
     "Mapping",
     "MappingBase",
     "Schema",
-    "UnitsAccessor",
 ]

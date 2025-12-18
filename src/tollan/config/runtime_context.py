@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, overload
 
 from pydantic import ConfigDict, Field
 
@@ -421,10 +421,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         -------
             Validated RuntimeConfig instance
         """
-        return cast(
-            "RuntimeConfigT",
-            self.runtime_config_cls.model_validate(self.config_dict),
-        )
+        return self.runtime_config_cls.model_validate(self.config_dict)
 
     @property
     def runtime_info(self) -> RuntimeInfo:

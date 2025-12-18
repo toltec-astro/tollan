@@ -8,7 +8,7 @@ import xarray as xr
 
 if TYPE_CHECKING:
     from ..schema import Mapping
-    from ..units import QDataArray, QDataSourceT
+    from .units import QDataArray, QDataSourceT
 
     type DataSourceT = xr.Dataset | xr.DataArray | QDataSourceT
 

@@ -272,7 +272,7 @@ class FileLocData:
         elif isinstance(arg, dict):
             for k, v in arg.items():
                 _set_kwarg(k, v)
-        elif isinstance(arg, cls | FileLoc):
+        elif isinstance(arg, (cls, FileLoc)):
             # handle validated instance, just extrtact the fields
             if isinstance(arg, FileLoc):
                 arg = arg.root

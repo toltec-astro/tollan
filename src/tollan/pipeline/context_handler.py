@@ -198,7 +198,7 @@ class DictContextHandlerMixin[KeyT: str, ContextT](
         if issubclass(ctx_cls, BaseModel):
             context_obj = ctx_cls.model_validate(context_data)
         elif is_dataclass(ctx_cls):
-            context_obj = ctx_cls(**context_data)
+            context_obj = ctx_cls(**context_data)  # ty:ignore[invalid-argument-type]
         else:
             context_obj = ctx_cls(context_data)
         context_obj = cast("ContextT", context_obj)
