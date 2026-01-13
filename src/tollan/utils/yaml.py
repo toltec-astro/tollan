@@ -298,7 +298,7 @@ def yaml_dump(
         msg = "output has to be str, PathLike, TextIO, or None."
         raise TypeError(msg)
     with ctx as stream:
-        return yaml.dump(data, stream, Dumper=YamlDumper, **kwargs)  # type: ignore[arg-type]
+        return yaml.dump(data, stream, Dumper=YamlDumper, **kwargs)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
 
 def yaml_load(source: str | os.PathLike | TextIOBase) -> object:

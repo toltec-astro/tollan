@@ -69,7 +69,7 @@ class QuantityValidator(_SimpleTypeValidatorMixin[Quantity]):
         return tuple(self.physical_types_allowed)
 
     @cached_property
-    def _field_value_json_schema_stub(self) -> dict[str, Any]:  # type: ignore[override]
+    def _field_value_json_schema_stub_impl(self) -> dict[str, Any]:  # pyright: ignore[reportIncompatibleVariableOverride]
         """JSON schema stub for Quantity."""
         schema: dict[str, Any] = {
             "type": "string",
@@ -81,7 +81,7 @@ class QuantityValidator(_SimpleTypeValidatorMixin[Quantity]):
         return schema
 
     @cached_property
-    def _field_value_error_message(self) -> str:  # type: ignore[override]
+    def _field_value_error_message(self) -> str:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Get error message for value validation."""
         if self._field_physical_types is None:
             return "Invalid quantity: {value}"

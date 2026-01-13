@@ -90,9 +90,9 @@ class TestSubplotGrid:
         result = grid.make_figure()
 
         assert isinstance(result, go.Figure)
-        assert len(result.data) == 2  # type: ignore[arg-type]
-        assert result.data[0].name == "trace1"  # type: ignore[attr-defined]
-        assert result.data[1].name == "trace2"  # type: ignore[attr-defined]
+        assert len(result.data) == 2  # pyright: ignore[reportArgumentType]
+        assert result.data[0].name == "trace1"  # pyright: ignore[reportAttributeAccessIssue]
+        assert result.data[1].name == "trace2"  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_make_figure_with_rowspan_colspan(self):
         """Test making figure with rowspan/colspan."""
@@ -105,7 +105,7 @@ class TestSubplotGrid:
 
         result = grid.make_figure()
         assert isinstance(result, go.Figure)
-        assert len(result.data) == 2  # type: ignore[arg-type]  # type: ignore[arg-type]
+        assert len(result.data) == 2  # pyright: ignore[reportArgumentType]
 
     def test_make_figure_with_shared_axes(self):
         """Test making figure with shared axes."""
@@ -143,7 +143,7 @@ class TestSubplotGrid:
 
         result = grid.make_figure()
         assert isinstance(result, go.Figure)
-        assert len(result.data) == 1  # type: ignore[arg-type]
+        assert len(result.data) == 1  # pyright: ignore[reportArgumentType]
 
 
 class TestMakeSubplots:
@@ -283,9 +283,9 @@ class TestAdjustSubplotColorbars:
         # Colorbars should have len, x, y set
         for trace in result.data:
             if hasattr(trace, "colorbar"):
-                assert "len" in trace.colorbar  # type: ignore[attr-defined]
-                assert "x" in trace.colorbar  # type: ignore[attr-defined]
-                assert "y" in trace.colorbar  # type: ignore[attr-defined]
+                assert "len" in trace.colorbar  # pyright: ignore[reportAttributeAccessIssue]
+                assert "x" in trace.colorbar  # pyright: ignore[reportAttributeAccessIssue]
+                assert "y" in trace.colorbar  # pyright: ignore[reportAttributeAccessIssue]
 
     def test_with_scatter_marker_colorbar(self):
         """Test adjusting colorbars with scatter plot."""
@@ -368,7 +368,7 @@ class TestMakeEmptyFigure:
         assert isinstance(fig, go.Figure)
         assert fig.layout.xaxis.visible is False
         assert fig.layout.yaxis.visible is False
-        assert len(fig.data) == 0  # type: ignore[arg-type]
+        assert len(fig.data) == 0  # pyright: ignore[reportArgumentType]
 
     def test_with_placeholder_text(self):
         """Test creating empty figure with placeholder text."""
@@ -613,7 +613,7 @@ class TestIntegration:
         result = grid.make_figure(shared_xaxes=True)
 
         assert isinstance(result, go.Figure)
-        assert len(result.data) == 3  # type: ignore[arg-type]
+        assert len(result.data) == 3  # pyright: ignore[reportArgumentType]
 
     def test_color_palette_in_subplot(self):
         """Test using ColorPalette for consistent coloring across subplots."""
@@ -634,7 +634,7 @@ class TestIntegration:
             col=2,
         )
 
-        assert len(fig.data) == 2  # type: ignore[arg-type]
+        assert len(fig.data) == 2  # pyright: ignore[reportArgumentType]
 
     def test_empty_figure_in_subplot_grid(self):
         """Test using empty figures as placeholders in grid."""

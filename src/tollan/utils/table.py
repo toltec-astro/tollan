@@ -315,7 +315,7 @@ class TableValidator:
             Filtered table with rows matching expression
         """
         if isinstance(tbl, Table):
-            return tbl[self.eval(tbl, expr, **kwargs)]  # type: ignore[return-value]
+            return tbl[self.eval(tbl, expr, **kwargs)]  # pyright: ignore[reportReturnType]
         if isinstance(tbl, pd.DataFrame):
             return tbl.query(expr, **kwargs)
         assert_never(tbl)

@@ -30,7 +30,7 @@ __all__ = [
 ]
 
 add_numpy_scalar_representers(pyaml.PYAMLDumper)
-pyaml.add_representer(None, lambda s, d: s.represent_str(str(d)))  # type: ignore[arg-type]
+pyaml.add_representer(None, lambda s, d: s.represent_str(str(d)))  # pyright: ignore[reportArgumentType]
 
 
 def pformat_yaml(obj: Any) -> str:

@@ -116,7 +116,7 @@ class TestQuantityFields:
         model = TestModel.model_validate({"distance": "5.0 m"})
         assert isinstance(model.distance, u.Quantity)
         assert model.distance.value == 5.0
-        assert model.distance.unit == u.m  # type: ignore[attr-defined]
+        assert model.distance.unit == u.m
 
     def test_length_quantity_field(self):
         """Test LengthQuantityField with physical type constraint."""
@@ -142,7 +142,7 @@ class TestQuantityFields:
         model = TestModel.model_validate({"angle": "45.0 deg"})
         assert isinstance(model.angle, u.Quantity)
         assert model.angle.value == 45.0
-        assert model.angle.unit == u.deg  # type: ignore[attr-defined]
+        assert model.angle.unit == u.deg
 
     def test_quantity_with_config_backend(self):
         """Test Quantity fields work with RuntimeConfig."""
@@ -181,7 +181,7 @@ class TestSkyCoordField:
         model = TestModel.model_validate({"target": "M31"})
         assert isinstance(model.target, SkyCoord)
         # M31 should be near RA=10.68deg, Dec=41.27deg
-        assert model.target.ra.deg == pytest.approx(10.68, abs=1.0)  # type: ignore[attr-defined]
+        assert model.target.ra.deg == pytest.approx(10.68, abs=1.0)  # pyright: ignore[reportOptionalMemberAccess]
 
     def test_skycoord_with_config_backend(self):
         """Test SkyCoord fields work with RuntimeConfig."""
@@ -237,9 +237,9 @@ class TestComplexConfigWithTypes:
         assert config.exposure_time == 3600.0
         assert config.instrument.name == "TolTEC"
         assert isinstance(config.instrument.wavelength, u.Quantity)
-        assert config.instrument.wavelength.unit == u.mm  # type: ignore[attr-defined]
+        assert config.instrument.wavelength.unit == u.mm
         assert isinstance(config.instrument.beam_size, u.Quantity)
-        assert config.instrument.beam_size.unit == u.arcsec  # type: ignore[attr-defined]
+        assert config.instrument.beam_size.unit == u.arcsec
 
     def test_yaml_config_with_types(self):
         """Test loading config with astronomy types from YAML."""

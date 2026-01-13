@@ -48,7 +48,7 @@ class SkyCoordValidator(_SimpleTypeValidatorMixin[SkyCoord]):
     """Helps round-trip coordinates by name."""
 
     @cached_property
-    def _field_value_json_schema_stub(self) -> dict[str, Any]:  # type: ignore[override]
+    def _field_value_json_schema_stub(self) -> dict[str, Any]:  # pyright: ignore[reportIncompatibleVariableOverride]
         """JSON schema stub for SkyCoord."""
         return {
             "type": "string",
@@ -65,7 +65,7 @@ class SkyCoordValidator(_SimpleTypeValidatorMixin[SkyCoord]):
         return result.replace(" ", "")
 
     @cached_property
-    def _field_value_error_message(self) -> str:  # type: ignore[override]
+    def _field_value_error_message(self) -> str:  # pyright: ignore[reportIncompatibleVariableOverride]
         """Get error message for value validation."""
         return "SkyCoord required, got {value}"
 

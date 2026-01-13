@@ -62,9 +62,9 @@ class RuntimeConfig[RuntimeInfoT: RuntimeInfo = RuntimeInfo](FrozenBaseModel):
 
     runtime_info: RuntimeInfoT = Field(
         # this get validated to the actual RuntimeInfoT
-        default_factory=dict,  # type: ignore[arg-type]
+        default_factory=dict,
         description="Runtime information",
-    )
+    )  # pyright: ignore[reportAssignmentType]
 
 
 class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:

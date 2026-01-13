@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 from functools import cached_property
+from typing import TYPE_CHECKING
 
 import pytest
 from pydantic import BaseModel
 
 from tollan.config import ConfigHandler, RuntimeContext
+
+if TYPE_CHECKING:
+    from tollan.config.sources.base import DictConfigT
 
 
 class TestConfigHandlerBasics:
@@ -123,7 +127,7 @@ class TestConfigHandlerUpdates:
                 return extra.get("test_config", {})
 
             @classmethod
-            def prepare_runtime_config_data(cls, config_data):  # type: ignore[override]
+            def prepare_runtime_config_data(cls, config_data: dict) -> DictConfigT:
                 return {"test_config": config_data}
 
         rc = RuntimeContext(
@@ -161,7 +165,7 @@ class TestConfigHandlerUpdates:
                 return extra.get("test_config", {})
 
             @classmethod
-            def prepare_runtime_config_data(cls, config_data):  # type: ignore[override]
+            def prepare_runtime_config_data(cls, config_data: dict) -> DictConfigT:
                 return {"test_config": config_data}
 
         rc = RuntimeContext(
@@ -198,7 +202,7 @@ class TestConfigHandlerUpdates:
                 return {"value": "test"}
 
             @classmethod
-            def prepare_runtime_config_data(cls, config_data):  # type: ignore[override]
+            def prepare_runtime_config_data(cls, config_data: dict) -> DictConfigT:
                 return {"test": config_data}
 
         rc = RuntimeContext()
@@ -220,7 +224,7 @@ class TestConfigHandlerUpdates:
                 return extra.get("test", {})
 
             @classmethod
-            def prepare_runtime_config_data(cls, config_data):  # type: ignore[override]
+            def prepare_runtime_config_data(cls, config_data: dict) -> DictConfigT:
                 return {"test": config_data}
 
         rc = RuntimeContext(
@@ -264,7 +268,7 @@ class TestConfigHandlerAutoCacheReset:
                 return extra.get("test", {})
 
             @classmethod
-            def prepare_runtime_config_data(cls, config_data):  # type: ignore[override]
+            def prepare_runtime_config_data(cls, config_data: dict) -> DictConfigT:
                 return {"test": config_data}
 
             @ConfigHandler.auto_cache_reset
@@ -359,7 +363,7 @@ class TestConfigHandlerTypeInference:
         with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
 
             class MyHandler(ConfigHandler[ConfigA]):
-                config_model_cls: type[BaseModel] = ConfigB  # type: ignore[misc,assignment]  # Should be disallowed
+                config_model_cls: type[BaseModel] = ConfigB  # pyright: ignore[reportIncompatibleVariableOverride] # Should be disallowed
 
                 @classmethod
                 def prepare_config_data(cls, runtime_config):

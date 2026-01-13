@@ -123,7 +123,11 @@ def strip_unit(arr: np.ma.MaskedArray) -> tuple[np.ma.MaskedArray, UnitT | None]
 
 
 @overload
-def strip_unit(arr: u.Quantity) -> tuple[npt.ArrayLike, UnitT | None]: ...
+def strip_unit(arr: u.Quantity) -> tuple[npt.ArrayLike, UnitT]: ...
+
+
+@overload
+def strip_unit(arr: npt.ArrayLike) -> tuple[npt.ArrayLike, UnitT | None]: ...
 
 
 def strip_unit(
@@ -161,6 +165,17 @@ def strip_unit(
             return np.ma.array(arr.data.value, mask=arr.mask), arr.data.unit
         return arr, None
     return arr, None
+
+
+@overload
+def attach_unit(arr: npt.NDArray, unit: UnitT) -> u.Quantity: ...
+
+
+@overload
+def attach_unit(
+    arr: npt.ArrayLike | np.ma.MaskedArray,
+    unit: None,
+) -> npt.ArrayLike | np.ma.MaskedArray: ...
 
 
 def attach_unit(
@@ -227,9 +242,23 @@ def preserve_unit[F: Callable](f: F) -> F:
     return wrapper  # type: ignore[return-value]
 
 
+@overload
+def ensure_unit(
+    arr: npt.NDArray | u.Quantity,
+    unit: UnitT,
+) -> u.Quantity: ...
+
+
+@overload
+def ensure_unit(
+    arr: None,
+    unit: UnitT,
+) -> None: ...
+
+
 def ensure_unit(
     arr: npt.ArrayLike | u.Quantity | None,
-    unit: u.Unit,
+    unit: UnitT,
 ) -> u.Quantity | None:
     """Ensure data has the given unit (returns None if arr is None).
 
@@ -237,7 +266,7 @@ def ensure_unit(
     ----------
     arr : ArrayLike | Quantity | None
         Input array (with or without units)
-    unit : Unit
+    unit : UnitT
         Target unit to apply
 
     Returns
@@ -278,4 +307,4 @@ def qrange(
     else:
         x1_value = x1.to_value(x_unit)
         step_value = step.to_value(x_unit)
-    return attach_unit(np.arange(x0_value, x1_value, step_value), x_unit)  # type: ignore[return-value]
+    return attach_unit(np.arange(x0_value, x1_value, step_value), x_unit)

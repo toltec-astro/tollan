@@ -64,7 +64,7 @@ class TimeValidator(_SimpleTypeValidatorMixin[Time]):
         return tuple(fmts)
 
     @cached_property
-    def _field_value_json_schema_stub(self) -> dict[str, Any]:  # type: ignore[override]
+    def _field_value_json_schema_stub(self) -> dict[str, Any]:  # pyright: ignore[reportIncompatibleVariableOverride]
         """JSON schema stub for Time."""
         schema: dict[str, Any] = {
             "type": "string",
@@ -76,7 +76,7 @@ class TimeValidator(_SimpleTypeValidatorMixin[Time]):
         return schema
 
     @cached_property
-    def _field_value_error_message(self) -> str:  # type: ignore[override]
+    def _field_value_error_message(self) -> str:  # pyright: ignore[reportIncompatibleVariableOverride]
         if self._field_formats is None:
             return "Invalid time format: {value}"
         return f"Time formats {self._field_formats} required, got {{value}}"

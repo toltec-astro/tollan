@@ -212,7 +212,7 @@ class TestQTable:
         """Test column validation works with QTable."""
         import astropy.units as u
 
-        qtbl = QTable([[1, 2, 3] * u.m, [4, 5, 6] * u.s], names=["distance", "time"])  # type: ignore[attr-defined]
+        qtbl = QTable([[1, 2, 3] * u.m, [4, 5, 6] * u.s], names=["distance", "time"])
         assert validator.has_all_cols(qtbl, ["distance", "time"])
         assert validator.get_first_col(qtbl, ["time", "distance"]) == "time"
 
@@ -220,7 +220,7 @@ class TestQTable:
         """Test eval works with QTable."""
         import astropy.units as u
 
-        qtbl = QTable([[1, 2, 3] * u.m, [4, 5, 6] * u.s], names=["distance", "time"])  # type: ignore[attr-defined]
+        qtbl = QTable([[1, 2, 3] * u.m, [4, 5, 6] * u.s], names=["distance", "time"])
         # Note: This will strip units when using pd.eval
         result = validator.eval(qtbl, "distance.value + time.value")
         assert list(result) == [5, 7, 9]

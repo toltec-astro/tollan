@@ -388,7 +388,7 @@ def update_subplot_layout(
                 fig.add_shape(row=r, col=c, **s)
             for a in annos:
                 fig.add_annotation(row=r, col=c, **a)
-    _fix_scale_anchor(fig["layout"])  # type: ignore[arg-type]
+    _fix_scale_anchor(fig.layout)
 
 
 def make_subplot_layout(
@@ -446,7 +446,7 @@ def _fix_scale_anchor(layout: dict[str, Any] | go.Layout) -> dict[str, Any] | go
     _layout = layout.to_plotly_json() if isinstance(layout, go.Layout) else layout
     for k, v in _layout.items():
         if k.startswith(("xaxis", "yaxis")) and "scaleanchor" in v:
-            layout[k]["scaleanchor"] = v["anchor"]  # type: ignore[index]
+            layout[k]["scaleanchor"] = v["anchor"]  # pyright: ignore[reportOptionalSubscript, reportIndexIssue]
     return layout
 
 
@@ -473,8 +473,8 @@ def adjust_subplot_colorbars(fig: go.Figure, size: float = 1.0) -> go.Figure:
     """
     layout = fig["layout"]
     for i, trace in enumerate(fig["data"]):
-        xax = trace["xaxis"].lstrip("x")  # type: ignore[attr-defined]
-        yax = trace["yaxis"].lstrip("y")  # type: ignore[attr-defined]
+        xax = trace["xaxis"].lstrip("x")  # pyright: ignore[reportArgumentType, reportCallIssue, reportOptionalSubscript]
+        yax = trace["yaxis"].lstrip("y")  # pyright: ignore[reportArgumentType, reportCallIssue, reportOptionalSubscript]
         xdom = cast("list[float]", layout[f"xaxis{xax}"]["domain"])
         ydom = cast("list[float]", layout[f"yaxis{yax}"]["domain"])
         ysize = ydom[1] - ydom[0]
@@ -485,7 +485,7 @@ def adjust_subplot_colorbars(fig: go.Figure, size: float = 1.0) -> go.Figure:
                 "y": ydom[-1] - 0.5 * ysize,
             },
         }
-        if trace["type"] not in [  # type: ignore[attr-defined]
+        if trace["type"] not in [  # pyright: ignore[reportCallIssue, reportArgumentType]
             "heatmap",
         ]:
             if "colorbar" not in trace:

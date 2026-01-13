@@ -122,7 +122,7 @@ class _SimpleTypeValidatorMixin[FieldT]:
         # we require the value has scalar semantics for array-like types
         if not hasattr(value, "shape"):
             return value
-        shape = value.shape  # type: ignore[attr-defined]
+        shape = value.shape  # pyright: ignore[reportAttributeAccessIssue]
         if shape != ():
             msg = f"{self._field_type_name} value must be a scalar, got {shape}"
             raise ValueError(msg)

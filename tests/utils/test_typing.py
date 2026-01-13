@@ -352,10 +352,10 @@ class TestQuantityPhysicalType:
         """Test extraction from unit-based Quantity."""
         from tollan.config.types.quantity import get_physical_type_from_quantity_type
 
-        Q1 = u.Quantity[u.m]  # type: ignore[attr-defined]
+        Q1 = u.Quantity[u.m]
         assert get_physical_type_from_quantity_type(Q1) == "length"
 
-        Q2 = u.Quantity[u.s]  # type: ignore[attr-defined]
+        Q2 = u.Quantity[u.s]
         assert get_physical_type_from_quantity_type(Q2) == "time"
 
     def test_string_physical_type(self):
@@ -372,10 +372,10 @@ class TestQuantityPhysicalType:
         """Test with derived units."""
         from tollan.config.types.quantity import get_physical_type_from_quantity_type
 
-        Q1 = u.Quantity[u.m / u.s]  # type: ignore[attr-defined]
+        Q1 = u.Quantity[u.m / u.s]
         assert get_physical_type_from_quantity_type(Q1) == "speed"
 
-        Q2 = u.Quantity[u.kg * u.m / u.s**2]  # type: ignore[attr-defined]
+        Q2 = u.Quantity[u.kg * u.m / u.s**2]
         assert get_physical_type_from_quantity_type(Q2) == "force"
 
     def test_invalid_quantity_type(self):
@@ -779,7 +779,7 @@ class TestEnsureClsAttrFromTypeArgs:
             pass
 
         class MyHandler(Handler[MyModel]):
-            pass
+            config_model: type
 
         # Should not have attribute before
         assert not hasattr(MyHandler, "config_model")
@@ -792,7 +792,7 @@ class TestEnsureClsAttrFromTypeArgs:
 
         # Should have attribute after
         assert hasattr(MyHandler, "config_model")
-        assert MyHandler.config_model is MyModel  # type: ignore[attr-defined]
+        assert MyHandler.config_model is MyModel
 
     def test_disallow_explicit_parameter(self):
         """Test that disallow_explicit=True raises TypeError for explicit attributes."""

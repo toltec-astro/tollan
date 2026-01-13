@@ -28,10 +28,10 @@ class Mapper[SchemaT: Schema]:
     """
 
     # Schema instance (auto-instantiated and cached via __init_subclass__)
-    schema: ClassVar[SchemaT]  # type: ignore[assignment]
+    schema: ClassVar[SchemaT]  # pyright: ignore[reportGeneralTypeIssues]
 
     # Schema instances cache (shared across all Mapper classes)
-    _schema_instances: ClassVar[dict[type[SchemaT], SchemaT]] = {}  # type: ignore[assignment]
+    _schema_instances: ClassVar[dict[type[SchemaT], SchemaT]] = {}  # pyright: ignore[reportGeneralTypeIssues]
 
     _mapped_fields: dict[MappingBase, MappedField]
 

@@ -357,7 +357,7 @@ class TestRuntimeContextSubConfigKeyTransformer:
             port: int = 5432
 
         class DatabaseHandler(
-            SubConfigKeyTransformer[Literal["database"]],  # type: ignore[type-var]
+            SubConfigKeyTransformer[Literal["database"]],
             ConfigHandler[DatabaseConfig],
         ):
             pass
@@ -384,7 +384,7 @@ class TestRuntimeContextSubConfigKeyTransformer:
             ttl: int = 3600
 
         class CacheHandler(
-            SubConfigKeyTransformer[Literal["cache"]],  # type: ignore[type-var]
+            SubConfigKeyTransformer[Literal["cache"]],
             ConfigHandler[CacheConfig],
         ):
             pass

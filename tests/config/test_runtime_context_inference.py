@@ -60,7 +60,7 @@ def test_manual_runtime_config_cls_disallowed():
     with pytest.raises(TypeError, match="explicitly sets 'runtime_config_cls'"):
 
         class MyContext(RuntimeContext[Config1]):
-            runtime_config_cls = Config2  # Not allowed! # type: ignore[assignment]
+            runtime_config_cls = Config2  # pyright: ignore[reportAssignmentType] # Not allowed!
 
 
 def test_nested_runtime_config_inheritance():
@@ -119,7 +119,7 @@ def test_runtime_config_with_extra_fields():
     assert config.api_key == "secret123"
     assert config.timeout == 60
     # Extra fields should be accessible
-    assert config.extra_field == "allowed"  # type: ignore[attr-defined]
+    assert config.extra_field == "allowed"  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def test_from_cli_with_custom_runtime_config():
@@ -141,5 +141,5 @@ def test_from_cli_with_custom_runtime_config():
     config = rc.config
     assert isinstance(config, AppConfig)
     # CLI args are in extra fields as nested dict
-    assert config.server["host"] == "127.0.0.1"  # type: ignore[attr-defined, index]
-    assert config.server["port"] == 9000  # type: ignore[attr-defined, index]
+    assert config.server["host"] == "127.0.0.1"  # pyright: ignore[reportAttributeAccessIssue]
+    assert config.server["port"] == 9000  # pyright: ignore[reportAttributeAccessIssue]

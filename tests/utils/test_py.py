@@ -158,7 +158,7 @@ class TestModuleFromPath:
         try:
             module = module_from_path(temp_path)
             assert hasattr(module, "test_value")
-            assert module.test_value == 123  # type: ignore[attr-defined]
+            assert module.test_value == 123  # pyright: ignore[reportAttributeAccessIssue]
         finally:
             Path(temp_path).unlink()
 

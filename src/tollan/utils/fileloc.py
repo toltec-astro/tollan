@@ -276,7 +276,7 @@ class FileLocData:
             # handle validated instance, just extrtact the fields
             if isinstance(arg, FileLoc):
                 arg = arg.root
-            for k in arg.__pydantic_fields__:  # type: ignore[attr-defined]
+            for k in arg.__pydantic_fields__:  # pyright: ignore[reportAttributeAccessIssue]
                 _set_kwarg(k, getattr(arg, k))
         else:
             msg = "unknown file loc data type."

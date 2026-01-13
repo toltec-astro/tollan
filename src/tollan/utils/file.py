@@ -1,13 +1,18 @@
 """Utility functions for file operations."""
 
+from __future__ import annotations
+
 import contextlib
 import os
 from pathlib import Path
-from typing import Any
+from typing import IO, TYPE_CHECKING, Any
 
 from astropy.utils.data import get_readable_fileobj
 
 from .log import logger, logit
+
+if TYPE_CHECKING:
+    from contextlib import _GeneratorContextManager
 
 __all__ = [
     "ensure_abspath",
@@ -82,7 +87,11 @@ def resolve_symlink(
     return p
 
 
-def ensure_readable_fileobj(arg, *args, **kwargs):  # type: ignore[no-untyped-def]
+def ensure_readable_fileobj(
+    arg: Any,
+    *args,
+    **kwargs,
+) -> _GeneratorContextManager[IO]:
     """Return a readable object.
 
     This differs from the `astropy.utils.data.get_readable_fileobj` in that it
@@ -100,7 +109,7 @@ def ensure_readable_fileobj(arg, *args, **kwargs):  # type: ignore[no-untyped-de
     if isinstance(arg, str | os.PathLike) and not Path(arg).is_dir():
         return get_readable_fileobj(arg, *args, **kwargs)
     if hasattr(arg, "read"):
-        return contextlib.nullcontext(arg)
+        return contextlib.nullcontext(arg)  # type:ignore[invalid-return-type]
     msg = f"cannot create readable context for {arg}"
     raise ValueError(msg)
 

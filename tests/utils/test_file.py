@@ -119,7 +119,7 @@ class TestEnsureReadableFileobj:
 
         try:
             with ensure_readable_fileobj(temp_path) as f:
-                content = f.read()  # type: ignore[union-attr]
+                content = f.read()
                 assert "test content" in content
         finally:
             Path(temp_path).unlink()
@@ -137,7 +137,7 @@ class TestEnsureReadableFileobj:
                 ensure_readable_fileobj(f) as f2,
             ):
                 assert f2 is f
-                content = f2.read()  # type: ignore[union-attr]
+                content = f2.read()
                 assert "test content" in content
         finally:
             Path(temp_path).unlink()

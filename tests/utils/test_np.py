@@ -89,29 +89,29 @@ class TestStripUnit:
 
     def test_strip_from_quantity(self):
         """Test stripping unit from Quantity."""
-        arr = np.array([1, 2, 3]) << u.m  # type: ignore[attr-defined]
+        arr = np.array([1, 2, 3]) << u.m
         data, unit = strip_unit(arr)
         np.testing.assert_array_equal(data, np.array([1, 2, 3]))
-        assert unit == u.m  # type: ignore[attr-defined]
+        assert unit == u.m
 
     def test_strip_from_plain_array(self):
         """Test with plain array (no unit)."""
         arr = np.array([1, 2, 3])
-        data, unit = strip_unit(arr)  # type: ignore[arg-type]
+        data, unit = strip_unit(arr)
         np.testing.assert_array_equal(data, arr)
         assert unit is None
 
     def test_strip_from_masked_quantity(self):
         """Test with masked array with units."""
-        data_arr = np.array([1, 2, 3]) << u.m  # type: ignore[attr-defined]
-        arr = np.ma.array(data_arr, mask=[False, True, False])
+        data_arr = np.array([1, 2, 3]) << u.m
+        arr = np.ma.masked_array(data_arr, mask=[False, True, False])
         data, unit = strip_unit(arr)
-        np.testing.assert_array_equal(data.data, np.array([1, 2, 3]))  # type: ignore[union-attr]
-        assert unit == u.m  # type: ignore[attr-defined]
+        np.testing.assert_array_equal(data.data, np.array([1, 2, 3]))
+        assert unit == u.m
 
     def test_strip_from_masked_array_no_unit(self):
         """Test with masked array without units."""
-        arr = np.ma.array([1, 2, 3], mask=[False, True, False])
+        arr = np.ma.masked_array([1, 2, 3], mask=[False, True, False])
         data, unit = strip_unit(arr)
         assert isinstance(data, np.ma.MaskedArray)
         assert unit is None
@@ -123,9 +123,9 @@ class TestAttachUnit:
     def test_attach_to_plain_array(self):
         """Test attaching unit to plain array."""
         arr = np.array([1, 2, 3])
-        result = attach_unit(arr, u.m)  # type: ignore[attr-defined]
+        result = attach_unit(arr, u.m)
         assert isinstance(result, u.Quantity)
-        assert result.unit == u.m  # type: ignore[attr-defined]
+        assert result.unit == u.m
         np.testing.assert_array_equal(result.value, arr)
 
     def test_attach_none_returns_original(self):
@@ -136,12 +136,12 @@ class TestAttachUnit:
 
     def test_attach_to_masked_array(self):
         """Test attaching unit to masked array."""
-        arr = np.ma.array([1, 2, 3], mask=[False, True, False])
-        result = attach_unit(arr, u.m)  # type: ignore[attr-defined]
-        assert isinstance(result.data, u.Quantity)  # type: ignore[union-attr]
-        assert result.data.unit == u.m  # type: ignore[attr-defined, union-attr]
+        arr = np.ma.masked_array([1, 2, 3], mask=[False, True, False])
+        result = attach_unit(arr, u.m)
+        assert isinstance(result.data, u.Quantity)
+        assert result.data.unit == u.m
         assert isinstance(result, np.ma.MaskedArray)
-        assert result.data.unit == u.m  # type: ignore[attr-defined, union-attr]
+        assert result.data.unit == u.m
 
 
 class TestPreserveUnit:
@@ -154,10 +154,10 @@ class TestPreserveUnit:
         def double(x):
             return x * 2
 
-        arr = np.array([1, 2, 3]) << u.m  # type: ignore[attr-defined]
+        arr = np.array([1, 2, 3]) << u.m
         result = double(arr)
         assert isinstance(result, u.Quantity)
-        assert result.unit == u.m  # type: ignore[attr-defined]
+        assert result.unit == u.m
         np.testing.assert_array_equal(result.value, np.array([2, 4, 6]))
 
     def test_works_without_unit(self):
@@ -178,9 +178,9 @@ class TestPreserveUnit:
         def multiply(x, factor, offset=0):
             return x * factor + offset
 
-        arr = np.array([1, 2, 3]) << u.m  # type: ignore[attr-defined]
+        arr = np.array([1, 2, 3]) << u.m
         result = multiply(arr, 2, offset=1)
-        assert result.unit == u.m  # type: ignore[attr-defined]
+        assert result.unit == u.m
         np.testing.assert_array_equal(result.value, np.array([3, 5, 7]))
 
 
@@ -190,20 +190,20 @@ class TestEnsureUnit:
     def test_attach_unit_to_plain_array(self):
         """Test attaching unit to plain array."""
         arr = np.array([1, 2, 3])
-        result = ensure_unit(arr, u.m)  # type: ignore[attr-defined]
+        result = ensure_unit(arr, u.m)
         assert isinstance(result, u.Quantity)
-        assert result.unit == u.m  # type: ignore[attr-defined]
+        assert result.unit == u.m
 
     def test_convert_existing_unit(self):
         """Test converting existing unit."""
-        arr = np.array([100, 200, 300]) << u.cm  # type: ignore[attr-defined]
-        result = ensure_unit(arr, u.m)  # type: ignore[attr-defined]
-        assert result.unit == u.m  # type: ignore[attr-defined, union-attr]
-        np.testing.assert_allclose(result.value, np.array([1, 2, 3]))  # type: ignore[union-attr]
+        arr = np.array([100, 200, 300]) << u.cm
+        result = ensure_unit(arr, u.m)
+        assert result.unit == u.m
+        np.testing.assert_allclose(result.value, np.array([1, 2, 3]))
 
     def test_none_returns_none(self):
         """Test that None returns None."""
-        result = ensure_unit(None, u.m)  # type: ignore[attr-defined]
+        result = ensure_unit(None, u.m)
         assert result is None
 
 
@@ -212,20 +212,20 @@ class TestQrange:
 
     def test_basic_range(self):
         """Test basic quantity range."""
-        result = qrange(0 * u.m, 10 * u.m, 2 * u.m)  # type: ignore[attr-defined]
-        expected = np.array([0, 2, 4, 6, 8]) << u.m  # type: ignore[attr-defined]
-        assert result.unit == u.m  # type: ignore[attr-defined]
+        result = qrange(0 * u.m, 10 * u.m, 2 * u.m)
+        expected = np.array([0, 2, 4, 6, 8]) << u.m
+        assert result.unit == u.m
         np.testing.assert_array_equal(result.value, expected.value)
 
     def test_frequency_range(self):
         """Test with frequency units."""
-        result = qrange(0 * u.Hz, 1 * u.kHz, 250 * u.Hz)  # type: ignore[attr-defined]
-        expected = np.array([0, 250, 500, 750]) << u.Hz  # type: ignore[attr-defined]
-        assert result.unit == u.Hz  # type: ignore[attr-defined]
+        result = qrange(0 * u.Hz, 1 * u.kHz, 250 * u.Hz)
+        expected = np.array([0, 250, 500, 750]) << u.Hz
+        assert result.unit == u.Hz
         np.testing.assert_array_equal(result.value, expected.value)
 
     def test_fractional_step(self):
         """Test with fractional step size."""
-        result = qrange(0 * u.m, 1 * u.m, 0.25 * u.m)  # type: ignore[attr-defined]
-        expected = np.array([0, 0.25, 0.5, 0.75]) << u.m  # type: ignore[attr-defined]
+        result = qrange(0 * u.m, 1 * u.m, 0.25 * u.m)
+        expected = np.array([0, 0.25, 0.5, 0.75]) << u.m
         np.testing.assert_allclose(result.value, expected.value)

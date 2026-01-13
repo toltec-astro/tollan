@@ -60,13 +60,13 @@ class TestYamlDumper:
 
     def test_quantity_scalar(self):
         """Test serialization of scalar Quantity."""
-        data = {"length": 5.0 * u.m}  # type: ignore[attr-defined]
+        data = {"length": 5.0 * u.m}
         result = yaml_dump(data)
         assert "5.0 m" in result
 
     def test_quantity_non_scalar_raises(self):
         """Test that non-scalar Quantity raises ValueError."""
-        data = {"lengths": [1.0, 2.0] * u.m}  # type: ignore[attr-defined]
+        data = {"lengths": [1.0, 2.0] * u.m}
         with pytest.raises(ValueError, match="Quantity is not scalar"):
             yaml_dump(data)
 
@@ -91,7 +91,7 @@ class TestYamlDumper:
 
     def test_coordinate_frame(self):
         """Test serialization of coordinate frames."""
-        coord = SkyCoord(ra=10.0 * u.deg, dec=20.0 * u.deg, frame="icrs")  # type: ignore[attr-defined]
+        coord = SkyCoord(ra=10.0 * u.deg, dec=20.0 * u.deg, frame="icrs")
         data = {"frame": coord.frame}
         result = yaml_dump(data)
         assert "icrs" in result

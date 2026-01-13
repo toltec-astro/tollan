@@ -69,9 +69,7 @@ class TestConfigHandlerAutoInference:
         with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
 
             class MyHandler(ConfigHandler[Config1]):
-                config_model_cls = (
-                    Config2  # Should be disallowed  # type: ignore[assignment]
-                )
+                config_model_cls = Config2  # pyright: ignore[reportAssignmentType] # Should be disallowed
 
                 @classmethod
                 def prepare_config_data(cls, runtime_config):
@@ -361,9 +359,7 @@ class TestCombinedAutoInference:
                 SubConfigKeyTransformer[Literal["auto"]],
                 ConfigHandler[Config1],
             ):
-                config_model_cls = (
-                    Config2  # Should be disallowed  # type: ignore[assignment]
-                )
+                config_model_cls = Config2  # pyright: ignore[reportAssignmentType] # Should be disallowed
 
 
 class TestRuntimeContextIntegration:
@@ -464,7 +460,7 @@ class TestEdgeCases:
         with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
 
             class Handler(ConfigHandler[int]):  # type: ignore[type-var]
-                config_model_cls = dict  # type: ignore[assignment]
+                config_model_cls = dict  # pyright: ignore[reportAssignmentType]
 
                 @classmethod
                 def prepare_config_data(cls, runtime_config):
