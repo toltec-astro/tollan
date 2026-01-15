@@ -66,15 +66,6 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[DataSourceT, MapperT]):
     ---------------
     MapperT : Mapper
         Type of mapper for field resolution
-
-    Attributes
-    ----------
-    _data_source : Dataset, DataArray, or DataTree
-        Original data source
-    mapper : MapperT
-        Field mapper for data access
-    data_source : Dataset
-        Resolved Dataset (DataTree → root, DataArray → wrapped)
     """
 
     def __init__(

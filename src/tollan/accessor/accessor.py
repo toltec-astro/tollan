@@ -30,13 +30,6 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
         Type of data source (e.g., xr.Dataset, pandas.DataFrame)
     MapperT : Mapper
         Type of mapper used for field resolution
-
-    Attributes
-    ----------
-    mapper : MapperT
-        Field mapper for data access
-    data_source : DataSourceT
-        Data source containing the data
     """
 
     _mapper_cls: ClassVar[type[MapperT]]  # pyright: ignore[reportGeneralTypeIssues]

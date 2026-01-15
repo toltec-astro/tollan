@@ -13,7 +13,11 @@ Data Accessors
 
 .. automodapi:: tollan.accessor
 
-.. automodapi:: tollan.accessor.mappers
+.. automodapi:: tollan.accessor.netcdf4
+
+.. automodapi:: tollan.accessor.pandas
+
+.. automodapi:: tollan.accessor.xarray
 
 Configuration System
 --------------------

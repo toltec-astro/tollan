@@ -64,30 +64,7 @@ class UnitsAccessor:
 
     Provides properties and methods for setting, getting, and converting physical
     units using Astropy's units framework. Units are stored in .attrs["units"]
-    as strings. Registered as the 'u' accessor on DataArrays.
-
-    Attributes
-    ----------
-    _obj : xr.DataArray
-        The DataArray this accessor is attached to
-
-    Properties
-    ----------
-    unit_str : str or None
-        The unit string from .attrs["units"], or None if not set
-    unit : astropy.units.Unit or None
-        The Astropy Unit object, or None if not set
-    quantity : astropy.units.Quantity
-        The data as an Astropy Quantity object (converts to numpy array)
-
-    Methods
-    -------
-    set(unit)
-        Set units (only if not already set or same unit)
-    unset()
-        Remove units
-    to(target_unit, equivalencies=None)
-        Convert to different units (lazy evaluation preserved)
+    as strings. Registered as the 'u' accessor on DataArrays
 
     Examples
     --------
