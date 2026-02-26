@@ -68,7 +68,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         """
         if name in data_source.attrs:
             return data_source.attrs[name]
-        return data_source[name].values  # ty: ignore[invalid-argument-type]
+        return data_source[name].values
 
     def has_arr(self, data_source: DataSourceT, field: Mapping) -> bool:
         """Check if field exists as a data variable or coordinate.
@@ -180,7 +180,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
 
         # Check if it's a variable
         if name in data_source:
-            var = data_source[name]  # ty: ignore[invalid-argument-type]
+            var = data_source[name]
             # Only accept 0-D arrays (true scalars)
             if var.ndim == 0:
                 return var.item()

@@ -100,7 +100,7 @@ class TestTimeit:
         """Test timeit as decorator."""
         with caplog.at_level("DEBUG"):
 
-            @timeit
+            @timeit  # ty: ignore[invalid-argument-type]
             def slow_function():
                 time.sleep(0.01)
                 return 42

@@ -32,7 +32,7 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
         Type of mapper used for field resolution
     """
 
-    _mapper_cls: ClassVar[type[MapperT]]  # pyright: ignore[reportGeneralTypeIssues]
+    _mapper_cls: ClassVar[type[MapperT]]  # type: ignore[misc]
     _mapper: MapperT
     _data_source: DataSourceT
 

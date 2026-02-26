@@ -65,7 +65,7 @@ class ConfigHandler[
         'postgresql://localhost/db'
     """
 
-    config_model_cls: ClassVar[type[ConfigModelT]]  # type: ignore[assignment]
+    config_model_cls: ClassVar[type[ConfigModelT]]  # type: ignore[misc]
     _auto_cache_reset_registry: ClassVar[dict[type, set[str]]] = {}
     _rc: RuntimeContextT
 
