@@ -207,7 +207,7 @@ ignore = [
 ]
 
 [tool.coverage.run]
-source = ["src"]
+source = ["src/tollan"]
 omit = ["*/tests/*", "*/test_*", "*/_version.py", "*/conftest.py"]
 
 [tool.coverage.report]
