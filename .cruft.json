@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/Jerry-Ma/cookiecutter-pypackage.git",
-  "commit": "5ad3e8dded2b463a2164f580594c33f8492adfa9",
-  "checkout": null,
+  "commit": "c99e73204cceca328ad4ba4521af946ad98b7222",
+  "checkout": "v2026",
   "context": {
     "cookiecutter": {
       "full_name": "Zhiyuan Ma",
@@ -14,7 +14,7 @@
       "pypi_username": "toltec-astro",
       "__gh_slug": "toltec-astro/tollan",
       "_template": "https://github.com/Jerry-Ma/cookiecutter-pypackage.git",
-      "_commit": "5ad3e8dded2b463a2164f580594c33f8492adfa9"
+      "_commit": "c99e73204cceca328ad4ba4521af946ad98b7222"
     }
   },
   "directory": null

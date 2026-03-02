@@ -17,9 +17,10 @@ qa:
     uv run pre-commit run --all-files
     uv run coverage run -m pytest .
 
-# Run coverage, and build to HTML
+# Run tests with coverage
 coverage:
     uv run coverage run -m pytest .
+    uv run coverage combine
     uv run coverage report -m
     uv run coverage html
 
@@ -28,6 +29,10 @@ build:
     rm -rf build
     rm -rf dist
     uv build
+
+# Publish to PyPI (manual alternative to GitHub Actions)
+publish: build
+    uv publish
 
 clean:
     rm -fr build/
@@ -48,12 +53,21 @@ clean:
 
 # Build the docs
 doc-build:
-    uv run sphinx-build -M html docs docs/_build -T
+    uv run --group docs sphinx-build -M html docs docs/_build -T
 
-# Serve docs locally
-doc: doc-build
-    uv run mkdocs serve -a localhost:8888
+# Serve docs locally with live reload
+doc:
+    uv run --group docs sphinx-autobuild docs docs/_build/html --port 8888 --open-browser
 
-# Deploy docs
+# Deploy docs to GitHub Pages
 doc-deploy: doc-build
-    uv run mkdocs gh-deploy --force
+    uv run --group docs ghp-import docs/_build/html -r origin -b gh-pages --push --no-jekyll
+
+# Check if project is up to date with the template
+# NOTE: --checkout must be passed explicitly; cruft does not read it from .cruft.json (upstream issue)
+cruft-check:
+    uvx cruft check --checkout v2026
+
+# Update project from the template
+cruft-update:
+    uvx cruft update --checkout v2026

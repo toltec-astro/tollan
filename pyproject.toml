@@ -3,12 +3,17 @@ name = "tollan"
 dynamic = ["version"]
 description = "TolTEC utility library."
 readme = "README.md"
-authors = [{ name = "Zhiyuan Ma", email = "zhiyuanma@umass.edu" }]
-maintainers = [{ name = "Zhiyuan Ma", email = "zhiyuanma@umass.edu" }]
+authors = [
+  { name = "Zhiyuan Ma", email = "zhiyuanma@umass.edu" },
+]
+maintainers = [
+  { name = "Zhiyuan Ma", email = "zhiyuanma@umass.edu" },
+]
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 requires-python = ">= 3.13"
 classifiers = [
+  "Typing :: Typed",
   "Intended Audience :: Science/Research",
   "Intended Audience :: Developers",
   "Operating System :: OS Independent",
@@ -52,9 +57,13 @@ test = [
 
 dev = [
   { include-group = "test" },
+  { include-group = "docs" },
   "pandas-stubs",
   "narwhals",
   "ipdb",
+]
+
+docs = [
   "myst-parser",
   "sphinx",
   "sphinx-astropy[confv2]",
@@ -62,11 +71,14 @@ dev = [
   "sphinx_book_theme",
   "autodoc_pydantic[erdantic]",
   "sphinxcontrib-typer",
-  "mkdocs",
+  "sphinx-autobuild",
+  "ghp-import",
 ]
 
 [project.urls]
 bugs = "https://github.com/toltec-astro/tollan/issues"
+changelog = "https://github.com/toltec-astro/tollan/releases"
+documentation = "https://toltec-astro.github.io/tollan/"
 homepage = "https://github.com/toltec-astro/tollan"
 
 [project.scripts]
@@ -153,7 +165,9 @@ lint.ignore = [
   "G004",   # f-string in logging
   "N806",   # non-lowercase variable name
   "S101",   # use of assert; needed for narrowing types
-  "PD011",  # generate false positives for xarray about .values usage
+  "COM812", # trailing comma (conflicts with ruff formatter)
+  "ISC001", # implicit string concatenation (conflicts with ruff formatter)
+  "PD011",  # false positives for xarray .values usage
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -173,6 +187,7 @@ lint.ignore = [
 "docs/conf.py" = [
   "D",      # pydocstyle
   "ERA001", # commented out code
+  "INP001", # implicit namespace package (docs/ has no __init__.py)
 ]
 
 [tool.ruff.lint.flake8-annotations]
@@ -194,6 +209,28 @@ runtime-evaluated-decorators = [
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["src/tollan"]
+omit = ["*/tests/*", "*/test_*", "*/_version.py", "*/conftest.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 50
+exclude_also = [
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "@abstractmethod",
+  "@overload",
+  "except.*Error.*:",
+  "except.*Exception.*:",
+]
+
 [tool.repo-review]
 ignore = [
   "PY007", # ignore task runner
@@ -204,24 +241,7 @@ ignore = [
   "MY",    # ignore mypy
   "RTD",   # ignore RTD
   "SCFG",  # ignore setup.cfg
-]
-
-[tool.coverage.run]
-source = ["src/tollan"]
-omit = ["*/tests/*", "*/test_*", "*/_version.py", "*/conftest.py"]
-
-[tool.coverage.report]
-exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "raise AssertionError",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:",
-  "@abstractmethod",
-  "@overload",
-  "except.*Error.*:",
-  "except.*Exception.*:",
+  "GH",    # ignore GitHub Actions (no workflows by default)
 ]
 
 [tool.codespell]
