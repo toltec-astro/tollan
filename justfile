@@ -6,7 +6,8 @@ list:
 
 install:
     uv sync --all-groups --all-packages --all-extras
-    uv run pre-commit install --install-hooks
+    git config core.hooksPath .githooks
+    uv run pre-commit install-hooks
 
 rebuild-lockfiles:
     uv lock --upgrade
