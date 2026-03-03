@@ -15,11 +15,11 @@ rebuild-lockfiles:
 # Run all the formatting, linting, and testing commands
 qa:
     uv run pre-commit run --all-files
-    uv run coverage run -m pytest .
+    uv run coverage run -m pytest
 
 # Run tests with coverage
 coverage:
-    uv run coverage run -m pytest .
+    uv run coverage run -m pytest
     uv run coverage combine
     uv run coverage report -m
     uv run coverage html
