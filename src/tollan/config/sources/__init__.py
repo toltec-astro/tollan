@@ -191,6 +191,30 @@ class CacheConfig:
 
 
 # ============================================================================
+# Directory loading patterns and format detection
+# ============================================================================
+
+# Matches any numbered config file: 00_base.yaml, 10_site.env, 99_anything.yml
+_DIR_FILE_PATTERN = re.compile(r"^(?P<order>\d+)(_.*)?(?:\.ya?ml|\.env)$")
+
+
+def _detect_source_format(path: Path) -> str | None:
+    """Return the config source format for *path*, or ``None`` if unsupported.
+
+    Detection is purely suffix-based:
+
+    * ``.env``            → ``"envfile"``
+    * ``.yaml`` / ``.yml`` → ``"yaml"``
+    * anything else       → ``None``
+    """
+    if path.suffix == ".env":
+        return "envfile"
+    if path.suffix in (".yaml", ".yml"):
+        return "yaml"
+    return None
+
+
+# ============================================================================
 # ConfigSourceList - Manages Multiple Config Sources
 # ============================================================================
 
@@ -249,10 +273,13 @@ class ConfigSourceList(BaseModel):
         """Resolve various input formats into ConfigSourceList data dict.
 
         Handles flexible initialization patterns:
+
         - ConfigSourceList: Extract data dict
-        - None or dict: Single source with order=0
-        - Path to file: Single YAML source with order=0
-        - Path to directory: Load numbered YAML files (e.g., 00_base.yaml)
+        - None or dict: Single dict source with order=0
+        - Path to file: Single source with order=0; format auto-detected from
+          extension (``.env`` → envfile, everything else → yaml)
+        - Path to directory: Load all numbered files (e.g., ``00_base.yaml``,
+          ``10_site.env``) via :meth:`_resolve_from_dir`
         - List: Multiple sources (order auto-assigned if not specified)
         """
         # Already validated ConfigSourceList instance (re-validation)
@@ -275,12 +302,13 @@ class ConfigSourceList(BaseModel):
         if isinstance(arg, str | os.PathLike):
             path = Path(arg)
 
-            # Directory -> load numbered YAML files
+            # Directory -> load numbered files of any supported format
             if path.is_dir():
                 return cls._resolve_from_dir(path)
 
-            # File -> single YAML source
-            sources = [{"format": "yaml", "source": path, "order": 0}]
+            # File -> detect format from extension
+            fmt = _detect_source_format(path) or "yaml"
+            sources = [{"format": fmt, "source": path, "order": 0}]
             return {"data": sources}
 
         # List -> multiple sources
@@ -633,37 +661,48 @@ class ConfigSourceList(BaseModel):
 
     @classmethod
     def _resolve_from_dir(cls, path: Path) -> dict[str, Any]:
-        """Resolve config sources from directory with numbered YAML files.
+        """Resolve config sources from a directory of numbered files.
 
-        Regex matches: 00_name.yaml, 01_name.yml, 99_anything.yaml
+        Recognises two formats by file extension:
+
+        * ``*.yaml`` / ``*.yml``  → :class:`YamlConfigSource`
+        * ``*.env``               → :class:`EnvFileConfigSource`
+
+        Files must be prefixed with an integer that determines their load order,
+        with an optional ``_label`` suffix:
+
+        .. code-block:: text
+
+            00_base.yaml     # loaded first (order=0)
+            01_dev.yml       # overrides 00 (order=1)
+            10_site.env      # env vars loaded after yaml files (order=10)
+
+        Non-matching files (no numeric prefix, unsupported extension) are
+        silently skipped.  Each numeric prefix becomes the source ``order``
+        value, so prefixes must be unique across *all* files in the directory
+        (a ``00_base.yaml`` and a ``00_default.env`` in the same directory
+        would both receive ``order=0`` and fail validation).
 
         Parameters
         ----------
         path : Path
-            Directory path containing numbered YAML files
+            Directory to scan.
 
         Returns
         -------
         dict[str, Any]
-            Dict with "data" (list of sources) and "name" (directory path)
+            Dict with ``"data"`` (list of source dicts) and ``"name"``
+            (resolved directory path), ready for :class:`ConfigSourceList`.
         """
-        # Regex for directory-based config loading
-        pattern = re.compile(r"^(?P<order>\d+)(_.*)?\ya?ml$")
-
         sources = []
         for p in path.iterdir():
-            m = pattern.match(p.name)
-            if m is None:
+            m = _DIR_FILE_PATTERN.match(p.name)
+            if not m:
                 continue
-
-            sources.append(
-                {
-                    "format": "yaml",
-                    "source": p,
-                    "order": int(m.group("order")),
-                },
-            )
-
+            fmt = _detect_source_format(p)
+            if fmt is None:
+                continue
+            sources.append({"format": fmt, "source": p, "order": int(m.group("order"))})
         return {
             "data": sources,
             "name": path.resolve().as_posix(),
@@ -690,10 +729,13 @@ def resolve_config_sources(
     - Validates order_min/order_max constraints
 
     Input patterns supported:
+
     - ConfigSourceList: Return as-is (with order validation)
     - None or dict: Single dict source with order=0
-    - Path to file: Single YAML source with order=0
-    - Path to directory: Load numbered YAML files (e.g., 00_base.yaml, 01_dev.yaml)
+    - Path to file: Single source; format auto-detected from extension
+      (``.env`` → :class:`EnvFileConfigSource`, else → :class:`YamlConfigSource`)
+    - Path to directory: Load numbered files in sort order — ``*.yaml``/``*.yml``
+      → :class:`YamlConfigSource`, ``*.env`` → :class:`EnvFileConfigSource`
     - List: Multiple sources (order auto-assigned if not specified)
 
     Parameters

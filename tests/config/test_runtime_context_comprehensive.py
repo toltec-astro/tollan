@@ -106,6 +106,70 @@ class TestRuntimeContextCLI:
         # Should work, just has empty config
         assert rc.config_dict is not None
 
+    def test_from_cli_with_env_files(self, tmp_path):
+        """Test from_cli loads env files into config dict."""
+        env_file = tmp_path / "config.env"
+        env_file.write_text("MY_VAR=hello\nMY_PORT=8080\n")
+        rc = RuntimeContext.from_cli(env_files=[env_file])
+        assert rc.config_dict["MY_VAR"] == "hello"
+        assert rc.config_dict["MY_PORT"] == "8080"
+
+    def test_from_cli_env_files_directory_expanded(self, tmp_path):
+        """Test from_cli expands a env.d directory to sorted *.env files."""
+        d = tmp_path / "env.d"
+        d.mkdir()
+        (d / "00_default.env").write_text("BASE=1\n")
+        (d / "10_site.env").write_text("SITE=2\n")
+        rc = RuntimeContext.from_cli(env_files=[d])
+        assert rc.config_dict["BASE"] == "1"
+        assert rc.config_dict["SITE"] == "2"
+
+    def test_from_cli_env_files_dir_and_file(self, tmp_path):
+        """Test from_cli with mixed directory and explicit file."""
+        d = tmp_path / "env.d"
+        d.mkdir()
+        (d / "00_default.env").write_text("BASE=default\n")
+        mode_file = tmp_path / "mode_sim.env"
+        mode_file.write_text("BASE=sim\nSIM=true\n")
+        rc = RuntimeContext.from_cli(env_files=[d, mode_file])
+        # mode_sim.env is loaded after env.d so it overrides BASE
+        assert rc.config_dict["BASE"] == "sim"
+        assert rc.config_dict["SIM"] == "true"
+
+    def test_from_cli_config_path_skips_env_file(self, tmp_path):
+        """config_path silently skips non-YAML sources (.env files)."""
+        env_file = tmp_path / "00_bad.env"
+        env_file.write_text("X=1\n")
+        rc = RuntimeContext.from_cli(config_path=env_file)
+        assert "X" not in rc.config_dict
+
+    def test_from_cli_config_path_dir_skips_env_files(self, tmp_path):
+        """config_path directory skips .env files, loads only YAML."""
+        d = tmp_path / "cfg"
+        d.mkdir()
+        (d / "00_base.yaml").write_text("key: val\n")
+        (d / "10_site.env").write_text("X=1\n")
+        rc = RuntimeContext.from_cli(config_path=d)
+        assert rc.config_dict["key"] == "val"
+        assert "X" not in rc.config_dict
+
+    def test_from_cli_env_files_skips_yaml(self, tmp_path):
+        """env_files silently skips non-env sources (.yaml files)."""
+        yaml_file = tmp_path / "00_bad.yaml"
+        yaml_file.write_text("key: val\n")
+        rc = RuntimeContext.from_cli(env_files=[yaml_file])
+        assert "key" not in rc.config_dict
+
+    def test_from_cli_env_files_dir_skips_yaml(self, tmp_path):
+        """env_files directory skips .yaml files, loads only .env files."""
+        d = tmp_path / "cfg.d"
+        d.mkdir()
+        (d / "00_default.env").write_text("X=1\n")
+        (d / "10_site.yaml").write_text("key: val\n")
+        rc = RuntimeContext.from_cli(env_files=[d])
+        assert rc.config_dict["X"] == "1"
+        assert "key" not in rc.config_dict
+
 
 class TestRuntimeContextSetContext:
     """Test RuntimeContext.set_context context manager."""

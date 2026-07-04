@@ -556,6 +556,48 @@ class TestEnvFileConfigSource:
         assert source.name == "my_config.env"
 
 
+class TestResolveConfigSourcesEnvFiles:
+    """Test resolve_config_sources with env file paths and directories."""
+
+    def test_single_env_file(self, tmp_path):
+        """Single .env file path resolves to EnvFileConfigSource."""
+        f = tmp_path / "config.env"
+        f.write_text("A=1\n")
+        csl = resolve_config_sources(f)
+        assert len(csl.data) == 1
+        assert isinstance(csl.data[0], EnvFileConfigSource)
+        assert csl.data[0].source == f
+
+    def test_directory_expands_env_files_in_order(self, tmp_path):
+        """Directory with numbered *.env files resolves to sorted env sources."""
+        d = tmp_path / "env.d"
+        d.mkdir()
+        (d / "00_default.env").write_text("A=1\n")
+        (d / "10_site.env").write_text("B=2\n")
+        csl = resolve_config_sources(d)
+        env_srcs = [s for s in csl.data if isinstance(s, EnvFileConfigSource)]
+        assert len(env_srcs) == 2
+        assert env_srcs[0].source == d / "00_default.env"
+        assert env_srcs[1].source == d / "10_site.env"
+
+    def test_directory_mixed_yaml_and_env(self, tmp_path):
+        """Directory with mixed yaml and env files resolves both formats."""
+        d = tmp_path / "env.d"
+        d.mkdir()
+        (d / "00_base.yaml").write_text("key: val\n")
+        (d / "10_extra.env").write_text("EXTRA=1\n")
+        csl = resolve_config_sources(d)
+        assert any(isinstance(s, YamlConfigSource) for s in csl.data)
+        assert any(isinstance(s, EnvFileConfigSource) for s in csl.data)
+
+    def test_empty_directory(self, tmp_path):
+        """Empty directory results in empty ConfigSourceList."""
+        d = tmp_path / "empty.d"
+        d.mkdir()
+        csl = resolve_config_sources(d)
+        assert csl.data == []
+
+
 class TestYamlConfigSource:
     """Test YamlConfigSource."""
 

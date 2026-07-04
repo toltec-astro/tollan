@@ -17,6 +17,8 @@ from .runtime_info import RuntimeInfo
 from .sources import (
     ConfigSourceList,
     DictConfigSource,
+    EnvFileConfigSource,
+    YamlConfigSource,
     resolve_config_sources,
 )
 
@@ -179,12 +181,14 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             tier_sources,
         )
         config_source_list.enable_cache(
-            exclude=lambda s: s.name
-            in {
-                self.TIERS["default"]["name"],
-                self.TIERS["info"]["name"],
-                self.TIERS["override"]["name"],
-            },
+            exclude=lambda s: (
+                s.name
+                in {
+                    self.TIERS["default"]["name"],
+                    self.TIERS["info"]["name"],
+                    self.TIERS["override"]["name"],
+                }
+            ),
         )
 
         # Inject runtime_info dict into info tier
@@ -196,7 +200,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         }
 
     @classmethod
-    def from_cli(
+    def from_cli(  # noqa: C901
         cls,
         config_path: Path | None = None,
         env_files: list[Path] | None = None,
@@ -243,26 +247,32 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         # Add main config path (file or directory)
         if config_path is not None:
             with logit(logger.debug, f"Loading config from path: {config_path}"):
-                # config_sources handles both files and directories
                 config_source_list = resolve_config_sources(
                     config_path,
                     order_min=cls._USER_ORDER_MIN,
                     order_max=env_file_base_order - 1,
                 )
-            sources.extend(config_source_list.data)
+            for s in config_source_list.data:
+                if not isinstance(s, YamlConfigSource):
+                    logger.debug("config_path: skipping non-YAML source {}", s.source)
+                    continue
+                sources.append(s)
 
-        # Add env files
+        # Add env files; resolve_config_sources handles dirs and single files.
         if env_files:
-            if len(env_files) > n_override_orders_max - 1:
+            env_sources = []
+            for p in env_files:
+                for s in resolve_config_sources(p).data:
+                    if not isinstance(s, EnvFileConfigSource):
+                        logger.debug("env_files: skipping non-env source {}", s.source)
+                        continue
+                    env_sources.append(s)
+            if len(env_sources) > n_override_orders_max - 1:
                 msg = "Too many env files."
                 raise ValueError(msg)
-            for i, env_file in enumerate(env_files):
+            for i, src in enumerate(env_sources):
                 sources.append(
-                    {
-                        "format": "envfile",
-                        "source": env_file,
-                        "order": env_file_base_order + i,
-                    },
+                    src.model_copy(update={"order": env_file_base_order + i}),
                 )
 
         # Parse and add CLI args as overrides
@@ -277,7 +287,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
                 },
             )
 
-        return cls(config_sources=sources if sources else None)
+        return cls(config_sources=sources or None)
 
     @classmethod
     def register_config_handler_cls(
