@@ -51,7 +51,11 @@ class TestFlexReshape:
         """Test that invalid trim option raises error."""
         arr = np.arange(10)
         with pytest.raises(ValueError, match="invalid trim option"):
-            flex_reshape(arr, (2, 4), trim_option="invalid")  # type: ignore[arg-type]
+            flex_reshape(
+                arr,
+                (2, 4),
+                trim_option="invalid",  # ty: ignore[invalid-argument-type]
+            )
 
 
 class TestMakeComplex:

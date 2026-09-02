@@ -150,7 +150,7 @@ class UnitsAccessor:
         return astropy_units.Unit(unit_str)
 
     @property
-    def quantity(self) -> Quantity:
+    def quantity(self) -> Quantity | xr.DataArray:
         """Get the data as an Astropy Quantity object.
 
         If no units are set, returns the underlying DataArray directly.
@@ -177,7 +177,7 @@ class UnitsAccessor:
         """
         unit = self.unit
         if unit is None:
-            return self._obj  # type: ignore[return-value]
+            return self._obj
 
         # Use << operator to attach units without copying
         return self._obj.data << unit

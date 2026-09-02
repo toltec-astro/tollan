@@ -5,14 +5,11 @@ from __future__ import annotations
 import contextlib
 import os
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Any
+from typing import IO, Any
 
 from astropy.utils.data import get_readable_fileobj
 
 from .log import logger, logit
-
-if TYPE_CHECKING:
-    from contextlib import _GeneratorContextManager
 
 __all__ = [
     "ensure_abspath",
@@ -91,7 +88,7 @@ def ensure_readable_fileobj(
     arg: Any,
     *args,
     **kwargs,
-) -> _GeneratorContextManager[IO]:
+) -> contextlib.AbstractContextManager[IO[Any]]:
     """Return a readable object.
 
     This differs from the `astropy.utils.data.get_readable_fileobj` in that it
@@ -109,7 +106,7 @@ def ensure_readable_fileobj(
     if isinstance(arg, str | os.PathLike) and not Path(arg).is_dir():
         return get_readable_fileobj(arg, *args, **kwargs)
     if hasattr(arg, "read"):
-        return contextlib.nullcontext(arg)  # type:ignore[invalid-return-type]
+        return contextlib.nullcontext(arg)
     msg = f"cannot create readable context for {arg}"
     raise ValueError(msg)
 

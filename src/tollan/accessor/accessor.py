@@ -6,7 +6,7 @@ with automatic mapper creation and type detection.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any, ClassVar, cast
 
 from tollan.utils.typing import ensure_cls_attr_from_type_args
 
@@ -32,7 +32,8 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
         Type of mapper used for field resolution
     """
 
-    _mapper_cls: ClassVar[type[MapperT]]  # type: ignore[misc]
+    # Set on concrete subclasses by __init_subclass__; runtime type: type[MapperT].
+    _mapper_cls: ClassVar
     _mapper: MapperT
     _data_source: DataSourceT
 
@@ -73,7 +74,8 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
 
         # Create mapper if not provided
         if mapper is None:
-            mapper = self._mapper_cls.from_data_source(data_source)
+            mapper_cls = cast("type[MapperT]", type(self)._mapper_cls)
+            mapper = mapper_cls.from_data_source(data_source)
         self._mapper = mapper
 
         # Validate after initialization (no-op by default)

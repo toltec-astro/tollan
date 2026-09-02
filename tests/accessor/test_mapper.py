@@ -463,7 +463,9 @@ class TestConditionalMapping:
             )
 
         # Rebuild to handle forward reference
-        rebuild_dataclass(TestSchema)  # pyright: ignore[reportArgumentType]
+        rebuild_dataclass(  # pyright: ignore[reportArgumentType]
+            TestSchema,  # ty: ignore[invalid-argument-type]
+        )
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:

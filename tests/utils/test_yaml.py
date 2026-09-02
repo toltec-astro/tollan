@@ -50,7 +50,8 @@ class TestYamlDumper:
         assert "2020-01-01T00:00:00" in result
         # Parse back
         loaded = yaml_loads(result)
-        assert loaded["time"] == "2020-01-01T00:00:00.000"  # type: ignore[index]
+        assert isinstance(loaded, dict)
+        assert loaded["time"] == "2020-01-01T00:00:00.000"
 
     def test_astropy_time_non_scalar_raises(self):
         """Test that non-scalar Time raises ValueError."""
@@ -129,7 +130,8 @@ class TestNumpyScalarRepresenters:
         data = {"value": np.bool_(True)}  # noqa: FBT003
         result = yaml_dump(data)
         loaded = yaml_loads(result)
-        assert loaded["value"] is True  # type: ignore[index]
+        assert isinstance(loaded, dict)
+        assert loaded["value"] is True
 
     def test_numpy_int_types(self):
         """Test various numpy int types."""
@@ -147,7 +149,8 @@ class TestNumpyScalarRepresenters:
             data = {"value": value}
             result = yaml_dump(data)
             loaded = yaml_loads(result)
-            assert loaded["value"] == i + 1  # type: ignore[index]
+            assert isinstance(loaded, dict)
+            assert loaded["value"] == i + 1
 
     def test_numpy_float_types(self):
         """Test various numpy float types."""
@@ -156,14 +159,16 @@ class TestNumpyScalarRepresenters:
             data = {"value": value}
             result = yaml_dump(data)
             loaded = yaml_loads(result)
-            assert abs(loaded["value"] - (i + 1.5)) < 0.01  # type: ignore[index]
+            assert isinstance(loaded, dict)
+            assert abs(loaded["value"] - (i + 1.5)) < 0.01
 
     def test_numpy_str(self):
         """Test numpy string type."""
         data = {"value": np.str_("hello")}
         result = yaml_dump(data)
         loaded = yaml_loads(result)
-        assert loaded["value"] == "hello"  # type: ignore[index]
+        assert isinstance(loaded, dict)
+        assert loaded["value"] == "hello"
 
     def test_add_representers_to_custom_dumper(self):
         """Test adding numpy representers to custom dumper."""
@@ -176,7 +181,8 @@ class TestNumpyScalarRepresenters:
         data = {"value": np.int32(42)}
         result = yaml.dump(data, Dumper=CustomDumper)
         loaded = yaml_loads(result)
-        assert loaded["value"] == 42  # type: ignore[index]
+        assert isinstance(loaded, dict)
+        assert loaded["value"] == 42
 
 
 class TestYamlDump:
@@ -216,7 +222,7 @@ class TestYamlDump:
         """Test dumping to file stream."""
         data = {"key": "value"}
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
-            result = yaml_dump(data, output=f)  # type: ignore[arg-type]
+            result = yaml_dump(data, output=f)
             assert result is None
             temp_path = f.name
         try:
@@ -232,7 +238,7 @@ class TestYamlDump:
             TypeError,
             match="output has to be str, PathLike, TextIO, or None",
         ):
-            yaml_dump(data, output=123)  # type: ignore[no-matching-overload]
+            yaml_dump(data, output=123)  # ty: ignore[no-matching-overload]
 
     def test_dump_with_kwargs(self):
         """Test passing additional kwargs to yaml.dump."""

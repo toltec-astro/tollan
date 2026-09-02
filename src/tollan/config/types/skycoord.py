@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import dataclasses
-import warnings
 from functools import cached_property
 from typing import Annotated, Any, ClassVar
 
 from astropy.coordinates import SkyCoord
-from astroquery.exceptions import InputWarning
-from astroquery.utils import parse_coordinates
 
 from .pydantic import GenerateJsonSchema
 from .validator import _SimpleTypeValidatorMixin
@@ -32,7 +29,7 @@ class SkyCoordValidator(_SimpleTypeValidatorMixin[SkyCoord]):
     >>> from pydantic import BaseModel
     >>> class Target(BaseModel):
     ...     position: SkyCoordField
-    >>> target = Target(position="M31")
+    >>> target = Target(position="10.6847083d 41.26875d")
     >>> isinstance(target.position, SkyCoord)
     True
     """
@@ -70,15 +67,22 @@ class SkyCoordValidator(_SimpleTypeValidatorMixin[SkyCoord]):
         return "SkyCoord required, got {value}"
 
     def _field_construct_value(self, value: str, *args, **kwargs) -> SkyCoord:
-        """Construct SkyCoord from coordinate string."""
+        """Construct a SkyCoord from a deterministic coordinate string.
+
+        Name resolution is deliberately excluded: model validation must not
+        perform network I/O. Callers that need named objects should resolve
+        them explicitly before validation and pass the resulting ``SkyCoord``.
+        """
         try:
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=InputWarning)
-                coord = parse_coordinates(value)
-        except ValueError as e:
+            try:
+                coord = SkyCoord(value, frame="icrs")
+            except ValueError:
+                # Match the deterministic fallback historically provided by
+                # astroquery.parse_coordinates for unitless string pairs.
+                coord = SkyCoord(value, unit="deg", frame="icrs")
+        except (TypeError, ValueError) as e:
             msg = self._field_value_error_message.format(value=value)
             raise ValueError(msg) from e
-        assert isinstance(coord, SkyCoord)
         setattr(coord, self._skycoord_name_attr, value)
         return coord
 

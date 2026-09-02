@@ -368,7 +368,7 @@ def rupdate(
             default = {} if copy_subdict else None
             if isinstance(d, MT):
                 # handle d as dict
-                dv = d.setdefault(k, default)  # ty: ignore[no-matching-overload]
+                dv = d.setdefault(k, default)
             elif isinstance(d, ST):
                 # handle d as list - use ListDSL for all list key handling
                 dsl, dv = ListDSL.from_key(k, d, default)

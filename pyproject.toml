@@ -25,14 +25,19 @@ dependencies = [
   "pydantic",
   "pyyaml",
   "typer",
+  "typing-extensions",
+  "click",
+  "rich",
   "loguru",
   "simpleeval",
+  "numpy",
   "astropy",
-  "astroquery",
+  "python-dotenv",
   "pandas",
   "pyaml",
   "dash",
   "dash_mantine_components",
+  "flask",
   "matplotlib",
   "plotly",
   "wrapt",
@@ -40,7 +45,6 @@ dependencies = [
   "xarray",
   "zarr",
   "dask",
-  "frozendict",
 ]
 
 [dependency-groups]
@@ -106,6 +110,7 @@ version_file = "src/tollan/_version.py"
 
 [tool.pytest.ini_options]
 minversion = "9.0"
+log_level = "DEBUG"
 testpaths = ["tests", "docs"]
 norecursedirs = [".*", "docs[\\/]_build", "docs[\\/]generated", "examples"]
 doctest_plus = "enabled"
@@ -168,6 +173,7 @@ lint.ignore = [
   "COM812", # trailing comma (conflicts with ruff formatter)
   "ISC001", # implicit string concatenation (conflicts with ruff formatter)
   "PD011",  # false positives for xarray .values usage
+  "CPY001", # project does not use per-file copyright notices
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -238,6 +244,7 @@ ignore = [
   "PC140", # ignore type checker
   "PC180", # ignore markdown formatter
   "PC901", # ignore custom update message
+  "PC902", # pre-commit.ci autofix is intentionally not configured
   "MY",    # ignore mypy
   "RTD",   # ignore RTD
   "SCFG",  # ignore setup.cfg

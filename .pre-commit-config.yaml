@@ -56,12 +56,12 @@ repos:
         # Enforce that all noqa annotations always occur with specific codes.
 
   - repo: https://github.com/woodruffw/zizmor-pre-commit
-    rev: v1.16.3
+    rev: v1.30.0
     hooks:
     - id: zizmor
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.3
     hooks:
       - id: codespell
         args: ["--write-changes"]
@@ -69,19 +69,19 @@ repos:
           - tomli
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.5
+    rev: v0.16.5
     hooks:
       - id: ruff-check
         args: ["--fix", "--show-fixes"]
       - id: ruff-format
 
   - repo: https://github.com/scientific-python/cookie
-    rev: 2025.11.10
+    rev: 2026.08.14
     hooks:
       - id: sp-repo-review
 
   - repo: https://github.com/sphinx-contrib/sphinx-lint
-    rev: v1.0.1
+    rev: v1.0.2
     hooks:
       - id: sphinx-lint
         args: ["--disable", "missing-underscore-after-hyperlink"]
@@ -91,7 +91,7 @@ repos:
     hooks:
       - id: typecheck
         name: Typecheck
-        entry: uv run ty check .
+        entry: uv run --locked ty check .
         types: [python]
         language: system
         pass_filenames: false

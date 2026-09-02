@@ -34,6 +34,7 @@ def check_config(
     env_files: Annotated[
         list[Path] | None,
         MultiOption(
+            "--env_files",
             help="Path to .env file(s). Can be specified multiple times.",
             exists=True,
             dir_okay=False,
@@ -60,7 +61,7 @@ def check_config(
         rc = RuntimeContext.from_cli(
             config_path=config,
             env_files=env_files,
-            cli_args=ctx.args if ctx.args else None,
+            cli_args=ctx.args or None,
         )
 
         # Display runtime info

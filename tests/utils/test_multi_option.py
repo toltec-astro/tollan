@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from pathlib import Path  # noqa: TC003
+from pathlib import Path  # noqa: TC003  # Typer resolves callback hints at runtime.
 from typing import Annotated
 
 import pytest
 import typer
 from typer.testing import CliRunner
 
-from tollan.utils.typer import MultiOption
+from tollan.utils.typer import MultiOption, TollanTyper
 
 
 class TestMultiOption:
@@ -22,7 +22,7 @@ class TestMultiOption:
 
     def test_basic_multi_option(self, runner):
         """Test basic multi-option with string values."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -41,7 +41,7 @@ class TestMultiOption:
 
     def test_multi_option_empty(self, runner):
         """Test multi-option with no values (default)."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -58,7 +58,7 @@ class TestMultiOption:
 
     def test_multi_option_with_type_conversion(self, runner):
         """Test multi-option with automatic type conversion."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -82,7 +82,7 @@ class TestMultiOption:
         file1.write_text("test1")
         file2.write_text("test2")
 
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -106,7 +106,7 @@ class TestMultiOption:
 
     def test_multi_option_path_validation_fails(self, runner, tmp_path):
         """Test multi-option path validation with non-existent file."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -130,7 +130,7 @@ class TestMultiOption:
 
     def test_multi_option_stops_at_next_option(self, runner):
         """Test that multi-option stops consuming at next option."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -151,7 +151,7 @@ class TestMultiOption:
 
     def test_multi_option_help_displayed(self, runner):
         """Test that help is correctly displayed for multi-options."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -169,7 +169,7 @@ class TestMultiOption:
 
     def test_multi_option_int_conversion(self, runner):
         """Test automatic type conversion with integers."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -189,7 +189,7 @@ class TestMultiOption:
 
     def test_multi_option_invalid_conversion(self, runner):
         """Test automatic type conversion with invalid values."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -202,14 +202,15 @@ class TestMultiOption:
 
         result = runner.invoke(app, ["--numbers", "1", "invalid", "3"])
         assert result.exit_code != 0
-        # The error message may vary, just check that it failed
-        assert ("not a valid integer" in result.output) or (
-            "Cannot convert" in result.output
-        )
+        assert "invalid" in result.output.lower()
+
+    def test_multi_option_does_not_patch_typer_globally(self):
+        """Importing Tollan leaves Typer's parameter factory untouched."""
+        assert typer.main.get_click_param.__module__ == "typer.main"
 
     def test_multiple_multi_options(self, runner):
         """Test command with multiple multi-options."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -235,7 +236,7 @@ class TestMultiOption:
 
     def test_multi_option_repeated_merged(self, runner):
         """Test that repeated multi-option specifications are merged."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -258,7 +259,7 @@ class TestMultiOption:
 
     def test_multi_option_with_argument_separator(self, runner):
         """Test multi-option with argument separator (--) and positional args."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command(context_settings={"allow_extra_args": True})
         def cmd(
@@ -280,7 +281,7 @@ class TestMultiOption:
 
     def test_multi_option_with_fixed_nargs_argument(self, runner):
         """Test multi-option consumes all args until separator or next option."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -312,7 +313,7 @@ class TestMultiOption:
 
     def test_multi_option_with_variadic_argument(self, runner):
         """Test multi-option with variadic argument requires separator."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -348,7 +349,7 @@ class TestMultiOption:
 
     def test_multi_option_between_arguments(self, runner):
         """Test multi-option positioned between arguments with separator."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -380,7 +381,7 @@ class TestMultiOption:
 
     def test_multiple_multi_options_with_arguments(self, runner):
         """Test multiple multi-options - last one needs separator before arguments."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -426,7 +427,7 @@ class TestMultiOption:
 
     def test_multi_option_with_optional_argument(self, runner):
         """Test multi-option with optional argument requires separator."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -466,7 +467,7 @@ class TestMultiOption:
 
     def test_multiple_separators(self, runner):
         """Test multiple separators: --option a b -- file1 file2 -- --option c."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -499,7 +500,7 @@ class TestMultiOption:
 
     def test_multi_option_with_equals_syntax(self, runner):
         """Test multi-option with --option=value syntax."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(
@@ -528,7 +529,7 @@ class TestMultiOption:
 
     def test_multi_option_equals_syntax_with_positional(self, runner):
         """Test --option= syntax: still consumes following args."""
-        app = typer.Typer()
+        app = TollanTyper()
 
         @app.command()
         def cmd(

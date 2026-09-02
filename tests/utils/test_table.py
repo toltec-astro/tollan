@@ -29,7 +29,7 @@ def astro_table():
 def pandas_table():
     """Create sample pandas DataFrame."""
     df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6], "z": [7, 8, 9]})
-    df.attrs = {"key1": "value1", "key2": "value2"}
+    df.attrs.update({"key1": "value1", "key2": "value2"})
     return df
 
 

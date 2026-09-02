@@ -277,7 +277,7 @@ class TestAccessorBaseAsXarrayAccessor:
         assert (ds.test_acc.get_temp() == ds["temp"]).all()
 
         # Clean up accessor registration
-        del xr.Dataset.test_acc  # type: ignore[attr-defined]
+        del xr.Dataset.test_acc  # ty: ignore[unresolved-attribute]
 
 
 class TestAccessorBaseAsView:

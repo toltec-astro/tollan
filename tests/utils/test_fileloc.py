@@ -348,7 +348,7 @@ class TestFileLocEdgeCases:
     def test_invalid_tuple_size(self):
         """Test that invalid tuple size raises error."""
         with pytest.raises(ValueError, match="tuple of size"):
-            FileLocData((1, 2, 3))  # type: ignore[arg-type]
+            FileLocData((1, 2, 3))  # ty: ignore[invalid-argument-type]
 
     def test_empty_string_raises(self):
         """Test that empty string raises error."""

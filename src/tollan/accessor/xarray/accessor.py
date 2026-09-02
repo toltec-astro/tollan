@@ -44,7 +44,7 @@ Example
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from ..accessor import AccessorBase
 from ..mapper import Mapper
@@ -85,7 +85,8 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[DataSourceT, MapperT]):
         self._data_source = data_source
 
         if mapper is None:
-            mapper = self._mapper_cls.from_data_source(self.data_source)
+            mapper_cls = cast("type[MapperT]", type(self)._mapper_cls)
+            mapper = mapper_cls.from_data_source(self.data_source)
         self._mapper = mapper
 
         self._validate()

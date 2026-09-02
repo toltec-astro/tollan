@@ -87,7 +87,9 @@ class TestPtyRun:
     def test_pty_run_converts_to_strings(self):
         """Test that pty_run converts arguments to strings."""
         with patch("pty.spawn", return_value=0) as mock_spawn:
-            result = pty_run(["echo", 123, True])  # type: ignore[list-item]
+            result = pty_run(
+                ["echo", 123, True],  # ty: ignore[invalid-argument-type]
+            )
             assert result == 0
             # All arguments should be converted to strings
             mock_spawn.assert_called_once_with(["echo", "123", "True"])

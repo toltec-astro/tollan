@@ -60,7 +60,7 @@ class PathValidator:
     '/base/dir/data.txt'
     """
 
-    path_type: None | Literal["file", "dir", "new"] = None
+    path_type: Literal["file", "dir", "new"] | None = None
     exists: bool = True
     resolve: bool = True
 

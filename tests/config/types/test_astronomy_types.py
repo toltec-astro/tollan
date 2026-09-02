@@ -34,7 +34,7 @@ class TestFrozenBaseModel:
 
         # Should raise validation error on frozen model
         with pytest.raises(ValidationError):
-            model.value = 100
+            model.value = 100  # ty: ignore[invalid-assignment]
 
     def test_yaml_roundtrip(self):
         """Test YAML serialization and deserialization."""
@@ -171,17 +171,29 @@ class TestSkyCoordField:
         model = TestModel.model_validate({"target": "10:00:00 +20:00:00"})
         assert isinstance(model.target, SkyCoord)
 
-    def test_skycoord_field_named_source(self):
-        """Test SkyCoordField with named source."""
+    def test_skycoord_field_explicit_source_coordinates(self):
+        """Test SkyCoordField with explicit M31 coordinates."""
 
         class TestModel(FrozenBaseModel):
             target: SkyCoordField
 
-        # Test with a well-known source name
-        model = TestModel.model_validate({"target": "M31"})
+        model = TestModel.model_validate({"target": "10.6847083d 41.26875d"})
         assert isinstance(model.target, SkyCoord)
-        # M31 should be near RA=10.68deg, Dec=41.27deg
         assert model.target.ra.deg == pytest.approx(10.68, abs=1.0)  # pyright: ignore[reportOptionalMemberAccess]
+
+    def test_skycoord_field_does_not_resolve_names(self, monkeypatch):
+        """Validation rejects names without invoking Astropy's network resolver."""
+
+        class TestModel(FrozenBaseModel):
+            target: SkyCoordField
+
+        def fail_if_called(*args, **kwargs):
+            pytest.fail("SkyCoord.from_name must not run during validation")
+
+        monkeypatch.setattr(SkyCoord, "from_name", fail_if_called)
+
+        with pytest.raises(ValidationError, match="SkyCoord required"):
+            TestModel.model_validate({"target": "M31"})
 
     def test_skycoord_with_config_backend(self):
         """Test SkyCoord fields work with RuntimeConfig."""
@@ -219,7 +231,7 @@ class TestComplexConfigWithTypes:
             instrument: InstrumentConfig
 
         config_data = {
-            "target": "M31",
+            "target": "10.6847083d 41.26875d",
             "start_time": "2020-01-01T00:00:00",
             "exposure_time": 3600.0,
             "instrument": {

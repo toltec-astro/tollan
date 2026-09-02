@@ -32,7 +32,7 @@ class ObjectProxy[T](wrapt.ObjectProxy):
     and .proxy_initialized() to check state.
     """
 
-    def __init__(self, factory: None | Callable[..., T] = None) -> None:
+    def __init__(self, factory: Callable[..., T] | None = None) -> None:
         self._self_factory = factory
         super().__init__(None)
 
@@ -110,7 +110,7 @@ def getname(obj: object, sep: str = ":") -> str:
     return f"{module}{sep}{name}"
 
 
-def module_from_path(filepath: str | Path, name: None | str = None) -> object:
+def module_from_path(filepath: str | Path, name: str | None = None) -> ModuleType:
     """Load a Python module from a file path."""
     filepath = Path(filepath)
     if name is None:

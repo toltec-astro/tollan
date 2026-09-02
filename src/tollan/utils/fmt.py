@@ -85,7 +85,7 @@ def pformat_fancy_index(
     if isinstance(arg, np.ndarray):
         return f"<mask {np.sum(arg)}/{arg.size}>"
     if isinstance(arg, list):
-        s = ", ".join(pformat_fancy_index(a) for a in arg)  # ty: ignore[invalid-argument-type]
+        s = ", ".join(pformat_fancy_index(a) for a in arg)
         return f"[{s}]"
     return str(arg)
 
@@ -108,7 +108,7 @@ def pformat_mask(mask: npt.NDArray[np.bool_]) -> str:
     g = mask.sum()
     n = mask.size
     p = g / n
-    return _pformat_mask(g, n, p)
+    return _pformat_mask(int(g), n, p)
 
 
 def bitmask_stats(bm_cls: type[Flag], bitmask: npt.NDArray) -> pd.DataFrame:

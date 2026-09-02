@@ -2,7 +2,8 @@
 
 This module extends Typer's CLI functionality with custom options and utilities.
 The main feature is MultiOption, which enables variable-length option arguments
-in Typer commands, with automatic type conversion via Typer's built-in system.
+in Tollan Typer commands, with automatic type conversion via Typer's built-in
+system.
 """
 
 from __future__ import annotations
@@ -15,19 +16,18 @@ from rich.rule import Rule
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from typer.models import ParamMeta
-
 import click
 import typer
 import typer.core
-import typer.main
 from typer.models import OptionInfo
+from typer.utils import get_params_from_function
 
 from .log import logger, reset_logger
 
 __all__ = [
     "MultiOption",
     "MultiOptionInfo",
+    "TollanTyper",
     "create_cli",
 ]
 
@@ -42,14 +42,6 @@ def create_cli(version: str = "dev", **kwargs) -> typer.Typer:
     **kwargs
         Additional keyword arguments to pass to typer.Typer().
     """
-    # HACK: Disable automatic conversion of underscores to dashes in CLI option names.
-    # By default, typer converts snake_case parameter names (e.g., env_files) to
-    # kebab-case CLI options (e.g., --env-file). This can be confusing and inconsistent
-    # with Python naming conventions. This override keeps parameter names as-is.
-    # See: https://github.com/fastapi/typer/discussions/1049
-    # Note: This affects both option names AND command names.
-    typer.main.get_command_name = lambda name: name  # ty: ignore[invalid-assignment]
-
     # Set reasonable defaults, allowing caller to override
     typer_kwargs: dict[str, Any] = {
         "context_settings": {"help_option_names": ["-h", "--help"]},
@@ -57,7 +49,7 @@ def create_cli(version: str = "dev", **kwargs) -> typer.Typer:
     }
     typer_kwargs.update(kwargs)
 
-    app = typer.Typer(**typer_kwargs)
+    app = TollanTyper(**typer_kwargs)
 
     @app.callback(invoke_without_command=True)
     def main(ctx: typer.Context) -> None:
@@ -116,7 +108,7 @@ def _reset_logger_callback(
 
 class _Group(typer.core.TyperGroup):
     @override
-    def get_params(self, ctx: click.Context) -> list[click.Parameter]:
+    def get_params(self, ctx: Any) -> list[Any]:
         """Get command parameters with added global options.
 
         Extends base parameters with --help_all and --log_level options.
@@ -155,7 +147,7 @@ class _Group(typer.core.TyperGroup):
         return params
 
     @override
-    def invoke(self, ctx: click.Context) -> Any:
+    def invoke(self, ctx: Any) -> Any:
         """Invoke command with cleaned parameters.
 
         Removes global options (help_all, log_level) from context before
@@ -177,113 +169,91 @@ class _Group(typer.core.TyperGroup):
         return super().invoke(ctx)
 
 
-class _OptionEatAll(typer.core.TyperOption):
-    """Typer Option that consumes all arguments until the next option.
+class _MultiValueCommand(typer.core.TyperCommand):
+    """A Typer command that expands one variadic option into repeated options.
 
-    This class provides variable-length option arguments (nargs='*' equivalent)
-    by consuming all remaining arguments until another option flag or the '--'
-    separator is encountered. This is a workaround for Click's limitation that
-    options only support fixed number of arguments.
-
-    Parameters
-    ----------
-    *args : Any
-        Positional arguments passed to click.Option
-    **kwargs : Any
-        Keyword arguments passed to click.Option (nargs will be forced to -1)
-
-    Notes
-    -----
-    This implementation is adapted from the Click/Typer community workaround.
-    See: https://github.com/fastapi/typer/issues/110#issuecomment-3386589706
-
-    This class is used internally by MultiOption. Typer handles type conversion
-    automatically via generate_list_convertor().
-
-    See Also
-    --------
-    MultiOption : High-level Typer interface for multi-argument options
+    Click natively supports repeatable list options but not ``nargs=-1`` for an
+    option. This command preserves Tollan's ``--option a b c`` syntax by
+    normalizing it to ``--option a --option b --option c`` before delegating to
+    Click's public ``Command.parse_args`` implementation. Typer therefore keeps
+    ownership of type conversion, validation, help, and callbacks.
     """
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        """Initialize OptionEatAll with validation.
+    @staticmethod
+    def _is_option_token(value: str) -> bool:
+        return value == "--" or (len(value) > 1 and value.startswith("-"))
 
-        Parameters
-        ----------
-        *args : Any
-            Positional arguments for click.Option
-        **kwargs : Any
-            Keyword arguments for click.Option
-        """
-        nargs = kwargs.pop("nargs", -1)
-        if nargs != -1:
-            msg = f"nargs must be -1, not {nargs}"
-            raise AssertionError(msg)
-        # Force multiple=True and is_flag=False for proper value handling
-        kwargs["multiple"] = True
-        kwargs["is_flag"] = False
-        super().__init__(*args, **kwargs)
-        self._previous_parser_process: Callable[..., Any] | None = None
-        self._eat_all_parser: Any = None
+    def _multi_option_flags(self) -> set[str]:
+        callback = self.callback
+        if callback is None:
+            return set()
+        param_meta = get_params_from_function(callback)
+        multi_names = {
+            name
+            for name, meta in param_meta.items()
+            if isinstance(meta.default, MultiOptionInfo)
+        }
+        return {
+            flag
+            for param in self.params
+            if isinstance(param, typer.core.TyperOption) and param.name in multi_names
+            for flag in (*param.opts, *param.secondary_opts)
+        }
+
+    @classmethod
+    def _expand_multi_options(
+        cls,
+        args: list[str],
+        multi_flags: set[str],
+    ) -> list[str]:
+        result: list[str] = []
+        index = 0
+        while index < len(args):
+            token = args[index]
+            option_flag, has_inline_value, _ = token.partition("=")
+            if option_flag not in multi_flags:
+                result.append(token)
+                index += 1
+                continue
+
+            result.append(token)
+            index += 1
+            has_value = bool(has_inline_value)
+            while index < len(args) and not cls._is_option_token(args[index]):
+                if has_value:
+                    result.append(option_flag)
+                result.append(args[index])
+                has_value = True
+                index += 1
+        return result
 
     @override
-    def add_to_parser(self, parser: Any, ctx: click.Context) -> Any:
-        """Add this option to the parser with custom processing logic.
+    def parse_args(self, ctx: Any, args: list[str]) -> list[str]:
+        """Normalize Tollan multi-options, then use Click's parser."""
+        flags = self._multi_option_flags()
+        if flags:
+            args = self._expand_multi_options(args, flags)
+        return super().parse_args(ctx, args)
 
-        Parameters
-        ----------
-        parser : Any
-            Click parser instance
-        ctx : click.Context
-            Click context
 
-        Returns
-        -------
-        Any
-            Result from parent add_to_parser
-        """
+class TollanTyper(typer.Typer):
+    """Typer application with Tollan's command-local CLI extensions."""
 
-        def parser_process(value: str, state: Any) -> None:
-            """Process arguments, consuming multiple values.
+    def command(self, name: str | None = None, **kwargs: Any) -> Callable:
+        """Register a command using Tollan's parser without global patches."""
+        command_kwargs = dict(kwargs)
+        command_kwargs.setdefault("cls", _MultiValueCommand)
 
-            Parameters
-            ----------
-            value : str
-                First value after the option flag
-            state : Any
-                Parser state containing remaining arguments
-            """
-            done = False
-            values = [value]
+        def decorator(callback: Callable) -> Callable:
+            # Preserve Tollan's historical underscore command names locally.
+            command_name = name if name is not None else cast("Any", callback).__name__
+            parent_decorator = super(TollanTyper, self).command(
+                command_name,
+                **command_kwargs,
+            )
+            return parent_decorator(callback)
 
-            # Consume arguments until we hit another option flag
-            while state.rargs and not done:
-                for prefix in self._eat_all_parser.prefixes:
-                    if state.rargs[0].startswith(prefix):
-                        done = True
-                        break
-                if not done:
-                    values.append(state.rargs.pop(0))
-
-            # Call the original process method for each value individually
-            # This allows Click's multiple=True to accumulate them properly
-            assert self._previous_parser_process is not None
-            for val in values:
-                self._previous_parser_process(val, state)
-
-        # Add option to parser using parent method
-        retval = super().add_to_parser(parser, ctx)
-
-        # Find our parser and monkey-patch its process method
-        for name in self.opts:
-            our_parser = parser._long_opt.get(name) or parser._short_opt.get(name)
-            if our_parser:
-                self._eat_all_parser = our_parser
-                self._previous_parser_process = our_parser.process
-                our_parser.process = parser_process
-                break
-
-        return retval
+        return decorator
 
 
 # =============================================================================
@@ -294,9 +264,7 @@ class _OptionEatAll(typer.core.TyperOption):
 class MultiOptionInfo(OptionInfo):
     """Extended OptionInfo for multi-argument options.
 
-    This class extends Typer's OptionInfo to add a flag indicating that this
-    option should use the OptionEatAll Click option class instead of the
-    default TyperOption class.
+    This class marks an option for preprocessing by :class:`TollanTyper`.
 
     Parameters
     ----------
@@ -319,10 +287,9 @@ def MultiOption(  # noqa: N802
 ) -> MultiOptionInfo:
     """Create a multi-argument option for Typer commands.
 
-    This function wraps typer.Option() to create options that can accept
-    multiple values in a single invocation. It returns a MultiOptionInfo
-    instance that will be detected by the patched get_click_param function
-    to create an OptionEatAll Click option.
+    This function wraps :func:`typer.Option` metadata so :class:`TollanTyper`
+    can accept multiple values in a single invocation. No global Typer state is
+    modified.
 
     Parameters
     ----------
@@ -345,7 +312,8 @@ def MultiOption(  # noqa: N802
     >>> import typer
     >>> from tollan.utils.typer import MultiOption
     >>>
-    >>> app = typer.Typer()
+    >>> from tollan.utils.typer import TollanTyper
+    >>> app = TollanTyper()
     >>>
     >>> @app.command()
     ... def process(
@@ -373,54 +341,3 @@ def MultiOption(  # noqa: N802
 
     # Wrap in MultiOptionInfo with our flag
     return MultiOptionInfo(option_info)
-
-
-# Save original get_click_param before monkey-patching
-_original_get_click_param = typer.main.get_click_param
-
-
-def _patched_get_click_param(
-    param: ParamMeta,
-) -> tuple[click.Parameter, Any]:
-    """Patched version of get_click_param that detects MultiOptionInfo.
-
-    This function wraps the original typer.main.get_click_param to detect
-    when a parameter uses MultiOptionInfo and creates an OptionEatAll
-    Click option instead of the default TyperOption.
-
-    Parameters
-    ----------
-    param : ParamMeta
-        Parameter metadata from function signature inspection
-
-    Returns
-    -------
-    tuple[click.Parameter, Any]
-        (Click parameter, value converter function)
-    """
-    # Call original to get the TyperOption and converter
-    click_param, converter = _original_get_click_param(param)
-
-    # Check if this is a MultiOptionInfo (only applies to Options, not Arguments)
-    if isinstance(param.default, MultiOptionInfo):
-        assert isinstance(click_param, click.Option), (
-            "MultiOption only works with Options, not Arguments"
-        )
-
-        # Create an OptionEatAll instance without calling __init__
-        # Then copy all state from the TyperOption that Typer configured
-        option_eat_all = object.__new__(_OptionEatAll)
-        option_eat_all.__dict__.update(click_param.__dict__)
-
-        # Initialize the OptionEatAll-specific attributes that __init__ would have set
-        option_eat_all._previous_parser_process = None
-        option_eat_all._eat_all_parser = None
-
-        return (option_eat_all, converter)
-
-    # Not a MultiOption, return original result
-    return (click_param, converter)
-
-
-# Install the monkey-patch
-typer.main.get_click_param = _patched_get_click_param  # ty: ignore[invalid-assignment]

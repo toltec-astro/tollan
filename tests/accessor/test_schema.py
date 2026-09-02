@@ -67,19 +67,19 @@ class TestMappingDataclass:
         with pytest.raises(
             (AttributeError, ValidationError, TypeError),
         ):  # FrozenInstanceError
-            fm.names = ("other",)  # type: ignore[misc]
+            fm.names = ("other",)  # ty: ignore[invalid-assignment]
 
     def test_invalid_names_type(self):
         """Invalid names type raises error."""
         with pytest.raises(ValueError, match="names must be str or tuple"):
-            Mapping(123)  # type: ignore[arg-type]
+            Mapping(123)  # ty: ignore[invalid-argument-type]
 
     def test_invalid_names_elements(self):
         """Non-string elements in names raises error."""
         from pydantic import ValidationError
 
         with pytest.raises(ValidationError):  # Validation error
-            Mapping([1, 2, 3])  # type: ignore[arg-type]
+            Mapping([1, 2, 3])  # ty: ignore[invalid-argument-type]
 
 
 class TestMapping:

@@ -17,6 +17,8 @@ from .validator import _SimpleTypeValidatorMixin
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from typing_extensions import TypeForm
+
 __all__ = [
     "AngleQuantityField",
     "DimensionlessQuantityField",
@@ -50,7 +52,7 @@ class QuantityValidator(_SimpleTypeValidatorMixin[Quantity]):
     <Quantity 5. m>
     """
 
-    physical_types_allowed: None | str | Sequence[str] = None
+    physical_types_allowed: str | Sequence[str] | None = None
 
     _field_type: ClassVar = Quantity
     _field_type_name: ClassVar = "Quantity"
@@ -60,7 +62,7 @@ class QuantityValidator(_SimpleTypeValidatorMixin[Quantity]):
     _field_value_types: ClassVar = {numbers.Number, str}
 
     @cached_property
-    def _field_physical_types(self) -> None | tuple[str, ...]:
+    def _field_physical_types(self) -> tuple[str, ...] | None:
         """Get normalized physical types."""
         if self.physical_types_allowed is None:
             return None
@@ -144,7 +146,7 @@ type DimensionlessQuantityField = Annotated[
 
 def quantity_field(
     physical_types_allowed: str | Sequence[str] | None = None,
-) -> type[Quantity]:
+) -> TypeForm[Quantity]:
     """Create a pydantic field type for validating astropy Quantity.
 
     Parameters
@@ -161,7 +163,7 @@ def quantity_field(
     --------
     >>> Speed = quantity_field(physical_types_allowed='speed')
     """
-    return Annotated[  # type: ignore[return-value]
+    return Annotated[
         Quantity,
         QuantityValidator(physical_types_allowed=physical_types_allowed),
     ]

@@ -5,7 +5,7 @@ list:
     @just --list
 
 install:
-    uv sync --all-groups --all-packages --all-extras
+    uv sync --locked --all-groups --all-packages --all-extras
     git config core.hooksPath .githooks
     uv run pre-commit install-hooks
 
@@ -14,15 +14,15 @@ rebuild-lockfiles:
 
 # Run all the formatting, linting, and testing commands
 qa:
-    uv run pre-commit run --all-files
-    uv run coverage run -m pytest
+    uv run --locked pre-commit run --all-files
+    uv run --locked coverage run -m pytest
 
 # Run tests with coverage
 coverage:
-    uv run coverage run -m pytest
-    uv run coverage combine
-    uv run coverage report -m
-    uv run coverage html
+    uv run --locked coverage run -m pytest
+    uv run --locked coverage combine
+    uv run --locked coverage report -m
+    uv run --locked coverage html
 
 # Build the project, useful for checking that packaging is correct
 build:
@@ -53,11 +53,11 @@ clean:
 
 # Build the docs
 doc-build:
-    uv run --group docs sphinx-build -M html docs docs/_build -T
+    uv run --locked --group docs sphinx-build -M html docs docs/_build -T
 
 # Serve docs locally with live reload
 doc:
-    uv run --group docs sphinx-autobuild docs docs/_build/html --port 8888 --open-browser
+    uv run --locked --group docs sphinx-autobuild docs docs/_build/html --port 8888 --open-browser
 
 # Deploy docs to GitHub Pages
 doc-deploy: doc-build

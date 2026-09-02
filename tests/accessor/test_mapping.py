@@ -44,7 +44,7 @@ def test_mapping_from_list():
 def test_mapping_rejects_invalid_names():
     """Test that invalid names types are caught by validation."""
     with pytest.raises(ValueError, match="names must be str or tuple"):
-        Mapping(123)  # type: ignore[arg-type]
+        Mapping(123)  # ty: ignore[invalid-argument-type]
 
 
 def test_mapping_equality():

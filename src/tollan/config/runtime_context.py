@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, overload
 
 from pydantic import ConfigDict, Field
 
@@ -119,7 +119,9 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     }
     """Tier configurations with name and order."""
 
-    runtime_config_cls: ClassVar[type[RuntimeConfigT]] = RuntimeConfig  # type: ignore[assignment]
+    # Replaced on concrete subclasses by __init_subclass__; runtime type:
+    # type[RuntimeConfigT].
+    runtime_config_cls: ClassVar = RuntimeConfig
 
     config_handler_cls_registry: ClassVar[set[type[ConfigHandler]]] = set()
     """Registry of ConfigHandler classes for this RuntimeContext."""
@@ -431,7 +433,11 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         -------
             Validated RuntimeConfig instance
         """
-        return self.runtime_config_cls.model_validate(self.config_dict)
+        runtime_config_cls = cast(
+            "type[RuntimeConfigT]",
+            self.runtime_config_cls,
+        )
+        return runtime_config_cls.model_validate(self.config_dict)
 
     @property
     def runtime_info(self) -> RuntimeInfo:

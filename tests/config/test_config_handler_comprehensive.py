@@ -209,7 +209,10 @@ class TestConfigHandlerUpdates:
         handler = TestHandler(rc)
 
         with pytest.raises(ValueError, match="Invalid update tier"):
-            handler.update_runtime_config({"test": {"value": "new"}}, tier="invalid")  # type: ignore[arg-type]
+            handler.update_runtime_config(
+                {"test": {"value": "new"}},
+                tier="invalid",  # ty: ignore[invalid-argument-type]
+            )
 
     def test_update_invalidates_cache(self):
         """Test update_config invalidates cached config."""
@@ -308,7 +311,7 @@ class TestConfigHandlerAutoCacheReset:
         ):
 
             class TestHandler(ConfigHandler):
-                @ConfigHandler.auto_cache_reset  # type: ignore[arg-type]
+                @ConfigHandler.auto_cache_reset  # ty: ignore[invalid-argument-type]
                 def not_cached(self):
                     return "value"
 
@@ -363,7 +366,7 @@ class TestConfigHandlerTypeInference:
         with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
 
             class MyHandler(ConfigHandler[ConfigA]):
-                config_model_cls: type[BaseModel] = ConfigB  # pyright: ignore[reportIncompatibleVariableOverride] # Should be disallowed
+                config_model_cls: type[BaseModel] = ConfigB  # pyright: ignore[reportIncompatibleVariableOverride]  # ty: ignore[invalid-attribute-override]  # Should be disallowed
 
                 @classmethod
                 def prepare_config_data(cls, runtime_config):

@@ -45,6 +45,7 @@ from typing import (
     ClassVar,
     Literal,
     TypeVar,
+    cast,
     overload,
 )
 
@@ -116,7 +117,7 @@ class StepContext[StepT: "Step", ConfigT: "StepConfig"](BaseModel):
 
     def make_step(self) -> StepT:
         """Reconstruct the step from the stored config."""
-        return self.step_cls(self.config)  # type: ignore[return-value]
+        return cast("StepT", self.step_cls(self.config))
 
 
 # ---------------------------------------------------------------------------
@@ -157,8 +158,8 @@ class StepContextDict(UserDict[str, StepContext]):
         msg = f"invalid step context key arg: {arg!r}"
         raise TypeError(msg)
 
-    def __setitem__(self, key: Any, value: Any) -> None:  # type: ignore[override]
-        super().__setitem__(self.resolve_key(key), value)
+    def __setitem__(self, key: Any, item: Any) -> None:
+        super().__setitem__(self.resolve_key(key), item)
 
     def __getitem__(self, key: Any) -> Any:  # type: ignore[override]
         return super().__getitem__(self.resolve_key(key))
@@ -267,7 +268,7 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
     _alias_name: ClassVar[str | None] = None
     _orig_context_key: ClassVar[str | None] = None
 
-    context_key: ClassVar[str] = _ContextKeyDescriptor()  # type: ignore[assignment]
+    context_key = _ContextKeyDescriptor()
 
     _config: ConfigT
 
@@ -313,17 +314,18 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         else:
             msg = "too many positional args."
             raise ValueError(msg)
-        self._config = config  # type: ignore[assignment]
+        self._config = cast("ConfigT", config)
 
     @property
     def config(self) -> ConfigT:
         """The step configuration object."""
-        return self._config  # type: ignore[return-value]
+        return self._config
 
     def create_context(self, data: Any) -> ContextT:
         """Create (or replace) this step's context on *data*."""
         pctx = get_pipeline_contexts(data)
-        ctx: ContextT = self.context_cls(  # type: ignore[call-arg]
+        context_cls = cast("type[ContextT]", self.context_cls)
+        ctx = context_cls(
             config=self._config,
             completed=False,
         )
@@ -356,7 +358,7 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
             If this step has not run on *data* yet.
         """
         pctx = get_pipeline_contexts(data)
-        return pctx[cls.context_key]  # type: ignore[return-value]
+        return cast("ContextT", pctx[cls.context_key])
 
     @classmethod
     def run(cls, data: Any, context: ContextT) -> bool:  # type: ignore[misc]
@@ -434,14 +436,17 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         type[Self]
             A new step class sharing implementation but with a distinct key.
         """
-        return type(  # type: ignore[return-value]
-            cls.__name__,
-            (cls,),
-            {
-                "_alias_name": name,
-                "_orig_context_key": getattr(cls, "_orig_context_key", None)
-                or cls.context_key,
-            },
+        return cast(
+            "type[Self]",
+            type(
+                cls.__name__,
+                (cls,),
+                {
+                    "_alias_name": name,
+                    "_orig_context_key": getattr(cls, "_orig_context_key", None)
+                    or cls.context_key,
+                },
+            ),
         )
 
 

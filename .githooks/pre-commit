@@ -3,4 +3,4 @@
 # Uses `uv run` so no hardcoded Python/virtualenv paths are needed.
 # Set as the active hook dir with: git config core.hooksPath .githooks
 
-exec uv run pre-commit run --hook-stage pre-commit --color always "$@"
+exec uv run --locked pre-commit run --hook-stage pre-commit --color always "$@"

@@ -79,7 +79,7 @@ class TestEnsureDataset:
     def test_invalid_type(self):
         """Invalid type raises TypeError."""
         with pytest.raises(TypeError, match="Expected Dataset, DataArray, or DataTree"):
-            ensure_dataset("not a valid type")  # type: ignore[arg-type]
+            ensure_dataset("not a valid type")  # ty: ignore[invalid-argument-type]
 
 
 class TestEnsureDataTree:
@@ -121,7 +121,7 @@ class TestEnsureDataTree:
     def test_invalid_type(self):
         """Invalid type raises TypeError."""
         with pytest.raises(TypeError, match="Expected Dataset, DataArray, or DataTree"):
-            ensure_datatree("not a valid type")  # type: ignore[arg-type]
+            ensure_datatree("not a valid type")  # ty: ignore[invalid-argument-type]
 
 
 class TestRoundTrip:
@@ -336,7 +336,7 @@ class TestXarrayAccessorBaseDualRegistration:
         assert ds.test_accessor.temp_mean == 21.0
 
         # Cleanup
-        del xr.Dataset.test_accessor  # type: ignore[attr-defined]
+        del xr.Dataset.test_accessor  # ty: ignore[unresolved-attribute]
 
     def test_datatree_accessor(self):
         """Accessor registered for DataTree."""
@@ -361,7 +361,7 @@ class TestXarrayAccessorBaseDualRegistration:
         assert dt.test_accessor.temp_mean == 21.0
 
         # Cleanup
-        del xr.DataTree.test_accessor  # type: ignore[attr-defined]
+        del xr.DataTree.test_accessor  # ty: ignore[unresolved-attribute]
 
     def test_dual_registration(self):
         """Accessor registered for both Dataset and DataTree."""
@@ -391,8 +391,8 @@ class TestXarrayAccessorBaseDualRegistration:
         assert dt.test_accessor.temp_mean == 21.0
 
         # Cleanup
-        del xr.Dataset.test_accessor  # type: ignore[attr-defined]
-        del xr.DataTree.test_accessor  # type: ignore[attr-defined]
+        del xr.Dataset.test_accessor  # ty: ignore[unresolved-attribute]
+        del xr.DataTree.test_accessor  # ty: ignore[unresolved-attribute]
 
 
 class TestXarrayAccessorBaseViews:
@@ -591,7 +591,7 @@ class TestXarrayAccessorBaseChildNodes:
         assert np.allclose(dt.data.analysis.result_data, 3.0)
 
         # Cleanup
-        del xr.DataTree.data  # type: ignore[attr-defined]
+        del xr.DataTree.data  # ty: ignore[unresolved-attribute]
 
 
 class TestXarrayAccessorBaseValidation:
@@ -649,8 +649,17 @@ class TestNetCDFFileIO:
         pass
 
     @pytest.mark.skipif(not HAS_NETCDF4, reason="netCDF4 not installed")
+    @pytest.mark.filterwarnings(
+        "ignore:Setting the shape on a NumPy array has been deprecated in NumPy "
+        "2.5:DeprecationWarning",
+    )
     def test_dataset_save_load_netcdf(self, tmp_path):
-        """Dataset can be saved and loaded from netcdf."""
+        """Dataset can be saved and loaded from netcdf.
+
+        netCDF4 1.7.4 assigns ``ndarray.shape`` internally when writing through
+        xarray, which NumPy 2.5 deprecates. Keep the suppression local to this
+        verified round trip until netCDF4 releases the upstream fix.
+        """
         # Create dataset
         ds = xr.Dataset(
             {
@@ -700,7 +709,7 @@ class TestNetCDFFileIO:
 
         # Cleanup
         ds_loaded.close()
-        del xr.Dataset.test_accessor  # type: ignore[attr-defined]
+        del xr.Dataset.test_accessor  # ty: ignore[unresolved-attribute]
 
     @pytest.mark.skipif(not HAS_ZARR, reason="zarr not installed")
     def test_datatree_save_load_zarr(self, tmp_path):
@@ -756,7 +765,7 @@ class TestNetCDFFileIO:
         assert dt_loaded.test_accessor.temp_mean == 21.0
 
         # Cleanup
-        del xr.DataTree.test_accessor  # type: ignore[attr-defined]
+        del xr.DataTree.test_accessor  # ty: ignore[unresolved-attribute]
 
     @pytest.mark.skipif(not HAS_NETCDF4, reason="netCDF4 not installed")
     def test_ensure_utilities_with_loaded_data(self, tmp_path):

@@ -141,5 +141,6 @@ def test_from_cli_with_custom_runtime_config():
     config = rc.config
     assert isinstance(config, AppConfig)
     # CLI args are in extra fields as nested dict
-    assert config.server["host"] == "127.0.0.1"  # pyright: ignore[reportAttributeAccessIssue]
-    assert config.server["port"] == 9000  # pyright: ignore[reportAttributeAccessIssue]
+    assert config.model_extra is not None
+    assert config.model_extra["server"]["host"] == "127.0.0.1"
+    assert config.model_extra["server"]["port"] == 9000

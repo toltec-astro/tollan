@@ -459,7 +459,9 @@ class TestEdgeCases:
         # Even with invalid generic param, explicit config_model_cls disallowed
         with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
 
-            class Handler(ConfigHandler[int]):  # type: ignore[type-var]
+            class Handler(
+                ConfigHandler[int],  # ty: ignore[invalid-type-arguments]
+            ):
                 config_model_cls = dict  # pyright: ignore[reportAssignmentType]
 
                 @classmethod

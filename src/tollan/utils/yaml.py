@@ -23,7 +23,7 @@ import os
 from dataclasses import asdict, is_dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Protocol, TextIO, cast, overload
 
 import astropy.units as u
 import numpy as np
@@ -33,8 +33,6 @@ from astropy.time import Time
 from yaml.dumper import SafeDumper
 
 if TYPE_CHECKING:
-    from io import TextIOBase
-
     from yaml.nodes import Node, ScalarNode
 
 __all__ = [
@@ -44,6 +42,12 @@ __all__ = [
     "yaml_load",
     "yaml_loads",
 ]
+
+
+class _TextWriter(Protocol):
+    """Structural type accepted by PyYAML for text output."""
+
+    def write(self, data: str, /) -> int: ...
 
 
 class YamlDumper(SafeDumper):
@@ -255,16 +259,16 @@ def yaml_dump(data: object, output: None = None, **kwargs: object) -> str: ...
 @overload
 def yaml_dump(
     data: object,
-    output: str | os.PathLike | TextIOBase,
+    output: str | os.PathLike | TextIO | _TextWriter,
     **kwargs: object,
 ) -> None: ...
 
 
 def yaml_dump(
     data: object,
-    output: str | os.PathLike[str] | TextIOBase | None = None,
+    output: str | os.PathLike[str] | TextIO | _TextWriter | None = None,
     **kwargs: object,
-) -> None | str:
+) -> str | None:
     """
     Serialize data as YAML and write to a file, stream, or return as string.
 
@@ -291,7 +295,7 @@ def yaml_dump(
         If output is not a valid type.
     """
     if isinstance(output, (str, os.PathLike)):
-        ctx = Path(output).open("w")  # noqa: SIM115 # ty: ignore[invalid-argument-type]
+        ctx = Path(output).open("w")  # noqa: SIM115
     elif output is None or hasattr(output, "write"):
         ctx = contextlib.nullcontext(output)
     else:
@@ -301,7 +305,7 @@ def yaml_dump(
         return yaml.dump(data, stream, Dumper=YamlDumper, **kwargs)  # pyright: ignore[reportArgumentType, reportCallIssue]
 
 
-def yaml_load(source: str | os.PathLike | TextIOBase) -> object:
+def yaml_load(source: str | os.PathLike | TextIO) -> object:
     """
     Load YAML data from a file, stream, or string.
 
@@ -325,7 +329,7 @@ def yaml_load(source: str | os.PathLike | TextIOBase) -> object:
     """
     # Handle file objects
     if hasattr(source, "read"):
-        return yaml_loads(source)  # type: ignore[arg-type]
+        return yaml_loads(cast("TextIO", source))
 
     def _read_filepath(p: os.PathLike) -> object:
         with Path(p).open() as fo:
@@ -349,7 +353,7 @@ def yaml_load(source: str | os.PathLike | TextIOBase) -> object:
     raise TypeError(msg)
 
 
-def yaml_loads(stream: str | TextIOBase) -> object:
+def yaml_loads(stream: str | TextIO) -> object:
     """
     Load YAML data from a string or stream.
 

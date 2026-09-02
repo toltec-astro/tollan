@@ -8,7 +8,7 @@ Includes unit handling, reshaping, and complex array creation.
 from __future__ import annotations
 
 import functools
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, cast, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -162,7 +162,8 @@ def strip_unit(
         return arr.value, arr.unit
     if isinstance(arr, np.ma.MaskedArray):
         if hasattr(arr.data, "value") and hasattr(arr.data, "unit"):
-            return np.ma.array(arr.data.value, mask=arr.mask), arr.data.unit
+            unit = cast("UnitT", arr.data.unit)
+            return np.ma.array(arr.data.value, mask=arr.mask), unit
         return arr, None
     return arr, None
 
@@ -239,7 +240,7 @@ def preserve_unit[F: Callable](f: F) -> F:
         v = f(dv, *a, **k)
         return attach_unit(v, unit)
 
-    return wrapper  # type: ignore[return-value]
+    return cast("F", wrapper)
 
 
 @overload

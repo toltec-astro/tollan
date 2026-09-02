@@ -15,6 +15,8 @@ from .validator import _SimpleTypeValidatorMixin
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from typing_extensions import TypeForm
+
 __all__ = [
     "IsoTimeField",
     "TimeField",
@@ -44,7 +46,7 @@ class TimeValidator(_SimpleTypeValidatorMixin[Time]):
     'isot'
     """
 
-    formats_allowed: None | str | Sequence[str] = None
+    formats_allowed: str | Sequence[str] | None = None
 
     _field_type: ClassVar = Time
     _field_type_name: ClassVar = "Time"
@@ -54,7 +56,7 @@ class TimeValidator(_SimpleTypeValidatorMixin[Time]):
     _field_value_types: ClassVar = {numbers.Number, str}
 
     @cached_property
-    def _field_formats(self) -> None | tuple[str, ...]:
+    def _field_formats(self) -> tuple[str, ...] | None:
         """Get normalized time formats."""
         fmts = self.formats_allowed
         if not fmts:
@@ -125,7 +127,7 @@ type UnixTimeField = Annotated[
 ]
 
 
-def time_field(formats_allowed: str | Sequence[str] | None = None) -> type[Time]:
+def time_field(formats_allowed: str | Sequence[str] | None = None) -> TypeForm[Time]:
     """Create a pydantic field type for validating astropy Time.
 
     Parameters
@@ -142,7 +144,7 @@ def time_field(formats_allowed: str | Sequence[str] | None = None) -> type[Time]
     --------
     >>> UnixTime = time_field(formats_allowed=['unix', 'unix_tai'])
     """
-    return Annotated[  # type: ignore[return-value]
+    return Annotated[
         Time,
         TimeValidator(formats_allowed=formats_allowed),
     ]

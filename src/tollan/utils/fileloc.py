@@ -72,13 +72,11 @@ def _url_replace(url, **kwargs):
 
     for attr in _url_attrs:
         v = kwargs[attr] if attr in kwargs else getattr(url, attr)
-        if attr in [
-            "port",
-        ]:
+        if attr == "port":
             v = TypeAdapter(int | None).validate_python(v)
         elif attr in ["scheme", "host"]:
             v = _to_str(v, null_value="")
-        elif attr in ["path"]:
+        elif attr == "path":
             v = _to_str(v, null_value=None)
         kwargs[attr] = v
     return AnyUrl.build(**kwargs)
@@ -97,11 +95,11 @@ _validate_file_loc_url = TypeAdapter(FileLocUrl).validate_python
 class FileLocData:
     """A helper model for storing file loc data."""
 
-    url: None | FileLocUrl = None
-    path: None | Path = None
+    url: FileLocUrl | None = None
+    path: Path | None = None
     netloc: str = ""
-    local_parent_path: None | Path = None
-    remote_parent_path: None | Path = None
+    local_parent_path: Path | None = None
+    remote_parent_path: Path | None = None
 
     if TYPE_CHECKING:
 
@@ -110,22 +108,22 @@ class FileLocData:
             self,
             netloc: str,
             path: str | Path,
-            local_parent_path: None | str | Path = None,
-            remote_parent_path: None | str | Path = None,
+            local_parent_path: str | Path | None = None,
+            remote_parent_path: str | Path | None = None,
         ) -> None: ...
 
         @overload
         def __init__(
             self,
-            arg: None
-            | FileLocUrl
+            arg: FileLocUrl
             | FileLocData
             | str
             | Path
             | tuple[str, str]
-            | dict[str, Any],
-            local_parent_path: None | str | Path = None,
-            remote_parent_path: None | str | Path = None,
+            | dict[str, Any]
+            | None,
+            local_parent_path: str | Path | None = None,
+            remote_parent_path: str | Path | None = None,
         ) -> None: ...
 
         def __init__(self, *args: Any, **kwargs: Any) -> None: ...
@@ -211,7 +209,7 @@ class FileLocData:
             arg = None
         elif len(args) == 1:
             # this is single argument, unpack
-            arg = args[0]  # ty: ignore[index-out-of-bounds]
+            arg = args[0]
         elif len(args) == 2:  # noqa: PLR2004
             # 2-tuple of (netloc, path), will be handled by the code below
             arg = args
@@ -259,8 +257,8 @@ class FileLocData:
         elif isinstance(arg, tuple):
             # path with netloc
             if len(arg) == 2:  # noqa: PLR2004
-                _set_kwarg("path", arg[1])  # ty: ignore[index-out-of-bounds]
-                _set_kwarg("netloc", arg[0])  # ty: ignore[index-out-of-bounds]
+                _set_kwarg("path", arg[1])
+                _set_kwarg("netloc", arg[0])
             else:
                 msg = (
                     "file loc tuple requires (netloc, path), got tuple of size"
@@ -302,7 +300,7 @@ class FileLocData:
     def _resolve_local_path(
         cls,
         path: Path,
-        local_parent_path: None | Path = None,
+        local_parent_path: Path | None = None,
     ) -> Path:
         p = Path(path)
         if p.is_absolute():
@@ -316,7 +314,7 @@ class FileLocData:
     def _resolve_remote_path(
         cls,
         path: Path,
-        remote_parent_path: None | Path = None,
+        remote_parent_path: Path | None = None,
     ) -> Path:
         p = Path(path)
         if isinstance(p, pathlib.WindowsPath):
@@ -340,8 +338,8 @@ class FileLocData:
         cls,
         hostname: str,
         path: Path,
-        local_parent_path: None | Path = None,
-        remote_parent_path: None | Path = None,
+        local_parent_path: Path | None = None,
+        remote_parent_path: Path | None = None,
     ) -> Path:
         if hostname and hostname != "localhost":
             return cls._resolve_remote_path(path, remote_parent_path=remote_parent_path)
@@ -546,8 +544,8 @@ class FileLoc(RootModel[FileLocData]):
 
 def fileloc(
     loc: str | Path | tuple[str, str] | dict | FileLoc,
-    remote_parent_path: None | str | Path = None,
-    local_parent_path: None | str | Path = None,
+    remote_parent_path: str | Path | None = None,
+    local_parent_path: str | Path | None = None,
     *,
     revalidate: bool = False,
 ) -> FileLoc:

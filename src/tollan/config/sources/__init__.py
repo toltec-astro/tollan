@@ -261,7 +261,10 @@ class ConfigSourceList(BaseModel):
     # Private: Cache configuration
     _cache_config: CacheConfig = PrivateAttr(default_factory=CacheConfig)
 
-    def __iter__(self) -> Iterator[ConfigSource]:  # type: ignore[override]
+    def __iter__(
+        self,
+    ) -> Iterator[ConfigSource]:  # ty: ignore[invalid-method-override]
+        # Deliberately expose the contained sources instead of BaseModel fields.
         return iter(self.data)
 
     def __getitem__(self, item: int) -> ConfigSource:

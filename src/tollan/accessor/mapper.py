@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import fields
-from typing import Any, ClassVar, Self
+from typing import Any, ClassVar, Self, cast
 
 from ..utils.typing import get_typing_args
 from .schema import MISSING, MappedField, MappedFieldSource, MappingBase, Schema
@@ -27,11 +27,11 @@ class Mapper[SchemaT: Schema]:
         Schema type for this mapper (auto-instantiated as class variable)
     """
 
-    # Schema instance (auto-instantiated and cached via __init_subclass__)
-    schema: ClassVar[SchemaT]  # type: ignore[misc]
+    # Set on concrete subclasses by __init_subclass__; runtime type: SchemaT.
+    schema: ClassVar
 
     # Schema instances cache (shared across all Mapper classes)
-    _schema_instances: ClassVar[dict[type[SchemaT], SchemaT]] = {}  # type: ignore[misc]
+    _schema_instances: ClassVar[dict[type[Schema], Schema]] = {}
 
     _mapped_fields: dict[MappingBase, MappedField]
 
@@ -126,15 +126,17 @@ class Mapper[SchemaT: Schema]:
         defaults : dict[MappingBase, Any]
             Default values for fields not found in data source
         """
+        schema = cast("SchemaT", type(self).schema)
+
         # Traverse schema fields in insertion order (depth-first)
-        for schema_field in fields(self.schema):
+        for schema_field in fields(schema):
             field_name = schema_field.name
-            mapping = getattr(self.schema, field_name)
+            mapping = getattr(schema, field_name)
             if not isinstance(mapping, MappingBase):
                 continue
 
             # Build schema path using schema's get_schema_path method
-            schema_path = self.schema.get_schema_path(field_name)
+            schema_path = schema.get_schema_path(field_name)
 
             # Get default value for this mapping (or MISSING sentinel)
             default_value = defaults.get(mapping, MISSING)

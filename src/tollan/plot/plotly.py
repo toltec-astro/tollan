@@ -59,11 +59,11 @@ class _SubplotSpec(TypedDict, total=False):
 class _Subplot(TypedDict):
     row: int
     col: int
-    fig: None | go.Figure
+    fig: go.Figure | None
     spec: _SubplotSpec
-    row_height: None | float
-    col_width: None | float
-    title: None | str
+    row_height: float | None
+    col_width: float | None
+    title: str | None
 
 
 @dataclass
@@ -73,7 +73,7 @@ class SubplotGrid:
     subplots: list[_Subplot] = field(default_factory=list)
     fig_layout: dict = field(default_factory=dict)
 
-    def add_subplot(  # noqa: PLR0913
+    def add_subplot(  # noqa: PLR0913, PLR0917
         self,
         row: int,
         col: int,
@@ -485,9 +485,7 @@ def adjust_subplot_colorbars(fig: go.Figure, size: float = 1.0) -> go.Figure:
                 "y": ydom[-1] - 0.5 * ysize,
             },
         }
-        if trace["type"] not in [  # pyright: ignore[reportCallIssue, reportArgumentType]
-            "heatmap",
-        ]:
+        if trace["type"] != "heatmap":  # pyright: ignore[reportCallIssue, reportArgumentType]
             if "colorbar" not in trace:
                 continue
             cdata = {"marker": cdata}
@@ -785,7 +783,7 @@ class ShowInDash:
                 dmc.TabsList(tab_list),
                 *tab_panel_list,
             ],
-            value=tab_list[0].value if tab_list else None,
+            value="tab-0" if tab_list else None,
         )
 
         # Wrap everything in a container
@@ -879,7 +877,8 @@ def show_in_dash(
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.start()
 
-    app = Dash(server=server_app, **kwargs)
+    # Dash accepts a Flask instance at runtime; its current stub omits that case.
+    app = Dash(server=cast("Any", server_app), **kwargs)
     app.enable_dev_tools(debug=True)
     show_in_dash = ShowInDash(data_items=data_items, title_text=title_text)
     app.layout = show_in_dash.layout()

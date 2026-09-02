@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -66,7 +67,7 @@ class TestObjectProxy:
 
     def test_proxy_wraps_methods(self):
         """Test that proxy properly wraps object methods."""
-        proxy: ObjectProxy[list[int]] = ObjectProxy()
+        proxy = cast("ObjectProxy[list[int]]", ObjectProxy())
         proxy.proxy_init([1, 2, 3])
         assert len(proxy) == 3  # type: ignore[arg-type]
         proxy.append(4)  # type: ignore[attr-defined]
@@ -110,7 +111,7 @@ class TestGetobj:
     def test_getobj_invalid_name_type(self):
         """Test getobj raises TypeError for non-string name."""
         with pytest.raises(TypeError, match="name must be a string"):
-            getobj(123)  # type: ignore[arg-type]
+            getobj(123)  # ty: ignore[invalid-argument-type]
 
 
 class TestGetname:
@@ -170,8 +171,8 @@ class TestModuleFromPath:
 
         try:
             module = module_from_path(temp_path, name="custom_module")
-            assert module.__name__ == "custom_module"  # type: ignore[attr-defined]
-            assert module.x == "hello"  # type: ignore[attr-defined]
+            assert module.__name__ == "custom_module"
+            assert module.x == "hello"
         finally:
             Path(temp_path).unlink()
 

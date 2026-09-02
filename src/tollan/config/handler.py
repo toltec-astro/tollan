@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, LiteralString
+from typing import TYPE_CHECKING, ClassVar, Literal, LiteralString, cast
+from weakref import WeakSet
 
 from pydantic import BaseModel
 
@@ -65,8 +66,11 @@ class ConfigHandler[
         'postgresql://localhost/db'
     """
 
-    config_model_cls: ClassVar[type[ConfigModelT]]  # type: ignore[misc]
+    # Set on concrete subclasses by __init_subclass__; runtime type:
+    # type[ConfigModelT].
+    config_model_cls: ClassVar
     _auto_cache_reset_registry: ClassVar[dict[type, set[str]]] = {}
+    _auto_cache_reset_markers: ClassVar[WeakSet[cached_property]] = WeakSet()
     _rc: RuntimeContextT
 
     def __init__(self, runtime_context: RuntimeContextT) -> None:
@@ -101,9 +105,9 @@ class ConfigHandler[
         cls._auto_cache_reset_registry[cls] = {"config"}
         # Scan for properties marked with auto_cache_reset decorator
         for name, value in cls.__dict__.items():
-            if isinstance(value, cached_property) and hasattr(
-                value,
-                "_auto_cache_reset_marker",
+            if (
+                isinstance(value, cached_property)
+                and value in cls._auto_cache_reset_markers
             ):
                 cls._auto_cache_reset_registry[cls].add(name)
 
@@ -144,10 +148,9 @@ class ConfigHandler[
         if not isinstance(prop, cached_property):
             msg = "auto_cache_reset can only be used on cached_property."
             raise TypeError(msg)
-        # Mark the property for auto-reset by adding an attribute
-        # The actual registration happens in __init_subclass__
-        # when we know the owner class
-        prop._auto_cache_reset_marker = True  # type: ignore[attr-defined]
+        # The owning class is not known until __init_subclass__, so retain a
+        # weak marker here and register the property name when the class forms.
+        cls._auto_cache_reset_markers.add(prop)
         return prop
 
     @property
@@ -256,7 +259,11 @@ class ConfigHandler[
             Validated config model instance
         """
         config_data = self.prepare_config_data(self.runtime_config)
-        return self.config_model_cls.model_validate(
+        config_model_cls = cast(
+            "type[ConfigModelT]",
+            type(self).config_model_cls,
+        )
+        return config_model_cls.model_validate(
             config_data,
             context=self.runtime_info.validation_context,
         )
