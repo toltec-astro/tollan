@@ -1,244 +1,129 @@
-"""Path validators and type aliases."""
+"""Context-aware Pydantic path annotations."""
 
 from __future__ import annotations
 
-import dataclasses
-from functools import cached_property
+from functools import cache, partial
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, Literal
 
-from pydantic.types import PathType as _PathType
-from pydantic_core import core_schema
+from pydantic import (
+    AfterValidator,
+    BeforeValidator,
+    DirectoryPath,
+    Field,
+    FilePath,
+    NewPath,
+    ValidationInfo,
+)
+from pydantic_core import PydanticCustomError
 
 if TYPE_CHECKING:
-    from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler, ValidationInfo
-    from pydantic.json_schema import JsonSchemaValue
-    from pydantic_core import CoreSchema
+    from typing_extensions import TypeForm
 
 __all__ = [
     "AbsAnyPath",
     "AbsDirectoryPath",
     "AbsFilePath",
     "AnyPath",
-    "PathValidator",
+    "path_field",
 ]
 
+type PathType = Literal["file", "dir", "new"]
+_PATH_JSON_INPUT = Annotated[str, Field(json_schema_extra={"format": "path"})]
+_PATH_BASE_TYPES: dict[PathType | None, Any] = {
+    "file": FilePath,
+    "dir": DirectoryPath,
+    "new": NewPath,
+    None: Path,
+}
 
-@dataclasses.dataclass(frozen=True)
-class PathValidator:
-    """Validator for Path types with rootpath context support.
 
-    This validator provides automatic handling of rootpath from validation context,
-    optional path resolution, and existence/type checking. It follows the validation
-    chain: rootpath → resolve → exists → type check.
-
-    Parameters
-    ----------
-    path_type : None | Literal["file", "dir", "new"]
-        Type of path to validate:
-        - "file": Must be an existing file
-        - "dir": Must be an existing directory
-        - "new": Must not exist, but parent must exist
-        - None: No type-specific validation
-    exists : bool, default=True
-        Whether to check if path exists (ignored for path_type="new")
-    resolve : bool, default=True
-        Whether to resolve path to absolute (expanduser + resolve)
-
-    Examples
-    --------
-    >>> from pydantic import BaseModel
-    >>> from pathlib import Path
-    >>> class Config(BaseModel):
-    ...     file: Annotated[Path, PathValidator(exists=False)]
-    >>> # Validate with rootpath context
-    >>> config = Config.model_validate(
-    ...     {"file": "data.txt"},
-    ...     context={"rootpath": "/base/dir"}
-    ... )
-    >>> str(config.file)
-    '/base/dir/data.txt'
-    """
-
-    path_type: Literal["file", "dir", "new"] | None = None
-    exists: bool = True
-    resolve: bool = True
-
-    def __post_init__(self) -> None:
-        """Adjust exists flag for 'new' path type."""
-        if self.path_type == "new":
-            # For 'new' paths, exists check is handled by _PathType
-            object.__setattr__(self, "exists", False)
-
-    def __get_pydantic_json_schema__(
-        self,
-        _core_schema: CoreSchema,
-        handler: GetJsonSchemaHandler,
-    ) -> JsonSchemaValue:
-        """Generate JSON schema for path field."""
-        if self._super is not None:
-            return self._super.__get_pydantic_json_schema__(_core_schema, handler)
-        js = handler(_core_schema)
-        js.update({"type": "string", "format": "path"})
-        return js
-
-    def __get_pydantic_core_schema__(
-        self,
-        source: type[Any],
-        handler: GetCoreSchemaHandler,
-    ) -> CoreSchema:
-        """Build validation chain: rootpath → resolve → exists → type check."""
-        # Step 1: Handle rootpath from context (before validation)
-        schema0 = core_schema.with_info_before_validator_function(
-            self.validate_path_rootpath,
-            schema=handler(source),
+def _prepare_path(value: Any, info: ValidationInfo) -> Path | str:
+    """Apply an optional validation-context root before Path validation."""
+    if not isinstance(value, str | Path):
+        error = PydanticCustomError(
+            "path_type",
+            "Input should be a string or Path object",
         )
-
-        # Step 2: Resolve if requested (after base Path validation)
-        if self.resolve:
-            schema1 = core_schema.with_info_after_validator_function(
-                self.resolve_path,
-                schema=schema0,
+        raise error
+    rootpath = None if info.context is None else info.context.get("rootpath")
+    if rootpath is None:
+        result = Path(value)
+    else:
+        try:
+            result = Path(rootpath).joinpath(value)
+        except TypeError as e:
+            error = PydanticCustomError(
+                "path_root_type",
+                "Validation context rootpath should be a string or Path object",
             )
-        else:
-            schema1 = schema0
+            raise error from e
+    return str(result) if info.mode == "json" else result
 
-        # Step 3: Check exists if requested
-        if self.exists:
-            schema2 = core_schema.with_info_after_validator_function(
-                self.validate_exists,
-                schema=schema1,
+
+def _validate_path(
+    path: Path,
+    *,
+    exists: bool,
+    resolve: bool,
+) -> Path:
+    """Apply the constraints not already supplied by Pydantic path types."""
+    if resolve:
+        path = path.expanduser().resolve()
+    if exists and not path.exists():
+        error = PydanticCustomError("path_not_found", "Path does not exist")
+        raise error
+    return path
+
+
+@cache
+def _path_metadata(
+    *,
+    exists: bool,
+    resolve: bool,
+) -> tuple[Any, ...]:
+    return (
+        BeforeValidator(_prepare_path, json_schema_input_type=_PATH_JSON_INPUT),
+        AfterValidator(
+            partial(
+                _validate_path,
+                exists=exists,
+                resolve=resolve,
             )
-        else:
-            schema2 = schema1
-
-        # Step 4: Apply type-specific validation (file/dir/new)
-        if self._super is not None:
-            return core_schema.chain_schema(
-                [
-                    schema2,
-                    self._super.__get_pydantic_core_schema__(
-                        source=source,
-                        handler=handler,
-                    ),
-                ],
-            )
-
-        return schema2
-
-    @cached_property
-    def _super(self) -> _PathType | None:
-        """Get pydantic's native PathType validator if path_type is specified."""
-        if self.path_type is not None:
-            return _PathType(self.path_type)
-        return None
-
-    @staticmethod
-    def validate_exists(path: Path, info: ValidationInfo) -> Path:
-        """Ensure path exists.
-
-        Parameters
-        ----------
-        path : Path
-            Path to validate
-        info : ValidationInfo
-            Pydantic validation info
-
-        Returns
-        -------
-        Path
-            The validated path if it exists
-
-        Raises
-        ------
-        ValueError
-            If path does not exist
-        """
-        if path.exists():
-            return path
-        msg = f"Path {path} does not exist."
-        raise ValueError(msg)
-
-    @staticmethod
-    def validate_path_rootpath(path: Any, info: ValidationInfo) -> Path:
-        """Handle rootpath from validation context.
-
-        This runs before Path validation, joining the input with rootpath
-        from context if present.
-
-        Parameters
-        ----------
-        path : Any
-            Input path (string or Path object)
-        info : ValidationInfo
-            Pydantic validation info with optional rootpath in context
-
-        Returns
-        -------
-        Path
-            Path joined with rootpath if present, otherwise original path
-
-        Raises
-        ------
-        TypeError
-            If path is not a string or Path object
-        """
-        if not isinstance(path, str | Path):
-            msg = f"invalid path data type {type(path)}"
-            raise TypeError(msg)
-
-        if info.context is not None:
-            rootpath = info.context.get("rootpath", None)
-        else:
-            rootpath = None
-
-        if rootpath is not None:
-            return Path(rootpath).joinpath(path)
-        return Path(path)
-
-    @staticmethod
-    def resolve_path(path: Path, info: ValidationInfo) -> Path:
-        """Resolve path to absolute.
-
-        Expands user home directory (~) and resolves to absolute path.
-
-        Parameters
-        ----------
-        path : Path
-            Path to resolve
-        info : ValidationInfo
-            Pydantic validation info (unused but required by interface)
-
-        Returns
-        -------
-        Path
-            Absolute path with user home directory expanded
-        """
-        return path.expanduser().resolve()
+        ),
+    )
 
 
-# Path type aliases with automatic rootpath support
+_ANY_PATH_METADATA = _path_metadata(exists=False, resolve=False)
+_ABS_TYPED_PATH_METADATA = _path_metadata(exists=False, resolve=True)
+_ABS_ANY_PATH_METADATA = _path_metadata(exists=False, resolve=True)
 
-AnyPath = Annotated[Path, PathValidator(path_type=None, exists=False, resolve=False)]
-"""Basic Path with no validation or resolution."""
+type AnyPath = Annotated[Path, *_ANY_PATH_METADATA]
+"""A Path with optional validation-context root and no filesystem checks."""
 
-AbsFilePath = Annotated[
-    Path,
-    PathValidator(path_type="file", exists=True, resolve=True),
-]
-"""Path to an existing file, resolved to absolute, with automatic rootpath support."""
+type AbsFilePath = Annotated[FilePath, *_ABS_TYPED_PATH_METADATA]
+"""An existing file resolved to an absolute path."""
 
-AbsDirectoryPath = Annotated[
-    Path,
-    PathValidator(path_type="dir", exists=True, resolve=True),
-]
-"""Path to an existing directory, resolved to absolute.
+type AbsDirectoryPath = Annotated[DirectoryPath, *_ABS_TYPED_PATH_METADATA]
+"""An existing directory resolved to an absolute path."""
 
-Automatically supports rootpath resolution.
-"""
+type AbsAnyPath = Annotated[Path, *_ABS_ANY_PATH_METADATA]
+"""Any path resolved to absolute form without an existence check."""
 
-AbsAnyPath = Annotated[Path, PathValidator(path_type=None, exists=False, resolve=True)]
-"""Any path resolved to absolute (no existence check).
 
-Automatically supports rootpath resolution.
-"""
+def path_field(
+    *,
+    path_type: PathType | None = None,
+    exists: bool = True,
+    resolve: bool = True,
+) -> TypeForm[Path]:
+    """Build a context-aware Path annotation with filesystem constraints."""
+    base_type = _PATH_BASE_TYPES[path_type]
+    # FilePath, DirectoryPath, and NewPath own their filesystem checks and
+    # standard Pydantic error messages. Only an unconstrained Path needs the
+    # separate generic existence check.
+    check_exists = exists and path_type is None
+    return Annotated[
+        base_type,
+        *_path_metadata(exists=check_exists, resolve=resolve),
+    ]

@@ -63,6 +63,8 @@ _url_attrs = [
     "fragment",
 ]
 
+_validate_optional_int = TypeAdapter(int | None).validate_python
+
 
 def _url_replace(url, **kwargs):
     def _to_str(d, null_value):
@@ -73,7 +75,7 @@ def _url_replace(url, **kwargs):
     for attr in _url_attrs:
         v = kwargs[attr] if attr in kwargs else getattr(url, attr)
         if attr == "port":
-            v = TypeAdapter(int | None).validate_python(v)
+            v = _validate_optional_int(v)
         elif attr in ["scheme", "host"]:
             v = _to_str(v, null_value="")
         elif attr == "path":

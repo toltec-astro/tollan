@@ -11,8 +11,8 @@ data structures using astropy, including:
 
 from __future__ import annotations
 
-from .path import AbsAnyPath, AbsDirectoryPath, AbsFilePath, AnyPath, PathValidator
-from .pydantic import FieldDefaults, GenerateJsonSchema
+from .path import AbsAnyPath, AbsDirectoryPath, AbsFilePath, AnyPath, path_field
+from .pydantic import FieldDefaults
 from .quantity import (
     AngleQuantityField,
     DimensionlessQuantityField,
@@ -26,28 +26,22 @@ from .skycoord import SkyCoordField
 from .time import IsoTimeField, TimeField, UnixTimeField, time_field
 
 __all__ = [
-    # Path types
     "AbsAnyPath",
     "AbsDirectoryPath",
     "AbsFilePath",
     "AngleQuantityField",
     "AnyPath",
     "DimensionlessQuantityField",
-    # Pydantic utilities
     "FieldDefaults",
     "FrequencyQuantityField",
-    "GenerateJsonSchema",
     "IsoTimeField",
     "LengthQuantityField",
-    "PathValidator",
-    # Quantity types
     "QuantityField",
-    # SkyCoord types
     "SkyCoordField",
-    # Time types
     "TimeField",
     "TimeQuantityField",
     "UnixTimeField",
+    "path_field",
     "quantity_field",
     "time_field",
 ]

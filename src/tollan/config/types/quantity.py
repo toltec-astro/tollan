@@ -1,18 +1,15 @@
-"""Quantity field validators and types."""
+"""Pydantic annotations for scalar Astropy quantities."""
 
 from __future__ import annotations
 
-import dataclasses
 import numbers
-from functools import cached_property
-from typing import TYPE_CHECKING, Annotated, Any, ClassVar
+from functools import lru_cache, partial
+from typing import TYPE_CHECKING, Annotated, Any, get_args
 
 import astropy.units as u
 from astropy.units import Quantity, get_physical_type
-
-from ...utils.typing import get_typing_args
-from .pydantic import GenerateJsonSchema
-from .validator import _SimpleTypeValidatorMixin
+from pydantic import Field, PlainSerializer, PlainValidator, WithJsonSchema
+from pydantic_core import PydanticCustomError
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -25,187 +22,170 @@ __all__ = [
     "FrequencyQuantityField",
     "LengthQuantityField",
     "QuantityField",
-    "QuantityValidator",
     "TimeQuantityField",
     "get_physical_type_from_quantity_type",
     "quantity_field",
 ]
 
+_QUANTITY_INPUT_TYPE = str | int | float
+_QUANTITY_SCHEMA_BASE: dict[str, Any] = {
+    "x-tollan-python-type": "astropy.units.Quantity",
+    "x-tollan-scalar": True,
+}
 
-@dataclasses.dataclass(frozen=True)
-class QuantityValidator(_SimpleTypeValidatorMixin[Quantity]):
-    """Validator for astropy.units.Quantity with physical type constraints.
 
-    Parameters
-    ----------
-    physical_types_allowed : None | str | Sequence[str], optional
-        Allowed physical types (e.g., 'length', 'angle', 'time')
+def _normalize_physical_types(
+    physical_types: str | Sequence[str] | None,
+) -> tuple[u.PhysicalType, ...]:
+    if physical_types is None:
+        return ()
+    values = (physical_types,) if isinstance(physical_types, str) else physical_types
+    try:
+        return tuple(_resolve_physical_type(value) for value in values)
+    except (TypeError, ValueError) as e:
+        msg = f"Unknown physical type in {tuple(values)!r}"
+        raise ValueError(msg) from e
 
-    Examples
-    --------
-    >>> from pydantic import BaseModel
-    >>> Length = Annotated[Quantity, QuantityValidator(physical_types_allowed='length')]
-    >>> class MyModel(BaseModel):
-    ...     distance: Length
-    >>> model = MyModel(distance="5.0 m")
-    >>> model.distance
-    <Quantity 5. m>
-    """
 
-    physical_types_allowed: str | Sequence[str] | None = None
-
-    _field_type: ClassVar = Quantity
-    _field_type_name: ClassVar = "Quantity"
-    _field_type_error_message: ClassVar = (
-        "Quantity, string, or number is required, got {type}."
-    )
-    _field_value_types: ClassVar = {numbers.Number, str}
-
-    @cached_property
-    def _field_physical_types(self) -> tuple[str, ...] | None:
-        """Get normalized physical types."""
-        if self.physical_types_allowed is None:
-            return None
-        if isinstance(self.physical_types_allowed, str):
-            return (self.physical_types_allowed,)
-        return tuple(self.physical_types_allowed)
-
-    @cached_property
-    def _field_value_json_schema_stub_impl(self) -> dict[str, Any]:  # pyright: ignore[reportIncompatibleVariableOverride]
-        """JSON schema stub for Quantity."""
-        schema: dict[str, Any] = {
-            "type": "string",
-            "format": "quantity",
-        }
-        types = self._field_physical_types
-        if types is not None:
-            schema["physical_types_allowed"] = types
-        return schema
-
-    @cached_property
-    def _field_value_error_message(self) -> str:  # pyright: ignore[reportIncompatibleVariableOverride]
-        """Get error message for value validation."""
-        if self._field_physical_types is None:
-            return "Invalid quantity: {value}"
-        return (
-            f"Quantity with physical type {self._field_physical_types} "
-            f"required, got {{value}}"
-        )
-
-    def _field_validate_value(self, value: Quantity, *args, **kwargs) -> Quantity:
-        """Validate physical type constraints."""
-        value = super()._field_validate_value(value, *args, **kwargs)
-        physical_types = self._field_physical_types
-        if physical_types is None:
-            return value
-
+def _validate_quantity(
+    value: Any,
+    *,
+    physical_types: tuple[u.PhysicalType, ...] = (),
+) -> Quantity:
+    """Parse a scalar quantity and enforce optional physical types."""
+    if isinstance(value, Quantity):
+        quantity = value
+    elif isinstance(value, str) or (
+        isinstance(value, numbers.Real) and not isinstance(value, bool)
+    ):
         try:
-            actual_type = get_physical_type(value)
-        except ValueError as e:
-            msg = f"Cannot determine physical type of {value!r}"
-            raise ValueError(
-                msg,
-            ) from e
+            quantity = Quantity(value)
+        except (TypeError, ValueError) as e:
+            error = PydanticCustomError(
+                "quantity_parsing",
+                "Input should be a valid scalar quantity",
+            )
+            raise error from e
+    else:
+        error = PydanticCustomError(
+            "quantity_type",
+            "Input should be an Astropy Quantity, string, or real number",
+        )
+        raise error
 
-        # actual_type._physical_type can be a list or string
-        actual_physical = actual_type._physical_type
-        if isinstance(actual_physical, str):
-            actual_physical = [actual_physical]
+    if quantity.shape != ():
+        error = PydanticCustomError(
+            "quantity_scalar",
+            "Quantity should be scalar, got shape {shape}",
+            {"shape": str(quantity.shape)},
+        )
+        raise error
 
-        # Check if any of the actual physical types match allowed types
-        if not any(pt in physical_types for pt in actual_physical):
-            msg = f"Physical type {physical_types} required, got {actual_physical}"
-            raise ValueError(msg)
+    if not physical_types:
+        return quantity
+    try:
+        actual_type = get_physical_type(quantity.unit)
+    except ValueError as e:
+        error = PydanticCustomError(
+            "quantity_physical_type",
+            "Cannot determine the quantity physical type",
+        )
+        raise error from e
+    if actual_type not in physical_types:
+        error = PydanticCustomError(
+            "quantity_physical_type",
+            "Quantity should have physical type {expected}, got {actual}",
+            {
+                "expected": ", ".join(str(item) for item in physical_types),
+                "actual": str(actual_type),
+            },
+        )
+        raise error
+    return quantity
 
-        return value
+
+def _serialize_quantity(value: Quantity) -> str:
+    """Use Astropy's parseable generic quantity syntax."""
+    return value.to_string()
 
 
-_default_quantity_validator = QuantityValidator()
-type QuantityField = Annotated[Quantity, _default_quantity_validator]
-type LengthQuantityField = Annotated[
-    Quantity,
-    QuantityValidator(physical_types_allowed="length"),
-]
-type AngleQuantityField = Annotated[
-    Quantity,
-    QuantityValidator(physical_types_allowed="angle"),
-]
-type FrequencyQuantityField = Annotated[
-    Quantity,
-    QuantityValidator(physical_types_allowed="frequency"),
-]
-type TimeQuantityField = Annotated[
-    Quantity,
-    QuantityValidator(physical_types_allowed="time"),
-]
-type DimensionlessQuantityField = Annotated[
-    Quantity,
-    QuantityValidator(physical_types_allowed="dimensionless"),
-]
+_QUANTITY_SERIALIZER = PlainSerializer(_serialize_quantity, return_type=str)
+
+
+@lru_cache(maxsize=128)
+def _resolve_physical_type(value: str) -> u.PhysicalType:
+    return get_physical_type(value)
+
+
+@lru_cache(maxsize=128)
+def _quantity_metadata(
+    physical_types: tuple[u.PhysicalType, ...],
+) -> tuple[Any, ...]:
+    schema_extra = dict(_QUANTITY_SCHEMA_BASE)
+    if physical_types:
+        schema_extra["x-tollan-physical-types"] = [str(item) for item in physical_types]
+    serialization_schema = {
+        "type": "string",
+        "format": "quantity",
+        "examples": ["5.0 m"],
+        **schema_extra,
+    }
+    validator = partial(_validate_quantity, physical_types=physical_types)
+    return (
+        PlainValidator(validator, json_schema_input_type=_QUANTITY_INPUT_TYPE),
+        _QUANTITY_SERIALIZER,
+        WithJsonSchema(serialization_schema, mode="serialization"),
+        Field(json_schema_extra=schema_extra),
+        *physical_types,
+    )
+
+
+_QUANTITY_METADATA = _quantity_metadata(())
+_LENGTH_METADATA = _quantity_metadata((_resolve_physical_type("length"),))
+_ANGLE_METADATA = _quantity_metadata((_resolve_physical_type("angle"),))
+_FREQUENCY_METADATA = _quantity_metadata((_resolve_physical_type("frequency"),))
+_TIME_METADATA = _quantity_metadata((_resolve_physical_type("time"),))
+_DIMENSIONLESS_METADATA = _quantity_metadata((_resolve_physical_type("dimensionless"),))
+
+type QuantityField = Annotated[Quantity, *_QUANTITY_METADATA]
+type LengthQuantityField = Annotated[Quantity, *_LENGTH_METADATA]
+type AngleQuantityField = Annotated[Quantity, *_ANGLE_METADATA]
+type FrequencyQuantityField = Annotated[Quantity, *_FREQUENCY_METADATA]
+type TimeQuantityField = Annotated[Quantity, *_TIME_METADATA]
+type DimensionlessQuantityField = Annotated[Quantity, *_DIMENSIONLESS_METADATA]
 
 
 def quantity_field(
     physical_types_allowed: str | Sequence[str] | None = None,
 ) -> TypeForm[Quantity]:
-    """Create a pydantic field type for validating astropy Quantity.
+    """Build a reusable scalar Quantity annotation.
 
-    Parameters
-    ----------
-    physical_types_allowed : None | str | Sequence[str], optional
-        Allowed physical types
-
-    Returns
-    -------
-    Annotated[Quantity, QuantityValidator]
-        Pydantic-compatible quantity field
-
-    Examples
-    --------
-    >>> Speed = quantity_field(physical_types_allowed='speed')
+    ``physical_types_allowed`` uses Astropy's public physical-type registry, so
+    aliases and synonyms evolve with Astropy rather than a Tollan-maintained
+    table.
     """
-    return Annotated[
-        Quantity,
-        QuantityValidator(physical_types_allowed=physical_types_allowed),
-    ]
+    physical_types = _normalize_physical_types(physical_types_allowed)
+    return Annotated[Quantity, *_quantity_metadata(physical_types)]
 
 
-def get_physical_type_from_quantity_type(cls: type) -> u.PhysicalType | None:
-    """Extract physical type from a Quantity type alias annotation.
-
-    Parameters
-    ----------
-    cls : type
-        Type to inspect (typically an Annotated Quantity type)
-
-    Returns
-    -------
-    astropy.units.PhysicalType | None
-        Physical type if found, None otherwise
-
-    Examples
-    --------
-    >>> from typing import Annotated
-    >>> Length = Annotated[Quantity, QuantityValidator(physical_types_allowed='length')]
-    >>> # Function extracts physical type from the annotation metadata
-    >>> get_physical_type_from_quantity_type(Length)  # doctest: +SKIP
-    PhysicalType('length')
-    """
-    # Extract all typing args and check for PhysicalType or UnitBase instances
-    args = get_typing_args(cls)
-
-    for arg in args:
-        # Check for PhysicalType directly
+def get_physical_type_from_quantity_type(cls: Any) -> u.PhysicalType | None:
+    """Return the single physical-type constraint carried by an annotation."""
+    pending = [cls]
+    seen: set[int] = set()
+    physical_types: set[u.PhysicalType] = set()
+    while pending:
+        arg = pending.pop()
+        if id(arg) in seen:
+            continue
+        seen.add(id(arg))
         if isinstance(arg, u.PhysicalType):
-            return arg
-        # Check for UnitBase (includes Unit, IrreducibleUnit, etc.)
-        if isinstance(arg, u.UnitBase):
-            return arg.physical_type
-
+            physical_types.add(arg)
+        elif isinstance(arg, u.UnitBase):
+            physical_types.add(arg.physical_type)
+        pending.extend(get_args(arg))
+        alias_value = getattr(arg, "__value__", None)
+        if alias_value is not None:
+            pending.append(alias_value)
+    if len(physical_types) == 1:
+        return physical_types.pop()
     return None
-
-
-# Register serializer for Quantity
-GenerateJsonSchema.register_default_serializers(
-    Quantity,
-    _default_quantity_validator._field_serialize,
-)

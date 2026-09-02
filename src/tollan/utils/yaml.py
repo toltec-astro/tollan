@@ -343,7 +343,7 @@ def yaml_load(source: str | os.PathLike | TextIO) -> object:
     if isinstance(source, str):
         try:
             path = Path(source)
-            if path.exists() and path.is_file():
+            if path.is_file():
                 return _read_filepath(path)
         except (OSError, ValueError):
             pass

@@ -26,7 +26,7 @@ class FrozenBaseModel(BaseModel):
     - Frozen by default
     - Strict type validation
     - YAML loading/dumping support
-    - Custom JSON schema generation
+    - JSON Schema generation through Pydantic
 
     Examples
     --------
@@ -86,27 +86,3 @@ class FrozenBaseModel(BaseModel):
         """
         d = cls.yaml_load(yaml_source)
         return cls.model_validate(d, **kwargs)
-
-    @classmethod
-    def model_json_schema(cls, *args: Any, **kwargs: Any) -> dict[str, Any]:
-        """Generate JSON schema using custom schema generator.
-
-        This uses our custom GenerateJsonSchema which knows how to
-        serialize astronomy types (Time, Quantity) in default values.
-
-        Parameters
-        ----------
-        *args
-            Arguments passed to BaseModel.model_json_schema()
-        **kwargs
-            Keyword arguments passed to BaseModel.model_json_schema()
-
-        Returns
-        -------
-        dict
-            JSON schema for the model
-        """
-        from .types.pydantic import GenerateJsonSchema  # noqa: PLC0415
-
-        kwargs.setdefault("schema_generator", GenerateJsonSchema)
-        return super().model_json_schema(*args, **kwargs)
