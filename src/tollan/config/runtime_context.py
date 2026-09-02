@@ -11,7 +11,10 @@ from pydantic import ConfigDict, Field
 from ..utils.cli import dict_from_cli_args
 from ..utils.dict import rupdate
 from ..utils.log import logger, logit
-from ..utils.typing import ensure_cls_attr_from_type_args
+from ..utils.typing import (
+    GenericBindingRequirement,
+    resolve_concrete_generic_bindings,
+)
 from .base import FrozenBaseModel
 from .runtime_info import RuntimeInfo
 from .sources import (
@@ -145,13 +148,16 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             TypeError: If runtime_config_cls is explicitly set (use type param instead)
         """
         super().__init_subclass__(**kwargs)
-        ensure_cls_attr_from_type_args(
+        bindings = resolve_concrete_generic_bindings(
             cls,
-            "runtime_config_cls",
-            max_depth=2,
-            bound=RuntimeConfig,
-            skip_on_exist=False,
+            RuntimeContext,
+            RuntimeConfigT=GenericBindingRequirement(
+                "runtime_config_cls",
+                RuntimeConfig,
+            ),
         )
+        if bindings is not None:
+            cls.runtime_config_cls = bindings["RuntimeConfigT"]
 
     def __init__(
         self,

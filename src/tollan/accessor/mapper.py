@@ -5,7 +5,10 @@ from __future__ import annotations
 from dataclasses import fields
 from typing import Any, ClassVar, Self, cast
 
-from ..utils.typing import get_typing_args
+from ..utils.typing import (
+    GenericBindingRequirement,
+    resolve_concrete_generic_bindings,
+)
 from .schema import MISSING, MappedField, MappedFieldSource, MappingBase, Schema
 
 __all__ = [
@@ -36,23 +39,20 @@ class Mapper[SchemaT: Schema]:
     _mapped_fields: dict[MappingBase, MappedField]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Auto-instantiate schema from generic parameter."""
+        """Instantiate the schema from the resolved origin type variable."""
         super().__init_subclass__(**kwargs)
 
-        # Get schema class - returns None for generic base classes with TypeVars,
-        # or raises ValueError for concrete classes missing a schema
-        schema_cls = get_typing_args(
+        bindings = resolve_concrete_generic_bindings(
             cls,
-            max_depth=2,
-            bound=Schema,
-            unique=True,
+            Mapper,
+            SchemaT=GenericBindingRequirement("schema", Schema),
         )
-
-        # Only set schema for concrete classes (generic base classes get None)
-        if schema_cls is not None:
-            if schema_cls not in cls._schema_instances:
-                cls._schema_instances[schema_cls] = schema_cls()
-            cls.schema = cls._schema_instances[schema_cls]
+        if bindings is None:
+            return
+        schema_cls = bindings["SchemaT"]
+        if schema_cls not in cls._schema_instances:
+            cls._schema_instances[schema_cls] = schema_cls()
+        cls.schema = cls._schema_instances[schema_cls]
 
     def __init__(
         self,

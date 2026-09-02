@@ -3,12 +3,23 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import TYPE_CHECKING, ClassVar, Literal, LiteralString, cast
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Literal,
+    LiteralString,
+    cast,
+    get_args,
+    get_origin,
+)
 from weakref import WeakSet
 
 from pydantic import BaseModel
 
-from ..utils.typing import ensure_cls_attr_from_type_args
+from ..utils.typing import (
+    GenericBindingRequirement,
+    resolve_concrete_generic_bindings,
+)
 from .runtime_context import RuntimeContext
 
 if TYPE_CHECKING:
@@ -84,19 +95,24 @@ class ConfigHandler[
         self._rc = runtime_context
 
     def __init_subclass__(cls, **kwargs):
-        """Register subclass and infer config_model_cls from Generic parameter.
+        """Register subclass and derive config_model_cls from its bound type.
 
         This automatically:
         - Extracts ConfigModelT from Generic[ConfigModelT]
         - Registers the handler class with RuntimeContext
         """
         super().__init_subclass__(**kwargs)
-        ensure_cls_attr_from_type_args(
+        bindings = resolve_concrete_generic_bindings(
             cls,
-            "config_model_cls",
-            max_depth=2,
-            bound=BaseModel,
+            ConfigHandler,
+            ConfigModelT=GenericBindingRequirement(
+                "config_model_cls",
+                BaseModel,
+            ),
         )
+        if bindings is None:
+            return
+        cls.config_model_cls = bindings["ConfigModelT"]
         # Register with RuntimeContext (avoid circular import)
         from .runtime_context import RuntimeContext  # noqa: PLC0415
 
@@ -365,14 +381,28 @@ class SubConfigKeyTransformer[KeyT: LiteralString]:
     subconfig_key: ClassVar[str]
 
     def __init_subclass__(cls, **kwargs):
-        """Extract subconfig_key from Generic parameter."""
+        """Extract subconfig_key from its resolved type-variable binding."""
         super().__init_subclass__(**kwargs)
-        ensure_cls_attr_from_type_args(
+        bindings = resolve_concrete_generic_bindings(
             cls,
-            "subconfig_key",
-            max_depth=3,
-            type_filter=str,
+            SubConfigKeyTransformer,
+            KeyT=GenericBindingRequirement("subconfig_key"),
         )
+        if bindings is None:
+            return
+        key_annotation = bindings["KeyT"]
+        key_values = get_args(key_annotation)
+        if (
+            get_origin(key_annotation) is not Literal
+            or len(key_values) != 1
+            or not isinstance(key_values[0], str)
+        ):
+            msg = (
+                f"{cls.__name__} must bind KeyT to one string Literal, "
+                f"got {key_annotation!r}"
+            )
+            raise TypeError(msg)
+        cls.subconfig_key = key_values[0]
 
     @classmethod
     def prepare_config_data(cls, runtime_config: RuntimeConfig) -> dict:

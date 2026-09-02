@@ -1,269 +1,334 @@
-"""Type introspection utilities for working with generic types."""
+"""Runtime resolution for user-defined generic class bindings."""
 
 from __future__ import annotations
 
-import functools
-import inspect
-from typing import TYPE_CHECKING, Any, TypeVar, get_args
+import types
+import typing
+from dataclasses import dataclass
+from functools import reduce
+from operator import or_
+from typing import TYPE_CHECKING, Any, TypeVar, get_args, get_origin
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Iterator
 
 __all__ = [
-    "ensure_cls_attr_from_type_args",
-    "get_typing_args",
+    "GenericBindingRequirement",
+    "GenericBindings",
+    "resolve_concrete_generic_bindings",
+    "resolve_generic_bindings",
 ]
 
 
-def get_typing_args(  # noqa: C901
-    cls: Any,
-    max_depth: int | None = 1,
-    bound: type | None = None,
-    type_filter: type | None = None,
-    *,
-    unique: bool = False,
+@dataclass(frozen=True)
+class GenericBindingRequirement:
+    """Runtime policy for one origin type variable used by a framework class.
+
+    ``runtime_attr`` names the class attribute derived from the resolved type. It
+    is used to reject a second, conflicting source of truth. ``bound`` enables
+    the common requirement that the resolved type be a subclass of a runtime
+    base.
+    """
+
+    runtime_attr: str
+    bound: type | None = None
+
+
+@dataclass(frozen=True)
+class GenericBindings:
+    """Resolved types for the variables declared by one generic origin.
+
+    ``type_vars`` and ``resolved_types`` retain the order declared by ``origin``.
+    A resolved type may still contain a type variable when the inspected class
+    is an intermediate generic class.
+    """
+
+    origin: type
+    type_vars: tuple[Any, ...]
+    resolved_types: tuple[Any, ...]
+
+    def __getitem__(self, key: int | str) -> Any:
+        """Return a resolved type by position or origin type-variable name."""
+        if isinstance(key, int):
+            return self.resolved_types[key]
+        for type_var, resolved_type in zip(
+            self.type_vars,
+            self.resolved_types,
+            strict=True,
+        ):
+            if type_var.__name__ == key:
+                return resolved_type
+        msg = f"{self.origin.__qualname__} has no type variable {key!r}"
+        raise KeyError(msg)
+
+    @property
+    def unresolved(self) -> tuple[str, ...]:
+        """Names of bindings that still contain runtime type variables."""
+        return tuple(
+            type_var.__name__
+            for type_var, resolved_type in zip(
+                self.type_vars,
+                self.resolved_types,
+                strict=True,
+            )
+            if _contains_type_parameter(resolved_type)
+        )
+
+    @property
+    def is_resolved(self) -> bool:
+        """Whether every origin type variable has a concrete resolved type."""
+        return not self.unresolved
+
+
+def _declared_type_vars(cls: type) -> tuple[Any, ...]:
+    """Return the PEP 695 type variables declared directly by ``cls``."""
+    return tuple(getattr(cls, "__type_params__", ()))
+
+
+def _contains_type_parameter(value: Any) -> bool:
+    if isinstance(value, TypeVar):
+        return True
+    if isinstance(value, list | tuple):
+        return any(_contains_type_parameter(item) for item in value)
+    return any(_contains_type_parameter(item) for item in get_args(value))
+
+
+def _substitute(value: Any, substitutions: dict[Any, Any]) -> Any:
+    """Substitute type variables recursively through a type expression."""
+    if isinstance(value, TypeVar):
+        replacement = substitutions.get(value, value)
+        return (
+            value if replacement is value else _substitute(replacement, substitutions)
+        )
+    if isinstance(value, list | tuple):
+        resolved_items = (_substitute(item, substitutions) for item in value)
+        if isinstance(value, list):
+            return list(resolved_items)
+        return tuple(resolved_items)
+
+    parts = get_args(value)
+    if not parts:
+        return value
+    resolved_parts = tuple(_substitute(item, substitutions) for item in parts)
+    if resolved_parts == parts:
+        return value
+    return _rebuild_type_expression(value, parts, resolved_parts)
+
+
+def _rebuild_type_expression(
+    value: Any,
+    original_parts: tuple[Any, ...],
+    resolved: tuple[Any, ...],
 ) -> Any:
-    """Extract typing arguments from a class's generic base classes.
-
-    Recursively traverses the class hierarchy to find all typing arguments
-    from Generic base classes. Can filter results by bound (subclass check)
-    or type_filter (instance check).
-
-    Parameters
-    ----------
-    cls : Any
-        Class or type construct to extract typing arguments from
-    max_depth : int | None, optional
-        Maximum depth to traverse the class hierarchy. None means unlimited.
-        Default is 1.
-    bound : type | None, optional
-        Filter results to only include classes that are subclasses of this type
-    type_filter : type | None, optional
-        Filter results to only include instances of this type
-    unique : bool, optional
-        If True, expect exactly one result and return it directly (not a list).
-        Returns None for generic base classes with unresolved TypeVars.
-        Raises ValueError if multiple results found or no results for concrete classes.
-
-    Returns
-    -------
-    list[Any] | Any | None
-        List of typing arguments found, single argument if unique=True,
-        or None if unique=True and class is a generic base with TypeVars
-
-    Raises
-    ------
-    ValueError
-        If both bound and type_filter are specified, or if unique=True but
-        result is not exactly one element (unless generic base class)
-
-    Examples
-    --------
-    >>> from typing import Generic, TypeVar
-    >>> from pydantic import BaseModel
-    >>> T = TypeVar('T')
-    >>> class MyHandler(Generic[T]):
-    ...     pass
-    >>> class MyConfig(BaseModel):
-    ...     pass
-    >>> class ConcreteHandler(MyHandler[MyConfig]):
-    ...     pass
-    >>> get_typing_args(ConcreteHandler, bound=BaseModel)  # doctest: +ELLIPSIS
-    [<class '...MyConfig'>]
-    >>> get_typing_args(  # doctest: +ELLIPSIS
-    ...     ConcreteHandler, bound=BaseModel, unique=True
-    ... )
-    <class '...MyConfig'>
-
-    Notes
-    -----
-    This function is useful for automatically inferring type parameters from
-    Generic base classes, particularly for frameworks that use Generic[T]
-    patterns for dependency injection or configuration.
-    """
-
-    def _get_args(bases: tuple, depth: int = 0) -> list[Any]:
-        """Recursively collect typing arguments from base classes."""
-        result: list[Any] = []
-        for c in bases:
-            # First, try to extract typing args directly
-            typing_args = get_args(c)
-            if typing_args:
-                # This is a parameterized generic (e.g., Base[str])
-                # Recurse into the args if within depth
-                if max_depth is None or depth < max_depth:
-                    result.extend(_get_args(typing_args, depth=depth + 1))
-                else:
-                    # At max depth, include the args directly
-                    result.extend(typing_args)
-            elif hasattr(c, "__orig_bases__") and (
-                max_depth is None or depth < max_depth
-            ):
-                # No typing args, but has __orig_bases__ - recurse
-                result.extend(_get_args(c.__orig_bases__, depth=depth + 1))
-            elif depth > 0:
-                # Leaf node at non-root depth - this is a concrete type arg
-                result.append(c)
-            # else: root level with no args - skip
-        return result
-
-    raw_args = _get_args((cls,))
-
-    # Check if this is a generic base class with unresolved type parameters
-
-    has_type_vars = any(isinstance(arg, TypeVar) for arg in raw_args)
-    # Always filter out TypeVars - they are placeholders, not concrete types
-    args = [arg for arg in raw_args if not isinstance(arg, TypeVar)]
-
-    def _handle_unique(args: list[Any]) -> Any:
-        """Handle unique result requirement."""
-        if len(args) == 1:
-            return args[0]
-        # For generic base classes with TypeVars, allow zero filtered results
-        if len(args) == 0 and has_type_vars:
-            return None
-        msg = f"Expected exactly one typing arg, found {len(args)}"
-        raise ValueError(msg)
-
-    # If no additional filtering requested, return TypeVar-filtered args
-    if bound is None and type_filter is None:
-        if unique:
-            return _handle_unique(args)
-        return args
-
-    # Apply additional bound or type_filter if specified
-    # Validate that only one filter is specified
-    if bound is not None and type_filter is not None:
-        msg = "Only one of 'bound' or 'type_filter' can be specified"
-        raise ValueError(msg)
-
-    # Define filter function
-    def _issubclass_safe(arg: Any, cls: type) -> bool:
-        """Check if arg is a class and subclass of cls."""
-        if inspect.isclass(arg):
-            return issubclass(arg, cls)
-        return False
-
-    def _isinstance_safe(arg: Any, cls: type) -> bool:
-        """Check if arg is an instance of cls."""
-        return isinstance(arg, cls)
-
-    # Apply appropriate filter
-    filter_func: Callable[[Any], bool]
-    if bound is not None:
-        filter_func = functools.partial(_issubclass_safe, cls=bound)
-    elif type_filter is not None:
-        filter_func = functools.partial(_isinstance_safe, cls=type_filter)
-    else:
-        # This should never happen due to earlier validation
-        msg = "Either 'bound' or 'type_filter' must be specified"
-        raise AssertionError(msg)
-
-    filtered_args = [arg for arg in args if filter_func(arg)]
-
-    # Handle unique result requirement
-    if unique:
-        return _handle_unique(filtered_args)
-    return filtered_args
+    """Rebuild a parameterized expression after TypeVar substitution."""
+    origin = get_origin(value)
+    if origin is typing.Annotated:
+        return typing.Annotated[resolved[0], *original_parts[1:]]
+    if origin is typing.Literal:
+        return typing.Literal[resolved]
+    if origin in (typing.Union, types.UnionType):
+        return reduce(or_, resolved)
+    try:
+        item = resolved[0] if len(resolved) == 1 else resolved
+        return origin[item]
+    except TypeError as e:
+        msg = f"Unable to substitute type variables in {value!r}"
+        raise TypeError(msg) from e
 
 
-def ensure_cls_attr_from_type_args(  # noqa: PLR0913
-    cls: type,
-    attr_name: str,
-    max_depth: int = 2,
-    bound: type | None = None,
-    type_filter: type | None = None,
-    *,
-    skip_on_exist: bool = True,
-    disallow_explicit: bool = True,
-) -> None:
-    """Ensure a class attribute is set from typing arguments.
-
-    Extract typing arguments from the class's generic base classes and
-    set the specified class attribute to the unique matching argument.
-
-    Handles intermediate generic classes gracefully: if the class still has
-    unresolved TypeVars (e.g., GenericBase[T] not yet specialized), the
-    function silently returns without setting the attribute.
-
-    Parameters
-    ----------
-    cls : type
-        Class to set attribute on
-    attr_name : str
-        Name of the class attribute to set
-    max_depth : int, optional
-        Maximum depth to traverse the class hierarchy. Default is 2.
-    bound : type | None, optional
-        Filter typing arguments to only include subclasses of this type
-    type_filter : type | None, optional
-        Filter typing arguments to only include instances of this type
-    skip_on_exist : bool, optional
-        If True, do not overwrite the attribute if it already exists.
-    disallow_explicit : bool, optional
-        If True, raise TypeError if the attribute is explicitly set on cls
-        (not inherited). Forces use of type parameters for consistency.
-        Default is True to enforce consistency.
-
-    Raises
-    ------
-    TypeError
-        If disallow_explicit=True and attribute is explicitly set on cls.
-    ValueError
-        If no matching typing argument is found for a concrete (non-generic) class,
-        or if multiple matching arguments are found.
-
-    Notes
-    -----
-    This function is useful for automatically setting class attributes
-    based on Generic[T] type parameters, particularly in frameworks that
-    use generics for configuration or dependency injection.
-
-    For intermediate generic classes (with unresolved TypeVars), the function
-    gracefully returns without error, allowing subclasses to provide concrete types.
-
-    Examples
-    --------
-    >>> from typing import Generic, TypeVar
-    >>> from pydantic import BaseModel
-    >>> T = TypeVar('T')
-    >>> class MyHandler(Generic[T]):
-    ...     pass
-    >>> class MyConfig(BaseModel):
-    ...     pass
-    >>> class ConcreteHandler(MyHandler[MyConfig]):
-    ...     pass
-    >>> ensure_cls_attr_from_type_args(
-    ...     ConcreteHandler, 'config_model_cls', bound=BaseModel
-    ... )
-    >>> ConcreteHandler.config_model_cls  # doctest: +ELLIPSIS
-    <class '...MyConfig'>
-    """
-    # Check if attribute is explicitly set on THIS class (not inherited)
-    if disallow_explicit and attr_name in cls.__dict__:
+def _substitutions_for_base(
+    origin: type,
+    supplied_types: tuple[Any, ...],
+    inherited_substitutions: dict[Any, Any],
+) -> dict[Any, Any]:
+    """Build substitutions for one original base expression."""
+    type_vars = _declared_type_vars(origin)
+    if not type_vars:
+        return {}
+    if len(supplied_types) > len(type_vars):
         msg = (
-            f"{cls.__name__} explicitly sets '{attr_name}'. "
-            f"Use type parameter instead: class {cls.__name__}(BaseClass[YourType])"
+            f"{origin.__qualname__} declares {len(type_vars)} type variables "
+            f"but its base expression supplies {len(supplied_types)} types"
         )
         raise TypeError(msg)
 
-    attr_value_default = getattr(cls, attr_name, None)
-    if attr_value_default is not None and skip_on_exist:
+    substitutions: dict[Any, Any] = {}
+    for type_var, supplied_type in zip(type_vars, supplied_types, strict=False):
+        substitutions[type_var] = _substitute(
+            supplied_type,
+            inherited_substitutions,
+        )
+
+    for type_var in type_vars[len(supplied_types) :]:
+        default = getattr(type_var, "__default__", typing.NoDefault)
+        if default is typing.NoDefault:
+            substitutions[type_var] = type_var
+        else:
+            substitutions[type_var] = _substitute(
+                default,
+                inherited_substitutions | substitutions,
+            )
+    return substitutions
+
+
+def _initial_substitutions(cls: type) -> dict[Any, Any]:
+    """Represent a generic class itself, including PEP 696 defaults."""
+    return _substitutions_for_base(cls, (), {})
+
+
+def _walk_generic_paths(
+    current: type,
+    target_origin: type,
+    origin_type_vars: tuple[Any, ...],
+    substitutions: dict[Any, Any],
+    path: tuple[str, ...],
+) -> Iterator[tuple[tuple[Any, ...], tuple[str, ...]]]:
+    """Yield the target bindings reached by every inheritance path."""
+    if current is target_origin:
+        resolved_types = tuple(
+            _substitute(
+                substitutions.get(type_var, type_var),
+                substitutions,
+            )
+            for type_var in origin_type_vars
+        )
+        yield resolved_types, path
         return
 
-    # Use get_typing_args with unique=True to get exactly one result
-    # Returns None for intermediate generic classes with unresolved TypeVars
-    attr_value = get_typing_args(
-        cls,
-        max_depth=max_depth,
-        bound=bound,
-        type_filter=type_filter,
-        unique=True,
+    for base_expression in types.get_original_bases(current):
+        base_origin = get_origin(base_expression) or base_expression
+        if not isinstance(base_origin, type) or base_origin is typing.Generic:
+            continue
+        try:
+            reaches_target = issubclass(base_origin, target_origin)
+        except TypeError:
+            reaches_target = False
+        if not reaches_target:
+            continue
+        base_substitutions = _substitutions_for_base(
+            base_origin,
+            get_args(base_expression),
+            substitutions,
+        )
+        yield from _walk_generic_paths(
+            base_origin,
+            target_origin,
+            origin_type_vars,
+            base_substitutions,
+            (*path, base_origin.__qualname__),
+        )
+
+
+def resolve_generic_bindings(cls: type, origin: type) -> GenericBindings:
+    """Resolve ``origin`` type variables as inherited by ``cls``.
+
+    Unlike a recursive ``get_args`` scan, resolution is tied to one exact
+    generic origin. Type variables are substituted at every inheritance edge,
+    unrelated generic bases are ignored, and conflicting diamond paths fail
+    explicitly.
+
+    An intermediate generic class returns bindings containing unresolved type
+    variables. Consumers can use :attr:`GenericBindings.is_resolved` to
+    defer materializing runtime class attributes until specialization.
+    """
+    if not isinstance(cls, type) or not isinstance(origin, type):
+        msg = "resolve_generic_bindings expects class objects"
+        raise TypeError(msg)
+    if not issubclass(cls, origin):
+        msg = f"{cls.__qualname__} is not a subclass of {origin.__qualname__}"
+        raise TypeError(msg)
+
+    origin_type_vars = _declared_type_vars(origin)
+    if not origin_type_vars:
+        msg = f"{origin.__qualname__} does not declare PEP 695 type variables"
+        raise TypeError(msg)
+
+    resolved_paths = list(
+        _walk_generic_paths(
+            cls,
+            origin,
+            origin_type_vars,
+            _initial_substitutions(cls),
+            (cls.__qualname__,),
+        ),
+    )
+    if not resolved_paths:
+        msg = (
+            f"Unable to find generic base {origin.__qualname__} from {cls.__qualname__}"
+        )
+        raise TypeError(msg)
+
+    resolved_types, first_path = resolved_paths[0]
+    for other_resolved_types, other_path in resolved_paths[1:]:
+        if other_resolved_types != resolved_types:
+            msg = (
+                f"Conflicting {origin.__qualname__} bindings for "
+                f"{cls.__qualname__}: {resolved_types!r} via "
+                f"{' -> '.join(first_path)}; {other_resolved_types!r} via "
+                f"{' -> '.join(other_path)}"
+            )
+            raise TypeError(msg)
+
+    return GenericBindings(
+        origin=origin,
+        type_vars=origin_type_vars,
+        resolved_types=resolved_types,
     )
 
-    # If None returned, this is an intermediate generic class - skip gracefully
-    if attr_value is None:
-        return
 
-    # Set the attribute with the resolved type
-    setattr(cls, attr_name, attr_value)
+def resolve_concrete_generic_bindings(
+    cls: type,
+    origin: type,
+    /,
+    **requirements: GenericBindingRequirement,
+) -> GenericBindings | None:
+    """Apply the common class-creation policy to generic bindings.
+
+    The low-level resolver only describes the inheritance graph. Framework
+    consumers additionally need the same three rules: a runtime class
+    attribute cannot be set explicitly, an intermediate generic class may
+    defer materialization, and a concrete resolved type may need a class bound.
+
+    ``None`` means that one of the requested type variables remains unresolved on
+    a genuinely generic intermediate class. A bare concrete subclass with the
+    same unresolved type variable is rejected.
+    """
+    if not requirements:
+        msg = "At least one generic binding requirement is needed"
+        raise ValueError(msg)
+
+    bindings = resolve_generic_bindings(cls, origin)
+    for parameter_name, requirement in requirements.items():
+        # Validate the type-variable name even when the class also violates the
+        # runtime-attribute rule, so a misspelled requirement cannot hide.
+        bindings[parameter_name]
+        if requirement.runtime_attr in cls.__dict__:
+            msg = (
+                f"{cls.__name__} explicitly sets "
+                f"{requirement.runtime_attr!r}. Use {origin.__name__}'s "
+                f"type variables as the single source of truth"
+            )
+            raise TypeError(msg)
+
+    unresolved = tuple(name for name in bindings.unresolved if name in requirements)
+    if unresolved:
+        if _declared_type_vars(cls):
+            return None
+        msg = (
+            f"{cls.__name__} must bind {origin.__name__}'s type variables: "
+            f"{', '.join(unresolved)}"
+        )
+        raise TypeError(msg)
+
+    for parameter_name, requirement in requirements.items():
+        resolved_type = bindings[parameter_name]
+        bound = requirement.bound
+        if bound is not None and (
+            not isinstance(resolved_type, type) or not issubclass(resolved_type, bound)
+        ):
+            msg = (
+                f"{cls.__name__} must bind {parameter_name} to a "
+                f"{bound.__name__} subclass, got {resolved_type!r}"
+            )
+            raise TypeError(msg)
+    return bindings

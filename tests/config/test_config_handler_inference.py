@@ -14,7 +14,7 @@ class TestConfigHandlerAutoInference:
     """Test automatic config_model_cls inference."""
 
     def test_basic_inference(self):
-        """Test config_model_cls is automatically inferred from Generic parameter."""
+        """Test config_model_cls is derived from its type-variable binding."""
 
         class MyConfig(BaseModel):
             x: int = 1
@@ -123,7 +123,7 @@ class TestConfigHandlerAutoInference:
         assert Handler3.config_model_cls == Config3
 
     def test_no_generic_parameter_disallowed(self):
-        # Even without Generic parameter, explicit config_model_cls disallowed
+        # Even without a resolved type, explicit config_model_cls is disallowed.
         with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
 
             class PlainHandler(ConfigHandler):
@@ -471,6 +471,29 @@ class TestEdgeCases:
                 @classmethod
                 def prepare_runtime_config_data(cls, config_data):
                     return config_data
+
+    def test_invalid_generic_param_rejected_by_inference(self):
+        """Runtime binding validation rejects an invalid model argument."""
+        with pytest.raises(TypeError, match="must bind ConfigModelT"):
+
+            class InvalidHandler(
+                ConfigHandler[int],  # ty: ignore[invalid-type-arguments]
+            ):
+                pass
+
+    def test_subconfig_key_requires_one_literal(self):
+        """Multiple literal alternatives cannot define one runtime key."""
+
+        class MyConfig(BaseModel):
+            value: int = 1
+
+        with pytest.raises(TypeError, match="one string Literal"):
+
+            class InvalidHandler(
+                SubConfigKeyTransformer[Literal["one", "two"]],
+                ConfigHandler[MyConfig],
+            ):
+                pass
 
     def test_abstract_handler_no_inference(self):
         """Test abstract base handlers work correctly."""

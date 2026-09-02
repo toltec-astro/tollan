@@ -340,7 +340,7 @@ class TestConfigHandlerTypeInference:
     """Test ConfigHandler config_model_cls inference."""
 
     def test_infers_config_model_cls_from_generic(self):
-        """Test config_model_cls is inferred from Generic parameter."""
+        """Test config_model_cls is derived from its type-variable binding."""
 
         class MyConfig(BaseModel):
             value: str

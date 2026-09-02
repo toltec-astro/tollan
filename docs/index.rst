@@ -6,6 +6,7 @@ Welcome to tollan's documentation!
    :caption: Contents:
 
    readme
+   generic-runtime-bindings
    cli
    modules
 

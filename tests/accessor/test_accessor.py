@@ -94,6 +94,26 @@ class TestAccessorBaseCreation:
         # _mapper_cls should NOT be set for intermediate generic classes
         assert not hasattr(GenericAccessor, "_mapper_cls")
 
+    def test_indirect_generic_specialization(self):
+        """Resolve the same two-stage pattern used by downstream KidsView."""
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        class GenericView[MapperT: Mapper](AccessorBase[xr.Dataset, MapperT]):
+            pass
+
+        class ConcreteView(GenericView[TestMapper]):
+            pass
+
+        assert not hasattr(GenericView, "_mapper_cls")
+        assert ConcreteView._mapper_cls is TestMapper
+        assert isinstance(ConcreteView(xr.Dataset()), ConcreteView)
+
 
 class TestAccessorBaseDataSourceTypes:
     """Test AccessorBase with different data source types."""

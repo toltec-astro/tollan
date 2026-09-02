@@ -17,6 +17,15 @@ def test_default_runtime_context_uses_base_runtime_config():
     assert isinstance(rc.config, RuntimeConfig)
 
 
+def test_bare_runtime_context_subclass_uses_type_parameter_default():
+    """PEP 696's default remains the inferred runtime binding."""
+
+    class DefaultContext(RuntimeContext):
+        pass
+
+    assert DefaultContext.runtime_config_cls is RuntimeConfig
+
+
 def test_custom_runtime_config_inference():
     """Test automatic inference of custom RuntimeConfig from type parameter."""
 

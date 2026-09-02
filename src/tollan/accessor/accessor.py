@@ -8,7 +8,10 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, cast
 
-from tollan.utils.typing import ensure_cls_attr_from_type_args
+from tollan.utils.typing import (
+    GenericBindingRequirement,
+    resolve_concrete_generic_bindings,
+)
 
 from .mapper import Mapper
 
@@ -38,18 +41,19 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
     _data_source: DataSourceT
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        """Auto-detect mapper class from generic parameter.
+        """Derive the mapper class from the origin type variable.
 
         For intermediate generic classes (with unresolved TypeVars),
         this gracefully returns without setting _mapper_cls.
         """
         super().__init_subclass__(**kwargs)
-        ensure_cls_attr_from_type_args(
+        bindings = resolve_concrete_generic_bindings(
             cls,
-            "_mapper_cls",
-            max_depth=2,
-            bound=Mapper,
+            AccessorBase,
+            MapperT=GenericBindingRequirement("_mapper_cls", Mapper),
         )
+        if bindings is not None:
+            cls._mapper_cls = bindings["MapperT"]
 
     def __init__(
         self,

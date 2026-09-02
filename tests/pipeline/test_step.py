@@ -240,6 +240,43 @@ class TestStepConstruction:
         with pytest.raises(ValueError, match="too many"):
             AddStep(AddConfig(), AddConfig())
 
+    def test_indirect_generic_specialization(self):
+        """Intermediate generic steps retain inference after specialization."""
+
+        class LocalConfig(StepConfig):
+            value: int = 1
+
+        class LocalContext(StepContext["LocalStep", LocalConfig]):
+            pass
+
+        class GenericStep[ConfigT: StepConfig, ContextT: StepContext](
+            Step[ConfigT, ContextT],
+        ):
+            pass
+
+        class LocalStep(GenericStep[LocalConfig, LocalContext]):
+            pass
+
+        assert LocalStep.config_cls is LocalConfig
+        assert LocalStep.context_cls is LocalContext
+
+    def test_context_config_binding_must_match_step(self):
+        """Duplicated static relationships are checked at class creation."""
+
+        class ContextConfig(StepConfig):
+            pass
+
+        class StepConfigMismatch(StepConfig):
+            pass
+
+        class LocalContext(StepContext["InvalidStep", ContextConfig]):
+            pass
+
+        with pytest.raises(TypeError, match="config uses"):
+
+            class InvalidStep(Step[StepConfigMismatch, LocalContext]):
+                pass
+
 
 # ---------------------------------------------------------------------------
 # Step execution

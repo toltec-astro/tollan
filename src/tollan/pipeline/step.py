@@ -7,7 +7,7 @@ container with an ``.attrs`` dict).  The design mirrors the v2
 - Context is stored in ``data.attrs["__pipeline_context__"]`` (equivalent to
   v2's ``data.meta["__pipeline_context__"]``).
 - :class:`Step` subclasses declare typed :class:`StepConfig` /
-  :class:`StepContext` generic parameters; ``Step.get_context(data)`` returns
+  :class:`StepContext` type-variable bindings; ``Step.get_context(data)`` returns
   the typed context without dict-key lookups at the call site.
 - :class:`SequentialPipeline` executes a list of steps in order, skipping
   disabled ones.
@@ -53,7 +53,10 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..utils.log import logger, timeit
 from ..utils.py import getname
-from ..utils.typing import get_typing_args
+from ..utils.typing import (
+    GenericBindingRequirement,
+    resolve_concrete_generic_bindings,
+)
 
 if TYPE_CHECKING:
     from typing import Self
@@ -243,7 +246,7 @@ class _ContextKeyDescriptor:
 class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
     """Base class for a typed, context-aware pipeline step.
 
-    Subclasses declare their config and context types as Generic parameters::
+    Subclasses bind their config and context types through the generic base::
 
         class MyStep(Step[MyConfig, MyContext]):
             @classmethod
@@ -273,27 +276,29 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
     _config: ConfigT
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
-        config_cls = get_typing_args(
+        super().__init_subclass__(**kwargs)
+        bindings = resolve_concrete_generic_bindings(
             cls,
-            max_depth=2,
-            bound=StepConfig,
-            unique=True,
+            Step,
+            ConfigT=GenericBindingRequirement("config_cls", StepConfig),
+            ContextT=GenericBindingRequirement("context_cls", StepContext),
         )
-        if config_cls is not None:
-            cls.config_cls = config_cls
+        if bindings is None:
+            return
+        config_cls = bindings["ConfigT"]
+        context_cls = bindings["ContextT"]
+        context_config_cls = context_cls.model_fields["config"].annotation
+        if context_config_cls is not config_cls:
+            msg = (
+                f"{cls.__name__} binds ConfigT to {config_cls.__name__}, but "
+                f"{context_cls.__name__}.config uses {context_config_cls!r}"
+            )
+            raise TypeError(msg)
 
-        context_cls = get_typing_args(
-            cls,
-            max_depth=2,
-            bound=StepContext,
-            unique=True,
-        )
-        if context_cls is not None:
-            cls.context_cls = context_cls
-            cls.context_cls.step_cls = cls  # type: ignore[attr-defined]
-            cls.context_cls.config_cls = cls.config_cls  # type: ignore[attr-defined]
-
-        return super().__init_subclass__(**kwargs)
+        cls.config_cls = config_cls
+        cls.context_cls = context_cls
+        cls.context_cls.step_cls = cls
+        cls.context_cls.config_cls = cls.config_cls
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         if not args:
