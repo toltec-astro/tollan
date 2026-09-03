@@ -12,11 +12,14 @@ Start with a generic storage interface:
 class Store[KeyT, ValueT]:
     pass
 
+
 class BatchStore[ItemT](Store[str, list[ItemT]]):
     pass
 
+
 class User:
     pass
+
 
 class UserBatchStore(BatchStore[User]):
     pass
@@ -100,11 +103,14 @@ Use the `UserBatchStore` example from above:
 class Store[KeyT, ValueT]:
     pass
 
+
 class BatchStore[ItemT](Store[str, list[ItemT]]):
     pass
 
+
 class User:
     pass
+
 
 class UserBatchStore(BatchStore[User]):
     pass
@@ -245,6 +251,7 @@ These cases are intentionally different:
 ```python
 class GenericView[MapperT: Mapper](AccessorBase[xr.Dataset, MapperT]):
     pass  # valid: MapperT is deliberately forwarded
+
 
 class IncompleteView(GenericView):
     pass  # invalid: no type variable remains and no concrete type was supplied

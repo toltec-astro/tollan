@@ -83,7 +83,9 @@ class Mapping(MappingBase):
     names : str or tuple[str, ...]
         Physical variable name(s) to try in order.
     resolve_value : bool, default False
-        Whether to load value immediately (True) or lazily (False).
+        Whether to capture the value as part of the concrete mapper resolution.
+        Values not captured remain ``MISSING`` in the mapper and are read from
+        an explicitly supplied data source when requested.
 
     Examples
     --------
@@ -152,7 +154,8 @@ class MappedField:
     name : str
         Physical field name resolved from data source.
     value : Any
-        The loaded value (MISSING if not loaded).
+        Value captured during mapper resolution, or ``MISSING`` when the
+        mapping does not retain a source value.
     source : MappedFieldSource
         Where the value came from.
     schema_path : str, optional

@@ -115,8 +115,8 @@ class TestFieldResolution:
 class TestValueRetrieval:
     """Test value retrieval methods."""
 
-    def test_get_value_lazy(self):
-        """Get value lazily (not loaded during resolution)."""
+    def test_get_value_reads_without_caching(self):
+        """Get an ordinary value without retaining it in the mapper."""
         data = {"temp": 25.0}
 
         @dataclass
@@ -133,16 +133,40 @@ class TestValueRetrieval:
         mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
-        # Value should NOT be loaded yet (lazy loading)
+        # Ordinary source values are not retained during resolution.
         assert mapped_field.value is MISSING
 
-        # Now get the value - this triggers loading
+        # Reading the value does not mutate the concrete mapper.
         value = mapper.get_value(data, mapper.schema.temp)
         assert value == 25.0
+        assert mapped_field.value is MISSING
+
+    def test_get_value_reads_each_supplied_data_source(self):
+        """An ordinary mapping reads the source supplied to each call."""
+        source_a = {"temp": 25.0}
+        source_b = {"temp": 30.0}
+
+        @dataclass
+        class TestSchema(Schema):
+            temp: Mapping = Mapping("temp")
+
+        class TestMapper(Mapper[TestSchema]):
+            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+                return name in data_source
+
+            def _read_value(self, data_source: dict[str, Any], name: str):
+                return data_source[name]
+
+        mapper = TestMapper.from_data_source(source_a)
+
+        assert mapper.get_value(source_a, mapper.schema.temp) == 25.0
+        assert mapper.get_value(source_b, mapper.schema.temp) == 30.0
+        assert mapper.mapped_fields[mapper.schema.temp].value is MISSING
 
     def test_get_value_eager(self):
-        """Get value eagerly (immediate resolution)."""
-        data = {"temp": 25.0}
+        """A resolution value remains mapper state, not a source-read cache."""
+        source_a = {"temp": 25.0}
+        source_b = {"temp": 30.0}
 
         @dataclass
         class TestSchema(Schema):
@@ -155,10 +179,15 @@ class TestValueRetrieval:
             def _read_value(self, data_source: dict[str, Any], name: str):
                 return data_source[name]
 
-        mapper = TestMapper.from_data_source(data)
+        mapper = TestMapper.from_data_source(source_a)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
-        # Value should be loaded during resolution
+        # The value captured from source A belongs to the concrete mapper.
+        assert mapped_field.value == 25.0
+
+        # get_value still reads the explicitly supplied source without
+        # changing the mapper's captured resolution value.
+        assert mapper.get_value(source_b, mapper.schema.temp) == 30.0
         assert mapped_field.value == 25.0
 
     def test_get_value_missing(self):

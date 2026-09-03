@@ -19,10 +19,10 @@ __all__ = [
 class Mapper[SchemaT: Schema]:
     """Resolve schema fields and provide data access interface.
 
-    Mapper resolves schema field mappings against a data source and caches
-    the results. The data source is passed as a parameter to methods rather
-    than stored as instance state, allowing mapper reuse across multiple
-    datasets.
+    Mapper resolves schema field mappings against a data source and retains
+    the resulting physical names and explicitly requested resolution values.
+    The data source is passed to read methods rather than stored as instance
+    state, allowing mapper reuse across multiple datasets.
 
     Type Parameters
     ---------------
@@ -259,12 +259,17 @@ class Mapper[SchemaT: Schema]:
         return resolved.name if resolved else None
 
     def get_value(self, data_source: Any, mapping: MappingBase) -> Any:
-        """Get field value, loading on demand if not already cached.
+        """Read a field value from the supplied data source.
+
+        Values captured during mapping resolution remain available in
+        ``mapped_fields`` as part of the concrete mapper, but do not replace a
+        read from ``data_source``. Only mapper defaults are returned without
+        consulting the source.
 
         Parameters
         ----------
         data_source : Any
-            Data source to read from if value not cached
+            Data source to read from
         mapping : MappingBase
             Schema field reference (e.g., schema.temp)
 
@@ -288,11 +293,10 @@ class Mapper[SchemaT: Schema]:
         if resolved.source == MappedFieldSource.DEFAULT:
             return resolved.value
 
-        # For DATA_SOURCE, load on demand if not already loaded
-        if resolved.value is MISSING:
-            resolved.value = self._read_value(data_source, resolved.name)
-
-        return resolved.value
+        # For DATA_SOURCE, always read the explicitly supplied source. The
+        # resolved value may be a discriminator captured by resolve_value=True
+        # and belongs to the concrete mapper rather than this read operation.
+        return self._read_value(data_source, resolved.name)
 
     def _has_field(self, data_source: Any, name: str) -> bool:
         """Check if physical field exists in data source.
