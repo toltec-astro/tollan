@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import tempfile
 import warnings
+from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import pytest
-from pydantic.dataclasses import dataclass
 
 from tollan.accessor.netcdf4 import NetCDF4Mapper
-from tollan.accessor.schema import Mapping, Schema
+from tollan.accessor.schema import Mapping, NameMapping, Schema
 
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -50,7 +50,7 @@ class TestNetCDF4Mapper:
 
             @dataclass
             class TestSchema(Schema):
-                temp: Mapping = Mapping("temperature")
+                temp: Mapping = NameMapping("temperature")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
@@ -67,7 +67,7 @@ class TestNetCDF4Mapper:
 
             @dataclass
             class TestSchema(Schema):
-                temp: Mapping = Mapping("temperature")
+                temp: Mapping = NameMapping("temperature")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
@@ -87,7 +87,7 @@ class TestNetCDF4Mapper:
 
             @dataclass
             class TestSchema(Schema):
-                meta: Mapping = Mapping("metadata_field")
+                meta: Mapping = NameMapping("metadata_field")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
@@ -105,7 +105,7 @@ class TestNetCDF4Mapper:
 
             @dataclass
             class TestSchema(Schema):
-                pressure: Mapping = Mapping("pressure")
+                pressure: Mapping = NameMapping("pressure")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass

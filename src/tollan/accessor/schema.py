@@ -2,18 +2,24 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import StrEnum, auto
 from typing import TYPE_CHECKING, Any
 
 from pydantic import field_validator
-from pydantic.dataclasses import dataclass
+from pydantic.dataclasses import dataclass as pydantic_dataclass
+from pydantic_core import PydanticCustomError
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping as MappingABC
 
 __all__ = [
     "MISSING",
     "MappedField",
     "MappedFieldSource",
     "Mapping",
-    "MappingBase",
+    "MappingContext",
+    "NameMapping",
     "Schema",
 ]
 
@@ -37,44 +43,44 @@ class MappedFieldSource(StrEnum):
     MISSING = auto()  # Field not found and no default value
 
 
-class MappingBase:
-    """Base class for custom field mapping resolution.
+class Mapping:
+    """Strategy for resolving one semantic field.
 
-    Subclass to implement conditional mappings based on data source
-    characteristics or runtime context.
+    Subclass this class for conditional mappings. Direct ordered-name
+    resolution is provided by :class:`NameMapping`.
 
     Examples
     --------
-    >>> class ConditionalMapping(MappingBase):
+    >>> class ConditionalMapping(Mapping):
     ...     def resolve(self, context):
     ...         if context.data_source.attrs.get('version') == 2:
-    ...             return Mapping('field_v2')
-    ...         return Mapping('field_v1')
+    ...             return NameMapping('field_v2')
+    ...         return NameMapping('field_v1')
     """
 
     def resolve(
         self,
-        context: Any,
-    ) -> Mapping:
+        context: MappingContext,
+    ) -> NameMapping:
         """Return the mapping to use for this data source.
 
         Parameters
         ----------
-        context : Any
-            Mapper instance with data_source and mapped_fields.
+        context : MappingContext
+            Current source, schema, and fields resolved so far.
 
         Returns
         -------
-        Mapping
-            Resolved mapping configuration.
+        NameMapping
+            Concrete ordered-name mapping.
         """
         msg = f"{self.__class__.__name__} must implement resolve()"
         raise NotImplementedError(msg)
 
 
-@dataclass(frozen=True)
-class Mapping(MappingBase):
-    """Field mapping configuration.
+@pydantic_dataclass(frozen=True)
+class NameMapping(Mapping):
+    """Resolve a semantic field from ordered physical-name candidates.
 
     Maps a logical field name to one or more physical variable names in the data source.
 
@@ -89,14 +95,14 @@ class Mapping(MappingBase):
 
     Examples
     --------
-    >>> Mapping('field')
-    Mapping(names=('field',), resolve_value=False)
+    >>> NameMapping('field')
+    NameMapping(names=('field',), resolve_value=False)
 
-    >>> Mapping('field', resolve_value=True)
-    Mapping(names=('field',), resolve_value=True)
+    >>> NameMapping('field', resolve_value=True)
+    NameMapping(names=('field',), resolve_value=True)
 
-    >>> Mapping(('field1', 'field2'))
-    Mapping(names=('field1', 'field2'), resolve_value=False)
+    >>> NameMapping(('field1', 'field2'))
+    NameMapping(names=('field1', 'field2'), resolve_value=False)
     """
 
     names: tuple[str, ...]
@@ -115,42 +121,56 @@ class Mapping(MappingBase):
     @classmethod
     def validate_names(cls, v: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
         """Normalize names to tuple."""
-        # Handle string
         if isinstance(v, str):
-            return (v,)
-        # Handle list/tuple
-        if isinstance(v, (list, tuple)):
-            return tuple(v)
-        msg = f"names must be str or tuple[str, ...] or list[str], got {type(v)}"
-        raise ValueError(msg)
+            names = (v,)
+        elif isinstance(v, (list, tuple)):
+            names = tuple(v)
+        else:
+            # Pydantic v2 does not wrap validator TypeError in ValidationError.
+            error = PydanticCustomError(
+                "mapping_names_type",
+                "Input should be a string, tuple of strings, or list of strings",
+            )
+            raise error
+        if not names:
+            msg = "names must contain at least one physical field name"
+            raise ValueError(msg)
+        if all(isinstance(name, str) for name in names) and len(set(names)) != len(
+            names,
+        ):
+            msg = f"names must be unique, got {names!r}"
+            raise ValueError(msg)
+        return names
 
     def resolve(
         self,
-        context: Any,
-    ) -> Mapping:
+        context: MappingContext,
+    ) -> NameMapping:
         """Return this mapping instance.
 
         Parameters
         ----------
-        context : Any
-            Mapper instance (unused for direct mappings).
+        context : MappingContext
+            Resolution context (unused by a direct name mapping).
 
         Returns
         -------
-        Mapping
+        NameMapping
             This instance.
         """
         return self
 
 
-@dataclass
+@dataclass(frozen=True, slots=True)
 class MappedField:
     """Result of field resolution.
 
     Parameters
     ----------
     mapping : Mapping
-        Configuration used for resolution.
+        Original strategy declared by the schema.
+    mapping_resolved : NameMapping
+        Concrete name mapping returned by resolution.
     name : str
         Physical field name resolved from data source.
     value : Any
@@ -163,41 +183,47 @@ class MappedField:
     """
 
     mapping: Mapping
+    mapping_resolved: NameMapping
     name: str
     value: Any = MISSING
     source: MappedFieldSource = MappedFieldSource.DATA_SOURCE
     schema_path: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class MappingContext:
+    """Short-lived state available while resolving mappings."""
+
+    data_source: Any
+    schema: Schema
+    mapped_fields: MappingABC[Mapping, MappedField]
+
+
 @dataclass
 class Schema:
-    """Base class for defining field schemas.
+    """Base class for a flat collection of semantic fields.
 
     Examples
     --------
     >>> from dataclasses import dataclass
     >>> @dataclass
     ... class MySchema(Schema):
-    ...     field1: Mapping = Mapping('physical_name')
-    ...     field2: Mapping = Mapping(('alt1', 'alt2'))
+    ...     field1: Mapping = NameMapping('physical_name')
+    ...     field2: Mapping = NameMapping(('alt1', 'alt2'))
     """
 
     @classmethod
-    def get_schema_path(cls, attr_name: str, parent_path: str = "") -> str:
+    def get_schema_path(cls, attr_name: str) -> str:
         """Build schema path string for a field.
 
         Parameters
         ----------
         attr_name : str
             Attribute name.
-        parent_path : str, optional
-            Parent path for nested schemas.
 
         Returns
         -------
         str
             Dot-separated schema path.
         """
-        if parent_path:
-            return f"{parent_path}.{attr_name}"
         return f"{cls.__name__}.{attr_name}"

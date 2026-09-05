@@ -212,6 +212,12 @@ runtime-evaluated-decorators = [
   "tollan.cli.app.command",
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+  "tollan.accessor.NameMapping",
+  "tollan.accessor.schema.NameMapping",
+]
+
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
 

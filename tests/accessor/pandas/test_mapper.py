@@ -3,14 +3,14 @@
 from __future__ import annotations
 
 import warnings
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 import pytest
-from pydantic.dataclasses import dataclass
 
 from tollan.accessor.pandas import DataFrameMapper
-from tollan.accessor.schema import Mapping, Schema
+from tollan.accessor.schema import Mapping, NameMapping, Schema
 
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -29,8 +29,8 @@ class TestDataFrameMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temp")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
@@ -45,7 +45,7 @@ class TestDataFrameMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
@@ -64,7 +64,7 @@ class TestDataFrameMapper:
 
         @dataclass
         class TestSchema(Schema):
-            meta: Mapping = Mapping("metadata_field")
+            meta: Mapping = NameMapping("metadata_field")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
@@ -81,7 +81,7 @@ class TestDataFrameMapper:
 
         @dataclass
         class TestSchema(Schema):
-            field: Mapping = Mapping("field")
+            field: Mapping = NameMapping("field")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
@@ -98,7 +98,7 @@ class TestDataFrameMapper:
 
         @dataclass
         class TestSchema(Schema):
-            pressure: Mapping = Mapping("pressure")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass

@@ -16,12 +16,12 @@ Basic mapper usage:
 
     >>> import xarray as xr
     >>> from dataclasses import dataclass
-    >>> from tollan.accessor import Schema, Mapping
+    >>> from tollan.accessor import Mapping, NameMapping, Schema
     >>> from tollan.accessor.xarray import XarrayMapper
     >>>
     >>> @dataclass
     ... class DataSchema(Schema):
-    ...     temperature: Mapping = Mapping("temp")
+    ...     temperature: Mapping = NameMapping("temp")
     >>>
     >>> class DataMapper(XarrayMapper[DataSchema]):
     ...     pass

@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
 import pytest
 import xarray as xr
-from pydantic.dataclasses import dataclass
 
-from tollan.accessor.schema import Mapping, Schema
+from tollan.accessor.schema import Mapping, NameMapping, Schema
 from tollan.accessor.xarray import XarrayMapper
 
 
@@ -25,8 +26,8 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temp")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -41,7 +42,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -60,7 +61,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            time: Mapping = Mapping("time")
+            time: Mapping = NameMapping("time")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -79,7 +80,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            meta: Mapping = Mapping("metadata_field")
+            meta: Mapping = NameMapping("metadata_field")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -95,7 +96,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            pressure: Mapping = Mapping("pressure")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -115,10 +116,10 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            x: Mapping = Mapping("x")
-            meta: Mapping = Mapping("meta")
-            missing: Mapping = Mapping("missing")
+            temp: Mapping = NameMapping("temp")
+            x: Mapping = NameMapping("x")
+            meta: Mapping = NameMapping("meta")
+            missing: Mapping = NameMapping("missing")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -143,9 +144,9 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            x: Mapping = Mapping("x")
-            meta: Mapping = Mapping("meta")
+            temp: Mapping = NameMapping("temp")
+            x: Mapping = NameMapping("x")
+            meta: Mapping = NameMapping("meta")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -165,7 +166,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -186,7 +187,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            x: Mapping = Mapping("x")
+            x: Mapping = NameMapping("x")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -205,7 +206,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            meta: Mapping = Mapping("meta")
+            meta: Mapping = NameMapping("meta")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -224,9 +225,9 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            x: Mapping = Mapping("x")
-            y: Mapping = Mapping("y")
+            temp: Mapping = NameMapping("temp")
+            x: Mapping = NameMapping("x")
+            y: Mapping = NameMapping("y")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -259,8 +260,8 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            z: Mapping = Mapping("z")
+            temp: Mapping = NameMapping("temp")
+            z: Mapping = NameMapping("z")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -284,9 +285,9 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            data: Mapping = Mapping("data")
-            chan: Mapping = Mapping("chan")
-            freq: Mapping = Mapping("freq")
+            data: Mapping = NameMapping("data")
+            chan: Mapping = NameMapping("chan")
+            freq: Mapping = NameMapping("freq")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -318,7 +319,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            obs_id: Mapping = Mapping("obs_id")
+            obs_id: Mapping = NameMapping("obs_id")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -334,7 +335,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            count: Mapping = Mapping("count")
+            count: Mapping = NameMapping("count")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -350,7 +351,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            name: Mapping = Mapping("name")
+            name: Mapping = NameMapping("name")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -366,7 +367,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -382,7 +383,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -398,7 +399,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -414,8 +415,8 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temp")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -431,7 +432,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            data: Mapping = Mapping("data")
+            data: Mapping = NameMapping("data")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -447,7 +448,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            data: Mapping = Mapping("data")
+            data: Mapping = NameMapping("data")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -464,7 +465,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            freq: Mapping = Mapping("freq")
+            freq: Mapping = NameMapping("freq")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -481,7 +482,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            t: Mapping = Mapping("t")
+            t: Mapping = NameMapping("t")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -500,7 +501,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            data: Mapping = Mapping("data")
+            data: Mapping = NameMapping("data")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass

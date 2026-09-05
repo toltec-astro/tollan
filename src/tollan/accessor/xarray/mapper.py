@@ -7,13 +7,12 @@ from typing import TYPE_CHECKING, Any
 import xarray as xr
 
 if TYPE_CHECKING:
-    from ..schema import Mapping
     from .units import QDataArray, QDataSourceT
 
     type DataSourceT = xr.Dataset | xr.DataArray | QDataSourceT
 
 from ..mapper import Mapper
-from ..schema import Schema
+from ..schema import Mapping, NameMapping, Schema
 
 __all__ = ["XarrayMapper"]
 
@@ -33,12 +32,12 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     --------
     >>> import xarray as xr
     >>> from dataclasses import dataclass
-    >>> from tollan.accessor.schema import Schema, Mapping
+    >>> from tollan.accessor.schema import Mapping, NameMapping, Schema
     >>>
     >>> @dataclass
     ... class MySchema(Schema):
-    ...     temperature: Mapping = Mapping("temp")
-    ...     time: Mapping = Mapping("time")
+    ...     temperature: Mapping = NameMapping("temp")
+    ...     time: Mapping = NameMapping("time")
     >>>
     >>> class MyMapper(XarrayMapper[MySchema]):
     ...     pass
@@ -136,13 +135,15 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         # Handle Dataset vs DataArray differently
         if isinstance(data_source, xr.Dataset):
             # For Dataset: check data_vars and coords using __contains__
-            if name not in data_source:
-                msg = f"Field '{field.names[0]}' not found in dataset"
+            if name is None or name not in data_source:
+                field_name = name if name is not None else field
+                msg = f"Field {field_name!r} not found in dataset"
                 raise ValueError(msg)
             return data_source[name]  # pyright: ignore[reportReturnType]  # ty:ignore[invalid-return-type]
         assert isinstance(data_source, xr.DataArray)
-        if name not in data_source.coords:
-            msg = f"Field '{field.names[0]}' not found in data array coords"
+        if name is None or name not in data_source.coords:
+            field_name = name if name is not None else field
+            msg = f"Field {field_name!r} not found in data array coords"
             raise ValueError(msg)
         return data_source.coords[name]  # pyright: ignore[reportReturnType]
 
@@ -169,10 +170,10 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         ValueError
             If field not found in dataset or is not a scalar (ndim != 0)
         """
-        if field not in self:
-            msg = f"Field '{field.names[0]}' not found in dataset"
-            raise ValueError(msg)
         name = self.get_name(field)
+        if name is None:
+            msg = f"Field mapping {field!r} is not available in this mapper"
+            raise ValueError(msg)
 
         # Check if it's in attrs first
         if name in data_source.attrs:
@@ -189,7 +190,10 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             if var.dtype.kind in ("U", "S", "O") and var.size == 1:
                 return var.item()
 
-        msg = f"Field '{field.names[0]}' is not a scalar (ndim=0)"
+        if name not in data_source:
+            msg = f"Field {name!r} not found in dataset"
+            raise ValueError(msg)
+        msg = f"Field {name!r} is not a scalar (ndim=0)"
         raise ValueError(msg)
 
     def get_shape(self, data_source: DataSourceT, field: Mapping) -> tuple[int, ...]:
@@ -216,10 +220,10 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         return arr.shape
 
     def validate_has_field(self, field: Mapping) -> None:
-        """Validate that a required field exists in the mapped schema.
+        """Validate that a required field was found during mapping.
 
-        This checks if the field is defined in the schema and has a valid
-        mapping. It does not check if the field exists in a particular dataset.
+        This checks the concrete plan resolved from the mapper's reference
+        source. It does not inspect the source supplied to a later read.
 
         Parameters
         ----------
@@ -232,8 +236,12 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             If field is missing from the schema mapping
         """
         if field not in self:
-            field_name = field.names[0]
-            msg = f"Missing required field '{field_name}'"
+            field_name = self.get_name(field)
+            if field_name is None and isinstance(field, NameMapping):
+                field_name = field.names[0]
+            if field_name is None:
+                field_name = field
+            msg = f"Missing required field {field_name!r}"
             raise ValueError(msg)
 
     def validate_ndim(

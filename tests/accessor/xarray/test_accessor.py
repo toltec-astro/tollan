@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 import functools
+from dataclasses import dataclass
 
 import numpy as np
 import pytest
 import xarray as xr
-from pydantic.dataclasses import dataclass
 
-from tollan.accessor import Mapping, Schema
+from tollan.accessor import Mapping, NameMapping, Schema
 from tollan.accessor.xarray import (
     XarrayAccessorBase,
     XarrayMapper,
@@ -150,7 +150,7 @@ class TestXarrayAccessorBaseCreation:
 
     @dataclass
     class MySchema(Schema):
-        temp: Mapping = Mapping("temp")
+        temp: Mapping = NameMapping("temp")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass
@@ -218,7 +218,7 @@ class TestXarrayAccessorBaseResolution:
 
     @dataclass
     class MySchema(Schema):
-        temp: Mapping = Mapping("temp")
+        temp: Mapping = NameMapping("temp")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass
@@ -308,8 +308,8 @@ class TestXarrayAccessorBaseDualRegistration:
 
     @dataclass
     class MySchema(Schema):
-        temp: Mapping = Mapping("temp")
-        pressure: Mapping = Mapping("pressure")
+        temp: Mapping = NameMapping("temp")
+        pressure: Mapping = NameMapping("pressure")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass
@@ -400,8 +400,8 @@ class TestXarrayAccessorBaseViews:
 
     @dataclass
     class MySchema(Schema):
-        temp: Mapping = Mapping("temp")
-        result: Mapping = Mapping("result")
+        temp: Mapping = NameMapping("temp")
+        result: Mapping = NameMapping("result")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass
@@ -491,9 +491,9 @@ class TestXarrayAccessorBaseChildNodes:
 
     @dataclass
     class DataSchema(Schema):
-        real: Mapping = Mapping("real")
-        imag: Mapping = Mapping("imag")
-        result: Mapping = Mapping("result")
+        real: Mapping = NameMapping("real")
+        imag: Mapping = NameMapping("imag")
+        result: Mapping = NameMapping("result")
 
     class DataMapper(XarrayMapper[DataSchema]):
         pass
@@ -599,7 +599,7 @@ class TestXarrayAccessorBaseValidation:
 
     @dataclass
     class MySchema(Schema):
-        required_field: Mapping = Mapping("required")
+        required_field: Mapping = NameMapping("required")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass
@@ -642,8 +642,8 @@ class TestNetCDFFileIO:
 
     @dataclass
     class MySchema(Schema):
-        temp: Mapping = Mapping("temp")
-        pressure: Mapping = Mapping("pressure")
+        temp: Mapping = NameMapping("temp")
+        pressure: Mapping = NameMapping("pressure")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass

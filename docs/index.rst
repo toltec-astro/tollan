@@ -7,6 +7,7 @@ Welcome to tollan's documentation!
 
    readme
    generic-runtime-bindings
+   schema-mapping-accessors
    cli
    modules
 

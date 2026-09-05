@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 import pytest
 import xarray as xr
-from pydantic.dataclasses import dataclass
 
-from tollan.accessor import AccessorBase, Mapper, Mapping, Schema
+from tollan.accessor import AccessorBase, Mapper, Mapping, NameMapping, Schema
 from tollan.accessor.xarray import XarrayMapper
 
 
@@ -20,7 +20,7 @@ class TestAccessorBaseCreation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -40,7 +40,7 @@ class TestAccessorBaseCreation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -71,7 +71,7 @@ class TestAccessorBaseCreation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -99,7 +99,7 @@ class TestAccessorBaseCreation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -123,7 +123,7 @@ class TestAccessorBaseDataSourceTypes:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -142,7 +142,7 @@ class TestAccessorBaseDataSourceTypes:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class DictMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -170,7 +170,7 @@ class TestAccessorBaseValidation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -189,7 +189,7 @@ class TestAccessorBaseValidation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -216,7 +216,7 @@ class TestAccessorBaseValidation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -238,7 +238,7 @@ class TestAccessorBaseProperties:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -257,7 +257,7 @@ class TestAccessorBaseProperties:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -279,7 +279,7 @@ class TestAccessorBaseAsXarrayAccessor:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -308,7 +308,7 @@ class TestAccessorBaseAsView:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -333,7 +333,7 @@ class TestAccessorBaseAsView:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -379,7 +379,7 @@ class TestAccessorBaseInheritance:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -406,7 +406,7 @@ class TestAccessorBaseInheritance:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass

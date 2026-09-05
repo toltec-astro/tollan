@@ -2,17 +2,19 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from dataclasses import dataclass
+from types import MappingProxyType
+from typing import Any, ClassVar, cast
 
 import pytest
-from pydantic.dataclasses import dataclass
 
 from tollan.accessor.mapper import Mapper
 from tollan.accessor.schema import (
     MISSING,
     MappedFieldSource,
     Mapping,
-    MappingBase,
+    MappingContext,
+    NameMapping,
     Schema,
 )
 
@@ -26,8 +28,8 @@ class TestMapperCreation:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temp")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -63,7 +65,7 @@ class TestFieldResolution:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
+            temp: Mapping = NameMapping("temperature")
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -74,7 +76,8 @@ class TestFieldResolution:
 
         assert mapped_field.name == "temperature"
         assert mapped_field.source == MappedFieldSource.DATA_SOURCE
-        assert mapped_field.mapping.names == ("temperature",)
+        assert mapped_field.mapping is mapper.schema.temp
+        assert mapped_field.mapping_resolved.names == ("temperature",)
 
     def test_resolve_field_alternative(self):
         """Resolve field using alternative name."""
@@ -82,7 +85,7 @@ class TestFieldResolution:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping(("temperature", "temp_c", "T"))
+            temp: Mapping = NameMapping(("temperature", "temp_c", "T"))
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -99,7 +102,7 @@ class TestFieldResolution:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
+            temp: Mapping = NameMapping("temperature")
 
         class TestMapper(Mapper[TestSchema]):
             pass  # Uses default _has_field which returns False
@@ -121,7 +124,7 @@ class TestValueRetrieval:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp", resolve_value=False)
+            temp: Mapping = NameMapping("temp", resolve_value=False)
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -148,7 +151,7 @@ class TestValueRetrieval:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -170,7 +173,7 @@ class TestValueRetrieval:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp", resolve_value=True)
+            temp: Mapping = NameMapping("temp", resolve_value=True)
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -196,7 +199,7 @@ class TestValueRetrieval:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -211,12 +214,12 @@ class TestMappedFields:
     """Test MappedField tracking."""
 
     def test_mapped_fields_property(self):
-        """mapped_fields property returns dict."""
+        """mapped_fields exposes an immutable live view."""
         data = {"temp": 25.0}
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -224,9 +227,12 @@ class TestMappedFields:
         mapper = TestMapper.from_data_source(data)
         mapped_fields = mapper.mapped_fields
 
-        assert isinstance(mapped_fields, dict)
+        assert isinstance(mapped_fields, MappingProxyType)
         assert len(mapped_fields) == 1
         assert mapper.schema.temp in mapped_fields
+
+        with pytest.raises(TypeError):
+            mapped_fields[NameMapping("other")] = mapped_fields[mapper.schema.temp]  # ty: ignore[invalid-assignment]
 
     def test_mapped_field_has_schema_path(self):
         """MappedField includes schema path."""
@@ -234,7 +240,7 @@ class TestMappedFields:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
+            temp: Mapping = NameMapping("temp")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -253,8 +259,8 @@ class TestFromDefaults:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temperature")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -269,13 +275,13 @@ class TestFromDefaults:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temperature")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             pass
 
-        defaults: dict[MappingBase, Any] = {
+        defaults: dict[Mapping, Any] = {
             TestMapper.schema.temp: 20.0,
             TestMapper.schema.pressure: 101.3,
         }
@@ -296,13 +302,13 @@ class TestFromDefaults:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temperature")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             pass
 
-        defaults: dict[MappingBase, Any] = {
+        defaults: dict[Mapping, Any] = {
             TestMapper.schema.temp: 20.0,
         }
 
@@ -322,7 +328,7 @@ class TestFromDefaults:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temperature")
+            temp: Mapping = NameMapping("temperature")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -337,8 +343,8 @@ class TestFromDefaults:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping(("temperature", "temp_c"))
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping(("temperature", "temp_c"))
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             pass
@@ -356,9 +362,9 @@ class TestFromDefaults:
         class SimpleCoordinateSchema(Schema):
             """Simple schema for coordinate names - no conditional resolution."""
 
-            x_coord: Mapping = Mapping("x")
-            y_coord: Mapping = Mapping("y")
-            z_coord: Mapping = Mapping("z")
+            x_coord: Mapping = NameMapping("x")
+            y_coord: Mapping = NameMapping("y")
+            z_coord: Mapping = NameMapping("z")
 
         class CoordMapper(Mapper[SimpleCoordinateSchema]):
             pass
@@ -385,8 +391,8 @@ class TestContainsOperator:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temp")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -403,8 +409,8 @@ class TestContainsOperator:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            pressure: Mapping = Mapping("pressure")
+            temp: Mapping = NameMapping("temp")
+            pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -421,7 +427,7 @@ class TestContainsOperator:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping(("temperature", "temp_c", "T"))
+            temp: Mapping = NameMapping(("temperature", "temp_c", "T"))
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -438,8 +444,8 @@ class TestContainsOperator:
 
         @dataclass
         class TestSchema(Schema):
-            temp: Mapping = Mapping("temp")
-            computed: Mapping = Mapping("computed_value")
+            temp: Mapping = NameMapping("temp")
+            computed: Mapping = NameMapping("computed_value")
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -458,21 +464,19 @@ class TestConditionalMapping:
     """Test conditional mapping resolution."""
 
     def test_custom_mapping_base(self):
-        """Custom MappingBase with conditional resolution based on schema state."""
-        from pydantic import Field
-        from pydantic.dataclasses import rebuild_dataclass
+        """Custom Mapping with conditional resolution based on schema state."""
 
         # Conditional mapping that checks a "version" field
         @dataclass(frozen=True)
-        class ConditionalDataMapping(MappingBase):
-            root: ClassVar[dict[str, Mapping]] = {
-                "v1": Mapping("data_v1"),
-                "v2": Mapping("data_v2"),
+        class ConditionalDataMapping(Mapping):
+            root: ClassVar[dict[str, NameMapping]] = {
+                "v1": NameMapping("data_v1"),
+                "v2": NameMapping("data_v2"),
             }
 
-            def resolve(self, context: Mapper) -> Mapping:
-                # Check mapper.mapped_fields for previously resolved "version" field
-                version_mapping = context.schema.version
+            def resolve(self, context: MappingContext) -> NameMapping:
+                # Inspect only fields resolved earlier in declaration order.
+                version_mapping = cast("TestSchema", context.schema).version
                 if version_mapping in context.mapped_fields:
                     version_field = context.mapped_fields[version_mapping]
                     if version_field.value == 2:
@@ -483,18 +487,11 @@ class TestConditionalMapping:
 
         @dataclass
         class TestSchema(Schema):
-            version: Mapping = Mapping(
+            version: Mapping = NameMapping(
                 "version",
                 resolve_value=True,
             )  # Resolve value immediately
-            data: ConditionalDataMapping = Field(
-                default_factory=ConditionalDataMapping,
-            )
-
-        # Rebuild to handle forward reference
-        rebuild_dataclass(  # pyright: ignore[reportArgumentType]
-            TestSchema,  # ty: ignore[invalid-argument-type]
-        )
+            data: Mapping = ConditionalDataMapping()
 
         class TestMapper(Mapper[TestSchema]):
             def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
@@ -511,3 +508,5 @@ class TestConditionalMapping:
         # Data should resolve to v2 based on version
         data_field = mapper.mapped_fields[mapper.schema.data]
         assert data_field.name == "data_v2"
+        assert data_field.mapping is mapper.schema.data
+        assert data_field.mapping_resolved is ConditionalDataMapping.root["v2"]

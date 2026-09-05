@@ -5,9 +5,10 @@ It resolves the challenge of accessing data variables that may have different na
 across datasets or depend on runtime conditions.
 
 Core Concepts:
-    - Mapping: Field definition with physical name candidates and resolution flags
-    - MappingBase: Base class for custom mapping strategies
-    - Schema: Dataclass with Mapping fields defining logical→physical name mappings
+    - Mapping: Base class for field-resolution strategies
+    - NameMapping: Ordered physical-name candidates and resolution flags
+    - MappingContext: Source and prior results visible during resolution
+    - Schema: Dataclass with Mapping fields defining logical→physical mappings
     - Mapper[SchemaT]: Generic translator that resolves schema against data source,
                        stores resolved names and values (when requested)
     - MappedField: Resolution result with name, value, and metadata
@@ -16,7 +17,7 @@ Core Concepts:
 
 Key Features:
     - Flexible resolution: Try multiple physical names per logical field
-    - Conditional mappings: Subclass MappingBase for context-dependent resolution
+    - Conditional mappings: Subclass Mapping for context-dependent resolution
     - Lazy loading: Fine-grained control over immediate vs deferred value loading
     - Type safety: Generic Mapper[SchemaT] for IDE support and type checking
     - Multiple backends: Built-in support for xarray, pandas, and NetCDF4
@@ -28,14 +29,14 @@ Basic mapper usage with xarray:
 
     >>> from dataclasses import dataclass
     >>> import xarray as xr
-    >>> from tollan.accessor import Schema, Mapping, AccessorBase
+    >>> from tollan.accessor import AccessorBase, Mapping, NameMapping, Schema
     >>> from tollan.accessor.xarray import XarrayMapper
     >>>
     >>> # Define schema with field mappings
     >>> @dataclass
     ... class DataSchema(Schema):
-    ...     temperature: Mapping = Mapping(("temp", "temperature", "T"))
-    ...     pressure: Mapping = Mapping(("press", "pressure", "P"))
+    ...     temperature: Mapping = NameMapping(("temp", "temperature", "T"))
+    ...     pressure: Mapping = NameMapping(("press", "pressure", "P"))
     >>>
     >>> # Define mapper
     >>> class DataMapper(XarrayMapper[DataSchema]):
@@ -103,8 +104,8 @@ Generic data sources (not just xarray):
     >>> # Define schema
     >>> @dataclass
     ... class ConfigSchema(Schema):
-    ...     host: Mapping = Mapping("host")
-    ...     port: Mapping = Mapping("port")
+    ...     host: Mapping = NameMapping("host")
+    ...     port: Mapping = NameMapping("port")
     >>>
     >>> # Define mapper for dict data source
     >>> class DictMapper(Mapper[ConfigSchema]):
@@ -141,8 +142,10 @@ from .mapper import Mapper
 from .schema import (
     MISSING,
     MappedField,
+    MappedFieldSource,
     Mapping,
-    MappingBase,
+    MappingContext,
+    NameMapping,
     Schema,
 )
 
@@ -150,8 +153,10 @@ __all__ = [
     "MISSING",
     "AccessorBase",
     "MappedField",
+    "MappedFieldSource",
     "Mapper",
     "Mapping",
-    "MappingBase",
+    "MappingContext",
+    "NameMapping",
     "Schema",
 ]

@@ -1,15 +1,26 @@
-"""Base mapper class for navigating schema trees and accessing data."""
+"""Base mapper class for resolving flat schemas and accessing data."""
 
 from __future__ import annotations
 
 from dataclasses import fields
-from typing import Any, ClassVar, Self, cast
+from types import MappingProxyType
+from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping as MappingABC
 
 from ..utils.typing import (
     GenericBindingRequirement,
     resolve_concrete_generic_bindings,
 )
-from .schema import MISSING, MappedField, MappedFieldSource, MappingBase, Schema
+from .schema import (
+    MISSING,
+    MappedField,
+    MappedFieldSource,
+    Mapping,
+    MappingContext,
+    Schema,
+)
 
 __all__ = [
     "Mapper",
@@ -36,7 +47,8 @@ class Mapper[SchemaT: Schema]:
     # Schema instances cache (shared across all Mapper classes)
     _schema_instances: ClassVar[dict[type[Schema], Schema]] = {}
 
-    _mapped_fields: dict[MappingBase, MappedField]
+    _mapped_fields: dict[Mapping, MappedField]
+    _mapped_fields_view: MappingABC[Mapping, MappedField]
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """Instantiate the schema from the resolved origin type variable."""
@@ -56,21 +68,22 @@ class Mapper[SchemaT: Schema]:
 
     def __init__(
         self,
-        mapped_fields: dict[MappingBase, MappedField] | None = None,
+        mapped_fields: MappingABC[Mapping, MappedField] | None = None,
     ) -> None:
-        """Initialize mapper with empty mapped_fields cache."""
-        self._mapped_fields: dict[MappingBase, MappedField] = mapped_fields or {}
+        """Initialize the mapper's private resolution state."""
+        self._mapped_fields = dict(mapped_fields or {})
+        self._mapped_fields_view = MappingProxyType(self._mapped_fields)
 
     @property
-    def mapped_fields(self) -> dict[MappingBase, MappedField]:
-        """Resolved mapped fields cache."""
-        return self._mapped_fields
+    def mapped_fields(self) -> MappingABC[Mapping, MappedField]:
+        """Read-only view of the concrete mapping plan."""
+        return self._mapped_fields_view
 
     @classmethod
     def from_data_source(
         cls,
         data_source: Any,
-        defaults: dict[MappingBase, Any] | None = None,
+        defaults: dict[Mapping, Any] | None = None,
     ) -> Self:
         """Create mapper resolved against data source.
 
@@ -78,7 +91,7 @@ class Mapper[SchemaT: Schema]:
         ----------
         data_source : Any
             Data source to resolve against (xarray.Dataset, pd.DataFrame, etc.)
-        defaults : dict[MappingBase, Any] | None
+        defaults : dict[Mapping, Any] | None
             Default values for fields not found in data_source
 
         Returns
@@ -93,13 +106,13 @@ class Mapper[SchemaT: Schema]:
     @classmethod
     def from_defaults(
         cls,
-        defaults: dict[MappingBase, Any] | None = None,
+        defaults: dict[Mapping, Any] | None = None,
     ) -> Self:
         """Create mapper resolved using only default values.
 
         Parameters
         ----------
-        defaults : dict[MappingBase, Any] | None
+        defaults : dict[Mapping, Any] | None
             Default values for fields
 
         Returns
@@ -115,24 +128,29 @@ class Mapper[SchemaT: Schema]:
     def _populate_from_schema(
         self,
         data_source: Any,
-        defaults: dict[MappingBase, Any],
+        defaults: dict[Mapping, Any],
     ) -> None:
-        """Traverse schema and resolve all field mappings.
+        """Resolve each field in a flat schema in declaration order.
 
         Parameters
         ----------
         data_source : Any
             Data source to check for field existence and read values
-        defaults : dict[MappingBase, Any]
+        defaults : dict[Mapping, Any]
             Default values for fields not found in data source
         """
         schema = cast("SchemaT", type(self).schema)
+        context = MappingContext(
+            data_source=data_source,
+            schema=schema,
+            mapped_fields=self.mapped_fields,
+        )
 
-        # Traverse schema fields in insertion order (depth-first)
+        # Earlier fields are visible to later conditional mappings.
         for schema_field in fields(schema):
             field_name = schema_field.name
             mapping = getattr(schema, field_name)
-            if not isinstance(mapping, MappingBase):
+            if not isinstance(mapping, Mapping):
                 continue
 
             # Build schema path using schema's get_schema_path method
@@ -141,62 +159,59 @@ class Mapper[SchemaT: Schema]:
             # Get default value for this mapping (or MISSING sentinel)
             default_value = defaults.get(mapping, MISSING)
 
-            # Resolve this field mapping
-            resolved_field = self._resolve_mapping(
+            self._mapped_fields[mapping] = self._resolve_mapping(
                 data_source=data_source,
                 mapping=mapping,
                 default_value=default_value,
                 schema_path=schema_path,
+                context=context,
             )
-
-            if resolved_field:
-                self.mapped_fields[mapping] = resolved_field
 
     def _resolve_mapping(
         self,
         data_source: Any,
-        mapping: MappingBase,
+        mapping: Mapping,
         default_value: Any,
+        context: MappingContext,
         schema_path: str = "",
-    ) -> MappedField | None:
+    ) -> MappedField:
         """Resolve a single field mapping.
 
-        Calls mapping.resolve(self) to handle conditional mappings, which
-        can check previously resolved fields in self.mapped_fields.
+        Calls ``mapping.resolve(context)`` to handle conditional mappings.
 
         Parameters
         ----------
         data_source : Any
             Data source to check for field existence and read values
-        mapping : MappingBase
+        mapping : Mapping
             Mapping to resolve (may be conditional)
         default_value : Any
             Default value if field not found in data source
+        context : MappingContext
+            Short-lived source and resolution state for custom mappings.
         schema_path : str
             Schema path for error messages
 
         Returns
         -------
-        MappedField | None
-            Resolved field or None if optional and not found
+        MappedField
+            Concrete resolution state for the semantic field.
         """
-        # Get the FieldMapping from the MappingBase
-        # Pass self (mapper) so resolve() can access mapped_fields
-        # for conditional resolution based on previously resolved fields
-        mapping = mapping.resolve(self)
+        mapping_resolved = mapping.resolve(context)
 
         # Try to resolve from data_source first
         if data_source is not None:
-            for name in mapping.names:
+            for name in mapping_resolved.names:
                 if self._has_field(data_source, name):
                     # Only read value immediately if resolve_value is True
                     value = (
                         self._read_value(data_source, name)
-                        if mapping.resolve_value
+                        if mapping_resolved.resolve_value
                         else MISSING
                     )
                     return MappedField(
                         mapping=mapping,
+                        mapping_resolved=mapping_resolved,
                         name=name,
                         value=value,
                         source=MappedFieldSource.DATA_SOURCE,
@@ -207,7 +222,8 @@ class Mapper[SchemaT: Schema]:
         if default_value is not MISSING:
             return MappedField(
                 mapping=mapping,
-                name=mapping.names[0],
+                mapping_resolved=mapping_resolved,
+                name=mapping_resolved.names[0],
                 value=default_value,
                 source=MappedFieldSource.DEFAULT,
                 schema_path=schema_path,
@@ -216,18 +232,19 @@ class Mapper[SchemaT: Schema]:
         # No candidate found and no default value - return MISSING
         return MappedField(
             mapping=mapping,
-            name=mapping.names[0],
+            mapping_resolved=mapping_resolved,
+            name=mapping_resolved.names[0],
             value=MISSING,
             source=MappedFieldSource.MISSING,
             schema_path=schema_path,
         )
 
-    def __contains__(self, mapping: MappingBase) -> bool:
+    def __contains__(self, mapping: Mapping) -> bool:
         """Check if field exists in data source (enables `mapping in mapper`).
 
         Parameters
         ----------
-        mapping : MappingBase
+        mapping : Mapping
             Schema field reference (e.g., schema.temp)
 
         Returns
@@ -238,7 +255,7 @@ class Mapper[SchemaT: Schema]:
         resolved = self.mapped_fields.get(mapping)
         return resolved.source == MappedFieldSource.DATA_SOURCE if resolved else False
 
-    def get_name(self, mapping: MappingBase) -> str | None:
+    def get_name(self, mapping: Mapping) -> str | None:
         """Get resolved physical field name.
 
         For fields resolved from a data source, returns the actual field name found.
@@ -247,7 +264,7 @@ class Mapper[SchemaT: Schema]:
 
         Parameters
         ----------
-        mapping : MappingBase
+        mapping : Mapping
             Schema field reference
 
         Returns
@@ -258,7 +275,7 @@ class Mapper[SchemaT: Schema]:
         resolved = self.mapped_fields.get(mapping)
         return resolved.name if resolved else None
 
-    def get_value(self, data_source: Any, mapping: MappingBase) -> Any:
+    def get_value(self, data_source: Any, mapping: Mapping) -> Any:
         """Read a field value from the supplied data source.
 
         Values captured during mapping resolution remain available in
@@ -270,7 +287,7 @@ class Mapper[SchemaT: Schema]:
         ----------
         data_source : Any
             Data source to read from
-        mapping : MappingBase
+        mapping : Mapping
             Schema field reference (e.g., schema.temp)
 
         Returns
