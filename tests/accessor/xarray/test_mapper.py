@@ -4,12 +4,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import dask.array as da
 import numpy as np
 import pytest
 import xarray as xr
+from dask import delayed
 
 from tollan.accessor.schema import Mapping, NameMapping, Schema
 from tollan.accessor.xarray import XarrayMapper
+
+
+@dataclass
+class SourceSchema(Schema):
+    """Schema shared by the xarray source-contract tests."""
+
+    signal: Mapping = NameMapping("signal")
+    sample: Mapping = NameMapping("sample")
+    meta: Mapping = NameMapping("meta")
+    child_only: Mapping = NameMapping("child_only")
+
+
+class SourceMapper(XarrayMapper[SourceSchema]):
+    """Mapper shared by the xarray source-contract tests."""
 
 
 class TestXarrayMapper:
@@ -213,7 +229,7 @@ class TestXarrayMapper:
 
         mapper = TestMapper.from_data_source(ds)
 
-        with pytest.raises(ValueError, match="not found in dataset"):
+        with pytest.raises(ValueError, match="not found as an array in Dataset"):
             mapper.get_arr(ds, mapper.schema.meta)
 
     def test_get_arr_from_dataarray_with_coordinate(self):
@@ -270,7 +286,7 @@ class TestXarrayMapper:
         temp_da = mapper.get_arr(ds, mapper.schema.temp)
 
         # Should fail when trying to get non-existent coordinate from DataArray
-        with pytest.raises(ValueError, match="not found in data array coords"):
+        with pytest.raises(ValueError, match="not found as an array in DataArray"):
             mapper.get_arr(temp_da, mapper.schema.z)
 
     def test_get_arr_dataset_vs_dataarray_coordinate_access(self):
@@ -510,3 +526,134 @@ class TestXarrayMapper:
 
         with pytest.raises(ValueError, match="has no units set"):
             mapper.validate_has_physical_type(ds, mapper.schema.data, "frequency")
+
+
+class TestXarraySourceContract:
+    """Test the common Dataset, DataArray, and DataTree source contract."""
+
+    def test_dataarray_payload_coordinates_and_attrs(self):
+        """A DataArray exposes its payload, coordinates, and attributes."""
+        source = xr.DataArray(
+            [1.0, 2.0, 3.0],
+            dims="sample",
+            coords={"sample": [10, 20, 30]},
+            name="signal",
+            attrs={"meta": "data-array"},
+        )
+
+        mapper = SourceMapper.from_data_source(source)
+
+        assert mapper.schema.signal in mapper
+        assert mapper.schema.sample in mapper
+        assert mapper.schema.meta in mapper
+        assert mapper.get_arr(source, mapper.schema.signal) is source
+        assert mapper.get_arr(source, mapper.schema.sample).identical(source["sample"])
+        assert mapper.get_value(source, mapper.schema.meta) == "data-array"
+        np.testing.assert_array_equal(
+            mapper.get_value(source, mapper.schema.signal),
+            source.to_numpy(),
+        )
+        assert mapper.has_arr(source, mapper.schema.signal)
+        assert mapper.has_arr(source, mapper.schema.sample)
+        assert mapper.has_attr(source, mapper.schema.meta)
+
+    def test_unnamed_dataarray_uses_data_payload_name(self):
+        """An unnamed DataArray resolves its payload under the documented fallback."""
+
+        @dataclass
+        class UnnamedSchema(Schema):
+            data: Mapping = NameMapping("data")
+
+        class UnnamedMapper(XarrayMapper[UnnamedSchema]):
+            pass
+
+        source = xr.DataArray([1, 2, 3])
+        mapper = UnnamedMapper.from_data_source(source)
+
+        assert mapper.get_arr(source, mapper.schema.data) is source
+
+    def test_datatree_uses_only_current_node(self):
+        """A DataTree exposes its current node without searching children."""
+        source = xr.DataTree(
+            dataset=xr.Dataset(
+                {"signal": ("sample", [1.0, 2.0])},
+                coords={"sample": [10, 20]},
+                attrs={"meta": "root"},
+            ),
+        )
+        source["analysis"] = xr.DataTree(
+            dataset=xr.Dataset({"child_only": ("sample", [3.0, 4.0])}),
+        )
+
+        mapper = SourceMapper.from_data_source(source)
+
+        assert mapper.schema.signal in mapper
+        assert mapper.schema.sample in mapper
+        assert mapper.schema.meta in mapper
+        assert mapper.schema.child_only not in mapper
+        assert mapper.get_arr(source, mapper.schema.signal).identical(
+            source.ds["signal"],
+        )
+        assert mapper.get_value(source, mapper.schema.meta) == "root"
+        assert not mapper.has_arr(source, mapper.schema.child_only)
+
+        child = source["analysis"]
+        child_mapper = SourceMapper.from_data_source(child)
+        assert child_mapper.schema.child_only in child_mapper
+        assert child_mapper.get_arr(child, child_mapper.schema.child_only).identical(
+            child.ds["child_only"],
+        )
+
+    def test_array_and_attr_name_collision_is_operation_specific(self):
+        """Generic values prefer attrs while get_arr explicitly selects arrays."""
+        source = xr.DataArray(
+            [1.0, 2.0],
+            dims="sample",
+            name="signal",
+            attrs={"signal": "metadata"},
+        )
+        mapper = SourceMapper.from_data_source(source)
+
+        assert mapper.get_value(source, mapper.schema.signal) == "metadata"
+        assert mapper.get_arr(source, mapper.schema.signal) is source
+
+    def test_get_arr_is_lazy_and_get_value_materializes(self):
+        """Mapper resolution and labeled reads preserve Dask laziness."""
+        computed: list[bool] = []
+
+        @delayed
+        def make_values() -> np.ndarray:
+            computed.append(True)
+            return np.array([1.0, 2.0, 3.0])
+
+        values = da.from_delayed(make_values(), shape=(3,), dtype=np.float64)
+        source = xr.Dataset({"signal": ("sample", values)})
+
+        mapper = SourceMapper.from_data_source(source)
+        assert computed == []
+
+        arr = mapper.get_arr(source, mapper.schema.signal)
+        assert isinstance(arr.data, da.Array)
+        assert computed == []
+
+        result = mapper.get_value(source, mapper.schema.signal)
+        np.testing.assert_array_equal(result, [1.0, 2.0, 3.0])
+        assert computed == [True]
+        assert isinstance(source["signal"].data, da.Array)
+
+    def test_get_scalar_materializes_dask_scalar(self):
+        """Scalar extraction computes one Dask value through to_numpy()."""
+
+        @dataclass
+        class ScalarSchema(Schema):
+            count: Mapping = NameMapping("count")
+
+        class ScalarMapper(XarrayMapper[ScalarSchema]):
+            pass
+
+        value = da.from_array(np.array(42))
+        source = xr.Dataset({"count": xr.DataArray(value)})
+        mapper = ScalarMapper.from_data_source(source)
+
+        assert mapper.get_scalar(source, mapper.schema.count) == 42
+        assert isinstance(source["count"].data, da.Array)

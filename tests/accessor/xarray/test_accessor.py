@@ -15,6 +15,7 @@ from tollan.accessor.xarray import (
     XarrayMapper,
     ensure_dataset,
     ensure_datatree,
+    unwrap_data_source,
 )
 
 # Random number generator for reproducible tests
@@ -80,6 +81,51 @@ class TestEnsureDataset:
         """Invalid type raises TypeError."""
         with pytest.raises(TypeError, match="Expected Dataset, DataArray, or DataTree"):
             ensure_dataset("not a valid type")  # ty: ignore[invalid-argument-type]
+
+
+class TestUnwrapDataSource:
+    """Test current-node and ad-hoc Dataset unwrapping."""
+
+    def test_dataset_passthrough(self):
+        """A Dataset is returned unchanged."""
+        source = xr.Dataset({"temp": ("x", [1.0, 2.0])})
+        assert unwrap_data_source(source) is source
+
+    def test_dataarray_passthrough(self):
+        """A DataArray retains its payload identity and attribute surface."""
+        source = xr.DataArray([1.0, 2.0], dims="x", attrs={"kind": "signal"})
+        assert unwrap_data_source(source) is source
+
+    def test_dataarray_dataset_wrapper(self):
+        """A Dataset wrapper restores the DataArray lookup surface."""
+        source = xr.DataArray(
+            [1.0, 2.0],
+            dims="x",
+            name="signal",
+            attrs={"kind": "signal"},
+        )
+        wrapped = ensure_dataset(source)
+        result = unwrap_data_source(wrapped)
+
+        assert isinstance(result, xr.DataArray)
+        assert result.identical(source)
+        assert result.data is source.data
+
+    def test_dataarray_datatree_wrapper(self):
+        """The DataArray marker survives the Dataset-to-DataTree wrapper."""
+        source = xr.DataArray([1.0, 2.0], dims="x", name="signal")
+        result = unwrap_data_source(ensure_datatree(source))
+
+        assert isinstance(result, xr.DataArray)
+        assert result.identical(source)
+        assert result.data is source.data
+
+    def test_datatree_current_node(self):
+        """A DataTree projects to its current-node Dataset."""
+        source = xr.DataTree(dataset=xr.Dataset({"temp": ("x", [1.0, 2.0])}))
+        result = unwrap_data_source(source)
+        assert isinstance(result, xr.Dataset)
+        assert result.identical(source.ds)
 
 
 class TestEnsureDataTree:
@@ -184,8 +230,9 @@ class TestXarrayAccessorBaseCreation:
         assert accessor._data_source is dt
 
         # Resolves to Dataset
-        assert isinstance(accessor.data_source, xr.Dataset)
-        assert accessor.data_source.equals(dt.ds)
+        data_source = accessor.data_source
+        assert isinstance(data_source, xr.Dataset)
+        assert data_source.equals(dt.ds)
 
     def test_with_dataarray(self):
         """XarrayAccessorBase with DataArray."""
@@ -199,6 +246,32 @@ class TestXarrayAccessorBaseCreation:
         assert isinstance(accessor._data_source, xr.DataArray)
         assert isinstance(accessor.data_source, xr.Dataset)
         assert "temp" in accessor.data_source
+
+    def test_dataarray_attrs_remain_visible_to_mapper(self):
+        """Accessor resolution keeps the DataArray attribute surface."""
+
+        @dataclass
+        class AttrSchema(Schema):
+            kind: Mapping = NameMapping("kind")
+
+        class AttrMapper(XarrayMapper[AttrSchema]):
+            pass
+
+        class TestAccessor(XarrayAccessorBase[AttrMapper]):
+            pass
+
+        source = xr.DataArray([1.0, 2.0], attrs={"kind": "signal"})
+        accessor = TestAccessor(source)
+
+        assert isinstance(accessor.data_source, xr.Dataset)
+        assert accessor.mapper.schema.kind in accessor.mapper
+        assert (
+            accessor.mapper.get_scalar(
+                accessor.data_source,
+                accessor.mapper.schema.kind,
+            )
+            == "signal"
+        )
 
     def test_with_provided_mapper(self):
         """XarrayAccessorBase accepts pre-created mapper."""
@@ -247,7 +320,9 @@ class TestXarrayAccessorBaseResolution:
 
         # data_source should be resolved to Dataset
         assert accessor._data_source is dt
-        assert accessor.data_source.equals(dt.ds)
+        data_source = accessor.data_source
+        assert isinstance(data_source, xr.Dataset)
+        assert data_source.equals(dt.ds)
 
     def test_custom_resolution(self):
         """Custom resolution can override data_source property."""

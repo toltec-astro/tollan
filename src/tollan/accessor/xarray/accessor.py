@@ -48,7 +48,7 @@ from typing import TYPE_CHECKING, cast
 
 from ..accessor import AccessorBase
 from ..mapper import Mapper
-from .utils import DataSourceT, ensure_dataset
+from .utils import XarraySourceT, ensure_dataset
 
 if TYPE_CHECKING:
     import xarray as xr
@@ -56,7 +56,7 @@ if TYPE_CHECKING:
 __all__ = ["XarrayAccessorBase"]
 
 
-class XarrayAccessorBase[MapperT: Mapper](AccessorBase[DataSourceT, MapperT]):
+class XarrayAccessorBase[MapperT: Mapper](AccessorBase[XarraySourceT, MapperT]):
     """Accessor base class for xarray with DataTree support.
 
     Extends AccessorBase to handle Dataset, DataArray, and DataTree objects.
@@ -70,7 +70,7 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[DataSourceT, MapperT]):
 
     def __init__(
         self,
-        data_source: DataSourceT,
+        data_source: XarraySourceT,
         mapper: MapperT | None = None,
     ) -> None:
         """Initialize with xarray data source.
@@ -93,14 +93,5 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[DataSourceT, MapperT]):
 
     @functools.cached_property
     def data_source(self) -> xr.Dataset:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Resolved Dataset from data source.
-
-        DataTree → root dataset, DataArray → wrapped in Dataset.
-        Override for custom resolution (e.g., child nodes).
-
-        Returns
-        -------
-        xr.Dataset
-            Resolved dataset
-        """
+        """Return the source normalized to a Dataset."""
         return ensure_dataset(self._data_source)

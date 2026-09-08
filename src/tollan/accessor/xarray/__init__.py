@@ -75,13 +75,14 @@ from __future__ import annotations
 from .accessor import XarrayAccessorBase
 from .mapper import XarrayMapper
 from .units import UnitsAccessor
-from .utils import DataSourceT, ensure_dataset, ensure_datatree
+from .utils import XarraySourceT, ensure_dataset, ensure_datatree, unwrap_data_source
 
 __all__ = [
-    "DataSourceT",
     "UnitsAccessor",
     "XarrayAccessorBase",
     "XarrayMapper",
+    "XarraySourceT",
     "ensure_dataset",
     "ensure_datatree",
+    "unwrap_data_source",
 ]
