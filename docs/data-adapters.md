@@ -113,8 +113,13 @@ Astropy.
 - `.u.set(unit)` and `.u.unset()` return shallow copies by default; pass
   `inplace=True` for explicit attribute mutation.
 - `.u.to(unit)` returns a DataArray with converted values and unit metadata.
-- `.u.quantity` returns an Astropy Quantity when units are present and the
-  original DataArray when they are absent.
+  Lazy backends remain lazy, and dimensions, coordinates, name, and unrelated
+  attributes are preserved. The converted data variable's storage encoding is
+  cleared because it may no longer describe the converted values.
+- `.u.quantity` attaches the configured unit to the backing array. NumPy data
+  becomes a no-copy Astropy Quantity view, while Dask data remains lazy and
+  computes to a Quantity. Without unit metadata, the original DataArray is
+  returned.
 
 ## netCDF4
 

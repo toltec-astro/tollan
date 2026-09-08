@@ -180,7 +180,7 @@ class TestQuantityProperty:
     """Test quantity property for Astropy Quantity objects."""
 
     def test_quantity_no_units(self):
-        """Test quantity returns DataArray when no units."""
+        """Test quantity keeps a DataArray bare when no units are set."""
         da = xr.DataArray([1, 2, 3])
         assert da.u.quantity is da
 
@@ -193,6 +193,7 @@ class TestQuantityProperty:
         assert isinstance(qty, Quantity)
         assert qty.unit == u.km
         np.testing.assert_array_equal(qty.value, [1.0, 2.0, 3.0])
+        assert np.shares_memory(qty.value, da_km.data)
 
     def test_quantity_invalid_units(self):
         """Test quantity raises ValueError for invalid unit string."""
@@ -201,6 +202,36 @@ class TestQuantityProperty:
 
         with pytest.raises(ValueError):
             _ = da.u.quantity
+
+    def test_quantity_preserves_dask_laziness(self):
+        """Attaching a unit builds a lazy graph that computes to Quantity."""
+        import dask.array as da
+        from dask import delayed
+
+        compute_calls: list[bool] = []
+
+        @delayed
+        def make_values() -> np.ndarray:
+            compute_calls.append(True)
+            return np.array([1.0, 2.0, 3.0])
+
+        lazy_values = da.from_delayed(
+            make_values(),
+            shape=(3,),
+            dtype=np.float64,
+        )
+        source = xr.DataArray(lazy_values).u.set("km")
+
+        quantity = source.u.quantity
+
+        assert compute_calls == []
+        assert isinstance(quantity, da.Array)
+
+        result = quantity.compute()
+        assert compute_calls == [True]
+        assert isinstance(result, Quantity)
+        assert result.unit == u.km
+        np.testing.assert_array_equal(result.value, [1.0, 2.0, 3.0])
 
 
 class TestUnitConversion:
@@ -261,6 +292,54 @@ class TestUnitConversion:
         assert da_m.attrs["units"] == "m"
         np.testing.assert_allclose(da_m.values, [1000.0, 2000.0, 3000.0])
 
+    @pytest.mark.parametrize(
+        ("source_unit", "target_unit", "expected"),
+        [
+            ("m", "km", [0.001, 0.002, 0.003]),
+            ("km", "m", [1000.0, 2000.0, 3000.0]),
+        ],
+    )
+    def test_integer_conversion_promotes_dtype(
+        self,
+        source_unit,
+        target_unit,
+        expected,
+    ):
+        """Scaling integer values advertises and computes the promoted dtype."""
+        source = xr.DataArray(np.array([1, 2, 3], dtype=np.int64)).u.set(
+            source_unit,
+        )
+
+        result = source.u.to(target_unit)
+
+        assert result.dtype == np.dtype(np.float64)
+        np.testing.assert_allclose(result.to_numpy(), expected)
+
+    def test_float32_conversion_preserves_dtype(self):
+        """A conversion representable by float32 retains its dtype."""
+        source = xr.DataArray(np.array([1.0, 2.0], dtype=np.float32)).u.set("km")
+
+        result = source.u.to("m")
+
+        assert result.dtype == np.dtype(np.float32)
+        np.testing.assert_allclose(result.to_numpy(), [1000.0, 2000.0])
+
+    def test_offset_conversion(self):
+        """Offset conversions use Astropy equivalencies and promote integers."""
+        source = xr.DataArray(np.array([0, 100], dtype=np.int64)).u.set("deg_C")
+
+        result = source.u.to("K", equivalencies=u.temperature())
+
+        assert result.dtype == np.dtype(np.float64)
+        np.testing.assert_allclose(result.to_numpy(), [273.15, 373.15])
+
+    def test_invalid_target_unit_fails(self):
+        """The target unit is validated before conversion."""
+        source = xr.DataArray([1.0]).u.set("m")
+
+        with pytest.raises(ValueError):
+            source.u.to("not_a_unit")
+
 
 class TestDaskSupport:
     """Test lazy evaluation with Dask arrays."""
@@ -279,23 +358,39 @@ class TestDaskSupport:
         assert isinstance(xda_km.data, da.Array)
 
     def test_to_preserves_dask(self):
-        """Test that to() preserves lazy evaluation with Dask."""
+        """Conversion preserves laziness, chunks, and truthful dtype metadata."""
         import dask.array as da
+        from dask import delayed
 
-        dask_data = da.from_array(
-            np.array([1.0, 2.0, 3.0]),
-            chunks=2,  # pyright: ignore[reportArgumentType]
+        compute_calls: list[bool] = []
+
+        @delayed
+        def make_values() -> np.ndarray:
+            compute_calls.append(True)
+            return np.array([1, 2, 3, 4], dtype=np.int64)
+
+        dask_data = da.from_delayed(
+            make_values(),
+            shape=(4,),
+            dtype=np.int64,
         )
-        xda = xr.DataArray(dask_data)
+        dask_data = dask_data.rechunk(2)
+        xda = xr.DataArray(dask_data, dims="sample")
         xda_km = xda.u.set("km")
         xda_m = xda_km.u.to("m")
 
-        # Should still be lazy
         assert isinstance(xda_m.data, da.Array)
+        assert xda_m.chunks == xda_km.chunks
+        assert xda_m.dtype == np.dtype(np.float64)
+        assert compute_calls == []
 
-        # Compute and verify values
-        computed = xda_m.compute()
-        np.testing.assert_allclose(computed.values, [1000.0, 2000.0, 3000.0])
+        result = xda_m.compute()
+        assert result.dtype == np.dtype(np.float64)
+        np.testing.assert_allclose(
+            result.values,
+            [1000.0, 2000.0, 3000.0, 4000.0],
+        )
+        assert compute_calls == [True]
 
 
 class TestAstropyEquivalencies:
@@ -374,6 +469,42 @@ class TestEdgeCases:
 
         assert da_m.attrs["description"] == "test data"
         assert da_m.attrs["source"] == "experiment"
+
+    def test_conversion_preserves_dataarray_structure(self):
+        """Conversion preserves structure without retaining stale encoding."""
+        source = xr.DataArray(
+            np.arange(6, dtype=np.int16).reshape(2, 3),
+            dims=("detector", "sample"),
+            coords={
+                "detector": ["a", "b"],
+                "sample": [10, 20, 30],
+                "offset": (
+                    ("detector", "sample"),
+                    np.arange(6).reshape(2, 3),
+                ),
+            },
+            name="signal",
+            attrs={"units": "m", "description": "science"},
+        )
+        source.encoding.update({"dtype": "int16", "zlib": True})
+
+        result = source.u.to("cm")
+
+        assert result.attrs is not source.attrs
+        assert result.encoding is not source.encoding
+        assert source.attrs == {"units": "m", "description": "science"}
+        assert source.encoding == {"dtype": "int16", "zlib": True}
+        np.testing.assert_array_equal(
+            source.to_numpy(),
+            np.arange(6, dtype=np.int16).reshape(2, 3),
+        )
+        assert result.name == source.name
+        assert result.dims == source.dims
+        assert result.encoding == {}
+        assert result.attrs == {"units": "cm", "description": "science"}
+        assert set(result.coords) == set(source.coords)
+        for name in source.coords:
+            assert result.coords[name].identical(source.coords[name])
 
     def test_compound_units(self):
         """Test compound units like m/s."""

@@ -8,8 +8,8 @@ Features:
     - Store units on DataArrays via .attrs["units"]
     - Retrieve and validate unit strings
     - Convert between compatible units
-    - Create Astropy Quantity objects
-    - Simple, non-intrusive design with lazy evaluation
+    - Attach units without computing lazy backends
+    - Preserve lazy backends during unit conversion
 
 Example:
     >>> import xarray as xr
@@ -36,6 +36,7 @@ from typing import TYPE_CHECKING
 import xarray as xr
 from astropy import units as astropy_units
 from astropy.units import Quantity
+from dask.array import Array as DaskArray
 
 if TYPE_CHECKING:
     from astropy.units import Unit
@@ -150,16 +151,17 @@ class UnitsAccessor:
         return astropy_units.Unit(unit_str)
 
     @property
-    def quantity(self) -> Quantity | xr.DataArray:
-        """Get the data as an Astropy Quantity object.
+    def quantity(self) -> Quantity | DaskArray | xr.DataArray:
+        """Get the data with its unit attached when one is present.
 
-        If no units are set, returns the underlying DataArray directly.
-        Uses the << operator to attach units without data copying.
+        NumPy-backed data becomes a no-copy Astropy Quantity view.
+        Dask-backed data remains lazy and computes to a Quantity. If no unit is
+        set, the original DataArray is returned unchanged.
 
         Returns
         -------
-        astropy.units.Quantity or xr.DataArray
-            Quantity object with data values and units, or the DataArray if no units
+        astropy.units.Quantity, dask.array.Array, or xr.DataArray
+            Unit-aware data, or the original DataArray when no unit is set.
 
         Examples
         --------
@@ -169,7 +171,7 @@ class UnitsAccessor:
         >>> print(qty)
         [1. 2. 3.] km
 
-        Without units, returns the DataArray:
+        Without unit metadata, the DataArray remains bare:
 
         >>> da = xr.DataArray([1, 2, 3])
         >>> da.u.quantity is da
@@ -179,8 +181,10 @@ class UnitsAccessor:
         if unit is None:
             return self._obj
 
-        # Use << operator to attach units without copying
-        return self._obj.data << unit
+        data = self._obj.data
+        if isinstance(data, DaskArray):
+            return data * Quantity(1, unit)
+        return data << unit
 
     def set(self, unit: str | Unit, *, inplace: bool = False) -> xr.DataArray:
         """Set units on the DataArray.
@@ -371,25 +375,16 @@ class UnitsAccessor:
             msg = "Cannot convert DataArray without units. Use .u.set() first."
             raise ValueError(msg)
 
-        # Parse target unit
-        if isinstance(target_unit, str):
-            target_unit = astropy_units.Unit(target_unit)
-
-        # Define conversion function for map_blocks
-        def convert(data):
-            quantity = Quantity(data, current_unit, copy=False)
-            converted = quantity.to(target_unit, equivalencies=equivalencies)
-            return converted.value
-
-        # Apply conversion using map_blocks (preserves dask arrays)
-        converted = xr.apply_ufunc(
-            convert,
-            self._obj,
-            dask="parallelized",
-            output_dtypes=[self._obj.dtype],
+        target_unit = astropy_units.Unit(target_unit)
+        converted_data = current_unit.to(
+            target_unit,
+            self._obj.data,
+            equivalencies=equivalencies,
         )
-
-        return converted.assign_attrs(units=str(target_unit))
+        result = self._obj.copy(deep=False, data=converted_data)
+        result.attrs["units"] = str(target_unit)
+        result.encoding.clear()
+        return result
 
     def __repr__(self) -> str:
         unit_display = self.unit_str if self.unit_str is not None else "no units"

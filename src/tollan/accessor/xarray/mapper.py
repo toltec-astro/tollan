@@ -5,8 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, cast
 
 import xarray as xr
+from astropy import units as astropy_units
 
 if TYPE_CHECKING:
+    from astropy.units import PhysicalType
+
     from .units import QDataArray
     from .utils import XarraySourceT
 
@@ -297,7 +300,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         self,
         data_source: XarraySourceT,
         field: Mapping,
-        expected_physical_type: str,
+        expected_physical_type: str | PhysicalType,
     ) -> None:
         """Validate that a field has the expected physical type.
 
@@ -311,7 +314,7 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             Dataset, DataArray, or DataTree current node to validate
         field : Mapping
             Field mapping to validate
-        expected_physical_type : str
+        expected_physical_type : str or astropy.units.PhysicalType
             Expected physical type (e.g., 'frequency', 'time', 'length')
 
         Raises
@@ -325,6 +328,9 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
         Common physical types include 'frequency', 'time', 'length', 'angle',
         'temperature', etc.
         """
+        physical_type_expected = astropy_units.get_physical_type(
+            expected_physical_type,
+        )
         field_name = self.get_name(field)
         da = self.get_arr(data_source, field)
         unit = da.u.unit
@@ -333,11 +339,10 @@ class XarrayMapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
             msg = f"Field '{field_name}' has no units set"
             raise ValueError(msg)
 
-        # Check physical type
-        actual_physical_type = unit.physical_type
-        if actual_physical_type != expected_physical_type:
+        physical_type_actual = unit.physical_type
+        if physical_type_actual != physical_type_expected:
             msg = (
-                f"Field '{field_name}' has physical type '{actual_physical_type}', "
-                f"expected '{expected_physical_type}'"
+                f"Field '{field_name}' has physical type '{physical_type_actual}', "
+                f"expected '{physical_type_expected}'"
             )
             raise ValueError(msg)

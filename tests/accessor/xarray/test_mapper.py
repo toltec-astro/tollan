@@ -8,6 +8,7 @@ import dask.array as da
 import numpy as np
 import pytest
 import xarray as xr
+from astropy import units as u
 from dask import delayed
 
 from tollan.accessor.schema import Mapping, NameMapping, Schema
@@ -490,6 +491,31 @@ class TestXarrayMapper:
 
         # Should not raise for frequency units
         mapper.validate_has_physical_type(ds, mapper.schema.freq, "frequency")
+        mapper.validate_has_physical_type(
+            ds,
+            mapper.schema.freq,
+            u.get_physical_type("frequency"),
+        )
+
+    def test_validate_has_physical_type_rejects_unknown_expected_type(self):
+        """An invalid expected physical type fails at the validation boundary."""
+        ds = xr.Dataset({"freq": ("x", [1.0, 2.0], {"units": "GHz"})})
+
+        @dataclass
+        class TestSchema(Schema):
+            freq: Mapping = NameMapping("freq")
+
+        class TestMapper(XarrayMapper[TestSchema]):
+            pass
+
+        mapper = TestMapper.from_data_source(ds)
+
+        with pytest.raises(ValueError):
+            mapper.validate_has_physical_type(
+                ds,
+                mapper.schema.freq,
+                "not-a-physical-type",
+            )
 
     def test_validate_has_physical_type_fails_wrong_type(self):
         """Test validate_has_physical_type fails for wrong type."""
