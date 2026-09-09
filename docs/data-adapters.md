@@ -14,7 +14,7 @@ or placed behind a domain accessor built from `AccessorBase`.
 | Source | Tollan class | Labeled read | Raw read |
 | --- | --- | --- | --- |
 | `xarray.Dataset`, `DataArray`, or `DataTree` | `XarrayMapper`, `XarrayAccessorBase` | `get_arr()` returns a `DataArray` | `get_value()` returns an attribute value or NumPy array |
-| `netCDF4.Dataset` | `NetCDF4Mapper` | — | `get_value()` returns an array representation of a variable or attribute |
+| `netCDF4.Dataset` | `NetCDF4Mapper` | — | `get_value()` returns a native variable slice, global attribute, or dimension length |
 | `pandas.DataFrame` | `DataFrameMapper` | — | `get_value()` returns a NumPy column array or raw `DataFrame.attrs` value |
 
 The schema declaration is independent of the backend:
@@ -139,9 +139,17 @@ signal = mapper.get_value(dataset, mapper.schema.signal)
 observation_id = mapper.get_value(dataset, mapper.schema.observation_id)
 ```
 
-This adapter provides raw reads rather than xarray-style labeled reads.
-Variable values are returned as NumPy arrays, and attributes are returned as
-array representations. Keep the netCDF4 Dataset open for resolution and reads.
+This adapter provides raw reads rather than xarray-style labeled reads. It
+resolves variables, actual global attributes, and dimensions. A dimension
+reads as its current integer length, making it suitable for schema metadata
+such as sample or channel counts. When a same-named coordinate variable is
+present, the variable takes precedence in `get_value()`. Use `has_dim()` and
+`get_dim()` to access the dimension length explicitly in that case.
+
+Variable values are returned directly from `variable[...]`, preserving
+netCDF4's automatic masking and scale/offset decoding. Global attributes are
+returned through `Dataset.getncattr()` and take precedence over a variable with
+the same name. Keep the netCDF4 Dataset open for resolution and reads.
 
 ## pandas DataFrame
 

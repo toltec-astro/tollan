@@ -4,10 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-import numpy as np
-
 from ..mapper import Mapper
-from ..schema import Schema
+from ..schema import Mapping, Schema
 
 if TYPE_CHECKING:
     import netCDF4 as nc  # noqa: N813
@@ -26,22 +24,38 @@ class NetCDF4Mapper[SchemaT: Schema = Schema](Mapper[SchemaT]):
     """
 
     def _has_field(self, data_source: nc.Dataset, name: str) -> bool:
-        """Check if field exists as variable, dimension, or attribute."""
+        """Check if a global attribute, variable, or dimension exists."""
         return (
-            name in data_source.variables
+            name in data_source.ncattrs()
+            or name in data_source.variables
             or name in data_source.dimensions
-            or hasattr(data_source, name)
         )
 
     def _read_value(self, data_source: nc.Dataset, name: str) -> Any:
         """Read field value from dataset.
 
-        Returns the underlying numpy array for variables,
-        or the attribute value for attributes.
+        Global attributes take precedence over variables with the same name.
+        Variable reads retain netCDF4's native masking and scaling behavior.
+        Dimensions are returned as their current integer length.
         """
+        if name in data_source.ncattrs():
+            return data_source.getncattr(name)
         if name in data_source.variables:
-            return np.array(data_source.variables[name][:])
-        if hasattr(data_source, name):
-            return np.array(getattr(data_source, name))
+            return data_source.variables[name][...]
+        if name in data_source.dimensions:
+            return len(data_source.dimensions[name])
         msg = f"Field {name} not found in dataset"
         raise KeyError(msg)
+
+    def has_dim(self, data_source: nc.Dataset, field: Mapping) -> bool:
+        """Return whether the mapped field names a NetCDF dimension."""
+        name = self.get_name(field)
+        return name is not None and name in data_source.dimensions
+
+    def get_dim(self, data_source: nc.Dataset, field: Mapping) -> int:
+        """Return the current length of a mapped NetCDF dimension."""
+        name = self.get_name(field)
+        if name is None or name not in data_source.dimensions:
+            msg = f"Dimension not found: {field}"
+            raise KeyError(msg)
+        return len(data_source.dimensions[name])
