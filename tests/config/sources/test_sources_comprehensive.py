@@ -168,6 +168,52 @@ class TestConfigSourceListConditionalLoading:
 class TestConfigSourceListCaching:
     """Test ConfigSourceList caching functionality."""
 
+    def test_top_level_list_patches_do_not_mutate_sources_or_cached_data(self):
+        base = DictConfigSource(order=0, source={"values": [1, 2]})
+        patch = DictConfigSource(
+            order=1,
+            enable_if="patched",
+            source={"values": {0: 9, "[]": [3]}},
+        )
+        sources = ConfigSourceList(data=[base, patch])
+        sources.enable_cache()
+
+        original = sources.load(context={"patched": False})
+        changed = sources.load(context={"patched": True})
+        assert changed == {"values": [9, 2, 3]}
+        assert sources.load(context={"patched": True}) == changed
+        assert sources.load(context={"patched": False}) == original
+        assert original == base.source == {"values": [1, 2]}
+        assert sources._cache_config.cache[0] == base.source
+        assert patch.source == {"values": {0: 9, "[]": [3]}}
+
+        changed["values"].append(4)
+        assert sources.load(context={"patched": True}) == {"values": [9, 2, 3]}
+
+    def test_nested_list_patches_do_not_mutate_sources_or_cached_data(self):
+        base = DictConfigSource(order=0, source={"items": [{"values": [1]}]})
+        patch = DictConfigSource(
+            order=1,
+            enable_if="patched",
+            source={"items": {0: {"values": {"[]": [2]}}}},
+        )
+        sources = ConfigSourceList(data=[base, patch])
+        sources.enable_cache()
+
+        original = sources.load(context={"patched": False})
+        changed = sources.load(context={"patched": True})
+        assert changed == {"items": [{"values": [1, 2]}]}
+        assert sources.load(context={"patched": True}) == changed
+        assert sources.load(context={"patched": False}) == original
+        assert original == base.source == {"items": [{"values": [1]}]}
+        assert sources._cache_config.cache[0] == base.source
+        assert patch.source == {"items": {0: {"values": {"[]": [2]}}}}
+
+        changed["items"][0]["values"].append(3)
+        assert sources.load(context={"patched": True}) == {
+            "items": [{"values": [1, 2]}],
+        }
+
     def test_enable_cache_all_sources(self):
         """Test enable_cache caches all sources by default."""
         sources = ConfigSourceList.model_validate(

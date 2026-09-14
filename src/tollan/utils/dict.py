@@ -10,12 +10,14 @@ from __future__ import annotations
 import collections.abc
 import itertools
 import re
+from copy import copy
 from dataclasses import dataclass
 from enum import Enum
+from functools import partial
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, MutableMapping, MutableSequence
+    from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 
 __all__ = [
     "add_to_dict",
@@ -29,6 +31,7 @@ __all__ = [
 
 MT = collections.abc.MutableMapping
 ST = collections.abc.MutableSequence
+_MISSING = object()
 
 
 class ListOperation(Enum):
@@ -206,7 +209,13 @@ class ListDSL:
         # For SLICE operations, return default value
         return dsl, default
 
-    def apply(self, lst: MutableSequence[Any], value: Any) -> bool:
+    def apply(
+        self,
+        lst: MutableSequence[Any],
+        value: Any,
+        *,
+        prepare_value: Callable[[Any], Any] | None = None,
+    ) -> bool:
         """Apply operation to list.
 
         Parameters
@@ -215,6 +224,9 @@ class ListDSL:
             The list to modify
         value : Any
             The value to apply
+        prepare_value : callable, optional
+            Prepare each item before slice insertion. By default, insert items
+            unchanged. Integer-index operations are left to rupdate().
 
         Returns
         -------
@@ -233,6 +245,8 @@ class ListDSL:
             # Wrap scalar as sequence for slice assignment
             if not isinstance(value, ST):
                 value = [value]
+            if prepare_value is not None:
+                value = [prepare_value(item) for item in value]
             lst[slice_obj] = value
             return True  # Slice operation complete, no merging
 
@@ -259,11 +273,26 @@ class ListDSL:
         return self.slice_obj
 
 
+def _prepare_update_value(value: Any, *, owned: dict[int, Any] | None) -> Any:
+    """Create missing dictionaries, copy shared containers, and reuse owned ones."""
+    if value is _MISSING:
+        if owned is None:
+            return None
+        value = {}
+    elif owned is None or not isinstance(value, MT | ST) or id(value) in owned:
+        return value
+    else:
+        value = copy(value)
+    # Retain owned containers to prevent id reuse during this update.
+    owned[id(value)] = value
+    return value
+
+
 def rupdate(
     d: MutableMapping[Any, Any] | MutableSequence[Any],
     u: Mapping[Any, Any],
     *,
-    copy_subdict: bool = True,
+    copy_subcontainers: bool = True,
 ) -> None:
     r"""Update dict recursively.
 
@@ -283,9 +312,17 @@ def rupdate(
     u : dict
         The update dict.
 
-    copy_subdict : bool
-        If True, subdicts in `u` will get copied to `d`, such that
-        further change in `d` will not propagate back to `u`.
+    copy_subcontainers : bool, optional
+        If True (default), create fresh dictionaries for missing keys during
+        recursive merging, and shallow-copy mutable containers assigned directly
+        or inserted through slices. Assigning a list does not traverse its
+        contents: nested objects remain shared. No deep copy is performed.
+        Before descending into an existing destination container, shallow-copy
+        it and assign the copy back to its parent. Only containers along update
+        paths are detached; untouched nested objects may remain shared.
+        If False, nested destination containers are updated in place and
+        inserted containers may be shared with `u`. The root `d` is always
+        updated in place.
 
     Returns
     -------
@@ -357,24 +394,24 @@ def rupdate(
 
     """
     stack = [(d, u)]
+    prepare_value = partial(
+        _prepare_update_value, owned={} if copy_subcontainers else None
+    )
+    prepare_slice_item = prepare_value if copy_subcontainers else None
 
     while stack:
         # here d can only be list or dict
         d, u = stack.pop(0)
         for k, v in u.items():
-            # determine default for new subdicts
-            # when copy_subdict is True, we create new dicts for subdicts in u
-            # when copy_subdict is False, we assign subdicts in u directly
-            default = {} if copy_subdict else None
             if isinstance(d, MT):
                 # handle d as dict
-                dv = d.setdefault(k, default)
+                dv = d.get(k, _MISSING)
             elif isinstance(d, ST):
                 # handle d as list - use ListDSL for all list key handling
-                dsl, dv = ListDSL.from_key(k, d, default)
+                dsl, dv = ListDSL.from_key(k, d, _MISSING)
 
                 # Apply operation and check if merging is needed
-                if dsl.apply(d, v):
+                if dsl.apply(d, v, prepare_value=prepare_slice_item):
                     # Slice operation - no further merging needed
                     continue
 
@@ -389,16 +426,20 @@ def rupdate(
             # now dv is the current value at the key
             if not isinstance(v, MT):
                 # u[k] is not a dict, nothing to merge, so just set it
-                d[k] = v
+                d[k] = prepare_value(v)
                 continue
 
             # now v = u[k] is dict
+            if not v and isinstance(dv, MT | ST):
+                # An empty mapping leaves an existing container unchanged.
+                continue
+            dv = prepare_value(dv)
             if not isinstance(dv, MT | ST):
-                # d[k] is not a container, so just set it to u[k]
-                d[k] = v
+                # d[k] is not a container, so replace it with the incoming mapping
+                d[k] = prepare_value(v)
             else:
-                # both d[k] and u[k] are containers, push them on the stack
-                # to merge further
+                # Queue the merge; repeated selectors reuse this prepared container.
+                d[k] = dv
                 stack.append((dv, v))
 
 
