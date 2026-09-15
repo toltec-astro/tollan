@@ -108,6 +108,45 @@ deep immutability for nested objects. Container isolation applies to updates
 through the runtime APIs; arbitrary direct mutation of shared nested values is
 not protected.
 
+## YAML configuration files
+
+A YAML mapping supplies configuration values directly. A YAML list supplies
+source declarations, which are validated as a `ConfigSourceList`:
+
+```yaml
+- source: base.yaml
+- enable_if: workers >= 4
+  source:
+    search:
+      pattern: warning
+```
+
+Load either form through `RuntimeContext(config_sources=Path("config.yaml"))`.
+For a directory, numbered files such as `00_base.yaml` and `10_overrides.yaml`
+are loaded in numeric order; each file may contain a mapping or a source list.
+
+Within each source list, omitted orders follow list position; explicit orders
+must be unique within that list. Lists can contain nested lists through their
+`source` values. Each nested list has its own ordering.
+
+File references in declarations are relative to the containing YAML file,
+including references inside inline nested lists. YAML and `.env` formats are
+inferred from the file suffix unless `format` is explicit. These references
+identify sources to load; they are not part of the configuration data.
+
+Path-valued configuration data stays unchanged until typed model validation.
+Tollan's path types use `validation_context["rootpath"]` at that point. Including
+a file does **not** make its path-valued settings relative to its own directory:
+after merging, they use the same validation root as the other settings. Source
+file locations are not retained as per-value path bases.
+
+Parsed mappings and source lists are cached, but conditions and merging run for
+each load's context. Disabled file sources are not read. Reloading the runtime
+discards cached YAML source lists and reads their included files afresh.
+
+Empty files, YAML null, and empty mappings/lists supply no settings. Other scalar
+documents and invalid source declarations raise errors rather than being ignored.
+
 ## Conditional sources
 
 An `enable_if` expression selects a source using variables from a context dictionary.

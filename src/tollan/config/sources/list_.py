@@ -61,12 +61,12 @@ class ListConfigSource(ConfigSourceBase):
             Validated source list
         """
         # Import here to avoid circular import
-        from . import ConfigSourceList  # noqa: PLC0415
+        from . import ConfigSourceList, resolve_config_sources  # noqa: PLC0415
 
         if isinstance(v, ConfigSourceList):
             return v
         # Use ConfigSourceList's validator to handle list/dict
-        return ConfigSourceList.model_validate(v)
+        return resolve_config_sources(v)
 
     @model_validator(mode="after")
     def _validate_name(self) -> ListConfigSource:

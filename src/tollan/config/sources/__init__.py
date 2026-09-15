@@ -238,7 +238,9 @@ class ConfigSourceList(BaseModel):
                     if "format" not in source:
                         src = source.get("source")
                         if isinstance(src, (str, Path)):
-                            source["format"] = "yaml"
+                            source["format"] = (
+                                _detect_source_format(Path(src)) or "yaml"
+                            )
                         elif isinstance(src, dict):
                             source["format"] = "dict"
                         elif isinstance(src, (list, ConfigSourceList)):

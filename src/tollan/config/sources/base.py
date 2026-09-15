@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pandas as pd
 from pydantic import BaseModel, PrivateAttr
 
 from ...utils.log import logger
+
+if TYPE_CHECKING:
+    from . import ConfigSourceList
 
 __all__ = [
     "ConfigSourceBase",
@@ -132,23 +135,24 @@ class ConfigSourceBase(BaseModel):
 class FileConfigSourceBase(ConfigSourceBase):
     """Base class for configuration files with cached parsing.
 
-    Subclasses implement `_read` to return a configuration dictionary.
+    Subclasses implement `_read` to return a dictionary or a source list.
     `load` checks source conditions on every call and reuses the parsed data
-    until `invalidate_cache` is called or caching is disabled.
+    until `invalidate_cache` is called or caching is disabled. Source lists
+    are evaluated with the current context on each load.
     """
 
     _cache_enabled: bool = PrivateAttr(default=True)
 
     @cached_property
-    def _data(self) -> DictConfigT:
+    def _data(self) -> DictConfigT | ConfigSourceList:
         return self._read()
 
-    def _read(self) -> DictConfigT:
+    def _read(self) -> DictConfigT | ConfigSourceList:
         """Read and parse the file without evaluating configuration conditions."""
         raise NotImplementedError
 
     def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
-        """Return parsed file data if enabled for context, reusing a cached read.
+        """Load configuration for the context, reusing cached parsed data.
 
         Parameters
         ----------
@@ -158,7 +162,8 @@ class FileConfigSourceBase(ConfigSourceBase):
         Returns
         -------
         DictConfigT
-            Parsed configuration. Treat the returned data as read-only.
+            Configuration dictionary, merging contained sources if present.
+            Treat the returned data as read-only.
 
         Raises
         ------
@@ -168,7 +173,10 @@ class FileConfigSourceBase(ConfigSourceBase):
         if not self.is_enabled_for(context):
             msg = f"Source '{self.name}' is not enabled for context: {context}"
             raise ValueError(msg)
-        return self._data if self._cache_enabled else self._read()
+        data = self._data if self._cache_enabled else self._read()
+        if isinstance(data, dict):
+            return data
+        return data.load(context=context)
 
     def enable_cache(self, *, enabled: bool = True) -> None:
         """Enable or disable reuse of parsed file data.
