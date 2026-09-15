@@ -5,8 +5,8 @@ from __future__ import annotations
 from functools import cached_property
 from typing import Any
 
+import pandas as pd
 from pydantic import BaseModel, PrivateAttr
-from simpleeval import NameNotDefined, simple_eval
 
 from ...utils.log import logger
 
@@ -34,17 +34,39 @@ class ConfigSourceBase(BaseModel):
     enable_if: str | None = None
 
     def is_enabled_for(self, context: dict[str, Any] | None = None) -> bool:
-        """Check if this source is enabled for the given context.
+        """Evaluate whether this source is enabled for the given context.
 
         Parameters
         ----------
         context : dict[str, Any] | None, optional
-            Context dictionary for evaluating enable_if condition
+            Variable names and values used to evaluate `enable_if`.
+            A conditional source is disabled when no context is provided.
 
         Returns
         -------
         bool
-            True if source should be loaded, False otherwise
+            Whether this source is enabled and its condition matches.
+            Undefined variables disable the source; other query errors propagate.
+
+        Notes
+        -----
+        Conditions use pandas query syntax, including comparison-before-boolean
+        precedence for `&` and `|`, and membership with `in` and `not in`.
+        Evaluation is not guaranteed to short-circuit.
+
+        Only use trusted configuration expressions. Pandas query evaluation
+        is not a security sandbox, even with empty local and global dictionaries.
+
+        Examples
+        --------
+        >>> source = ConfigSourceBase(
+        ...     order=0,
+        ...     enable_if='workers >= 4 & environment in ["staging", "production"]',
+        ... )
+        >>> source.is_enabled_for({"workers": 8, "environment": "production"})
+        True
+        >>> source.is_enabled_for({"workers": 2, "environment": "production"})
+        False
         """
         if not self.enabled:
             return False
@@ -53,18 +75,35 @@ class ConfigSourceBase(BaseModel):
             return True
 
         if context is None:
-            context = {}
-
-        # Evaluate enable_if expression using safe eval
-        try:
-            result = _safe_eval(self.enable_if, context)
-            return bool(result)
-        except (ValueError, NameError, NameNotDefined, SyntaxError) as e:
-            logger.warning(
-                f"Failed to evaluate enable_if '{self.enable_if}' "
-                f"with context {context}: {e}",
+            logger.debug(
+                "Source {} (order={}): disabled by enable_if={!r} "
+                "with context=None: no context provided",
+                self.name or "<unnamed>",
+                self.order,
+                self.enable_if,
             )
             return False
+        if not isinstance(context, dict):
+            msg = "Condition context must be a dictionary."
+            raise TypeError(msg)
+
+        tbl_context = pd.DataFrame.from_records([context])
+        try:
+            result = tbl_context.query(
+                self.enable_if, parser="pandas", local_dict={}, global_dict={}
+            )
+        except pd.errors.UndefinedVariableError as e:
+            logger.debug(
+                "Source {} (order={}): disabled by enable_if={!r} "
+                "with context={!r}: {}",
+                self.name or "<unnamed>",
+                self.order,
+                self.enable_if,
+                context,
+                e,
+            )
+            return False
+        return not result.empty
 
     def enable_cache(self, *, enabled: bool = True) -> None:
         """Configure cached reads, if the source has any."""
@@ -150,35 +189,3 @@ class FileConfigSourceBase(ConfigSourceBase):
         Does not read the file immediately or change the cache setting.
         """
         self.__dict__.pop("_data", None)
-
-
-def _safe_eval(expr: str, context: dict[str, Any]) -> Any:
-    """Safely evaluate an expression using simpleeval.
-
-    Uses the simpleeval library for safe expression evaluation without eval().
-    Supports comparison operators, boolean logic, and basic operations.
-
-    Parameters
-    ----------
-    expr : str
-        Expression to evaluate
-    context : dict[str, Any]
-        Variables available in the expression (passed as 'names' to simpleeval)
-
-    Returns
-    -------
-    Any
-        Result of the expression
-
-    Raises
-    ------
-    ValueError
-        If expression contains disallowed operations
-    NameError
-        If variable not found in context
-    """
-    try:
-        return simple_eval(expr, names=context)
-    except NameError as e:
-        msg = f"Variable not found in context: {e}"
-        raise NameError(msg) from e

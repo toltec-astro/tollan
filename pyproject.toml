@@ -29,7 +29,6 @@ dependencies = [
   "click",
   "rich",
   "loguru",
-  "simpleeval",
   "numpy",
   "astropy",
   "python-dotenv",

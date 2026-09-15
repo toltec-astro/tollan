@@ -30,9 +30,9 @@ class SearchHandler(
 
 
 rc = RuntimeContext()
-rc.update_default_config({"search": {"pattern": "sweep"}})
+rc.update_default_config({"search": {"pattern": "error"}})
 handler = SearchHandler(rc)  # Validates SearchConfig now.
-assert handler.compiled_pattern.search("raw sweep") is not None
+assert handler.compiled_pattern.search("an error occurred") is not None
 ```
 
 Use ordinary `cached_property` for handler-owned resources. Creating another
@@ -43,7 +43,7 @@ out of config validation itself.
 The handler takes a runtime, not a raw dictionary or an already validated model.
 For in-memory use, configure the runtime's tiers or supply a dictionary source.
 The private runtime reference is a provider for creating new handlers, not the
-current handler's source of scientific settings. Application code should consume
+current handler's source of settings. Application code should consume
 `handler.config` for domain settings and `handler.runtime_info` for the broader
 execution context, including invocation details and validation context.
 
@@ -55,17 +55,17 @@ for introspection, not a frozen copy of the source tree.
 ## Temporary variants
 
 ```python
-with handler.temporary_config(overrides={"pattern": "tune"}) as other:
-    assert other.compiled_pattern.search("raw tune") is not None
-    assert handler.config.pattern == "sweep"
+with handler.temporary_config(overrides={"pattern": "warning"}) as other:
+    assert other.compiled_pattern.search("a warning occurred") is not None
+    assert handler.config.pattern == "error"
 
 with handler.temporary_runtime_config(
-    overrides={"search": {"pattern": "target"}},
-    validation_context={"observation": 42},
+    overrides={"search": {"pattern": "critical"}},
+    validation_context={"job_id": 42},
 ) as other:
-    assert other.config.pattern == "target"
-    assert other.runtime_info.validation_context["observation"] == 42
-    assert "observation" not in handler.runtime_info.validation_context
+    assert other.config.pattern == "critical"
+    assert other.runtime_info.validation_context["job_id"] == 42
+    assert "job_id" not in handler.runtime_info.validation_context
 ```
 
 Both methods yield a new handler. `temporary_config` wraps domain-shaped patches
@@ -93,7 +93,7 @@ concrete handler or caller.
 rc.update_override_config({"search": {"pattern": "new"}})
 new_handler = handler.recreate()
 assert new_handler.config.pattern == "new"
-assert handler.config.pattern == "sweep"
+assert handler.config.pattern == "error"
 ```
 
 `recreate()` uses the attached runtime's **current** configuration. Temporary
@@ -107,6 +107,35 @@ property is read-only, but neither it nor Pydantic's frozen-model option provide
 deep immutability for nested objects. Container isolation applies to updates
 through the runtime APIs; arbitrary direct mutation of shared nested values is
 not protected.
+
+## Conditional sources
+
+An `enable_if` expression selects a source using variables from a context dictionary.
+Expressions use
+[pandas query syntax](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html):
+`&`, `|`, `~`, `in`, and `not in` are supported, with comparisons binding
+before boolean combinations.
+
+```python
+from tollan.config.sources import DictConfigSource
+
+source = DictConfigSource(
+    order=0,
+    source={"logging": {"level": "DEBUG"}},
+    enable_if='workers >= 4 & environment in ["staging", "production"]',
+)
+assert source.is_enabled_for({"workers": 8, "environment": "production"})
+assert not source.is_enabled_for({"workers": 2, "environment": "production"})
+```
+
+No context or an undefined variable disables a conditional source. Other query
+errors propagate so malformed expressions are visible. Evaluation is not guaranteed
+to short-circuit: `workers >= 4 | missing > 0` is disabled even if `workers` is 8.
+Supply the variables required by an expression before evaluating its conditions.
+
+Expressions must come from trusted configuration: pandas query evaluation can
+execute code and is not a sandbox. The context API accepts a dictionary of variable
+bindings, not a DataFrame.
 
 ## Runtime variants and source caching
 

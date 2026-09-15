@@ -381,10 +381,10 @@ class ConfigHandler[
         >>> handler = Handler(RuntimeContext())
         >>> with handler.temporary_runtime_config(
         ...     overrides={"job": {"limit": 5}},
-        ...     validation_context={"observation": 42},
+        ...     validation_context={"job_id": 42},
         ... ) as other:
         ...     print(other.config.limit)
-        ...     print(other.runtime_info.validation_context["observation"])
+        ...     print(other.runtime_info.validation_context["job_id"])
         5
         42
         >>> handler.config.limit
