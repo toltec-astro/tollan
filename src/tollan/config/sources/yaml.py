@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 import yaml
 from pydantic import field_validator, model_validator
 
-from .base import ConfigSourceBase
+from .base import FileConfigSourceBase
 
 if TYPE_CHECKING:
     from .base import DictConfigT
@@ -16,8 +16,13 @@ if TYPE_CHECKING:
 __all__ = ["YamlConfigSource"]
 
 
-class YamlConfigSource(ConfigSourceBase):
+class YamlConfigSource(FileConfigSourceBase):
     """Configuration source from YAML file.
+
+    Parses the file with `yaml.safe_load` and caches the resulting dictionary.
+    Empty files and non-mapping YAML documents produce an empty dictionary.
+    Loading a missing file raises FileNotFoundError; invalid YAML raises
+    yaml.YAMLError.
 
     Examples
     --------
@@ -69,30 +74,8 @@ class YamlConfigSource(ConfigSourceBase):
             object.__setattr__(self, "name", self.source.name)
         return self
 
-    def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
-        """Load configuration from YAML file.
-
-        Parameters
-        ----------
-        context : dict[str, Any] | None, optional
-            Context dictionary (unused, for signature compatibility)
-
-        Returns
-        -------
-        dict[str, Any]
-            Configuration dictionary
-
-        Raises
-        ------
-        ValueError
-            If source is not enabled for context
-        FileNotFoundError
-            If YAML file doesn't exist
-        """
-        if not self.is_enabled_for(context):
-            msg = f"Source '{self.name}' is not enabled for context: {context}"
-            raise ValueError(msg)
-
+    def _read(self) -> DictConfigT:
+        """Read and parse the YAML file."""
         with Path(self.source).open() as f:
             data = yaml.safe_load(f)
         return data if isinstance(data, dict) else {}

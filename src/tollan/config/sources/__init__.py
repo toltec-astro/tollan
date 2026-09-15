@@ -5,8 +5,6 @@ from __future__ import annotations
 import collections.abc
 import os
 import re
-from copy import deepcopy
-from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, overload
 
@@ -14,7 +12,6 @@ from loguru import logger
 from pydantic import (
     BaseModel,
     Field,
-    PrivateAttr,
     WithJsonSchema,
     field_validator,
     model_validator,
@@ -55,142 +52,6 @@ type ConfigSource = Annotated[
 
 
 # ============================================================================
-# Cache Configuration
-# ============================================================================
-
-
-@dataclass
-class CacheConfig:
-    """Configuration for ConfigSourceList caching behavior.
-
-    Attributes
-    ----------
-        enabled: Whether caching is enabled
-        cache: Cache storage (order → loaded data)
-        cached_predicate: Predicate to select sources to cache
-        exclude_predicate: Predicate to exclude sources from cache
-    """
-
-    enabled: bool = False
-    cache: dict[int, DictConfigT] = field(default_factory=dict)
-    cached_predicate: Callable[[Any], bool] | None = None
-    exclude_predicate: Callable[[Any], bool] | None = None
-
-    def should_cache(self, source: Any) -> bool:
-        """Check if a source should be cached.
-
-        Parameters
-        ----------
-        source : Any
-            Config source to check
-
-        Returns
-        -------
-        bool
-            True if source should be cached
-        """
-        if not self.enabled:
-            return False
-
-        # Check exclude predicate first
-        if self.exclude_predicate and self.exclude_predicate(source):
-            return False
-
-        # Check include predicate
-        if self.cached_predicate is not None:
-            return self.cached_predicate(source)
-
-        # Default: cache all (unless excluded)
-        return True
-
-    def get_cache_key(self, source: ConfigSource) -> int:
-        """Get cache key for a source.
-
-        Uses order as the key since order is enforced to be unique.
-
-        Parameters
-        ----------
-        source : ConfigSource
-            Config source
-
-        Returns
-        -------
-        int
-            Cache key (order)
-        """
-        return source.order
-
-    def get(self, source: ConfigSource) -> DictConfigT | None:
-        """Get cached data for a source.
-
-        Parameters
-        ----------
-        source : ConfigSource
-            Config source
-
-        Returns
-        -------
-        DictConfigT | None
-            Cached data if available, None otherwise
-        """
-        key = self.get_cache_key(source)
-        return self.cache.get(key)
-
-    def set(self, source: ConfigSource, data: DictConfigT) -> None:
-        """Cache data for a source.
-
-        Parameters
-        ----------
-        source : ConfigSource
-            Config source
-        data : DictConfigT
-            Data to cache
-        """
-        key = self.get_cache_key(source)
-        self.cache[key] = data
-
-    def invalidate(
-        self,
-        sources: list[Any],
-        predicate: Callable[[Any], bool] | None = None,
-    ) -> list[int]:
-        """Invalidate cache for sources matching predicate or all sources.
-
-        Parameters
-        ----------
-        sources : list[Any]
-            List of all sources to check against
-        predicate : Callable[[Any], bool] | None, optional
-            Function to select sources to invalidate
-            (None = invalidate all), by default None
-
-        Returns
-        -------
-            List of invalidated cache keys (orders)
-        """
-        invalidated: list[int] = []
-
-        if predicate is None:
-            # Clear all cache
-            invalidated = list(self.cache.keys())
-            self.cache.clear()
-        else:
-            # Clear cache for matching sources
-            keys_to_remove = []
-            for source in sources:
-                if predicate(source):
-                    key = self.get_cache_key(source)
-                    if key in self.cache:
-                        keys_to_remove.append(key)
-
-            for key in keys_to_remove:
-                del self.cache[key]
-                invalidated.append(key)
-
-        return invalidated
-
-
-# ============================================================================
 # Directory loading patterns and format detection
 # ============================================================================
 
@@ -227,10 +88,9 @@ class ConfigSourceList(BaseModel):
 
     Caching
     -------
-    Per-source caching can be enabled with enable_cache(). This caches
-    the loaded data for each source independently, which is useful for
-    expensive loads (e.g., file I/O, remote APIs). Cache control can be
-    granular: specify which sources to cache via names or orders.
+    File sources cache their read-and-parse results by default. Dictionary
+    sources return their in-memory data, and nested lists merge their contents
+    for each context. Cache selection and invalidation delegate to the sources.
 
     Example:
         >>> sources = ConfigSourceList(data=[
@@ -257,9 +117,6 @@ class ConfigSourceList(BaseModel):
         default=None,
         description="Optional name for this source list",
     )
-
-    # Private: Cache configuration
-    _cache_config: CacheConfig = PrivateAttr(default_factory=CacheConfig)
 
     def __iter__(
         self,
@@ -369,7 +226,11 @@ class ConfigSourceList(BaseModel):
         # Check if we should auto-assign order based on position
         implicit_order = (info.context or {}).get("config_source_implicit_order", False)
         if implicit_order:
-            data = deepcopy(data)
+            # Only declaration keys below are changed. Preserve validated sources,
+            # nested source caches, and opaque values inside source payloads.
+            data = [
+                source.copy() if isinstance(source, dict) else source for source in data
+            ]
             for i, source in enumerate(data):
                 if isinstance(source, dict):
                     source.setdefault("order", i)
@@ -398,56 +259,14 @@ class ConfigSourceList(BaseModel):
 
         return sorted(data, key=get_order)
 
-    def _load_source(
-        self,
-        source: ConfigSource,
-        context: dict[str, Any] | None = None,
-    ) -> DictConfigT:
-        """Load data from a source with optional caching.
-
-        Parameters
-        ----------
-        source : ConfigSource
-            Config source to load
-        context : dict[str, Any] | None, optional
-            Context dictionary for conditional loading, by default None
-
-        Returns
-        -------
-        DictConfigT
-            Configuration data from the source
-        """
-        # Check if this source should be cached
-        if self._cache_config.should_cache(source):
-            # Try to get from cache
-            cached_data = self._cache_config.get(source)
-            if cached_data is not None:
-                logger.debug(
-                    f"Source {source.name or '<unnamed>'} (order={source.order}): "
-                    f"loaded from cache",
-                )
-                return cached_data
-
-            # Load and cache
-            data = source.load(context=context)
-            self._cache_config.set(source, data)
-            logger.debug(
-                f"Source {source.name or '<unnamed>'} (order={source.order}): "
-                f"loaded and cached",
-            )
-            return data
-
-        # Load without caching
-        return source.load(context=context)
-
     def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
         """Load and merge all enabled configuration sources.
 
         Sources are evaluated for enable_if conditions, then loaded and
         merged in order (lower order first, higher order overrides).
 
-        If caching is enabled, individual sources may be cached based on
-        the cache configuration.
+        Each source manages its own cached reads. Conditions and merging run
+        on every call, including for nested lists.
 
         Parameters
         ----------
@@ -467,7 +286,7 @@ class ConfigSourceList(BaseModel):
                 continue
 
             if source.is_enabled_for(context=context):
-                data = self._load_source(source, context=context)
+                data = source.load(context=context)
                 rupdate(merged, data)
                 status = "enabled"
             else:
@@ -486,90 +305,88 @@ class ConfigSourceList(BaseModel):
         self,
         predicate: Callable[[ConfigSource], bool] | None = None,
         exclude: Callable[[ConfigSource], bool] | None = None,
+        *,
+        enabled: bool = True,
     ) -> None:
-        """Enable per-source caching for sources matching predicate.
-
-        Caching is applied at the source level, not at the merged config level.
-        This allows expensive sources (e.g., file I/O, remote APIs) to be cached
-        while keeping mutable dict sources uncached.
+        """Configure read caching for the contained sources.
 
         Parameters
         ----------
-        predicate : Callable[[ConfigSource], bool] | None, optional
-            Function to select sources to cache.
-            If None, cache all sources (unless excluded), by default None
-        exclude : Callable[[ConfigSource], bool] | None, optional
-            Function to select sources to exclude from caching.
-            Applied after predicate, by default None
+        predicate : callable, optional
+            Select sources to cache. By default, select all sources.
+        exclude : callable, optional
+            Exclude sources from caching, taking precedence over predicate.
+        enabled : bool, optional
+            Set False to disable caching for all sources.
 
-        Example:
-            >>> from tollan.config.sources import ConfigSourceList
-            >>> sources = ConfigSourceList(data=[
-            ...     {"format": "dict", "source": {"a": 1}, "order": 0, "name": "base"},
-            ...     {"format": "dict", "source": {"b": 2}, "order": 1, "name": "env"}
-            ... ])
+        Notes
+        -----
+        Selection applies to this list's immediate sources. A nested list
+        forwards its selected state to its contents. Dictionary sources have
+        no read cache. Disabling a file source's cache clears its saved read.
 
-            >>> # Cache all except env
-            >>> sources.enable_cache(
-            ...     exclude=lambda s: s.name == "env"
-            ... )
+        Examples
+        --------
+        Select cached sources by name, format, or order. These calls configure
+        caching without reading the files:
 
-            >>> # Cache only YAML sources
-            >>> sources.enable_cache(
-            ...     lambda s: isinstance(s, YamlConfigSource)
-            ... )
-
-            >>> # Cache sources with specific orders
-            >>> sources.enable_cache(lambda s: s.order > 5)
-
-            >>> sources._cache_config.enabled
-            True
+        >>> sources = ConfigSourceList(data=[
+        ...     YamlConfigSource(order=0, name="base", source=Path("base.yaml")),
+        ...     EnvFileConfigSource(order=1, name="env", source=Path(".env")),
+        ... ])
+        >>> sources.enable_cache(exclude=lambda s: s.name == "env")
+        >>> sources.enable_cache(lambda s: isinstance(s, YamlConfigSource))
+        >>> sources.enable_cache(lambda s: s.order == 0)
+        >>> sources.enable_cache(enabled=False)  # Read files on every load.
         """
-        self._cache_config.enabled = True
-        self._cache_config.cached_predicate = predicate
-        self._cache_config.exclude_predicate = exclude
+        for source in self:
+            selected = (
+                enabled
+                and (exclude is None or not exclude(source))
+                and (predicate is None or predicate(source))
+            )
+            source.enable_cache(enabled=selected)
 
     def invalidate_cache(
         self,
         predicate: Callable[[ConfigSource], bool] | None = None,
     ) -> None:
-        """Invalidate cache for sources matching predicate or all sources.
+        """Clear cached reads for selected sources, including nested contents.
 
         Parameters
         ----------
-        predicate : Callable[[ConfigSource], bool] | None, optional
-            Function to select sources to invalidate.
-            If None, invalidate all cached sources, by default None
+        predicate : callable, optional
+            Select immediate sources to invalidate. By default, invalidate all.
+            Selecting a nested list invalidates all its contained source reads.
 
-        Example:
-            >>> from tollan.config.sources import ConfigSourceList
-            >>> sources = ConfigSourceList(data=[
-            ...     {"format": "dict", "source": {"a": 1}, "order": 0, "name": "base"},
-            ...     {"format": "dict", "source": {"b": 2}, "order": 1, "name": "env"}
-            ... ])
-            >>> sources.enable_cache()
-            >>> _ = sources.load()  # Populate cache
+        Examples
+        --------
+        Refresh a changed file by selecting its source:
 
-            >>> # Invalidate all
-            >>> sources.invalidate_cache()
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as directory:
+        ...     path = Path(directory) / "base.yaml"
+        ...     _ = path.write_text("limit: 10")
+        ...     sources = ConfigSourceList(data=[
+        ...         YamlConfigSource(order=0, name="base", source=path),
+        ...     ])
+        ...     print(sources.load()["limit"])
+        ...     _ = path.write_text("limit: 20")
+        ...     print(sources.load()["limit"])
+        ...     sources.invalidate_cache(lambda s: s.name == "base")
+        ...     print(sources.load()["limit"])
+        10
+        10
+        20
 
-            >>> # Invalidate specific sources
-            >>> sources.invalidate_cache(
-            ...     lambda s: s.name == "env"
-            ... )
-            >>> sources.invalidate_cache(lambda s: s.order > 5)
+        Select by order, or clear all source caches:
+
+        >>> sources.invalidate_cache(lambda s: s.order == 0)
+        >>> sources.invalidate_cache()
         """
-        invalidated = self._cache_config.invalidate(
-            sources=self.data,
-            predicate=predicate,
-        )
-
-        if invalidated:
-            if predicate is None:
-                logger.debug("Invalidated all source caches")
-            else:
-                for key in invalidated:
-                    logger.debug(f"Invalidated cache for source key={key}")
+        for source in self:
+            if predicate is None or predicate(source):
+                source.invalidate_cache()
 
     @overload
     def get(

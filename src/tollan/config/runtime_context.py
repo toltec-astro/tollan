@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from functools import cached_property
-from typing import TYPE_CHECKING, Any, ClassVar, Literal, cast, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Self, cast, overload
 
 from pydantic import ConfigDict, Field
 
@@ -163,17 +163,13 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         self,
         config_sources: Path | dict | list | ConfigSourceList | None = None,
     ) -> None:
-        # Build four-tier ConfigSourceList with granular caching
-        # Default and override tiers are NOT cached (they're mutable)
-        # User sources ARE cached (they're typically from immutable files)
-
         # Create tier sources from TIERS dict
         tier_sources: list[dict[str, Any] | ConfigSource] = [
             tier_config | {"format": "dict", "source": {}, "enabled": True}
             for tier_config in self.TIERS.values()
         ]
 
-        # Add user sources if provided (order=0...N, cached)
+        # Add user sources if provided (order=0...N)
         if config_sources is not None:
             user_sources = resolve_config_sources(
                 config_sources,
@@ -183,21 +179,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             logger.debug(f"Loaded {len(user_sources.data)} user config source(s)")
             tier_sources.extend(user_sources.data)
 
-        # Create ConfigSourceList with caching (sources will be sorted by order)
-        # Don't cache default, info, and override tiers
-        config_source_list = self._config_sources = ConfigSourceList.model_validate(
-            tier_sources,
-        )
-        config_source_list.enable_cache(
-            exclude=lambda s: (
-                s.name
-                in {
-                    self.TIERS["default"]["name"],
-                    self.TIERS["info"]["name"],
-                    self.TIERS["override"]["name"],
-                }
-            ),
-        )
+        self._config_sources = ConfigSourceList.model_validate(tier_sources)
 
         # Inject runtime_info dict into info tier
         # This must happen after _config_sources is set
@@ -443,7 +425,9 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             "type[RuntimeConfigT]",
             self.runtime_config_cls,
         )
-        return runtime_config_cls.model_validate(self.config_dict)
+        return runtime_config_cls.model_validate(
+            self.config_dict, context=self._get_validation_context()
+        )
 
     @property
     def runtime_info(self) -> RuntimeInfo:
@@ -454,6 +438,65 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             Runtime info instance from config.runtime_info
         """
         return self.config.runtime_info
+
+    def with_config(
+        self,
+        *,
+        defaults: DictConfigT | None = None,
+        overrides: DictConfigT | None = None,
+        validation_context: dict[str, Any] | None = None,
+    ) -> Self:
+        """Create a runtime with patched defaults, overrides, and context.
+
+        Parameters
+        ----------
+        defaults, overrides : dict, optional
+            Settings to merge into copies of the current default and override
+            tiers. User sources retain their existing precedence.
+        validation_context : dict, optional
+            Values to merge into a copy of the current validation context.
+
+        Returns
+        -------
+        Self
+            New instance of the same runtime class with independently updatable
+            tiers and validation context.
+
+        Notes
+        -----
+        User-source objects and their cached file reads are shared. Updating
+        tiers through either runtime's API does not change the other runtime.
+        Direct mutation of shared source data is not isolated.
+
+        Examples
+        --------
+        >>> rc = RuntimeContext()
+        >>> other = rc.with_config(overrides={"port": 9000})
+        >>> other.config_dict["port"]
+        9000
+        >>> "port" in rc.config_dict
+        False
+        """
+        variant = type(self)(
+            config_sources=[
+                source
+                for source in self.config_sources
+                if self._USER_ORDER_MIN <= source.order <= self._USER_ORDER_MAX
+            ]
+        )
+        for tier in ("default", "override", "info"):
+            rupdate(variant._get_tier(tier).source, self._get_tier(tier).source)
+        variant._get_tier("info").source["runtime_info"]["config_sources"] = (
+            variant.config_sources
+        )
+        if defaults is not None:
+            variant.update_default_config(defaults)
+        if overrides is not None:
+            variant.update_override_config(overrides)
+        if validation_context is not None:
+            rupdate(variant._get_validation_context(), validation_context)
+        variant._invalidate_config_cache()
+        return variant
 
     @contextmanager
     def set_context(
@@ -558,8 +601,8 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     def set_default_config(self, cfg: DictConfigT) -> None:
         """Set default configuration (order=-1 tier).
 
-        This only invalidates RuntimeContext caches, not ConfigSourceList
-        source caches (since default tier is not cached in sources).
+        This invalidates RuntimeContext caches. Dictionary tiers have no
+        separate read cache.
 
         Parameters
         ----------
@@ -571,8 +614,8 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     def set_override_config(self, cfg: DictConfigT) -> None:
         """Set override configuration (order=1001 tier).
 
-        This only invalidates RuntimeContext caches, not ConfigSourceList
-        source caches (since override tier is not cached in sources).
+        This invalidates RuntimeContext caches. Dictionary tiers have no
+        separate read cache.
 
         Parameters
         ----------
@@ -584,8 +627,8 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     def update_default_config(self, cfg: DictConfigT) -> None:
         """Merge default configuration (order=-1 tier).
 
-        This only invalidates RuntimeContext caches, not ConfigSourceList
-        source caches (since default tier is not cached in sources).
+        This invalidates RuntimeContext caches. Dictionary tiers have no
+        separate read cache.
 
         Parameters
         ----------
@@ -597,8 +640,8 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     def update_override_config(self, cfg: DictConfigT) -> None:
         """Merge override configuration (order=1001 tier).
 
-        This only invalidates RuntimeContext caches, not ConfigSourceList
-        source caches (since override tier is not cached in sources).
+        This invalidates RuntimeContext caches. Dictionary tiers have no
+        separate read cache.
 
         Parameters
         ----------

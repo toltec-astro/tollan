@@ -51,7 +51,7 @@ class DictConfigSource(ConfigSourceBase):
         Returns
         -------
         DictConfigT
-            Deep copy of source dictionary
+            The source dictionary, without copying or additional caching
 
         Raises
         ------

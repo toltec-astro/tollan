@@ -82,6 +82,14 @@ class ListConfigSource(ConfigSourceBase):
             object.__setattr__(self, "name", name)
         return self
 
+    def enable_cache(self, *, enabled: bool = True) -> None:
+        """Configure read caching for the contained sources."""
+        self.source.enable_cache(enabled=enabled)
+
+    def invalidate_cache(self) -> None:
+        """Clear cached reads in the contained sources."""
+        self.source.invalidate_cache()
+
     def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
         """Load configuration from nested source list.
 

@@ -9,6 +9,7 @@ Welcome to tollan's documentation!
    generic-runtime-bindings
    schema-mapping-accessors
    data-adapters
+   configuration
    cli
    modules
 

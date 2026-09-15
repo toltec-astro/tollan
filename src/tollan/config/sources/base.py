@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from functools import cached_property
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 from simpleeval import NameNotDefined, simple_eval
 
 from ...utils.log import logger
@@ -12,6 +13,7 @@ from ...utils.log import logger
 __all__ = [
     "ConfigSourceBase",
     "DictConfigT",
+    "FileConfigSourceBase",
 ]
 
 
@@ -64,6 +66,12 @@ class ConfigSourceBase(BaseModel):
             )
             return False
 
+    def enable_cache(self, *, enabled: bool = True) -> None:
+        """Configure cached reads, if the source has any."""
+
+    def invalidate_cache(self) -> None:
+        """Clear cached reads, if the source has any."""
+
     def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
         """Load configuration data from this source.
 
@@ -80,6 +88,68 @@ class ConfigSourceBase(BaseModel):
             Configuration dictionary
         """
         raise NotImplementedError
+
+
+class FileConfigSourceBase(ConfigSourceBase):
+    """Base class for configuration files with cached parsing.
+
+    Subclasses implement `_read` to return a configuration dictionary.
+    `load` checks source conditions on every call and reuses the parsed data
+    until `invalidate_cache` is called or caching is disabled.
+    """
+
+    _cache_enabled: bool = PrivateAttr(default=True)
+
+    @cached_property
+    def _data(self) -> DictConfigT:
+        return self._read()
+
+    def _read(self) -> DictConfigT:
+        """Read and parse the file without evaluating configuration conditions."""
+        raise NotImplementedError
+
+    def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
+        """Return parsed file data if enabled for context, reusing a cached read.
+
+        Parameters
+        ----------
+        context : dict[str, Any] | None, optional
+            Values used to evaluate the source's enable_if condition.
+
+        Returns
+        -------
+        DictConfigT
+            Parsed configuration. Treat the returned data as read-only.
+
+        Raises
+        ------
+        ValueError
+            If the source is disabled for the supplied context.
+        """
+        if not self.is_enabled_for(context):
+            msg = f"Source '{self.name}' is not enabled for context: {context}"
+            raise ValueError(msg)
+        return self._data if self._cache_enabled else self._read()
+
+    def enable_cache(self, *, enabled: bool = True) -> None:
+        """Enable or disable reuse of parsed file data.
+
+        Parameters
+        ----------
+        enabled : bool, optional
+            Whether to cache parsed data, by default True. False discards any
+            cached data and makes each enabled load read the file again.
+        """
+        self._cache_enabled = enabled
+        if not enabled:
+            self.invalidate_cache()
+
+    def invalidate_cache(self) -> None:
+        """Discard parsed data so the next enabled load rereads the file.
+
+        Does not read the file immediately or change the cache setting.
+        """
+        self.__dict__.pop("_data", None)
 
 
 def _safe_eval(expr: str, context: dict[str, Any]) -> Any:

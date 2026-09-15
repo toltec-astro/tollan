@@ -2,17 +2,18 @@
 
 from __future__ import annotations
 
-from functools import cached_property
+from contextlib import contextmanager
 from typing import (
     TYPE_CHECKING,
+    Any,
     ClassVar,
     Literal,
     LiteralString,
+    Self,
     cast,
     get_args,
     get_origin,
 )
-from weakref import WeakSet
 
 from pydantic import BaseModel
 
@@ -23,7 +24,10 @@ from ..utils.typing import (
 from .runtime_context import RuntimeContext
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+
     from .runtime_context import RuntimeConfig
+    from .runtime_info import RuntimeInfo
     from .sources import DictConfigT
 
 __all__ = [
@@ -38,24 +42,28 @@ class ConfigHandler[
 ]:
     """Base class for domain-specific configuration handlers.
 
-    ConfigHandler provides a pattern for consuming RuntimeContext and validating
-    its raw config against domain-specific models. It offers:
+    Extracts and validates a domain configuration when constructed. The validated
+    model is available as `config`, and its execution context as `runtime_info`.
+    Use ordinary `functools.cached_property` for resources built from the config.
 
-    - Lazy-loaded, cached domain config via `.config` property
-    - Auto-reset cached properties when config updates
-    - Unified interface for specialized config management
-    - Subconfig extraction via SubConfigKeyTransformer pattern
+    Type Parameters
+    ---------------
+    ConfigModelT
+        Pydantic model used to validate the domain configuration.
+    RuntimeContextT
+        Accepted runtime context type; defaults to RuntimeContext.
 
-    Type Parameters:
-        ConfigModelT: Domain config model class (Pydantic BaseModel)
-        RuntimeContextT: RuntimeContext for type hint only (default: RuntimeContext)
+    Notes
+    -----
+    Subclasses implement `prepare_config_data` to extract their domain and
+    `prepare_runtime_config_data` to wrap domain patches for temporary variants.
+    `SubConfigKeyTransformer` supplies both methods for a single runtime key.
 
-    Subclasses must:
-        - Define ConfigModelT type parameter
-        - Implement prepare_config_data() to extract config from runtime config
-        - Implement prepare_runtime_config_data() to wrap config for updates
+    Examples
+    --------
+    Define a handler that reads a database section and caches a derived resource:
 
-    Example:
+        >>> from functools import cached_property
         >>> from pydantic import BaseModel
         >>> from tollan.config import ConfigHandler, RuntimeContext
         >>>
@@ -66,33 +74,54 @@ class ConfigHandler[
         >>> class MyConfigHandler(ConfigHandler[MyConfigModel]):
         ...     @classmethod
         ...     def prepare_config_data(cls, runtime_config):
-        ...         return {
-        ...             "database_url": "postgresql://localhost/db",
-        ...             "max_connections": 20,
-        ...         }
+        ...         return runtime_config.database
+        ...     @classmethod
+        ...     def prepare_runtime_config_data(cls, config_data):
+        ...         return {"database": config_data}
+        ...     @cached_property
+        ...     def connection_options(self):
+        ...         return {"url": self.config.database_url}
         >>>
-        >>> rc = RuntimeContext(config_sources={"format": "dict", "source": {}})
+        >>> rc = RuntimeContext()
+        >>> rc.update_default_config({
+        ...     "database": {"database_url": "postgresql://localhost/db"}
+        ... })
         >>> handler = MyConfigHandler(rc)
         >>> handler.config.database_url
         'postgresql://localhost/db'
+        >>> handler.connection_options is handler.connection_options
+        True
+        >>> with handler.temporary_config(overrides={"max_connections": 20}) as other:
+        ...     print(other.config.max_connections)
+        ...     print(other.connection_options is handler.connection_options)
+        20
+        False
+        >>> handler.config.max_connections
+        10
     """
 
     # Set on concrete subclasses by __init_subclass__; runtime type:
     # type[ConfigModelT].
     config_model_cls: ClassVar
-    _auto_cache_reset_registry: ClassVar[dict[type, set[str]]] = {}
-    _auto_cache_reset_markers: ClassVar[WeakSet[cached_property]] = WeakSet()
     _rc: RuntimeContextT
+    _config: ConfigModelT
+    _runtime_info: RuntimeInfo
 
     def __init__(self, runtime_context: RuntimeContextT) -> None:
-        """Initialize config handler.
+        """Initialize and validate a domain handler.
 
         Parameters
         ----------
         runtime_context : RuntimeContext
-            RuntimeContext instance
+            Runtime providing the domain settings and validation context.
+
+        Raises
+        ------
+        pydantic.ValidationError
+            If the runtime or extracted domain settings fail validation.
         """
         self._rc = runtime_context
+        self._load_config()
 
     def __init_subclass__(cls, **kwargs):
         """Register subclass and derive config_model_cls from its bound type.
@@ -117,101 +146,34 @@ class ConfigHandler[
         from .runtime_context import RuntimeContext  # noqa: PLC0415
 
         RuntimeContext.register_config_handler_cls(cls)
-        # Initialize auto cache registry for this class with base "config" property
-        cls._auto_cache_reset_registry[cls] = {"config"}
-        # Scan for properties marked with auto_cache_reset decorator
-        for name, value in cls.__dict__.items():
-            if (
-                isinstance(value, cached_property)
-                and value in cls._auto_cache_reset_markers
-            ):
-                cls._auto_cache_reset_registry[cls].add(name)
-
-    @classmethod
-    def auto_cache_reset(cls, prop: cached_property) -> cached_property:
-        """Mark cached property for auto-reset on config reload.
-
-        Parameters
-        ----------
-        prop : cached_property
-            Cached property to mark
-
-        Returns
-        -------
-        cached_property
-            Same cached property (for chaining)
-
-        Raises
-        ------
-        TypeError
-            If prop is not a cached_property
-
-        Example:
-            >>> from functools import cached_property
-            >>> from pydantic import BaseModel
-            >>> class MyConfig(BaseModel):
-            ...     value: str = "test"
-            >>> class MyHandler(ConfigHandler[MyConfig]):
-            ...     @classmethod
-            ...     def prepare_config_data(cls, runtime_config):
-            ...         return {"value": "test"}
-            ...     @ConfigHandler.auto_cache_reset
-            ...     @cached_property
-            ...     def expensive_computation(self):
-            ...         return "computed"
-            >>> # Property will auto-reset when config updates
-        """
-        if not isinstance(prop, cached_property):
-            msg = "auto_cache_reset can only be used on cached_property."
-            raise TypeError(msg)
-        # The owning class is not known until __init_subclass__, so retain a
-        # weak marker here and register the property name when the class forms.
-        cls._auto_cache_reset_markers.add(prop)
-        return prop
 
     @property
-    def rc(self):
-        """Get the underlying runtime context.
-
-        Returns
-        -------
-            RuntimeContext instance
-        """
-        return self._rc
-
-    @property
-    def runtime_config(self):
-        """Get the underlying runtime config model.
-
-        Returns
-        -------
-            RuntimeConfig instance
-        """
-        return self.rc.config
-
-    @property
-    def runtime_info(self):
-        """Get the runtime info.
-
-        Returns
-        -------
-            Runtime info instance
-        """
-        return self.rc.runtime_info
-
-    # note the cache is auto-reset as registered in __init_subclass__
-    @cached_property
     def config(self) -> ConfigModelT:
-        """Lazy-loaded, cached domain config.
-
-        Calls load_config() on first access and caches the result.
-        Cache is cleared when update_config() is called.
+        """Return the validated domain configuration.
 
         Returns
         -------
-            Validated config model instance
+        ConfigModelT
+            Model created during initialization. Runtime updates do not replace
+            it; use `recreate` to construct a handler with current settings.
         """
-        return self.load_config()
+        return self._config
+
+    @property
+    def runtime_info(self) -> RuntimeInfo:
+        """Return the runtime information used to validate this handler.
+
+        Returns
+        -------
+        RuntimeInfo
+            Execution metadata and validation context captured at construction.
+
+        Notes
+        -----
+        Treat the model as read-only. Later runtime updates do not replace it,
+        but `config_sources` remains a shared reference for source introspection.
+        """
+        return self._runtime_info
 
     @classmethod
     def prepare_config_data(cls, runtime_config: RuntimeConfig) -> dict:
@@ -267,71 +229,173 @@ class ConfigHandler[
             msg,
         )
 
-    def load_config(self) -> ConfigModelT:
-        """Load and validate config from runtime config.
+    def _load_config(self) -> None:
+        """Initialize `_config` and `_runtime_info` from the attached runtime.
 
-        Returns
-        -------
-            Validated config model instance
+        Extract domain settings with `prepare_config_data` and validate them
+        using the runtime's validation context. Called during construction.
+
+        Raises
+        ------
+        pydantic.ValidationError
+            If the runtime or domain settings fail validation.
         """
-        config_data = self.prepare_config_data(self.runtime_config)
+        runtime_config = self._rc.config
+        self._runtime_info = runtime_config.runtime_info
+        config_data = self.prepare_config_data(runtime_config)
         config_model_cls = cast(
             "type[ConfigModelT]",
             type(self).config_model_cls,
         )
-        return config_model_cls.model_validate(
+        self._config = config_model_cls.model_validate(
             config_data,
             context=self.runtime_info.validation_context,
         )
 
-    def update_config(
-        self,
-        cfg: DictConfigT,
-        tier: Literal["override", "default"] = "override",
-    ) -> None:
-        """Update config with provided config dict.
+    def recreate(self) -> Self:
+        """Create a handler from the attached runtime's current configuration.
 
-        This wraps the config under the appropriate runtime config key
-        and calls update_runtime_config().
+        Returns
+        -------
+        Self
+            New instance of the same handler class, with freshly validated
+            settings and no inherited resource caches.
 
-        Parameters
-        ----------
-        cfg : dict
-            Config data to apply
-        tier : Literal["override", "default"], optional
-            Update tier ("override" or "default"), by default "override"
+        Notes
+        -----
+        Does not change this handler or reread cached files. Call the runtime's
+        `reload` method first if configuration files have changed.
+
+        Examples
+        --------
+        >>> class Settings(BaseModel):
+        ...     limit: int = 10
+        >>> class Handler(
+        ...     SubConfigKeyTransformer[Literal["job"]], ConfigHandler[Settings]
+        ... ):
+        ...     pass
+        >>> rc = RuntimeContext()
+        >>> handler = Handler(rc)
+        >>> rc.update_override_config({"job": {"limit": 20}})
+        >>> other = handler.recreate()
+        >>> handler.config.limit, other.config.limit
+        (10, 20)
         """
-        runtime_cfg = self.prepare_runtime_config_data(cfg)
-        self.update_runtime_config(runtime_cfg, tier=tier)
+        return type(self)(self._rc)
 
-    def update_runtime_config(
+    @contextmanager
+    def temporary_config(
         self,
-        cfg: DictConfigT,
-        tier: Literal["override", "default"] = "override",
-    ) -> None:
-        """Update runtime config with provided dict.
+        *,
+        defaults: DictConfigT | None = None,
+        overrides: DictConfigT | None = None,
+        validation_context: dict[str, Any] | None = None,
+    ) -> Iterator[Self]:
+        """Create a context manager for a handler with patched domain settings.
 
         Parameters
         ----------
-        cfg : DictConfigT
-            Runtime config data to apply
-        tier : Literal["override", "default"], optional
-            Update tier, by default "override":
-            - "override": Override existing values
-            - "default": Use as default for unspecified values
+        defaults, overrides : dict, optional
+            Domain-shaped patches merged into the current runtime's default
+            and override tiers. Defaults apply below user sources; overrides
+            apply above them.
+        validation_context : dict, optional
+            Values to merge into the inherited validation context.
 
-        Raises
+        Yields
         ------
-        ValueError
-            If tier is invalid
+        Self
+            A separately validated handler with its own resource caches.
+
+        See Also
+        --------
+        temporary_runtime_config : Apply patches using the full runtime shape.
+
+        Examples
+        --------
+        >>> class Settings(BaseModel):
+        ...     limit: int = 10
+        >>> class Handler(
+        ...     SubConfigKeyTransformer[Literal["job"]], ConfigHandler[Settings]
+        ... ):
+        ...     pass
+        >>> handler = Handler(RuntimeContext())
+        >>> with handler.temporary_config(overrides={"limit": 5}) as other:
+        ...     print(other.config.limit)
+        5
+        >>> handler.config.limit
+        10
         """
-        self.rc.update_config(cfg, tier=tier)
-        # Clear auto-reset cached properties
-        cls = self.__class__
-        if cls in cls._auto_cache_reset_registry:
-            for prop in cls._auto_cache_reset_registry[cls]:
-                if prop in self.__dict__:
-                    del self.__dict__[prop]
+        with self.temporary_runtime_config(
+            defaults=(
+                self.prepare_runtime_config_data(defaults)
+                if defaults is not None
+                else None
+            ),
+            overrides=(
+                self.prepare_runtime_config_data(overrides)
+                if overrides is not None
+                else None
+            ),
+            validation_context=validation_context,
+        ) as handler:
+            yield handler
+
+    @contextmanager
+    def temporary_runtime_config(
+        self,
+        *,
+        defaults: DictConfigT | None = None,
+        overrides: DictConfigT | None = None,
+        validation_context: dict[str, Any] | None = None,
+    ) -> Iterator[Self]:
+        """Create a context manager for a handler with patched runtime settings.
+
+        Parameters
+        ----------
+        defaults, overrides : dict, optional
+            Runtime-shaped patches merged into the current default and override
+            tiers before `prepare_config_data` extracts the domain settings.
+        validation_context : dict, optional
+            Values to merge into the inherited validation context.
+
+        Yields
+        ------
+        Self
+            New handler with the patched settings and validation context.
+
+        Notes
+        -----
+        The original handler and runtime are unchanged. Leaving the context
+        does not close resources or invalidate the yielded handler; resource
+        cleanup belongs to the concrete handler or caller.
+
+        Examples
+        --------
+        >>> class Settings(BaseModel):
+        ...     limit: int = 10
+        >>> class Handler(
+        ...     SubConfigKeyTransformer[Literal["job"]], ConfigHandler[Settings]
+        ... ):
+        ...     pass
+        >>> handler = Handler(RuntimeContext())
+        >>> with handler.temporary_runtime_config(
+        ...     overrides={"job": {"limit": 5}},
+        ...     validation_context={"observation": 42},
+        ... ) as other:
+        ...     print(other.config.limit)
+        ...     print(other.runtime_info.validation_context["observation"])
+        5
+        42
+        >>> handler.config.limit
+        10
+        """
+        runtime_context = self._rc.with_config(
+            defaults=defaults,
+            overrides=overrides,
+            validation_context=validation_context,
+        )
+        yield type(self)(runtime_context)
 
 
 class SubConfigKeyTransformer[KeyT: LiteralString]:

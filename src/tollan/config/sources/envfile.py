@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Any, Literal
 from dotenv import dotenv_values
 from pydantic import field_validator, model_validator
 
-from .base import ConfigSourceBase
+from .base import FileConfigSourceBase
 
 if TYPE_CHECKING:
     from .base import DictConfigT
@@ -16,20 +16,29 @@ if TYPE_CHECKING:
 __all__ = ["EnvFileConfigSource"]
 
 
-class EnvFileConfigSource(ConfigSourceBase):
+class EnvFileConfigSource(FileConfigSourceBase):
     r"""Configuration source from .env file.
 
     Uses python-dotenv to parse .env files. Supports variable expansion
-    and default values.
+    and default values. Values are strings; entries without a value are omitted.
+    Set `interpolate=False` to retain variable references literally.
+    Parsed values, including environment expansion, are cached until invalidated.
+
+    Notes
+    -----
+    With interpolation enabled, ``${VAR}`` expands a variable reference and
+    ``${VAR:-default}`` supplies a fallback for an unset variable. Type
+    conversion is left to the configuration consumer.
 
     Examples
     --------
-    >>> from pathlib import Path
-    >>> from tollan.config.sources import EnvFileConfigSource
-    >>> # Basic usage (requires actual .env file)
-    >>> src = EnvFileConfigSource(order=0, source=Path(".env"))  # doctest: +SKIP
-    >>> src.format  # doctest: +SKIP
-    'envfile'
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     path = Path(directory) / ".env"
+    ...     _ = path.write_text("HOST=localhost\nURL=http://${HOST}\n")
+    ...     src = EnvFileConfigSource(order=0, source=path)
+    ...     print(src.load()["URL"])
+    http://localhost
     """
 
     format: Literal["envfile"] = "envfile"
@@ -73,42 +82,8 @@ class EnvFileConfigSource(ConfigSourceBase):
             object.__setattr__(self, "name", self.source.name)
         return self
 
-    def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
-        """Load configuration from .env file.
-
-        Uses python-dotenv's dotenv_values() to parse the file.
-        Returns a dictionary with all key-value pairs from the file.
-
-        Parameters
-        ----------
-        context : dict[str, Any] | None, optional
-            Context dictionary (unused, for signature compatibility)
-
-        Returns
-        -------
-        dict[str, Any]
-            Configuration dictionary with string values
-
-        Raises
-        ------
-        ValueError
-            If source is not enabled for context
-        FileNotFoundError
-            If .env file doesn't exist
-
-        Notes
-        -----
-        All values are returned as strings (as they appear in the .env file).
-        Type conversion should be handled by the consumer.
-
-        Variable expansion is supported if interpolate=True:
-        - ${VAR} expands to the value of VAR
-        - ${VAR:-default} expands to value of VAR or "default" if not set
-        """
-        if not self.is_enabled_for(context):
-            msg = f"Source '{self.name}' is not enabled for context: {context}"
-            raise ValueError(msg)
-
+    def _read(self) -> DictConfigT:
+        """Read the env file and expand variables using the current environment."""
         # Use dotenv_values to parse the file
         # It returns a dict[str, str | None] where None means variable without value
         data = dotenv_values(

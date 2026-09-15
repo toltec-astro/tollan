@@ -168,7 +168,7 @@ class TestConfigSourceListConditionalLoading:
 class TestConfigSourceListCaching:
     """Test ConfigSourceList caching functionality."""
 
-    def test_top_level_list_patches_do_not_mutate_sources_or_cached_data(self):
+    def test_top_level_list_patches_do_not_mutate_sources(self):
         base = DictConfigSource(order=0, source={"values": [1, 2]})
         patch = DictConfigSource(
             order=1,
@@ -176,7 +176,6 @@ class TestConfigSourceListCaching:
             source={"values": {0: 9, "[]": [3]}},
         )
         sources = ConfigSourceList(data=[base, patch])
-        sources.enable_cache()
 
         original = sources.load(context={"patched": False})
         changed = sources.load(context={"patched": True})
@@ -184,13 +183,13 @@ class TestConfigSourceListCaching:
         assert sources.load(context={"patched": True}) == changed
         assert sources.load(context={"patched": False}) == original
         assert original == base.source == {"values": [1, 2]}
-        assert sources._cache_config.cache[0] == base.source
+        assert base.load() == original
         assert patch.source == {"values": {0: 9, "[]": [3]}}
 
         changed["values"].append(4)
         assert sources.load(context={"patched": True}) == {"values": [9, 2, 3]}
 
-    def test_nested_list_patches_do_not_mutate_sources_or_cached_data(self):
+    def test_nested_list_patches_do_not_mutate_sources(self):
         base = DictConfigSource(order=0, source={"items": [{"values": [1]}]})
         patch = DictConfigSource(
             order=1,
@@ -198,7 +197,6 @@ class TestConfigSourceListCaching:
             source={"items": {0: {"values": {"[]": [2]}}}},
         )
         sources = ConfigSourceList(data=[base, patch])
-        sources.enable_cache()
 
         original = sources.load(context={"patched": False})
         changed = sources.load(context={"patched": True})
@@ -206,7 +204,7 @@ class TestConfigSourceListCaching:
         assert sources.load(context={"patched": True}) == changed
         assert sources.load(context={"patched": False}) == original
         assert original == base.source == {"items": [{"values": [1]}]}
-        assert sources._cache_config.cache[0] == base.source
+        assert base.load() == original
         assert patch.source == {"items": {0: {"values": {"[]": [2]}}}}
 
         changed["items"][0]["values"].append(3)
@@ -214,157 +212,50 @@ class TestConfigSourceListCaching:
             "items": [{"values": [1, 2]}],
         }
 
-    def test_enable_cache_all_sources(self):
-        """Test enable_cache caches all sources by default."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {
-                        "format": "dict",
-                        "source": {"key": "value"},
-                        "order": 0,
-                        "name": "test",
-                    },
-                ],
-            },
-        )
+    @pytest.fixture
+    def file_sources(self, tmp_path):
+        sources = []
+        for order, name in enumerate(("a", "b", "c")):
+            path = tmp_path / f"{name}.yaml"
+            path.write_text(f"{name}: 1\n")
+            sources.append(YamlConfigSource(order=order, name=name, source=path))
+        return ConfigSourceList(data=sources)
 
-        sources.enable_cache()
+    def test_enable_cache_all_sources(self, file_sources):
+        file_sources.enable_cache()
+        assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
+        for source in file_sources:
+            source.source.write_text(f"{source.name}: 2\n")
+        assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
 
-        # First load - populates cache
-        config1 = sources.load()
-        assert config1["key"] == "value"
+    @pytest.mark.parametrize(
+        "selection",
+        [
+            {"exclude": lambda s: s.name == "b"},
+            {"predicate": lambda s: s.name in {"a", "c"}},
+        ],
+    )
+    def test_enable_cache_selection(self, file_sources, selection):
+        file_sources.enable_cache(**selection)
+        assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
+        for source in file_sources:
+            source.source.write_text(f"{source.name}: 2\n")
+        assert file_sources.load() == {"a": 1, "b": 2, "c": 1}
 
-        # Verify cache was populated (uses order as key)
-        assert 0 in sources._cache_config.cache
-
-        # Second load - should use cached value
-        config2 = sources.load()
-        assert config2["key"] == "value"
-
-        # Verify cache still contains the source
-        assert 0 in sources._cache_config.cache
-
-    def test_enable_cache_with_excludes(self):
-        """Test enable_cache with exclude predicate."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {
-                        "format": "dict",
-                        "source": {"cached": True},
-                        "order": 0,
-                        "name": "cached_source",
-                    },
-                    {
-                        "format": "dict",
-                        "source": {"not_cached": True},
-                        "order": 1,
-                        "name": "excluded_source",
-                    },
-                ],
-            },
-        )
-
-        sources.enable_cache(exclude=lambda s: s.name == "excluded_source")
-
-        # Load to populate cache
-        sources.load()
-
-        # Check cache contains only cached_source (uses order as key)
-        assert 0 in sources._cache_config.cache
-        assert 1 not in sources._cache_config.cache
-
-    def test_enable_cache_with_specific_names(self):
-        """Test enable_cache caches only specified names using predicate."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {
-                        "format": "dict",
-                        "source": {"a": 1},
-                        "order": 0,
-                        "name": "source_a",
-                    },
-                    {
-                        "format": "dict",
-                        "source": {"b": 2},
-                        "order": 1,
-                        "name": "source_b",
-                    },
-                    {
-                        "format": "dict",
-                        "source": {"c": 3},
-                        "order": 2,
-                        "name": "source_c",
-                    },
-                ],
-            },
-        )
-
-        sources.enable_cache(predicate=lambda s: s.name in {"source_a", "source_c"})
-        sources.load()
-
-        assert 0 in sources._cache_config.cache
-        assert 1 not in sources._cache_config.cache
-        assert 2 in sources._cache_config.cache
-
-    def test_invalidate_cache_all(self):
-        """Test invalidate_cache clears all caches."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {"format": "dict", "source": {"a": 1}, "order": 0, "name": "a"},
-                    {"format": "dict", "source": {"b": 2}, "order": 1, "name": "b"},
-                ],
-            },
-        )
-
-        sources.enable_cache()
-        sources.load()
-
-        assert len(sources._cache_config.cache) > 0
-
-        sources.invalidate_cache()
-        assert len(sources._cache_config.cache) == 0
-
-    def test_invalidate_cache_specific_names(self):
-        """Test invalidate_cache for specific sources using predicate."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {"format": "dict", "source": {"a": 1}, "order": 0, "name": "a"},
-                    {"format": "dict", "source": {"b": 2}, "order": 1, "name": "b"},
-                ],
-            },
-        )
-
-        sources.enable_cache()
-        sources.load()
-
-        sources.invalidate_cache(predicate=lambda s: s.name == "a")
-
-        assert 0 not in sources._cache_config.cache
-        assert 1 in sources._cache_config.cache
-
-    def test_invalidate_cache_specific_orders(self):
-        """Test invalidate_cache for specific orders using predicate."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {"format": "dict", "source": {"a": 1}, "order": 0},
-                    {"format": "dict", "source": {"b": 2}, "order": 1},
-                ],
-            },
-        )
-
-        sources.enable_cache()
-        sources.load()
-
-        sources.invalidate_cache(predicate=lambda s: s.order == 0)
-
-        assert 0 not in sources._cache_config.cache
-        assert 1 in sources._cache_config.cache
+    @pytest.mark.parametrize(
+        ("predicate", "expected"),
+        [
+            (None, {"a": 2, "b": 2, "c": 2}),
+            (lambda s: s.name == "a", {"a": 2, "b": 1, "c": 1}),
+            (lambda s: s.order == 0, {"a": 2, "b": 1, "c": 1}),
+        ],
+    )
+    def test_invalidate_cache_selection(self, file_sources, predicate, expected):
+        assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
+        for source in file_sources:
+            source.source.write_text(f"{source.name}: 2\n")
+        file_sources.invalidate_cache(predicate=predicate)
+        assert file_sources.load() == expected
 
 
 class TestConfigSourceListGet:

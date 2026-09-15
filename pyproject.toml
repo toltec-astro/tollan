@@ -205,6 +205,7 @@ runtime-evaluated-base-classes = [
   "sqlalchemy.orm.DeclarativeBase",
   "tollan.config.sources.base.ConfigSourceBase",
   "tollan.config.FrozenBaseModel",
+  "tollan.config.RuntimeConfig",
 ]
 runtime-evaluated-decorators = [
   "pydantic.validate_call",

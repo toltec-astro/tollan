@@ -466,12 +466,13 @@ class TestRuntimeContextSubConfigKeyTransformer:
         handler = CacheHandler(rc)
         assert handler.config.enabled is False
 
-        # Update config
-        handler.update_config({"enabled": True, "ttl": 7200})
-
-        # Check that update was applied to runtime config under "cache" key
-        assert rc.config_dict["cache"]["enabled"] is True
-        assert rc.config_dict["cache"]["ttl"] == 7200
+        with handler.temporary_config(
+            overrides={"enabled": True, "ttl": 7200}
+        ) as other:
+            assert other.config.enabled is True
+            assert other.config.ttl == 7200
+            assert other._rc.config_dict["cache"]["enabled"] is True
+        assert rc.config_dict["cache"] == {"enabled": False}
 
 
 if __name__ == "__main__":
