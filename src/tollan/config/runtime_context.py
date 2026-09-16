@@ -18,16 +18,19 @@ from ..utils.typing import (
 from .base import FrozenBaseModel
 from .runtime_info import RuntimeInfo
 from .sources import (
+    ENV_NAMESPACE_DEFAULT,
+    ConfigSourceFormat,
     ConfigSourceList,
     DictConfigSource,
-    EnvFileConfigSource,
-    YamlConfigSource,
+    ListConfigSource,
     resolve_config_sources,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Collection, Generator
     from pathlib import Path
+
+    import typer
 
     from .handler import ConfigHandler
     from .sources import ConfigSource, DictConfigT
@@ -190,31 +193,108 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         }
 
     @classmethod
-    def from_cli(  # noqa: C901
-        cls,
-        config_path: Path | None = None,
-        env_files: list[Path] | None = None,
-        cli_args: list[str] | None = None,
-    ) -> RuntimeContext[RuntimeConfigT]:
-        """Create RuntimeContext from CLI arguments.
+    def add_cli_options(cls) -> Callable:
+        """Add configuration path options to a Tollan command or group callback.
 
-        This factory method creates a standard CLI configuration layout:
-        - Config path (file or directory) at order=0
-        - Env files at order=100+
-        - CLI args converted to overrides env files at order=200
+        Apply below ``@app.command()`` or ``@app.callback()``. The decorator
+        adds ``--config_paths`` (``-c``) and ``--env_paths``; both accept several
+        paths or repeated occurrences. Files and directories must exist.
+
+        Use :meth:`from_cli_ctx` inside the callback to construct a runtime.
+        The decorator does not load configuration or change ``ctx.obj``.
+
+        Examples
+        --------
+        >>> import typer
+        >>> from tollan.utils.typer import TollanTyper
+        >>> app = TollanTyper()
+        >>> @app.command()
+        ... @RuntimeContext.add_cli_options()
+        ... def show(ctx: typer.Context):
+        ...     rc = RuntimeContext.from_cli_ctx(ctx)
+        ...     print(rc.config_dict.get("search"))
+        >>> # app --config_paths settings.yaml --env_paths local.env
+        """
+        from .cli import _add_cli_options  # noqa: PLC0415
+
+        return _add_cli_options
+
+    @classmethod
+    def from_cli_ctx(
+        cls, ctx: typer.Context, **kwargs: Any
+    ) -> RuntimeContext[RuntimeConfigT]:
+        """Create a runtime from the current callback's configuration path options.
 
         Parameters
         ----------
-        config_path : Path | None, optional
-            Main config file or directory path. If directory,
-            loads numbered YAML files (e.g., 00_base.yaml, 01_dev.yaml),
-            by default None
-        env_files : list[Path] | None, optional
-            List of .env file paths, by default None
+        ctx : typer.Context
+            Context of a command or group callback decorated with
+            :meth:`add_cli_options`.
+        **kwargs
+            Additional :meth:`from_cli` arguments, such as ``config_formats``,
+            ``env_namespace``, and explicitly supplied ``cli_args``. Path
+            arguments come from the context and must not be passed again.
+
+        Returns
+        -------
+        RuntimeContext
+            A new runtime created by this class's ``from_cli`` method. The caller
+            chooses whether to store it on ``ctx.obj`` or elsewhere.
+
+        Examples
+        --------
+        Within a decorated callback::
+
+            rc = RuntimeContext.from_cli_ctx(ctx, env_namespace="process")
+
+        To accept configuration overrides, configure argument handling on the
+        application and pass the selected arguments explicitly as ``cli_args``.
+        Unconsumed arguments in ``ctx.args`` are not read automatically.
+        """
+        return cls.from_cli(
+            config_paths=ctx.params["config_paths"],
+            env_paths=ctx.params["env_paths"],
+            **kwargs,
+        )
+
+    @classmethod
+    def from_cli(
+        cls,
+        config_paths: list[Path] | None = None,
+        env_paths: list[Path] | None = None,
+        cli_args: list[str] | None = None,
+        *,
+        config_formats: Collection[ConfigSourceFormat] | None = None,
+        env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
+    ) -> RuntimeContext[RuntimeConfigT]:
+        """Create a runtime from ordered config files, env files, and CLI overrides.
+
+        Later paths override earlier paths. Environment paths override config
+        paths, and CLI arguments override both.
+
+        Parameters
+        ----------
+        config_paths : list[Path] | None, optional
+            Config files or directories, in increasing precedence. Each directory
+            loads numbered YAML and dotenv files in local numeric order. YAML
+            files may contain mappings or conditional source lists.
+        env_paths : list[Path] | None, optional
+            Dotenv files or directories, in increasing precedence. Each directory
+            loads numbered env files in local numeric order; non-env entries are
+            skipped. Values remain strings under ``env_namespace``.
+            Loading does not modify the process environment.
         cli_args : list[str] | None, optional
             CLI arguments in "--key=value" or "--key value" format.
             Converted to nested dict (e.g., ["--db.host", "localhost"] →
             {"db": {"host": "localhost"}}), by default None
+        config_formats : Collection[ConfigSourceFormat] | None, optional
+            Formats to accept from ``config_paths``. None accepts all supported
+            formats; an empty collection accepts none. Explicit includes inside
+            YAML source lists are not filtered.
+        env_namespace : str | None, optional
+            Default key for dotenv values; defaults to ``ENV_NAMESPACE_DEFAULT``.
+            None loads at the root. Applies to both path options and included
+            sources, unless a source explicitly declares its own namespace.
 
         Returns
         -------
@@ -230,51 +310,56 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             >>> 'debug' in rc.config_dict
             True
         """
-        sources = []
-
-        n_override_orders_max = 100
-        env_file_base_order = cls._USER_ORDER_MAX - n_override_orders_max
-        # Add main config path (file or directory)
-        if config_path is not None:
-            with logit(logger.debug, f"Loading config from path: {config_path}"):
-                config_source_list = resolve_config_sources(
-                    config_path,
-                    order_min=cls._USER_ORDER_MIN,
-                    order_max=env_file_base_order - 1,
+        if config_formats is not None:
+            config_formats = frozenset(ConfigSourceFormat(f) for f in config_formats)
+        sources: list[ConfigSource] = []
+        for order, (name, paths, formats) in enumerate(
+            [
+                (
+                    "config_paths",
+                    config_paths,
+                    config_formats,
+                ),
+                ("env_paths", env_paths, {ConfigSourceFormat.envfile}),
+            ]
+        ):
+            if not paths:
+                continue
+            groups = []
+            for i, path in enumerate(paths):
+                with logit(logger.debug, f"Loading {name} from path: {path}"):
+                    resolved = resolve_config_sources(path, env_namespace=env_namespace)
+                filtered = []
+                for source in resolved:
+                    if formats is None or source.format in formats:
+                        filtered.append(source)
+                    else:
+                        logger.debug(
+                            "{}: skipping {} source {}",
+                            name,
+                            source.format,
+                            source.name,
+                        )
+                # Each path has a local order space; later paths override the
+                # whole preceding group without renumbering its file sources.
+                groups.append(
+                    ListConfigSource(
+                        order=i,
+                        name=str(path),
+                        source=ConfigSourceList(data=filtered, name=resolved.name),
+                    )
                 )
-            for s in config_source_list.data:
-                if not isinstance(s, YamlConfigSource):
-                    logger.debug("config_path: skipping non-YAML source {}", s.source)
-                    continue
-                sources.append(s)
-
-        # Add env files; resolve_config_sources handles dirs and single files.
-        if env_files:
-            env_sources = []
-            for p in env_files:
-                for s in resolve_config_sources(p).data:
-                    if not isinstance(s, EnvFileConfigSource):
-                        logger.debug("env_files: skipping non-env source {}", s.source)
-                        continue
-                    env_sources.append(s)
-            if len(env_sources) > n_override_orders_max - 1:
-                msg = "Too many env files."
-                raise ValueError(msg)
-            for i, src in enumerate(env_sources):
-                sources.append(
-                    src.model_copy(update={"order": env_file_base_order + i}),
+            sources.append(
+                ListConfigSource(
+                    order=order, name=name, source=ConfigSourceList(data=groups)
                 )
+            )
 
         # Parse and add CLI args as overrides
         if cli_args:
             cli_overrides = dict_from_cli_args(cli_args)
             sources.append(
-                {
-                    "format": "dict",
-                    "source": cli_overrides,
-                    "order": cls._USER_ORDER_MAX,
-                    "name": "cli_overrides",
-                },
+                DictConfigSource(order=2, name="cli_overrides", source=cli_overrides),
             )
 
         return cls(config_sources=sources or None)

@@ -13,7 +13,10 @@ from .base import FileConfigSourceBase
 if TYPE_CHECKING:
     from .base import DictConfigT
 
-__all__ = ["EnvFileConfigSource"]
+__all__ = ["ENV_NAMESPACE_DEFAULT", "EnvFileConfigSource"]
+
+ENV_NAMESPACE_DEFAULT = "_env"
+"""Default configuration key containing dotenv values."""
 
 
 class EnvFileConfigSource(FileConfigSourceBase):
@@ -23,6 +26,9 @@ class EnvFileConfigSource(FileConfigSourceBase):
     and default values. Values are strings; entries without a value are omitted.
     Set `interpolate=False` to retain variable references literally.
     Parsed values, including environment expansion, are cached until invalidated.
+    Values are stored under ``ENV_NAMESPACE_DEFAULT`` by default. Set ``namespace`` to
+    another top-level key, or to ``None`` to load values directly at the root.
+    Loading does not modify the process environment.
 
     Notes
     -----
@@ -37,7 +43,7 @@ class EnvFileConfigSource(FileConfigSourceBase):
     ...     path = Path(directory) / ".env"
     ...     _ = path.write_text("HOST=localhost\nURL=http://${HOST}\n")
     ...     src = EnvFileConfigSource(order=0, source=path)
-    ...     print(src.load()["URL"])
+    ...     print(src.load()[ENV_NAMESPACE_DEFAULT]["URL"])
     http://localhost
     """
 
@@ -49,6 +55,8 @@ class EnvFileConfigSource(FileConfigSourceBase):
     """File encoding"""
     interpolate: bool = True
     """Enable variable expansion"""
+    namespace: str | None = ENV_NAMESPACE_DEFAULT
+    """Top-level key for parsed values; None loads them at the root."""
 
     @field_validator("source", mode="before")
     @classmethod
@@ -92,6 +100,6 @@ class EnvFileConfigSource(FileConfigSourceBase):
             interpolate=self.interpolate,
         )
 
-        # Filter out None values (variables without values)
-        # Convert to regular dict[str, Any] for compatibility
-        return {k: v for k, v in data.items() if v is not None}
+        # Omit declarations without values, retaining empty strings.
+        values: DictConfigT = {k: v for k, v in data.items() if v is not None}
+        return values if self.namespace is None else {self.namespace: values}

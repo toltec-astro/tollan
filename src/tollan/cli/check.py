@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Annotated
-
 import typer
 
+from ..config import RuntimeContext
 from ..utils.fmt import pformat_yaml
 from ..utils.log import logger
-from ..utils.typer import MultiOption
 from . import app
 
 __all__ = ["check_config"]
@@ -19,27 +16,9 @@ __all__ = ["check_config"]
     "check",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
 )
+@RuntimeContext.add_cli_options()
 def check_config(
     ctx: typer.Context,
-    config: Annotated[
-        Path | None,
-        typer.Option(
-            "--config",
-            "-c",
-            help="Path to the config file.",
-            exists=True,
-            dir_okay=False,
-        ),
-    ] = None,
-    env_files: Annotated[
-        list[Path] | None,
-        MultiOption(
-            "--env_files",
-            help="Path to .env file(s). Can be specified multiple times.",
-            exists=True,
-            dir_okay=False,
-        ),
-    ] = None,
 ) -> None:
     """
     Check and display runtime context and configuration.
@@ -50,19 +29,12 @@ def check_config(
 
         tollan check
         tollan check -c config.yaml
-        tollan check -c config.yaml --env_files .env
+        tollan check -c config.d override.yaml --env_paths env.d local.env
         tollan check -c config.yaml --debug=true --port=8080
-        tollan check --log_level DEBUG --workers 4
+        tollan --log_level DEBUG check --workers 4
     """
     try:  # pragma: no cover
-        from ..config.runtime_context import RuntimeContext  # noqa: PLC0415
-
-        # Create RuntimeContext using from_cli factory method
-        rc = RuntimeContext.from_cli(
-            config_path=config,
-            env_files=env_files,
-            cli_args=ctx.args or None,
-        )
+        rc = RuntimeContext.from_cli_ctx(ctx, cli_args=ctx.args or None)
 
         # Display runtime info
         typer.echo("Runtime Context:")

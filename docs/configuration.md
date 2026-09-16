@@ -1,11 +1,132 @@
-# Runtime configuration and domain handlers
+# Configure an application
 
-`RuntimeContext` loads ordered sources, evaluates their conditions, and merges
-default and override tiers. `ConfigHandler` consumes that configuration: it
-extracts one domain, validates a Pydantic model at construction, and owns the
-resources built from those settings.
+Use `RuntimeContext` to load configuration and `ConfigHandler` to validate the
+settings used by a component. A handler keeps its validated settings and any
+resources it creates, even if the runtime is updated later.
 
-## Define a handler
+## Add configuration options to a CLI
+
+Use `RuntimeContext.add_cli_options()` to add `--config_paths` (or `-c`) and
+`--env_paths` to a command or group callback. Construct the runtime inside your
+callback with `from_cli_ctx()`:
+
+```python
+import typer
+
+from tollan.config import RuntimeContext
+from tollan.utils.typer import create_cli
+
+app = create_cli(version="1.0")
+
+
+@app.callback()
+@RuntimeContext.add_cli_options()
+def main(ctx: typer.Context, profile: str = "default"):
+    rc = RuntimeContext.from_cli_ctx(ctx)
+    rc.update_default_config({"profile": profile})
+    ctx.obj = rc
+
+
+@app.command()
+def show(ctx: typer.Context):
+    print(ctx.obj.config_dict.get("profile"))
+
+
+if __name__ == "__main__":
+    app()
+```
+
+```console
+python app.py --profile local --config_paths settings.yaml -- show
+python app.py -c config.d local.yaml --env_paths env.d local.env -- show
+```
+
+Each path may be a file or directory. Both options accept several paths at once
+or repeated occurrences. Use `--` to end a list of paths before a subcommand or
+positional inputs.
+
+Later paths override earlier ones. Within a directory, files such as
+`00_defaults.yaml`, `10_site.env`, and `20_local.yaml` load in numeric order;
+their numeric prefixes must be unique. Environment paths override configuration
+paths, and command-line overrides override both.
+
+To put options on a command instead, apply `add_cli_options()` below
+`@app.command()`. `from_cli_ctx()` reads the options on that callback's context;
+it does not inherit path options from a parent group. Store the runtime on
+`ctx.obj`, as above, when child commands should use the parent's runtime.
+
+The helper also works with `TollanTyper()` for a single-command application.
+See [command-line applications](cli.rst) for a command with variadic inputs and
+an example accepting dotted configuration overrides.
+
+## Load configuration from Python
+
+Use the same loading rules without Typer:
+
+```python
+from pathlib import Path
+from tollan.config import RuntimeContext
+
+rc = RuntimeContext.from_cli(
+    config_paths=[Path("config.d"), Path("local.yaml")],
+    env_paths=[Path("env.d")],
+    cli_args=["--search.pattern", "warning"],
+)
+```
+
+`config_paths` accepts YAML and dotenv files. To select particular formats, pass
+a collection of `ConfigSourceFormat` members:
+
+```python
+from tollan.config import ConfigSourceFormat
+
+rc = RuntimeContext.from_cli(
+    config_paths=[Path("settings.d")],
+    config_formats={ConfigSourceFormat.yaml},
+)
+```
+
+`config_formats=None` accepts all supported formats; an empty collection accepts
+none. This filters the supplied paths and directory entries, not explicit
+includes inside a YAML file. `env_paths` always selects dotenv files only.
+Pass the same `config_formats` setting to `from_cli_ctx()` in a CLI callback.
+
+## Use dotenv values
+
+Dotenv values are strings stored under `ENV_NAMESPACE_DEFAULT` (`"_env"`),
+exported by `tollan.config`. Loading them does not change `os.environ`.
+Read them from `rc.config_dict["_env"]`, or choose a different namespace:
+
+```python
+rc = RuntimeContext.from_cli(
+    env_paths=[Path("local.env")],
+    env_namespace="process",
+)
+print(rc.config_dict["process"]["HOST"])
+```
+
+`env_namespace=None` loads the values at the root. The setting also applies to
+included dotenv files. A source declaration can override it with
+`namespace: custom` or `namespace: null`. `from_cli_ctx()` accepts
+`env_namespace` too.
+
+YAML can provide defaults or overrides for dotenv values at the same key:
+
+```yaml
+_env:
+  HOST: localhost
+  PORT: "8000"
+```
+
+Dotenv interpolation uses that file's values and the process environment when
+the file is read. It does not interpolate against merged YAML settings or other
+configuration sources. Command-line overrides use YAML value parsing, so quote
+a numeric value as a YAML string when its type must remain a string.
+
+## Validate a component's settings
+
+Define a Pydantic model and a handler. `SubConfigKeyTransformer` selects the
+component's section of the runtime configuration:
 
 ```python
 import re
@@ -31,28 +152,20 @@ class SearchHandler(
 
 rc = RuntimeContext()
 rc.update_default_config({"search": {"pattern": "error"}})
-handler = SearchHandler(rc)  # Validates SearchConfig now.
+handler = SearchHandler(rc)
 assert handler.compiled_pattern.search("an error occurred") is not None
 ```
 
-Use ordinary `cached_property` for handler-owned resources. Creating another
-handler gives it separate property caches; updating a runtime does not invalidate
-an existing handler's config or resources. Keep expensive resource construction
-out of config validation itself.
+Construction validates the settings immediately. Use `handler.config` for
+validated settings and `handler.runtime_info` for execution information.
+Use `cached_property` for expensive resources; each new handler has its own
+resource cache.
 
-The handler takes a runtime, not a raw dictionary or an already validated model.
-For in-memory use, configure the runtime's tiers or supply a dictionary source.
-The private runtime reference is a provider for creating new handlers, not the
-current handler's source of settings. Application code should consume
-`handler.config` for domain settings and `handler.runtime_info` for the broader
-execution context, including invocation details and validation context.
+Runtime defaults apply before loaded sources. Runtime overrides apply after
+sources and CLI overrides. For in-memory configuration, set these tiers or
+pass a dictionary source to `RuntimeContext`.
 
-Both are captured at construction from the same validated runtime configuration.
-Later runtime updates do not replace an existing handler's runtime-info model.
-Treat that model as read-only; its `config_sources` field is a shared reference
-for introspection, not a frozen copy of the source tree.
-
-## Temporary variants
+## Try temporary settings
 
 ```python
 with handler.temporary_config(overrides={"pattern": "warning"}) as other:
@@ -65,95 +178,82 @@ with handler.temporary_runtime_config(
 ) as other:
     assert other.config.pattern == "critical"
     assert other.runtime_info.validation_context["job_id"] == 42
-    assert "job_id" not in handler.runtime_info.validation_context
 ```
 
-Both methods yield a new handler. `temporary_config` wraps domain-shaped patches
-using `prepare_runtime_config_data`; `temporary_runtime_config` accepts the full
-runtime shape. Both support `defaults=`, `overrides=`, and `validation_context=`.
-Patches merge recursively through `rupdate`, including its list selectors.
+Both methods yield a new handler without changing the original. Use
+`temporary_config` for component settings and `temporary_runtime_config` for
+the full configuration. Both accept `defaults`, `overrides`, and
+`validation_context`; patches merge recursively.
 
-Defaults remain below user sources; overrides remain above them. The context
-patch merges into the inherited context and is used for source conditions and
-Pydantic validation. Each variant has its own default, override, and info tiers,
-validation context, and merged-config caches. Nested and concurrent scopes do
-not temporarily mutate the parent runtime or swap the original handler's state.
+The new handler validates settings with the supplied context. For example,
+changing `rootpath` lets path fields resolve under a different directory.
+For a runtime without a handler, use
+`rc.with_config(defaults=..., overrides=..., validation_context=...)`.
 
-Raw configuration is validated afresh, rather than patching a dump of the old
-model. Consequently, a relative path can be resolved under a different
-`validation_context={"rootpath": ...}` without retaining its old expansion.
+Treat validated models and loaded data as read-only; use these APIs for updates
+rather than mutating nested values directly. Leaving a temporary scope does not
+close resources automatically: resource cleanup belongs to the handler or caller.
 
-The context manager does not automatically close arbitrary resources or make
-the yielded handler unusable on exit. Resource-specific cleanup belongs to the
-concrete handler or caller.
+## Apply updated settings
 
-## Recreate from a changed runtime
+Updating a runtime does not change an existing handler. Create a new handler
+when you want to use the updated configuration:
 
 ```python
 rc.update_override_config({"search": {"pattern": "new"}})
-new_handler = handler.recreate()
-assert new_handler.config.pattern == "new"
+handler_new = handler.recreate()
+assert handler_new.config.pattern == "new"
 assert handler.config.pattern == "error"
 ```
 
-`recreate()` uses the attached runtime's **current** configuration. Temporary
-variants also start from the current runtime tiers, not from the original
-handler's validated model. Retain the original handler when you need its original
-settings. The handler stores no second raw config dictionary and has no in-place
-config-update or auto-cache-reset API.
+`recreate()` and temporary variants use the runtime's current settings, not a
+copy of the original handler's settings. Keep the original handler when you
+need its previous configuration.
 
-Treat validated config models and loaded source data as read-only. The config
-property is read-only, but neither it nor Pydantic's frozen-model option provides
-deep immutability for nested objects. Container isolation applies to updates
-through the runtime APIs; arbitrary direct mutation of shared nested values is
-not protected.
+## Include configuration files
 
-## YAML configuration files
-
-A YAML mapping supplies configuration values directly. A YAML list supplies
-source declarations, which are validated as a `ConfigSourceList`:
+A YAML mapping supplies settings directly. A YAML list includes other sources:
 
 ```yaml
 - source: base.yaml
+- source: local.env
 - enable_if: workers >= 4
   source:
     search:
       pattern: warning
 ```
 
-Load either form through `RuntimeContext(config_sources=Path("config.yaml"))`.
-For a directory, numbered files such as `00_base.yaml` and `10_overrides.yaml`
-are loaded in numeric order; each file may contain a mapping or a source list.
+Load either form with `RuntimeContext(config_sources=Path("settings.yaml"))`.
+List entries load in order; optional explicit `order` values must be unique
+within their list. A disabled source contributes no settings.
 
-Within each source list, omitted orders follow list position; explicit orders
-must be unique within that list. Lists can contain nested lists through their
-`source` values. Each nested list has its own ordering.
+Included filenames are relative to the containing YAML file. File formats are
+inferred from their suffix unless a declaration specifies `format`.
 
-File references in declarations are relative to the containing YAML file,
-including references inside inline nested lists. YAML and `.env` formats are
-inferred from the file suffix unless `format` is explicit. These references
-identify sources to load; they are not part of the configuration data.
+Paths *inside settings* are different: they remain unchanged until model
+validation. Tollan's path types resolve them against
+`validation_context["rootpath"]`, not the directory of each included file.
+Set that validation root explicitly when your configuration contains relative
+paths.
 
-Path-valued configuration data stays unchanged until typed model validation.
-Tollan's path types use `validation_context["rootpath"]` at that point. Including
-a file does **not** make its path-valued settings relative to its own directory:
-after merging, they use the same validation root as the other settings. Source
-file locations are not retained as per-value path bases.
+Source lists can be nested. List patches apply to values from preceding sources.
+For example, after a source supplies `items: [base]`, this appends `a` and `b`:
 
-Parsed mappings and source lists are cached, but conditions and merging run for
-each load's context. Disabled file sources are not read. Reloading the runtime
-discards cached YAML source lists and reads their included files afresh.
+```yaml
+- source:
+    - source: {items: {"[]": [a]}}
+    - source: {items: {"[]": [b]}}
+```
 
-Empty files, YAML null, and empty mappings/lists supply no settings. Other scalar
-documents and invalid source declarations raise errors rather than being ignored.
+The result is `items: [base, a, b]`. Disabling the containing source skips both
+entries. Empty YAML files contribute no settings; malformed documents raise
+errors.
 
-## Conditional sources
+## Select sources with conditions
 
-An `enable_if` expression selects a source using variables from a context dictionary.
-Expressions use
-[pandas query syntax](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html):
-`&`, `|`, `~`, `in`, and `not in` are supported, with comparisons binding
-before boolean combinations.
+Use `enable_if` to select a source using context variables. Expressions use
+[pandas query syntax](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html),
+including `&`, `|`, `~`, `in`, and `not in`:
 
 ```python
 from tollan.config.sources import DictConfigSource
@@ -167,42 +267,30 @@ assert source.is_enabled_for({"workers": 8, "environment": "production"})
 assert not source.is_enabled_for({"workers": 2, "environment": "production"})
 ```
 
-No context or an undefined variable disables a conditional source. Other query
-errors propagate so malformed expressions are visible. Evaluation is not guaranteed
-to short-circuit: `workers >= 4 | missing > 0` is disabled even if `workers` is 8.
-Supply the variables required by an expression before evaluating its conditions.
+Provide a dictionary containing all variables used in an expression. Missing
+context or an undefined variable disables the source; other expression errors
+propagate. Do not rely on short-circuit evaluation.
 
-Expressions must come from trusted configuration: pandas query evaluation can
-execute code and is not a sandbox. The context API accepts a dictionary of variable
-bindings, not a DataFrame.
+Only use trusted expressions: pandas query evaluation is not a sandbox.
 
-## Runtime variants and source caching
+## Reload changed files
 
-`rc.with_config(defaults=..., overrides=..., validation_context=...)` returns a
-new runtime directly, using the same mechanism as handler variants. No handler
-or domain extraction is needed for this lower-level operation.
+File contents and dotenv interpolation are cached. Creating a runtime variant
+reuses cached reads but evaluates source conditions for the new context.
+Disabled sources are not read.
 
-Related runtimes share the same user-source objects. YAML and env-file sources
-cache their read-and-parse results by default, so creating a variant does not
-reread a cached file. Dictionary sources return their in-memory data without
-caching. Nested source lists evaluate conditions and merge their contents for each
-context; their merged results are not cached. Env-file interpolation uses the
-environment at read time and is refreshed when that source is invalidated.
+After editing a configuration file or changing an interpolated environment
+variable, reload the runtime and create a new handler:
 
-Use `source.enable_cache(enabled=False)` to read a file on every load.
-`rc.config_sources.enable_cache(predicate=..., exclude=...)` selects which
-immediate sources cache their reads; unselected sources have caching disabled.
-A selected nested list forwards its cache setting to its contents. Creating a
-runtime variant preserves these settings. Changing a shared source's cache
-setting affects all runtimes using that source.
+```python
+rc.reload()
+handler_new = handler.recreate()
+```
 
-`rc.reload()` explicitly invalidates source caches and reloads that runtime. Source
-cache invalidation is shared with related variants, but their already materialized
-config models and existing handlers do not change. Construct a fresh handler after
-reloading to consume the new configuration. The older `rc.set_context()` mutates
-one runtime temporarily and restores its saved config caches; use variants when
-scopes may overlap concurrently.
+Existing handlers retain their settings and resources. Related runtimes share
+file caches, but reloading one does not replace another's already loaded
+configuration; reload that runtime too when it needs the new values.
 
-Validation uses Pydantic's documented
-[`model_validate(..., context=...)` interface](https://docs.pydantic.dev/latest/concepts/validators/#validation-context).
-User patches go through validation, not unvalidated model-copy updates.
+For a file that must be read on every load, use
+`source.enable_cache(enabled=False)`. For a temporary validation context, prefer
+`rc.with_config(validation_context=...)` when scopes may overlap.

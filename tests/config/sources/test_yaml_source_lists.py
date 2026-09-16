@@ -59,7 +59,7 @@ def test_relative_includes_nested_lists_and_envfiles(tmp_path, monkeypatch):
     assert YamlConfigSource(order=0, source=root).load() == {
         "path": "relative.dat",
         "value": "included",
-        "SETTING": "from_env",
+        "_env": {"SETTING": "from_env"},
     }
 
 

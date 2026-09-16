@@ -429,8 +429,8 @@ class TestEnvFileConfigSource:
 
         assert isinstance(source, EnvFileConfigSource)
         config = source.load()
-        assert config["DATABASE_URL"] == "postgresql://localhost/db"
-        assert config["DEBUG"] == "true"
+        assert config["_env"]["DATABASE_URL"] == "postgresql://localhost/db"
+        assert config["_env"]["DEBUG"] == "true"
 
     def test_envfile_source_interpolation(self, tmp_path):
         """Test EnvFileConfigSource variable interpolation."""
@@ -452,7 +452,7 @@ class TestEnvFileConfigSource:
         source = sources[0]
 
         config = source.load()
-        assert config["URL"] == "https://example.com/api"
+        assert config["_env"]["URL"] == "https://example.com/api"
 
     def test_envfile_source_no_interpolation(self, tmp_path):
         """Test EnvFileConfigSource without interpolation."""
@@ -474,7 +474,7 @@ class TestEnvFileConfigSource:
         source = sources[0]
 
         config = source.load()
-        assert config["VAR"] == "${UNDEFINED}"  # Not interpolated
+        assert config["_env"]["VAR"] == "${UNDEFINED}"  # Not interpolated
 
     def test_envfile_source_auto_names(self, tmp_path):
         """Test EnvFileConfigSource auto-infers name from filename."""

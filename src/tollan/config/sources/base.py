@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from enum import StrEnum, auto
 from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
@@ -15,12 +16,22 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ConfigSourceBase",
+    "ConfigSourceFormat",
     "DictConfigT",
     "FileConfigSourceBase",
 ]
 
 
 type DictConfigT = dict[str | int, Any]
+
+
+class ConfigSourceFormat(StrEnum):
+    """Supported configuration source formats."""
+
+    yaml = auto()
+    envfile = auto()
+    dict = auto()
+    list = auto()
 
 
 class ConfigSourceBase(BaseModel):
@@ -170,13 +181,19 @@ class FileConfigSourceBase(ConfigSourceBase):
         ValueError
             If the source is disabled for the supplied context.
         """
-        if not self.is_enabled_for(context):
-            msg = f"Source '{self.name}' is not enabled for context: {context}"
-            raise ValueError(msg)
-        data = self._data if self._cache_enabled else self._read()
+        data = self._load_data(context)
         if isinstance(data, dict):
             return data
         return data.load(context=context)
+
+    def _load_data(
+        self, context: dict[str, Any] | None = None
+    ) -> DictConfigT | ConfigSourceList:
+        """Return cached file contents without merging a contained source list."""
+        if not self.is_enabled_for(context):
+            msg = f"Source '{self.name}' is not enabled for context: {context}"
+            raise ValueError(msg)
+        return self._data if self._cache_enabled else self._read()
 
     def enable_cache(self, *, enabled: bool = True) -> None:
         """Enable or disable reuse of parsed file data.

@@ -9,6 +9,8 @@ from pydantic import WithJsonSchema, field_validator, model_validator
 from .base import ConfigSourceBase
 
 if TYPE_CHECKING:
+    from pydantic import ValidationInfo
+
     from . import ConfigSourceList
     from .base import DictConfigT
 
@@ -47,13 +49,15 @@ class ListConfigSource(ConfigSourceBase):
 
     @field_validator("source", mode="before")
     @classmethod
-    def _validate_source(cls, v: Any) -> ConfigSourceList:
+    def _validate_source(cls, v: Any, info: ValidationInfo) -> ConfigSourceList:
         """Convert list/dict to ConfigSourceList if needed.
 
         Parameters
         ----------
         v : Any
             Source as ConfigSourceList, list, or dict
+        info : ValidationInfo
+            Validation context with defaults for included sources.
 
         Returns
         -------
@@ -61,12 +65,21 @@ class ListConfigSource(ConfigSourceBase):
             Validated source list
         """
         # Import here to avoid circular import
-        from . import ConfigSourceList, resolve_config_sources  # noqa: PLC0415
+        from . import (  # noqa: PLC0415
+            ENV_NAMESPACE_DEFAULT,
+            ConfigSourceList,
+            resolve_config_sources,
+        )
 
         if isinstance(v, ConfigSourceList):
             return v
         # Use ConfigSourceList's validator to handle list/dict
-        return resolve_config_sources(v)
+        return resolve_config_sources(
+            v,
+            env_namespace=(info.context or {}).get(
+                "env_namespace", ENV_NAMESPACE_DEFAULT
+            ),
+        )
 
     @model_validator(mode="after")
     def _validate_name(self) -> ListConfigSource:

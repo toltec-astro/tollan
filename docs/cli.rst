@@ -99,6 +99,69 @@ Place group options before the group's child command. They are not options on
 leaf commands; a single-command ``TollanTyper()`` app without a group callback
 has only that command's options.
 
+Runtime configuration
+---------------------
+
+Add configuration path options with ``RuntimeContext.add_cli_options()`` and
+construct a runtime when your callback needs it:
+
+.. code-block:: python
+
+    from typing import Annotated
+    import typer
+
+    from tollan.config import RuntimeContext
+    from tollan.utils.typer import TollanTyper
+
+    app = TollanTyper()
+
+    @app.command()
+    @RuntimeContext.add_cli_options()
+    def search(
+        ctx: typer.Context,
+        files: Annotated[list[str], typer.Argument()],
+    ):
+        rc = RuntimeContext.from_cli_ctx(ctx)
+        print(files, rc.config_dict.get("search"))
+
+This single-command application accepts::
+
+    app --config_paths settings.yaml -- first.txt second.txt
+
+The helper adds ``--config_paths`` (``-c``) and ``--env_paths``. Both accept
+multiple values and repeated occurrences. Use ``--`` to end the path options
+before positional inputs. Tokens after it remain positional values, including
+those beginning with ``--``.
+
+You can apply the same decorator below ``@app.callback()`` to put the options on
+a group. Add your other options normally, then call ``from_cli_ctx`` with any
+loading settings you need, such as ``env_namespace="process"``. Store the result
+on ``ctx.obj`` if child commands should share it.
+
+To accept dotted overrides, configure argument handling explicitly and pass
+the configuration arguments as ``cli_args``. For example, a command without
+positional arguments can forward its unconsumed options:
+
+.. code-block:: python
+
+    @app.command(
+        context_settings={"allow_extra_args": True, "ignore_unknown_options": True}
+    )
+    @RuntimeContext.add_cli_options()
+    def show(ctx: typer.Context):
+        rc = RuntimeContext.from_cli_ctx(ctx, cli_args=ctx.args or None)
+        print(rc.config_dict.get("search"))
+
+On a command group this accepts::
+
+    app show --config_paths settings.yaml --search.pattern warning
+
+``from_cli_ctx`` does not consume ``ctx.args`` automatically. With variadic
+positionals, Typer may collect unknown options among those positional values;
+the application must separate overrides before passing them as ``cli_args``.
+
+See :doc:`configuration` for format filtering, dotenv namespaces, and precedence.
+
 Tollan's built-in commands
 --------------------------
 

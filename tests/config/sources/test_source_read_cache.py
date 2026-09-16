@@ -54,16 +54,24 @@ def test_disabling_cache_discards_previous_read(tmp_path):
     assert source.load() == {"value": 3}
 
 
-def test_env_interpolation_is_refreshed_with_file_read(tmp_path, monkeypatch):
+@pytest.mark.parametrize("namespace", ["_env", "custom", None])
+def test_env_interpolation_is_refreshed_with_file_read(
+    tmp_path, monkeypatch, namespace
+):
     path = tmp_path / ".env"
     path.write_text("SETTING=${TOLLAN_TEST_INPUT}\n")
-    source = EnvFileConfigSource(order=0, source=path)
+    source = EnvFileConfigSource(order=0, source=path, namespace=namespace)
+
+    def expected(value):
+        values = {"SETTING": value}
+        return values if namespace is None else {namespace: values}
+
     monkeypatch.setenv("TOLLAN_TEST_INPUT", "first")
-    assert source.load() == {"SETTING": "first"}
+    assert source.load() == expected("first")
     monkeypatch.setenv("TOLLAN_TEST_INPUT", "second")
-    assert source.load() == {"SETTING": "first"}
+    assert source.load() == expected("first")
     source.invalidate_cache()
-    assert source.load() == {"SETTING": "second"}
+    assert source.load() == expected("second")
 
 
 def test_dictionary_source_has_no_read_cache():

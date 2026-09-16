@@ -21,9 +21,13 @@ from pydantic import (
 from ...utils.dict import rupdate
 
 # Import source implementations
-from .base import DictConfigT  # noqa: TC001  # downstream models use this
+from .base import (
+    ConfigSourceFormat,
+    DictConfigT,  # downstream models use this
+    FileConfigSourceBase,
+)
 from .dict_ import DictConfigSource
-from .envfile import EnvFileConfigSource
+from .envfile import ENV_NAMESPACE_DEFAULT, EnvFileConfigSource
 from .list_ import ListConfigSource
 from .yaml import YamlConfigSource
 
@@ -35,7 +39,9 @@ if TYPE_CHECKING:
     )
 
 __all__ = [
+    "ENV_NAMESPACE_DEFAULT",
     "ConfigSource",
+    "ConfigSourceFormat",
     "ConfigSourceList",
     "DictConfigSource",
     "EnvFileConfigSource",
@@ -59,19 +65,19 @@ type ConfigSource = Annotated[
 _DIR_FILE_PATTERN = re.compile(r"^(?P<order>\d+)(_.*)?(?:\.ya?ml|\.env)$")
 
 
-def _detect_source_format(path: Path) -> str | None:
+def _detect_source_format(path: Path) -> ConfigSourceFormat | None:
     """Return the config source format for *path*, or ``None`` if unsupported.
 
-    Detection is purely suffix-based:
+    Detection uses the suffix, with bare ``.env`` also recognized:
 
     * ``.env``            → ``"envfile"``
     * ``.yaml`` / ``.yml`` → ``"yaml"``
     * anything else       → ``None``
     """
-    if path.suffix == ".env":
-        return "envfile"
+    if path.suffix == ".env" or path.name == ".env":
+        return ConfigSourceFormat.envfile
     if path.suffix in (".yaml", ".yml"):
-        return "yaml"
+        return ConfigSourceFormat.yaml
     return None
 
 
@@ -84,13 +90,14 @@ class ConfigSourceList(BaseModel):
     """A list of configuration sources with conditional loading.
 
     ConfigSourceList manages multiple ConfigSource instances, evaluates
-    their enable_if conditions, and merges them in order.
+    their enable_if conditions, and merges them in order. Nested lists are
+    traversed in their local order and share one accumulated result.
 
     Caching
     -------
     File sources cache their read-and-parse results by default. Dictionary
-    sources return their in-memory data, and nested lists merge their contents
-    for each context. Cache selection and invalidation delegate to the sources.
+    sources return their in-memory data. Conditions and merging run for each
+    context. Cache selection and invalidation delegate to the sources.
 
     Example:
         >>> sources = ConfigSourceList(data=[
@@ -246,6 +253,16 @@ class ConfigSourceList(BaseModel):
                         elif isinstance(src, (list, ConfigSourceList)):
                             source["format"] = "list"
 
+                    # Keep the default with YAML sources so it also applies to
+                    # includes parsed later. Explicit source choices win.
+                    namespace = (info.context or {}).get(
+                        "env_namespace", ENV_NAMESPACE_DEFAULT
+                    )
+                    if source.get("format") == ConfigSourceFormat.envfile:
+                        source.setdefault("namespace", namespace)
+                    elif source.get("format") == ConfigSourceFormat.yaml:
+                        source.setdefault("env_namespace", namespace)
+
         # Validate orders are unique
         orders = [s.get("order") if isinstance(s, dict) else s.order for s in data]
         if len(set(orders)) != len(orders):
@@ -265,7 +282,9 @@ class ConfigSourceList(BaseModel):
         """Load and merge all enabled configuration sources.
 
         Sources are evaluated for enable_if conditions, then loaded and
-        merged in order (lower order first, higher order overrides).
+        merged in order (lower order first, higher order overrides). Nested
+        lists, including those read from YAML, apply their sources to the same
+        result. List patches can therefore update values from preceding groups.
 
         Each source manages its own cached reads. Conditions and merging run
         on every call, including for nested lists.
@@ -281,15 +300,32 @@ class ConfigSourceList(BaseModel):
             Merged configuration dictionary
         """
         merged: DictConfigT = {}
+        for data in self._iter_data(context):
+            rupdate(merged, data)
+        return merged
 
+    def _iter_data(
+        self, context: dict[str, Any] | None = None
+    ) -> Iterator[DictConfigT]:
+        """Yield enabled mappings in depth-first, locally sorted source order."""
         for i, source in enumerate(self):
             if not source.enabled:
                 logger.debug(f"Source {source.name} (order={source.order}): disabled")
                 continue
 
             if source.is_enabled_for(context=context):
-                data = source.load(context=context)
-                rupdate(merged, data)
+                if isinstance(source, ListConfigSource):
+                    data = source.source
+                elif isinstance(source, FileConfigSourceBase):
+                    data = source._load_data(context)
+                else:
+                    data = source.load(context=context)
+                # Keep patches in sequence: merging a subgroup first can discard
+                # repeated list operations or replacements of earlier values.
+                if isinstance(data, ConfigSourceList):
+                    yield from data._iter_data(context)
+                else:
+                    yield data
                 status = "enabled"
             else:
                 status = "disabled"
@@ -300,8 +336,6 @@ class ConfigSourceList(BaseModel):
                     f"idx={i}): {status} by enable_if='{source.enable_if}' "
                     f"with context={context}",
                 )
-
-        return merged
 
     def enable_cache(
         self,
@@ -542,6 +576,8 @@ def resolve_config_sources(
     arg: ConfigSourceList | Path | dict | list | None,
     order_max: int | None = None,
     order_min: int | None = None,
+    *,
+    env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
 ) -> ConfigSourceList:
     """Create a ConfigSourceList from various input formats.
 
@@ -568,6 +604,9 @@ def resolve_config_sources(
         Maximum allowed order value for sources, by default None
     order_min : int | None, optional
         Minimum allowed order value for sources, by default None
+    env_namespace : str | None, optional
+        Default namespace for dotenv values, including YAML includes. Explicit
+        namespaces on source declarations take precedence. None loads at root.
 
     Returns
     -------
@@ -597,7 +636,10 @@ def resolve_config_sources(
         >>> csl = resolve_config_sources(Path("config_dir"))
     """
     # Build validation context
-    context: dict[str, Any] = {"config_source_implicit_order": True}
+    context: dict[str, Any] = {
+        "config_source_implicit_order": True,
+        "env_namespace": env_namespace,
+    }
     if order_max is not None:
         context["order_max"] = order_max
     if order_min is not None:

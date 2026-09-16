@@ -9,6 +9,7 @@ import yaml
 from pydantic import field_validator, model_validator
 
 from .base import FileConfigSourceBase
+from .envfile import ENV_NAMESPACE_DEFAULT
 
 if TYPE_CHECKING:
     from . import ConfigSourceList
@@ -48,6 +49,8 @@ class YamlConfigSource(FileConfigSourceBase):
     """Format identifier, always 'yaml'"""
     source: Path
     """Path to YAML file"""
+    env_namespace: str | None = ENV_NAMESPACE_DEFAULT
+    """Default namespace for dotenv sources included by this file."""
 
     @field_validator("source", mode="before")
     @classmethod
@@ -93,7 +96,7 @@ class YamlConfigSource(FileConfigSourceBase):
             from . import resolve_config_sources  # noqa: PLC0415
 
             _resolve_source_paths(data, self.source.resolve().parent)
-            return resolve_config_sources(data)
+            return resolve_config_sources(data, env_namespace=self.env_namespace)
         msg = f"Expected a configuration mapping or source list in {self.source}"
         raise ValueError(msg)
 
