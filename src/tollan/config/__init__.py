@@ -63,6 +63,8 @@ __all__ = [
     "ENV_NAMESPACE_DEFAULT",
     "ConfigHandler",
     "ConfigSourceFormat",
+    "EnvConfig",
+    "EnvHandler",
     "FrozenBaseModel",
     "RuntimeConfig",
     "RuntimeContext",
@@ -72,4 +74,5 @@ __all__ = [
 
 
 # this has to be imported after RuntimeContext.
+from .env import EnvConfig, EnvHandler
 from .handler import ConfigHandler, SubConfigKeyTransformer

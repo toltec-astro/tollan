@@ -32,6 +32,7 @@ if TYPE_CHECKING:
 
     import typer
 
+    from .env import EnvHandler
     from .handler import ConfigHandler
     from .sources import ConfigSource, DictConfigT
 
@@ -220,9 +221,43 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         return _add_cli_options
 
     @classmethod
+    @overload
     def from_cli_ctx(
-        cls, ctx: typer.Context, **kwargs: Any
-    ) -> RuntimeContext[RuntimeConfigT]:
+        cls,
+        ctx: typer.Context,
+        *,
+        return_env_handler: Literal[False] = False,
+        **kwargs: Any,
+    ) -> Self: ...
+
+    @classmethod
+    @overload
+    def from_cli_ctx(
+        cls,
+        ctx: typer.Context,
+        *,
+        return_env_handler: Literal[True],
+        **kwargs: Any,
+    ) -> tuple[Self, EnvHandler | None]: ...
+
+    @classmethod
+    @overload
+    def from_cli_ctx(
+        cls,
+        ctx: typer.Context,
+        *,
+        return_env_handler: bool,
+        **kwargs: Any,
+    ) -> Self | tuple[Self, EnvHandler | None]: ...
+
+    @classmethod
+    def from_cli_ctx(
+        cls,
+        ctx: typer.Context,
+        *,
+        return_env_handler: bool = False,
+        **kwargs: Any,
+    ) -> Self | tuple[Self, EnvHandler | None]:
         """Create a runtime from the current callback's configuration path options.
 
         Parameters
@@ -230,6 +265,9 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         ctx : typer.Context
             Context of a command or group callback decorated with
             :meth:`add_cli_options`.
+        return_env_handler : bool, optional
+            Return ``(runtime, env_handler)`` instead of just the runtime.
+            See :meth:`from_cli` for the handler's loading and namespace behavior.
         **kwargs
             Additional :meth:`from_cli` arguments, such as ``config_formats``,
             ``env_namespace``, and explicitly supplied ``cli_args``. Path
@@ -237,9 +275,11 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
         Returns
         -------
-        RuntimeContext
+        RuntimeContext or tuple[RuntimeContext, EnvHandler | None]
             A new runtime created by this class's ``from_cli`` method. The caller
-            chooses whether to store it on ``ctx.obj`` or elsewhere.
+            chooses whether to store it on ``ctx.obj`` or elsewhere. When
+            requested, the second item is the environment handler, or None
+            when ``env_namespace=None``.
 
         Examples
         --------
@@ -254,10 +294,12 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         return cls.from_cli(
             config_paths=ctx.params["config_paths"],
             env_paths=ctx.params["env_paths"],
+            return_env_handler=return_env_handler,
             **kwargs,
         )
 
     @classmethod
+    @overload
     def from_cli(
         cls,
         config_paths: list[Path] | None = None,
@@ -266,7 +308,46 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         *,
         config_formats: Collection[ConfigSourceFormat] | None = None,
         env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
-    ) -> RuntimeContext[RuntimeConfigT]:
+        return_env_handler: Literal[False] = False,
+    ) -> Self: ...
+
+    @classmethod
+    @overload
+    def from_cli(
+        cls,
+        config_paths: list[Path] | None = None,
+        env_paths: list[Path] | None = None,
+        cli_args: list[str] | None = None,
+        *,
+        config_formats: Collection[ConfigSourceFormat] | None = None,
+        env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
+        return_env_handler: Literal[True],
+    ) -> tuple[Self, EnvHandler | None]: ...
+
+    @classmethod
+    @overload
+    def from_cli(
+        cls,
+        config_paths: list[Path] | None = None,
+        env_paths: list[Path] | None = None,
+        cli_args: list[str] | None = None,
+        *,
+        config_formats: Collection[ConfigSourceFormat] | None = None,
+        env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
+        return_env_handler: bool,
+    ) -> Self | tuple[Self, EnvHandler | None]: ...
+
+    @classmethod
+    def from_cli(  # noqa: PLR0913 -- independent CLI source and return options
+        cls,
+        config_paths: list[Path] | None = None,
+        env_paths: list[Path] | None = None,
+        cli_args: list[str] | None = None,
+        *,
+        config_formats: Collection[ConfigSourceFormat] | None = None,
+        env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
+        return_env_handler: bool = False,
+    ) -> Self | tuple[Self, EnvHandler | None]:
         """Create a runtime from ordered config files, env files, and CLI overrides.
 
         Later paths override earlier paths. Environment paths override config
@@ -295,11 +376,20 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             Default key for dotenv values; defaults to ``ENV_NAMESPACE_DEFAULT``.
             None loads at the root. Applies to both path options and included
             sources, unless a source explicitly declares its own namespace.
+        return_env_handler : bool, optional
+            If True, also return a handler capturing the merged environment
+            namespace. This loads the runtime configuration and validates the
+            environment mapping immediately. If ``env_namespace=None``, return
+            None in place of the handler and leave loading lazy. Defaults to
+            False, returning only the lazily loaded runtime.
 
         Returns
         -------
-        RuntimeContext[RuntimeConfigT]
-            RuntimeContext instance configured for CLI usage
+        RuntimeContext or tuple[RuntimeContext, EnvHandler | None]
+            Configured runtime, with an environment handler when requested.
+            A missing namespace produces an empty handler. Sources explicitly
+            using other namespaces are not collected into this handler.
+            No process environment variables are changed.
 
         Example:
             >>> from pathlib import Path
@@ -362,7 +452,14 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
                 DictConfigSource(order=2, name="cli_overrides", source=cli_overrides),
             )
 
-        return cls(config_sources=sources or None)
+        runtime = cls(config_sources=sources or None)
+        if not return_env_handler:
+            return runtime
+        if env_namespace is None:
+            return runtime, None
+        from .env import _make_env_handler  # noqa: PLC0415
+
+        return runtime, _make_env_handler(runtime, env_namespace)
 
     @classmethod
     def register_config_handler_cls(

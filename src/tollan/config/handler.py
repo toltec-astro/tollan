@@ -123,12 +123,17 @@ class ConfigHandler[
         self._rc = runtime_context
         self._load_config()
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(
+        cls, *, register_with_runtime_context: bool = True, **kwargs: Any
+    ) -> None:
         """Register subclass and derive config_model_cls from its bound type.
 
         This automatically:
         - Extracts ConfigModelT from Generic[ConfigModelT]
         - Registers the handler class with RuntimeContext
+
+        Pass ``register_with_runtime_context=False`` for a handler constructed
+        directly rather than through ``rc[Handler]``.
         """
         super().__init_subclass__(**kwargs)
         bindings = resolve_concrete_generic_bindings(
@@ -145,7 +150,8 @@ class ConfigHandler[
         # Register with RuntimeContext (avoid circular import)
         from .runtime_context import RuntimeContext  # noqa: PLC0415
 
-        RuntimeContext.register_config_handler_cls(cls)
+        if register_with_runtime_context:
+            RuntimeContext.register_config_handler_cls(cls)
 
     @property
     def config(self) -> ConfigModelT:

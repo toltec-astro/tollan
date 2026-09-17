@@ -63,6 +63,7 @@ def test_check_without_paths_passes_none(monkeypatch):
         {
             "config_paths": None,
             "env_paths": None,
+            "return_env_handler": False,
             "cli_args": None,
         }
     ]

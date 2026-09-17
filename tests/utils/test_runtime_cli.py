@@ -1,13 +1,13 @@
 """Shared path options leave runtime construction to application callbacks."""
 
 from pathlib import Path  # noqa: TC003 -- Typer inspects annotations at runtime
-from typing import Annotated
+from typing import Annotated, assert_type
 
 import pytest
 import typer
 from typer.testing import CliRunner
 
-from tollan.config import ConfigSourceFormat, RuntimeContext
+from tollan.config import ConfigSourceFormat, EnvHandler, RuntimeContext
 from tollan.utils.typer import TollanTyper, create_cli
 
 
@@ -206,3 +206,30 @@ def test_source_format_names_match_values():
         "dict": "dict",
         "list": "list",
     }
+
+
+@pytest.mark.parametrize("namespace", ["_env", "process", None])
+def test_callback_can_request_environment_handler(tmp_path, namespace):
+    class CustomRuntime(RuntimeContext):
+        pass
+
+    app = TollanTyper()
+    path = tmp_path / "settings.env"
+    path.write_text("PORT=8000\n")
+    seen = []
+
+    @app.command()
+    @CustomRuntime.add_cli_options()
+    def show(ctx: typer.Context):
+        rc, handler = assert_type(
+            CustomRuntime.from_cli_ctx(
+                ctx, env_namespace=namespace, return_env_handler=True
+            ),
+            tuple[CustomRuntime, EnvHandler | None],
+        )
+        assert isinstance(rc, CustomRuntime)
+        seen.append(None if handler is None else handler.as_environ())
+
+    result = CliRunner().invoke(app, ["--env_paths", str(path)])
+    assert result.exit_code == 0, result.output
+    assert seen == [None if namespace is None else {"PORT": "8000"}]

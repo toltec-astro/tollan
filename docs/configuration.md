@@ -93,22 +93,68 @@ Pass the same `config_formats` setting to `from_cli_ctx()` in a CLI callback.
 
 ## Use dotenv values
 
-Dotenv values are strings stored under `ENV_NAMESPACE_DEFAULT` (`"_env"`),
-exported by `tollan.config`. Loading them does not change `os.environ`.
-Read them from `rc.config_dict["_env"]`, or choose a different namespace:
+Request an environment handler when you need to pass configured variables to
+another process:
 
 ```python
-rc = RuntimeContext.from_cli(
+import os
+
+rc, env_handler = RuntimeContext.from_cli(
+    env_paths=[Path("local.env")],
+    return_env_handler=True,
+)
+assert env_handler is not None
+env = {**os.environ, **env_handler.as_environ()}
+# Pass env=env to subprocess.run(...).
+```
+
+`as_environ()` returns a fresh `dict[str, str]` containing only the selected
+environment section. It does not read or modify `os.environ`. In this example,
+configured values override inherited process variables; reverse the merge order
+if the process environment should win.
+
+Inside a callback decorated with `RuntimeContext.add_cli_options()`, use:
+
+```python
+rc, env_handler = RuntimeContext.from_cli_ctx(ctx, return_env_handler=True)
+```
+
+Requesting a handler loads the merged configuration immediately and captures its
+environment settings. Later runtime updates do not change that handler. Use
+`env_handler.recreate()` to capture updated settings, or
+`env_handler.temporary_config(overrides={"PORT": 9000})` for a temporary variant.
+Values are converted with Python's `str`, so a YAML integer `8000` becomes
+`"8000"` and a Boolean `true` becomes `"True"`. The runtime's original values
+are not changed. The selected section must be a mapping with string keys.
+
+Without `return_env_handler=True`, both factories return only the runtime and
+leave configuration loading lazy.
+
+### Choose an environment namespace
+
+Dotenv values are stored under `ENV_NAMESPACE_DEFAULT` (`"_env"`), exported
+by `tollan.config`. Choose a different namespace when needed:
+
+```python
+rc, env_handler = RuntimeContext.from_cli(
     env_paths=[Path("local.env")],
     env_namespace="process",
+    return_env_handler=True,
 )
-print(rc.config_dict["process"]["HOST"])
+assert env_handler is not None
+print(env_handler.as_environ()["HOST"])
 ```
 
 `env_namespace=None` loads the values at the root. The setting also applies to
 included dotenv files. A source declaration can override it with
 `namespace: custom` or `namespace: null`. `from_cli_ctx()` accepts
-`env_namespace` too.
+`env_namespace` too. The handler reads only the chosen namespace, not sources
+explicitly assigned elsewhere. If the chosen section is absent, the handler
+contains an empty mapping.
+
+With both `env_namespace=None` and `return_env_handler=True`, the result is
+`(rc, None)` and loading stays lazy: root-level environment values are mixed
+with application configuration and are not collected into a handler.
 
 YAML can provide defaults or overrides for dotenv values at the same key:
 
