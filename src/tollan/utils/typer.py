@@ -172,7 +172,7 @@ class _Group(typer.core.TyperGroup):
                     expose_value=False,
                 ),
                 typer.core.TyperOption(
-                    param_decls=["--log_level", "-l"],
+                    param_decls=["--log_level"],
                     # Let Typer build its own choice type, not external Click's.
                     type=typer.main.get_click_type(
                         annotation=Literal["DEBUG", "INFO", "WARNING"],

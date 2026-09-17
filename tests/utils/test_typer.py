@@ -85,7 +85,7 @@ def test_shared_callback_does_not_change_plain_typer():
         (["--log_level", "DEBUG", "child", "run"], ["DEBUG"]),
         (["child", "--log_level", "WARNING", "run"], ["INFO", "WARNING"]),
         (
-            ["--log_level", "DEBUG", "child", "-l", "WARNING", "run"],
+            ["--log_level", "DEBUG", "child", "--log_level", "WARNING", "run"],
             ["DEBUG", "WARNING"],
         ),
         (
@@ -128,6 +128,37 @@ def test_log_levels_at_each_group(embedded, args, expected, monkeypatch):
     assert result.exit_code == 0, result.output
     assert levels == expected
     assert seen == [{}, {}]
+
+
+@pytest.mark.parametrize("nested", [False, True])
+def test_application_can_use_short_l_for_its_own_option(nested, monkeypatch):
+    from tollan.utils import typer as typer_utils
+
+    levels = []
+    monkeypatch.setattr(
+        typer_utils, "reset_logger", lambda *, level, verbose: levels.append(level)
+    )
+    app = create_cli()
+    group = TollanTyper() if nested else app
+    if nested:
+        app.add_typer(group, name="tools")
+    locations = []
+
+    @group.callback()
+    def main(location: Annotated[str | None, typer.Option("--location", "-l")] = None):
+        locations.append(location)
+
+    @group.command()
+    def run():
+        pass
+
+    prefix = ["tools"] if nested else []
+    result = CliRunner().invoke(
+        app, [*prefix, "-l", "here", "--log_level", "DEBUG", "run"]
+    )
+    assert result.exit_code == 0, result.output
+    assert locations == ["here"]
+    assert levels == (["INFO", "DEBUG"] if nested else ["DEBUG"])
 
 
 def test_regular_typer_ancestor_logging_is_preserved(monkeypatch):
@@ -480,8 +511,8 @@ class TestCreateCli:
         result = runner.invoke(app, ["--log_level", "WARNING", "test_cmd"])
         assert result.exit_code == 0
 
-    def test_log_level_short_option(self):
-        """Test -l short option for log level."""
+    def test_log_level_has_no_short_option(self):
+        """Logging requires the explicit --log_level option."""
         app = create_cli()
 
         @app.command()
@@ -492,8 +523,8 @@ class TestCreateCli:
         runner = CliRunner()
         result = runner.invoke(app, ["-l", "DEBUG", "test_cmd"])
 
-        assert result.exit_code == 0
-        assert "Test output" in result.stdout
+        assert result.exit_code == 2
+        assert "Test output" not in result.stdout
 
     def test_custom_options_in_help(self):
         """Test that --help_all and --log_level appear in help."""
@@ -507,7 +538,7 @@ class TestCreateCli:
         assert "--help_all" in result.stdout
         assert "Show full help" in result.stdout
         # Check for --log_level option
-        assert "--log_level" in result.stdout or "-l" in result.stdout
+        assert "--log_level" in result.stdout
         assert "log level" in result.stdout.lower()
 
     def test_no_command_shows_help(self):

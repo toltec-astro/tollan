@@ -79,7 +79,7 @@ group.
 Logging
 -------
 
-Each Tollan group accepts ``--log_level`` (or ``-l``) with ``DEBUG``, ``INFO``,
+Each Tollan group accepts ``--log_level`` with ``DEBUG``, ``INFO``,
 or ``WARNING``. The default is ``INFO``. A nested group keeps the current level
 unless you supply another one::
 
