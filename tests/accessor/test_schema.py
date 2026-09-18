@@ -66,7 +66,7 @@ class TestNameMapping:
 
     def test_invalid_names_type(self):
         """Invalid names type raises error."""
-        with pytest.raises(ValueError, match="string, tuple of strings"):
+        with pytest.raises(ValueError, match="name or a sequence"):
             NameMapping(123)  # ty: ignore[invalid-argument-type]
 
     def test_invalid_names_elements(self):
@@ -201,6 +201,7 @@ class TestMappedField:
         assert mf.mapping_resolved is fm
         assert mf.name == "temperature"
         assert mf.value == 25.0
+        assert mf.value_default is MISSING
         assert mf.source == MappedFieldSource.DATA_SOURCE
 
     def test_with_missing_value(self):
@@ -223,10 +224,11 @@ class TestMappedField:
             mapping=fm,
             mapping_resolved=fm,
             name="",
-            value=0.0,
+            value_default=0.0,
             source=MappedFieldSource.DEFAULT,
         )
-        assert mf.value == 0.0
+        assert mf.value is MISSING
+        assert mf.value_default == 0.0
         assert mf.source == MappedFieldSource.DEFAULT
 
     def test_with_schema_path(self):

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import dask.array as da
 import numpy as np
@@ -11,22 +12,135 @@ import xarray as xr
 from astropy import units as u
 from dask import delayed
 
-from tollan.accessor.schema import Mapping, NameMapping, Schema
-from tollan.accessor.xarray import XarrayMapper
+from tollan.accessor.schema import NameMapping, Schema
+from tollan.accessor.xarray import XarrayAccessorBase, XarrayMapper, ensure_dataset
+
+if TYPE_CHECKING:
+    from tollan.accessor.schema import Mapping
 
 
 @dataclass
 class SourceSchema(Schema):
     """Schema shared by the xarray source-contract tests."""
 
-    signal: Mapping = NameMapping("signal")
-    sample: Mapping = NameMapping("sample")
+    signal: Mapping = NameMapping.var("signal")
+    sample: Mapping = NameMapping.var("sample")
+    n_sample: Mapping = NameMapping.dim("sample")
     meta: Mapping = NameMapping("meta")
     child_only: Mapping = NameMapping("child_only")
 
 
 class SourceMapper(XarrayMapper[SourceSchema]):
     """Mapper shared by the xarray source-contract tests."""
+
+
+class SourceAccessor(XarrayAccessorBase[SourceMapper]):
+    """Select payloads before calling the shared mapper."""
+
+
+@pytest.mark.parametrize("size", [0, 3])
+@pytest.mark.parametrize("source_kind", ["dataset", "dataarray", "wrapped", "tree"])
+def test_dimension_without_coordinate(size, source_kind):
+    """Dimension lengths need neither a coordinate nor a payload read."""
+
+    @delayed
+    def payload():
+        pytest.fail("Dimension lookup must not read array values")
+
+    source = xr.DataArray(
+        da.from_delayed(payload(), shape=(size,), dtype=float),
+        dims="sample",
+        name="signal",
+    )
+    if source_kind == "dataset":
+        source = source.to_dataset()
+    elif source_kind == "wrapped":
+        source = ensure_dataset(source)
+    elif source_kind == "tree":
+        source = xr.DataTree(source.to_dataset())
+    accessor = SourceAccessor(source)
+    source = accessor.data_source
+    mapper = accessor.mapper
+    field = mapper.schema.n_sample
+    assert field in mapper
+    assert mapper.has_dim(source, field)
+    assert mapper.get_dim(source, field) == size
+    assert mapper.get_value(source, field) == size
+    assert mapper.get_scalar(source, field) == size
+    assert not mapper.has_arr(source, field)
+    with pytest.raises(ValueError, match="not found as a variable"):
+        mapper.get_arr(source, field)
+    assert not mapper.has_dim(source, mapper.schema.child_only)
+    with pytest.raises(KeyError, match="Dimension not found"):
+        mapper.get_dim(source, mapper.schema.child_only)
+    with pytest.raises(KeyError, match="Dimension not found"):
+        mapper.get_dim(source, mapper.schema.signal)
+
+
+def test_dimension_and_coordinate_reads_are_distinct():
+    """A coordinate's values and a same-named attribute do not affect its size."""
+    ds = xr.Dataset(coords={"sample": [10, 20, 30]})
+    mapper = SourceMapper.from_data_source(ds)
+    field = mapper.schema.sample
+    count = mapper.schema.n_sample
+    assert mapper.get_dim(ds, count) == 3
+    assert not mapper.has_dim(ds, field)
+    np.testing.assert_array_equal(mapper.get_value(ds, field), [10, 20, 30])
+    with pytest.raises(ValueError, match="not a scalar"):
+        mapper.get_scalar(ds, field)
+    ds.attrs["sample"] = "attribute"
+    np.testing.assert_array_equal(mapper.get_value(ds, field), [10, 20, 30])
+    assert mapper.get_dim(ds, count) == 3
+    np.testing.assert_array_equal(mapper.get_arr(ds, field), [10, 20, 30])
+    assert mapper.get_dim(ds.isel(sample=slice(0, 2)), count) == 2
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        " text ",
+        b" text\x00 ",
+        np.array([b" text\x00 "]),
+        np.array(list(" text\x00 "), dtype="S1"),
+        np.array(list(" text\x00 "), dtype="U1"),
+        np.array(["text"], dtype=object),
+    ],
+)
+@pytest.mark.parametrize("as_attr", [False, True])
+def test_get_str(value, as_attr):
+    ds = xr.Dataset()
+    if as_attr:
+        ds.attrs["meta"] = value
+    else:
+        ds["meta"] = xr.DataArray(value)
+    mapper = SourceMapper.from_data_source(ds)
+    assert mapper.get_str(ds, mapper.schema.meta) == "text"
+
+
+@pytest.mark.parametrize(
+    ("value", "error"),
+    [
+        (123, TypeError),
+        ([123], TypeError),
+        (["one", "two"], ValueError),
+        ([["a", "b"]], ValueError),
+    ],
+)
+def test_get_str_rejects_non_string_or_multiple_strings(value, error):
+    ds = xr.Dataset({"meta": xr.DataArray(value)})
+    mapper = SourceMapper.from_data_source(ds)
+    with pytest.raises(error, match="not a single string"):
+        mapper.get_str(ds, mapper.schema.meta)
+
+
+def test_get_str_preserves_scalar_bytes_contract_and_supports_encoding():
+    encoded = "café".encode("latin-1")
+    ds = xr.Dataset({"meta": encoded})
+    mapper = SourceMapper.from_data_source(ds)
+    assert mapper.get_scalar(ds, mapper.schema.meta) == encoded
+    assert mapper.get_str(ds, mapper.schema.meta, encoding="latin-1") == "café"
+    with pytest.raises(UnicodeDecodeError):
+        mapper.get_str(ds, mapper.schema.meta)
 
 
 class TestXarrayMapper:
@@ -78,7 +192,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            time: Mapping = NameMapping("time")
+            time: Mapping = NameMapping.var("time")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -90,7 +204,7 @@ class TestXarrayMapper:
         assert isinstance(value, np.ndarray)
         assert len(value) == 2
 
-    def test_read_attrs(self):
+    def test_get_attrs(self):
         """Read values from Dataset.attrs."""
         ds = xr.Dataset({"data": (["x"], [1, 2])})
         ds.attrs["metadata_field"] = "metadata_value"
@@ -123,7 +237,7 @@ class TestXarrayMapper:
         with pytest.raises(KeyError, match="Field not found"):
             mapper.get_value(ds, mapper.schema.pressure)
 
-    def test_has_arr(self):
+    def test_has_var(self):
         """Test has_arr checks for data variables and coordinates."""
         ds = xr.Dataset(
             {"temp": (["x"], [25.0, 26.0])},
@@ -134,7 +248,7 @@ class TestXarrayMapper:
         @dataclass
         class TestSchema(Schema):
             temp: Mapping = NameMapping("temp")
-            x: Mapping = NameMapping("x")
+            x: Mapping = NameMapping.var("x")
             meta: Mapping = NameMapping("meta")
             missing: Mapping = NameMapping("missing")
 
@@ -162,7 +276,7 @@ class TestXarrayMapper:
         @dataclass
         class TestSchema(Schema):
             temp: Mapping = NameMapping("temp")
-            x: Mapping = NameMapping("x")
+            x: Mapping = NameMapping.var("x")
             meta: Mapping = NameMapping("meta")
 
         class TestMapper(XarrayMapper[TestSchema]):
@@ -177,7 +291,7 @@ class TestXarrayMapper:
         # x is a coordinate, not an attribute
         assert not mapper.has_attr(ds, mapper.schema.x)
 
-    def test_get_arr_with_data_variable(self):
+    def test_get_var_with_data_variable(self):
         """Test get_arr retrieves DataArray for data variable."""
         ds = xr.Dataset({"temp": (["x"], [25.0, 26.0, 27.0])})
 
@@ -195,7 +309,7 @@ class TestXarrayMapper:
         assert len(arr) == 3
         assert arr.values[0] == 25.0
 
-    def test_get_arr_with_coordinate(self):
+    def test_get_var_with_coordinate(self):
         """Test get_arr retrieves DataArray for coordinate."""
         ds = xr.Dataset(
             {"data": (["x"], [1, 2, 3])},
@@ -204,7 +318,7 @@ class TestXarrayMapper:
 
         @dataclass
         class TestSchema(Schema):
-            x: Mapping = NameMapping("x")
+            x: Mapping = NameMapping.var("x")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -216,7 +330,7 @@ class TestXarrayMapper:
         assert len(arr) == 3
         assert arr.values[0] == 0.0
 
-    def test_get_arr_with_attribute_fails(self):
+    def test_get_var_with_attribute_fails(self):
         """Test get_arr raises error for attribute."""
         ds = xr.Dataset({"data": (["x"], [1, 2])})
         ds.attrs["meta"] = "value"
@@ -230,10 +344,10 @@ class TestXarrayMapper:
 
         mapper = TestMapper.from_data_source(ds)
 
-        with pytest.raises(ValueError, match="not found as an array in Dataset"):
+        with pytest.raises(ValueError, match="not found as a variable in Dataset"):
             mapper.get_arr(ds, mapper.schema.meta)
 
-    def test_get_arr_from_dataarray_with_coordinate(self):
+    def test_get_var_from_dataarray_with_coordinate(self):
         """Test get_arr retrieves coordinate from DataArray."""
         ds = xr.Dataset(
             {"temp": (["x", "y"], [[1, 2], [3, 4]])},
@@ -243,8 +357,8 @@ class TestXarrayMapper:
         @dataclass
         class TestSchema(Schema):
             temp: Mapping = NameMapping("temp")
-            x: Mapping = NameMapping("x")
-            y: Mapping = NameMapping("y")
+            x: Mapping = NameMapping.var("x")
+            y: Mapping = NameMapping.var("y")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -268,7 +382,7 @@ class TestXarrayMapper:
         assert y_from_da.values[0] == 10.0
         assert y_from_da.values[1] == 20.0
 
-    def test_get_arr_from_dataarray_fails_for_nonexistent_coord(self):
+    def test_get_var_from_dataarray_fails_for_nonexistent_coord(self):
         """Test get_arr raises error for non-existent coordinate in DataArray."""
         ds = xr.Dataset(
             {"temp": (["x"], [1, 2, 3])},
@@ -287,10 +401,10 @@ class TestXarrayMapper:
         temp_da = mapper.get_arr(ds, mapper.schema.temp)
 
         # Should fail when trying to get non-existent coordinate from DataArray
-        with pytest.raises(ValueError, match="not found as an array in DataArray"):
+        with pytest.raises(ValueError, match="not found as a variable in DataArray"):
             mapper.get_arr(temp_da, mapper.schema.z)
 
-    def test_get_arr_dataset_vs_dataarray_coordinate_access(self):
+    def test_get_var_dataset_vs_dataarray_coordinate_access(self):
         """Test get_arr works consistently for coords from Dataset vs DataArray."""
         ds = xr.Dataset(
             {"data": (["chan", "freq"], [[1, 2, 3], [4, 5, 6]])},
@@ -303,8 +417,8 @@ class TestXarrayMapper:
         @dataclass
         class TestSchema(Schema):
             data: Mapping = NameMapping("data")
-            chan: Mapping = NameMapping("chan")
-            freq: Mapping = NameMapping("freq")
+            chan: Mapping = NameMapping.var("chan")
+            freq: Mapping = NameMapping.var("freq")
 
         class TestMapper(XarrayMapper[TestSchema]):
             pass
@@ -599,7 +713,7 @@ class TestXarraySourceContract:
         assert mapper.get_arr(source, mapper.schema.data) is source
 
     def test_datatree_uses_only_current_node(self):
-        """A DataTree exposes its current node without searching children."""
+        """The accessor selects the DataTree node before mapper operations."""
         source = xr.DataTree(
             dataset=xr.Dataset(
                 {"signal": ("sample", [1.0, 2.0])},
@@ -611,27 +725,33 @@ class TestXarraySourceContract:
             dataset=xr.Dataset({"child_only": ("sample", [3.0, 4.0])}),
         )
 
-        mapper = SourceMapper.from_data_source(source)
-
+        with pytest.raises(TypeError, match="payload"):
+            SourceMapper.from_data_source(source)  # ty: ignore[invalid-argument-type]
+        accessor = SourceAccessor(source)
+        mapper = accessor.mapper
+        payload = accessor.data_source
         assert mapper.schema.signal in mapper
         assert mapper.schema.sample in mapper
         assert mapper.schema.meta in mapper
         assert mapper.schema.child_only not in mapper
-        assert mapper.get_arr(source, mapper.schema.signal).identical(
+        assert mapper.get_arr(payload, mapper.schema.signal).identical(
             source.ds["signal"],
         )
-        assert mapper.get_value(source, mapper.schema.meta) == "root"
-        assert not mapper.has_arr(source, mapper.schema.child_only)
+        assert mapper.get_value(payload, mapper.schema.meta) == "root"
+        assert not mapper.has_arr(payload, mapper.schema.child_only)
 
         child = source["analysis"]
-        child_mapper = SourceMapper.from_data_source(child)
+        child_accessor = SourceAccessor(child)
+        child_mapper = child_accessor.mapper
         assert child_mapper.schema.child_only in child_mapper
-        assert child_mapper.get_arr(child, child_mapper.schema.child_only).identical(
+        assert child_mapper.get_arr(
+            child_accessor.data_source, child_mapper.schema.child_only
+        ).identical(
             child.ds["child_only"],
         )
 
-    def test_array_and_attr_name_collision_is_operation_specific(self):
-        """Generic values prefer attrs while get_arr explicitly selects arrays."""
+    def test_array_mapping_does_not_switch_to_same_named_attribute(self):
+        """All reads honor the location selected by the mapping."""
         source = xr.DataArray(
             [1.0, 2.0],
             dims="sample",
@@ -640,10 +760,13 @@ class TestXarraySourceContract:
         )
         mapper = SourceMapper.from_data_source(source)
 
-        assert mapper.get_value(source, mapper.schema.signal) == "metadata"
+        np.testing.assert_array_equal(
+            mapper.get_value(source, mapper.schema.signal), [1.0, 2.0]
+        )
+        assert not mapper.has_attr(source, mapper.schema.signal)
         assert mapper.get_arr(source, mapper.schema.signal) is source
 
-    def test_get_arr_is_lazy_and_get_value_materializes(self):
+    def test_get_var_is_lazy_and_get_value_materializes(self):
         """Mapper resolution and labeled reads preserve Dask laziness."""
         computed: list[bool] = []
 
@@ -683,3 +806,15 @@ class TestXarraySourceContract:
 
         assert mapper.get_scalar(source, mapper.schema.count) == 42
         assert isinstance(source["count"].data, da.Array)
+
+    def test_get_scalar_rejects_array_before_computing(self):
+        @delayed
+        def values():
+            pytest.fail("A non-scalar array must be rejected before reading values")
+
+        source = xr.Dataset(
+            {"signal": ("sample", da.from_delayed(values(), shape=(3,), dtype=float))}
+        )
+        mapper = SourceMapper.from_data_source(source)
+        with pytest.raises(ValueError, match="not a scalar"):
+            mapper.get_scalar(source, mapper.schema.signal)

@@ -108,11 +108,11 @@ Generic data sources (not just xarray):
     ...     port: Mapping = NameMapping("port")
     >>>
     >>> # Define mapper for dict data source
-    >>> class DictMapper(Mapper[ConfigSchema]):
-    ...     def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+    >>> class DictMapper(Mapper[ConfigSchema, dict[str, Any]]):
+    ...     def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
     ...         return name in data_source
     ...
-    ...     def _read_value(self, data_source: dict[str, Any], name: str):
+    ...     def _get_var(self, data_source: dict[str, Any], name: str):
     ...         return data_source[name]
     >>>
     >>> # Define accessor
@@ -141,6 +141,7 @@ from .accessor import AccessorBase
 from .mapper import Mapper
 from .schema import (
     MISSING,
+    FieldLocation,
     MappedField,
     MappedFieldSource,
     Mapping,
@@ -152,6 +153,7 @@ from .schema import (
 __all__ = [
     "MISSING",
     "AccessorBase",
+    "FieldLocation",
     "MappedField",
     "MappedFieldSource",
     "Mapper",

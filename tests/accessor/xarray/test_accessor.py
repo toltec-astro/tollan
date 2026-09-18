@@ -4,12 +4,13 @@ from __future__ import annotations
 
 import functools
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 import xarray as xr
 
-from tollan.accessor import Mapping, NameMapping, Schema
+from tollan.accessor import NameMapping, Schema
 from tollan.accessor.xarray import (
     XarrayAccessorBase,
     XarrayMapper,
@@ -17,6 +18,9 @@ from tollan.accessor.xarray import (
     ensure_datatree,
     unwrap_data_source,
 )
+
+if TYPE_CHECKING:
+    from tollan.accessor import Mapping
 
 # Random number generator for reproducible tests
 rng = np.random.default_rng(42)
@@ -244,8 +248,7 @@ class TestXarrayAccessorBaseCreation:
         accessor = TestAccessor(da)
 
         assert isinstance(accessor._data_source, xr.DataArray)
-        assert isinstance(accessor.data_source, xr.Dataset)
-        assert "temp" in accessor.data_source
+        assert accessor.data_source is da
 
     def test_dataarray_attrs_remain_visible_to_mapper(self):
         """Accessor resolution keeps the DataArray attribute surface."""
@@ -263,7 +266,7 @@ class TestXarrayAccessorBaseCreation:
         source = xr.DataArray([1.0, 2.0], attrs={"kind": "signal"})
         accessor = TestAccessor(source)
 
-        assert isinstance(accessor.data_source, xr.Dataset)
+        assert accessor.data_source is source
         assert accessor.mapper.schema.kind in accessor.mapper
         assert (
             accessor.mapper.get_scalar(
@@ -271,6 +274,33 @@ class TestXarrayAccessorBaseCreation:
                 accessor.mapper.schema.kind,
             )
             == "signal"
+        )
+
+    @pytest.mark.parametrize("wrap", [ensure_dataset, ensure_datatree])
+    def test_wrapped_dataarray_is_unwrapped_before_resolution(self, wrap):
+        @dataclass
+        class AttrSchema(Schema):
+            kind: Mapping = NameMapping.attr("kind")
+            values: Mapping = NameMapping.var("temp")
+
+        class AttrMapper(XarrayMapper[AttrSchema]):
+            pass
+
+        class TestAccessor(XarrayAccessorBase[AttrMapper]):
+            pass
+
+        source = xr.DataArray([1.0, 2.0], name="temp", attrs={"kind": "values"})
+        accessor = TestAccessor(wrap(source))
+        assert isinstance(accessor.data_source, xr.DataArray)
+        assert accessor.data_source.identical(source)
+        assert accessor.data_source.data is source.data
+        assert (
+            accessor.mapper.get_value(accessor.data_source, accessor.mapper.schema.kind)
+            == "values"
+        )
+        assert (
+            accessor.mapper.get_arr(accessor.data_source, accessor.mapper.schema.values)
+            is accessor.data_source
         )
 
     def test_with_provided_mapper(self):
@@ -476,7 +506,7 @@ class TestXarrayAccessorBaseViews:
     @dataclass
     class MySchema(Schema):
         temp: Mapping = NameMapping("temp")
-        result: Mapping = NameMapping("result")
+        result: Mapping = NameMapping.var("result")
 
     class MyMapper(XarrayMapper[MySchema]):
         pass
@@ -568,7 +598,7 @@ class TestXarrayAccessorBaseChildNodes:
     class DataSchema(Schema):
         real: Mapping = NameMapping("real")
         imag: Mapping = NameMapping("imag")
-        result: Mapping = NameMapping("result")
+        result: Mapping = NameMapping.var("result")
 
     class DataMapper(XarrayMapper[DataSchema]):
         pass

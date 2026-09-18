@@ -48,10 +48,10 @@ from typing import TYPE_CHECKING, cast
 
 from ..accessor import AccessorBase
 from ..mapper import Mapper
-from .utils import XarraySourceT, ensure_dataset
+from .utils import XarraySourceT, unwrap_data_source
 
 if TYPE_CHECKING:
-    import xarray as xr
+    from .utils import XarrayPayloadT
 
 __all__ = ["XarrayAccessorBase"]
 
@@ -60,7 +60,7 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[XarraySourceT, MapperT]):
     """Accessor base class for xarray with DataTree support.
 
     Extends AccessorBase to handle Dataset, DataArray, and DataTree objects.
-    Stores the original data source and provides automatic resolution to Dataset.
+    Stores the original source and exposes its Dataset or DataArray payload.
 
     Type Parameters
     ---------------
@@ -80,7 +80,7 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[XarraySourceT, MapperT]):
         data_source : Dataset, DataArray, or DataTree
             Xarray data source to access
         mapper : MapperT, optional
-            Field mapper. If None, creates from resolved Dataset.
+            Field mapper. If None, creates from the selected payload.
         """
         self._data_source = data_source
 
@@ -92,6 +92,10 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[XarraySourceT, MapperT]):
         self._validate()
 
     @functools.cached_property
-    def data_source(self) -> xr.Dataset:  # pyright: ignore[reportIncompatibleMethodOverride]
-        """Return the source normalized to a Dataset."""
-        return ensure_dataset(self._data_source)
+    def data_source(self) -> XarrayPayloadT:
+        """Return the unwrapped payload supplied to mapper operations.
+
+        DataTrees select their current node. Override this property to select a
+        different node for a view. DataArrays retain their own attributes.
+        """
+        return unwrap_data_source(self._data_source)

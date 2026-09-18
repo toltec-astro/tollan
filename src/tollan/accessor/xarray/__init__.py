@@ -5,7 +5,8 @@ and views with support for Dataset, DataArray, and DataTree.
 
 Core Components
 ---------------
-- XarrayMapper: Mapper for xarray.Dataset with support for data variables, coords, attrs
+- XarrayMapper: Reads variables, coordinates, attributes, and dimension lengths
+  from Dataset or DataArray payloads
 - XarrayAccessorBase: Specialized accessor base class with DataTree support
 - ensure_dataset: Utility to convert DataTree/DataArray to Dataset
 - ensure_datatree: Utility to wrap Dataset/DataArray in DataTree
@@ -75,12 +76,19 @@ from __future__ import annotations
 from .accessor import XarrayAccessorBase
 from .mapper import XarrayMapper
 from .units import UnitsAccessor
-from .utils import XarraySourceT, ensure_dataset, ensure_datatree, unwrap_data_source
+from .utils import (
+    XarrayPayloadT,
+    XarraySourceT,
+    ensure_dataset,
+    ensure_datatree,
+    unwrap_data_source,
+)
 
 __all__ = [
     "UnitsAccessor",
     "XarrayAccessorBase",
     "XarrayMapper",
+    "XarrayPayloadT",
     "XarraySourceT",
     "ensure_dataset",
     "ensure_datatree",

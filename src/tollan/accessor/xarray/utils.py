@@ -5,11 +5,13 @@ from __future__ import annotations
 import xarray as xr
 
 type XarraySourceT = xr.Dataset | xr.DataArray | xr.DataTree
+type XarrayPayloadT = xr.Dataset | xr.DataArray
 
 _DATAARRAY_WRAPPER_ATTR = "_tollan_accessor_xarray_dataarray_name"
 _MISSING = object()
 
 __all__ = [
+    "XarrayPayloadT",
     "XarraySourceT",
     "ensure_dataset",
     "ensure_datatree",
@@ -19,7 +21,7 @@ __all__ = [
 
 def unwrap_data_source(
     data_source: XarraySourceT,
-) -> xr.Dataset | xr.DataArray:
+) -> XarrayPayloadT:
     """Unwrap a DataTree node and any DataArray wrapper created here."""
     if isinstance(data_source, xr.DataTree):
         data_source = data_source.ds

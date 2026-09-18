@@ -3,13 +3,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 import xarray as xr
 
-from tollan.accessor import AccessorBase, Mapper, Mapping, NameMapping, Schema
+from tollan.accessor import (
+    AccessorBase,
+    Mapper,
+    NameMapping,
+    Schema,
+)
 from tollan.accessor.xarray import XarrayMapper
+
+if TYPE_CHECKING:
+    from tollan.accessor import (
+        Mapping,
+    )
 
 
 class TestAccessorBaseCreation:
@@ -145,10 +155,14 @@ class TestAccessorBaseDataSourceTypes:
             temp: Mapping = NameMapping("temp")
 
         class DictMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
-            def _read_value(self, data_source: dict[str, Any], name: str):
+            def _get_var(
+                self,
+                data_source: dict[str, Any],
+                name: str,
+            ):
                 return data_source[name]
 
         class DictAccessor(AccessorBase[dict[str, Any], DictMapper]):

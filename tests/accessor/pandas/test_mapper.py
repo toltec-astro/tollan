@@ -4,13 +4,17 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from tollan.accessor.pandas import DataFrameMapper
-from tollan.accessor.schema import Mapping, NameMapping, Schema
+from tollan.accessor.schema import NameMapping, Schema
+
+if TYPE_CHECKING:
+    from tollan.accessor.schema import Mapping
 
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -22,6 +26,46 @@ with warnings.catch_warnings():
 
 class TestDataFrameMapper:
     """Test DataFrameMapper for pandas.DataFrame."""
+
+    def test_ambiguous_name_rejected(self):
+        @dataclass
+        class TestSchema(Schema):
+            field: Mapping = NameMapping("field")
+
+        class TestMapper(DataFrameMapper[TestSchema]):
+            pass
+
+        df = pd.DataFrame({"field": [1, 2]})
+        df.attrs["field"] = "metadata"
+        with pytest.raises(ValueError, match="Ambiguous field 'field'.*attr, var"):
+            TestMapper.from_data_source(df)
+
+    def test_column_location_does_not_switch_to_attribute(self):
+        @dataclass
+        class TestSchema(Schema):
+            field: Mapping = NameMapping.var("field")
+
+        class TestMapper(DataFrameMapper[TestSchema]):
+            pass
+
+        df = pd.DataFrame({"field": [1, 2]})
+        df.attrs["field"] = "metadata"
+        mapper = TestMapper.from_data_source(df)
+        np.testing.assert_array_equal(mapper.get_value(df, mapper.schema.field), [1, 2])
+        del df["field"]
+        with pytest.raises(KeyError, match="field"):
+            mapper.get_value(df, mapper.schema.field)
+
+    def test_unsupported_dimension_location(self):
+        @dataclass
+        class TestSchema(Schema):
+            field: Mapping = NameMapping.dim("field")
+
+        class TestMapper(DataFrameMapper[TestSchema]):
+            pass
+
+        with pytest.raises(ValueError, match="does not support location 'dim'"):
+            TestMapper.from_data_source(pd.DataFrame({"field": [1, 2]}))
 
     def test_from_dataframe(self):
         """Create mapper from DataFrame."""
@@ -74,14 +118,14 @@ class TestDataFrameMapper:
 
         assert value == "metadata_value"
 
-    def test_attrs_priority_over_columns(self):
-        """attrs take priority over columns with same name."""
+    def test_explicit_attribute_with_same_named_column(self):
+        """The schema chooses which namespace to read."""
         df = pd.DataFrame({"field": [1, 2, 3]})
         df.attrs["field"] = "from_attrs"
 
         @dataclass
         class TestSchema(Schema):
-            field: Mapping = NameMapping("field")
+            field: Mapping = NameMapping.attr("field")
 
         class TestMapper(DataFrameMapper[TestSchema]):
             pass
@@ -89,7 +133,7 @@ class TestDataFrameMapper:
         mapper = TestMapper.from_data_source(df)
         value = mapper.get_value(df, mapper.schema.field)
 
-        # attrs should be checked first
+        # The column is not part of this mapping.
         assert value == "from_attrs"
 
     def test_missing_field(self):

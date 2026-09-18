@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum, auto
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, NamedTuple, Self
 
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass as pydantic_dataclass
@@ -12,9 +12,11 @@ from pydantic_core import PydanticCustomError
 
 if TYPE_CHECKING:
     from collections.abc import Mapping as MappingABC
+    from collections.abc import Sequence
 
 __all__ = [
     "MISSING",
+    "FieldLocation",
     "MappedField",
     "MappedFieldSource",
     "Mapping",
@@ -35,11 +37,23 @@ class _MissingSentinel:
 MISSING = _MissingSentinel()
 
 
+class FieldLocation(StrEnum):
+    """Storage namespace containing a field.
+
+    ``var`` includes array variables, coordinates, and table columns. ``attr``
+    selects source attributes; ``dim`` selects dimension lengths.
+    """
+
+    attr = auto()
+    var = auto()
+    dim = auto()
+
+
 class MappedFieldSource(StrEnum):
-    """Source of a mapped field's value."""
+    """Field availability when the mapper was resolved."""
 
     DATA_SOURCE = auto()  # Field found and resolved from data source
-    DEFAULT = auto()  # Field not found, using default value
+    DEFAULT = auto()  # Field not found, fallback available
     MISSING = auto()  # Field not found and no default value
 
 
@@ -78,16 +92,23 @@ class Mapping:
         raise NotImplementedError(msg)
 
 
+class _Candidate(NamedTuple):
+    """A physical field name and its optional storage location."""
+
+    name: str
+    location: FieldLocation | None
+
+
 @pydantic_dataclass(frozen=True)
 class NameMapping(Mapping):
-    """Resolve a semantic field from ordered physical-name candidates.
-
-    Maps a logical field name to one or more physical variable names in the data source.
+    """Resolve a semantic field from ordered names and storage locations.
 
     Parameters
     ----------
-    names : str or tuple[str, ...]
-        Physical variable name(s) to try in order.
+    candidates : str or sequence
+        One name, a sequence of names, or a sequence of (name, location) pairs.
+        A name without a location must occur in exactly one supported namespace.
+        Candidates are tried in order; an ambiguous name raises ValueError.
     resolve_value : bool, default False
         Whether to capture the value as part of the concrete mapper resolution.
         Values not captured remain ``MISSING`` in the mapper and are read from
@@ -95,52 +116,102 @@ class NameMapping(Mapping):
 
     Examples
     --------
-    >>> NameMapping('field')
-    NameMapping(names=('field',), resolve_value=False)
+    >>> NameMapping('field').names
+    ('field',)
 
-    >>> NameMapping('field', resolve_value=True)
-    NameMapping(names=('field',), resolve_value=True)
+    >>> NameMapping('field', resolve_value=True).resolve_value
+    True
 
-    >>> NameMapping(('field1', 'field2'))
-    NameMapping(names=('field1', 'field2'), resolve_value=False)
+    >>> NameMapping.dim(('sample', 'time')).names
+    ('sample', 'time')
+    >>> NameMapping([
+    ...     ('sample', FieldLocation.dim), ('count', FieldLocation.attr)
+    ... ]).names
+    ('sample', 'count')
     """
 
-    names: tuple[str, ...]
+    candidates: tuple[_Candidate, ...]
     resolve_value: bool = False
 
     if TYPE_CHECKING:
 
         def __init__(
             self,
-            names: str | tuple[str, ...] | list[str],
+            candidates: str
+            | Sequence[str]
+            | Sequence[tuple[str, FieldLocation | None]],
             *,
             resolve_value: bool = False,
         ) -> None: ...
 
-    @field_validator("names", mode="before")
+    @field_validator("candidates", mode="before")
     @classmethod
-    def validate_names(cls, v: str | tuple[str, ...] | list[str]) -> tuple[str, ...]:
-        """Normalize names to tuple."""
+    def normalize_candidates(cls, v: Any) -> Any:
+        """Normalize bare names to name/location pairs."""
         if isinstance(v, str):
-            names = (v,)
-        elif isinstance(v, (list, tuple)):
-            names = tuple(v)
-        else:
+            v = (v,)
+        if not isinstance(v, (list, tuple)):
             # Pydantic v2 does not wrap validator TypeError in ValidationError.
             error = PydanticCustomError(
-                "mapping_names_type",
-                "Input should be a string, tuple of strings, or list of strings",
+                "mapping_candidates_type",
+                "Input should be a name or a sequence of names or "
+                "(name, location) pairs",
             )
             raise error
-        if not names:
-            msg = "names must contain at least one physical field name"
+        if not v:
+            msg = "candidates must contain at least one physical field name"
             raise ValueError(msg)
-        if all(isinstance(name, str) for name in names) and len(set(names)) != len(
-            names,
-        ):
-            msg = f"names must be unique, got {names!r}"
+        if any(isinstance(item, FieldLocation) for item in v):
+            msg = "Use a sequence of (name, location) pairs or a NameMapping factory"
             raise ValueError(msg)
-        return names
+        if any(not isinstance(item, (str, list, tuple)) for item in v):
+            msg = "Candidates must be names or (name, location) pairs"
+            raise ValueError(msg)
+        return tuple((item, None) if isinstance(item, str) else item for item in v)
+
+    @field_validator("candidates")
+    @classmethod
+    def validate_candidates(
+        cls, candidates: tuple[_Candidate, ...]
+    ) -> tuple[_Candidate, ...]:
+        """Reject duplicate name/location pairs."""
+        if len(set(candidates)) != len(candidates):
+            msg = f"candidates must be unique, got {candidates!r}"
+            raise ValueError(msg)
+        return candidates
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        """Physical names in candidate order, including cross-location repeats."""
+        return tuple(candidate.name for candidate in self.candidates)
+
+    @classmethod
+    def _with_location(
+        cls,
+        names: str | Sequence[str],
+        location: FieldLocation,
+        *,
+        resolve_value: bool,
+    ) -> Self:
+        names = (names,) if isinstance(names, str) else names
+        return cls([(name, location) for name in names], resolve_value=resolve_value)
+
+    @classmethod
+    def attr(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
+        """Try one or more names in source attributes, in declaration order."""
+        return cls._with_location(
+            names, FieldLocation.attr, resolve_value=resolve_value
+        )
+
+    @classmethod
+    def var(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
+        """Try one or more variable/coordinate/column names in declaration order."""
+        return cls._with_location(names, FieldLocation.var, resolve_value=resolve_value)
+
+    @classmethod
+    def dim(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
+        """Try one or more dimension names in declaration order."""
+        return cls._with_location(names, FieldLocation.dim, resolve_value=resolve_value)
 
     def resolve(
         self,
@@ -173,11 +244,16 @@ class MappedField:
         Concrete name mapping returned by resolution.
     name : str
         Physical field name resolved from data source.
+    location : FieldLocation or None
+        Selected storage namespace. None for an unlocated default or missing field.
     value : Any
-        Value captured during mapper resolution, or ``MISSING`` when the
-        mapping does not retain a source value.
+        Source value or fallback captured with ``resolve_value=True``, or
+        ``MISSING`` when no value was captured.
+    value_default : Any
+        Configured fallback, retained even if the field exists in the source.
+        ``MISSING`` means no fallback was supplied.
     source : MappedFieldSource
-        Where the value came from.
+        Whether the original resolution found a source field, a default, or neither.
     schema_path : str, optional
         Dot-separated path in the schema.
     """
@@ -185,7 +261,9 @@ class MappedField:
     mapping: Mapping
     mapping_resolved: NameMapping
     name: str
+    location: FieldLocation | None = None
     value: Any = MISSING
+    value_default: Any = MISSING
     source: MappedFieldSource = MappedFieldSource.DATA_SOURCE
     schema_path: str = ""
 

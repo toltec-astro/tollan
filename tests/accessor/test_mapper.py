@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import pytest
 
@@ -13,10 +13,14 @@ from tollan.accessor.schema import (
     MISSING,
     MappedFieldSource,
     Mapping,
-    MappingContext,
     NameMapping,
     Schema,
 )
+
+if TYPE_CHECKING:
+    from tollan.accessor.schema import (
+        MappingContext,
+    )
 
 
 class TestMapperCreation:
@@ -68,7 +72,7 @@ class TestFieldResolution:
             temp: Mapping = NameMapping("temperature")
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
         mapper = TestMapper.from_data_source(data)
@@ -88,7 +92,7 @@ class TestFieldResolution:
             temp: Mapping = NameMapping(("temperature", "temp_c", "T"))
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
         mapper = TestMapper.from_data_source(data)
@@ -97,7 +101,7 @@ class TestFieldResolution:
         assert mapped_field.name == "temp_c"
 
     def test_resolve_field_missing_optional(self):
-        """Missing field marked as MISSING (default _has_field returns False)."""
+        """Missing field marked as MISSING (default _has_var returns False)."""
         data = {}
 
         @dataclass
@@ -105,7 +109,7 @@ class TestFieldResolution:
             temp: Mapping = NameMapping("temperature")
 
         class TestMapper(Mapper[TestSchema]):
-            pass  # Uses default _has_field which returns False
+            pass  # Uses default _has_var which returns False
 
         mapper = TestMapper.from_data_source(data)
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
@@ -127,10 +131,14 @@ class TestValueRetrieval:
             temp: Mapping = NameMapping("temp", resolve_value=False)
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
-            def _read_value(self, data_source: dict[str, Any], name: str):
+            def _get_var(
+                self,
+                data_source: dict[str, Any],
+                name: str,
+            ):
                 return data_source[name]
 
         mapper = TestMapper.from_data_source(data)
@@ -154,10 +162,14 @@ class TestValueRetrieval:
             temp: Mapping = NameMapping("temp")
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
-            def _read_value(self, data_source: dict[str, Any], name: str):
+            def _get_var(
+                self,
+                data_source: dict[str, Any],
+                name: str,
+            ):
                 return data_source[name]
 
         mapper = TestMapper.from_data_source(source_a)
@@ -176,10 +188,14 @@ class TestValueRetrieval:
             temp: Mapping = NameMapping("temp", resolve_value=True)
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
-            def _read_value(self, data_source: dict[str, Any], name: str):
+            def _get_var(
+                self,
+                data_source: dict[str, Any],
+                name: str,
+            ):
                 return data_source[name]
 
         mapper = TestMapper.from_data_source(source_a)
@@ -290,11 +306,13 @@ class TestFromDefaults:
 
         # Fields should be resolved with DEFAULT source
         temp_field = mapper.mapped_fields[mapper.schema.temp]
-        assert temp_field.value == 20.0
+        assert temp_field.value is MISSING
+        assert temp_field.value_default == 20.0
         assert temp_field.source == MappedFieldSource.DEFAULT
 
         pressure_field = mapper.mapped_fields[mapper.schema.pressure]
-        assert pressure_field.value == 101.3
+        assert pressure_field.value is MISSING
+        assert pressure_field.value_default == 101.3
         assert pressure_field.source == MappedFieldSource.DEFAULT
 
     def test_from_defaults_partial_defaults(self):
@@ -316,7 +334,8 @@ class TestFromDefaults:
 
         # temp should have default value
         temp_field = mapper.mapped_fields[mapper.schema.temp]
-        assert temp_field.value == 20.0
+        assert temp_field.value is MISSING
+        assert temp_field.value_default == 20.0
         assert temp_field.source == MappedFieldSource.DEFAULT
 
         # pressure should be MISSING
@@ -395,7 +414,7 @@ class TestContainsOperator:
             pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
         mapper = TestMapper.from_data_source(data)
@@ -413,7 +432,7 @@ class TestContainsOperator:
             pressure: Mapping = NameMapping("pressure")
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
         mapper = TestMapper.from_data_source(data)
@@ -430,7 +449,7 @@ class TestContainsOperator:
             temp: Mapping = NameMapping(("temperature", "temp_c", "T"))
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
         mapper = TestMapper.from_data_source(data)
@@ -448,7 +467,7 @@ class TestContainsOperator:
             computed: Mapping = NameMapping("computed_value")
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
         mapper = TestMapper.from_data_source(data)
@@ -494,10 +513,14 @@ class TestConditionalMapping:
             data: Mapping = ConditionalDataMapping()
 
         class TestMapper(Mapper[TestSchema]):
-            def _has_field(self, data_source: dict[str, Any], name: str) -> bool:
+            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
                 return name in data_source
 
-            def _read_value(self, data_source: dict[str, Any], name: str):
+            def _get_var(
+                self,
+                data_source: dict[str, Any],
+                name: str,
+            ):
                 return data_source[name]
 
         mapper = TestMapper.from_data_source(data)

@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import warnings
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pytest
 
 from tollan.accessor.netcdf4 import NetCDF4Mapper
-from tollan.accessor.schema import Mapping, NameMapping, Schema
+from tollan.accessor.schema import NameMapping, Schema
+
+if TYPE_CHECKING:
+    from tollan.accessor.schema import Mapping
 
 with warnings.catch_warnings():
     warnings.filterwarnings(
@@ -22,6 +26,37 @@ with warnings.catch_warnings():
 
 class TestNetCDF4Mapper:
     """Test NetCDF4Mapper for netCDF4.Dataset."""
+
+    @pytest.mark.parametrize("name", ["close", "x"])
+    def test_ambiguous_name_rejected(self, temp_netcdf, name):
+        mapping = NameMapping(name)
+
+        @dataclass
+        class TestSchema(Schema):
+            field: Mapping = mapping
+
+        class TestMapper(NetCDF4Mapper[TestSchema]):
+            pass
+
+        with (
+            nc.Dataset(temp_netcdf) as ds,
+            pytest.raises(ValueError, match="Ambiguous field"),
+        ):
+            TestMapper.from_data_source(ds)
+
+    def test_resolved_attribute_does_not_switch_to_variable(self, temp_netcdf):
+        @dataclass
+        class TestSchema(Schema):
+            field: Mapping = NameMapping.attr("close")
+
+        class TestMapper(NetCDF4Mapper[TestSchema]):
+            pass
+
+        with nc.Dataset(temp_netcdf, "r+") as ds:
+            mapper = TestMapper.from_data_source(ds)
+            ds.delncattr("close")
+            with pytest.raises(AttributeError):
+                mapper.get_value(ds, mapper.schema.field)
 
     @pytest.fixture
     def temp_netcdf(self, tmp_path):
@@ -154,29 +189,32 @@ class TestNetCDF4Mapper:
 
             @dataclass
             class TestSchema(Schema):
-                coordinate: Mapping = NameMapping("x")
+                coordinate: Mapping = NameMapping.var("x")
+                n_x: Mapping = NameMapping.dim("x")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
 
             mapper = TestMapper.from_data_source(ds)
 
-            assert mapper.has_dim(ds, mapper.schema.coordinate)
-            assert mapper.get_dim(ds, mapper.schema.coordinate) == 3
+            assert not mapper.has_dim(ds, mapper.schema.coordinate)
+            assert mapper.get_dim(ds, mapper.schema.n_x) == 3
             np.testing.assert_array_equal(
                 mapper.get_value(ds, mapper.schema.coordinate),
                 [10, 20, 30],
             )
 
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
-    def test_global_attribute_precedes_variable_and_api_member(self, temp_netcdf):
+    def test_explicit_attribute_with_same_named_variable_and_api_member(
+        self, temp_netcdf
+    ):
         """The netCDF attribute API disambiguates reserved Python names."""
 
         with nc.Dataset(temp_netcdf, "r") as ds:
 
             @dataclass
             class TestSchema(Schema):
-                collision: Mapping = NameMapping("close")
+                collision: Mapping = NameMapping.attr("close")
 
             class TestMapper(NetCDF4Mapper[TestSchema]):
                 pass
