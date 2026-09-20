@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, overload
 
 from pydantic import (
-    BeforeValidator,
     ConfigDict,
     RootModel,
     TypeAdapter,
@@ -36,20 +35,6 @@ __all__ = [
     "FileLocUrl",
     "fileloc",
 ]
-
-
-def _url_unquote(
-    v: Any,
-    info: ValidationInfo,
-) -> str:
-    if isinstance(v, str):
-        _v = v
-    elif isinstance(v, AnyUrl):
-        _v = v.unicode_string()
-    else:
-        msg = f"unable to unquote type {type(v)}"
-        raise TypeError(msg)
-    return urllib.parse.unquote(_v)
 
 
 _url_attrs = [
@@ -80,6 +65,9 @@ def _url_replace(url, **kwargs):
             v = _to_str(v, null_value="")
         elif attr == "path":
             v = _to_str(v, null_value=None)
+            # The HTTP builder inserts the authority/path separator itself.
+            if v is not None and url.scheme in {"http", "https"}:
+                v = v.removeprefix("/")
         kwargs[attr] = v
     return AnyUrl.build(**kwargs)
 
@@ -87,7 +75,6 @@ def _url_replace(url, **kwargs):
 FileLocUrl = Annotated[
     AnyUrl,
     UrlConstraints(allowed_schemes=["file", "http", "https"]),
-    BeforeValidator(_url_unquote),
 ]
 
 _validate_file_loc_url = TypeAdapter(FileLocUrl).validate_python
@@ -130,31 +117,10 @@ class FileLocData:
 
         def __init__(self, *args: Any, **kwargs: Any) -> None: ...
 
-    @field_validator("path", "local_parent_path", "remote_parent_path", mode="before")
-    @classmethod
-    def validate_path(cls, v: str | Path, info: ValidationInfo) -> Path:
-        """Ensure path is Path instance.
-
-        Parameters
-        ----------
-        v : str | Path
-            Path value to validate
-        info : ValidationInfo
-            Pydantic validation context
-
-        Returns
-        -------
-        Path
-            Validated Path instance
-        """
-        if isinstance(v, str):
-            return Path(v)
-        return v
-
     @field_validator("netloc", mode="before")
     @classmethod
     def validate_netloc(cls, v: str | None, info: ValidationInfo) -> str:
-        """Normalize netloc to string.
+        """Normalize the hostname and check agreement with a supplied URL.
 
         Parameters
         ----------
@@ -166,8 +132,22 @@ class FileLocData:
         Returns
         -------
         str
-            Normalized netloc (empty string for localhost/None)
+            URL hostname, or the supplied host for a path-only location.
+            Local file locations use an empty string.
+
+        Raises
+        ------
+        ValueError
+            If the supplied hostname conflicts with the URL.
         """
+        if (url := info.data.get("url")) is not None:
+            host = url.unicode_host() or ""
+            if url.scheme == "file" and v == "localhost":
+                v = ""
+            if v is not None and v != host:
+                msg = f"netloc {v!r} conflicts with URL hostname {host!r}"
+                raise ValueError(msg)
+            return host
         if v is None or v == "localhost":
             return ""
         return v
@@ -230,14 +210,16 @@ class FileLocData:
         if arg is None:
             # do nothing
             pass
-        elif isinstance(arg, str):
-            if not arg.strip():
+        elif isinstance(arg, (str, AnyUrl)):
+            if isinstance(arg, str) and not arg.strip():
                 msg = "File location cannot be an empty string"
                 raise ValueError(msg)
             # try validate as URL
             try:
                 url = _validate_file_loc_url(arg)
             except ValidationError:
+                if isinstance(arg, AnyUrl) or "://" in arg:
+                    raise
                 if re.match(r"^[A-Z]:\\\w", arg):
                     # local window path
                     _set_kwarg("path", arg)
@@ -251,7 +233,8 @@ class FileLocData:
             else:
                 # valid url
                 _set_kwarg("url", url)
-                _set_kwarg("path", url.path)
+                # Decode after parsing so escaped characters stay path data.
+                _set_kwarg("path", urllib.parse.unquote(url.path or "/"))
                 _set_kwarg("netloc", url.unicode_host())
         elif isinstance(arg, Path):
             # local path
@@ -281,6 +264,9 @@ class FileLocData:
         else:
             msg = "unknown file loc data type."
             raise TypeError(msg)
+        # Omitted fields skip validation; URL-only input still needs its hostname.
+        if kwargs.get("url") is not None:
+            kwargs.setdefault("netloc", None)
         # update context
         context = info.context or {}
         if "local_parent_path" in context:
@@ -365,20 +351,29 @@ class FileLocData:
         if self.url is None and self.path is None:
             msg = "url or path required in file loc data."
             raise ValueError(msg)
-        if self.url is not None and self.path is None:
-            assert self.url.path is not None
-            path = Path(self.url.path)
-        else:
-            path = self.path
-        assert path is not None
-        p = self._resolve_path(
-            self.netloc,
-            path,
-            local_parent_path=self.local_parent_path,
-            remote_parent_path=self.remote_parent_path,
-        )
         if self.url is not None:
-            url_resolved = _url_replace(self.url, path=p)
+            path_url = Path(urllib.parse.unquote(self.url.path or "/"))
+            if self.path is None or self.path == path_url:
+                # Rebuilding an unchanged path can lose encoded separators.
+                return self.url
+        path = self.path
+        assert path is not None
+        if self.url is not None and self.url.scheme != "file":
+            # HTTP paths are remote even when the hostname is localhost.
+            p = self._resolve_remote_path(
+                path, remote_parent_path=self.remote_parent_path
+            )
+        else:
+            p = self._resolve_path(
+                self.netloc,
+                path,
+                local_parent_path=self.local_parent_path,
+                remote_parent_path=self.remote_parent_path,
+            )
+        if self.url is not None:
+            url_resolved = _url_replace(
+                self.url, path=urllib.parse.quote(p.as_posix(), safe="/")
+            )
         else:
             url_resolved = _url_replace(
                 _validate_file_loc_url(p.as_uri()),
@@ -409,7 +404,7 @@ class FileLocData:
             Fully resolved file path
         """
         assert self.url_resolved.path is not None
-        return Path(self.url_resolved.path)
+        return Path(urllib.parse.unquote(self.url_resolved.path))
 
     @property
     def data_unresolved(self) -> str | tuple[str, Path]:
@@ -421,7 +416,7 @@ class FileLocData:
             Original unresolved URL string or (netloc, path) tuple
         """
         if self.url is not None:
-            return self.url.encoded_string()
+            return str(self.url)
         assert self.path is not None
         return (self.netloc, self.path)
 
@@ -429,7 +424,26 @@ class FileLocData:
 class FileLoc(RootModel[FileLocData]):
     """A model to hold file location info.
 
-    This is a simple wrapper around ``FileLocData``.
+    Accept local paths, ``host:/path``, ``(host, path)`` pairs, and file/HTTP/HTTPS
+    URLs. Validation resolves the location without opening or transferring it.
+    ``path`` is a decoded path, not a local copy of a remote resource.
+
+    A URL supplies the hostname exposed by ``host`` and ``netloc``, without its
+    port or credentials. Dictionary input may replace its path; an explicit
+    ``netloc`` must match the URL hostname, or be ``None`` to leave it unspecified.
+    Relative HTTP paths use ``remote_parent_path``, including on localhost.
+
+    Parent paths are supplied directly or through validation context. Unset
+    parents remain ``None``. Resolution is cached during validation; reconstruct
+    or revalidate a location to use a new context or working directory.
+
+    Examples
+    --------
+    >>> source = fileloc(("archive", "example.nc"), remote_parent_path="/data")
+    >>> source.as_rsync_arg()
+    'archive:/data/example.nc'
+    >>> fileloc(source, remote_parent_path="/mirror", revalidate=True).url
+    'file://archive/mirror/example.nc'
     """
 
     @property
@@ -499,14 +513,14 @@ class FileLoc(RootModel[FileLocData]):
         return self.root.path
 
     def is_remote(self) -> bool:
-        """Return True if file is remote.
+        """Return True for remote file locations and HTTP/HTTPS resources.
 
         Returns
         -------
         bool
-            True if file is on a remote host
+            True unless this is a local file-scheme location
         """
-        return self.netloc not in ["", "localhost"]
+        return self.scheme != "file" or self.netloc not in ["", "localhost"]
 
     def is_local(self) -> bool:
         """Return True if file is local.
@@ -579,14 +593,15 @@ def fileloc(
 
         If not None, this is used as the parent of local
         relative path. Otherwise, the current path (``pwd``) is used.
-        Ignored if `loc` is `~tollan.utils.FileLoc`.
+        Unset parents stay None; relative parents stay relative.
+        Ignored for an existing `FileLoc` unless ``revalidate=True``.
 
     remote_parent_path : str, `~pathlib.Path`, None
 
         If not None and is absolute, this is used as the parent of remote
         relative path. Otherwise, `ValueError` will be raised if a remote
         relative path is given.
-        Ignored if `loc` is `~tollan.utils.FileLoc`.
+        Ignored for an existing `FileLoc` unless ``revalidate=True``.
 
     revalidate : bool
         If True and ``loc`` is `FileLoc` object, the data gets re-validated with new

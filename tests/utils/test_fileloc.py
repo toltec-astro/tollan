@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 import pytest
-from pydantic import ValidationError
+from pydantic import AnyUrl, BaseModel, ValidationError
 
 from tollan.utils.fileloc import FileLoc, FileLocData, fileloc
 
@@ -555,3 +555,141 @@ class TestFileLocIntegration:
 
         assert "/project" in cfg.data_dir.url
         assert "/project" in cfg.output_file.url
+
+
+@pytest.mark.parametrize(
+    ("url", "host", "path"),
+    [
+        ("file:///data/a%20b%23c%25.nc", "", "/data/a b#c%.nc"),
+        ("file://host/data/a%2523.nc", "host", "/data/a%23.nc"),
+        ("https://example.org//a%2Fb.nc?q=a%26b#c%23d", "example.org", "//a/b.nc"),
+        ("http://localhost:8080/a.nc", "localhost", "/a.nc"),
+    ],
+)
+def test_url_components_and_json_roundtrip(url, host, path):
+    for value in (url, AnyUrl(url), {"url": url}):
+        location = FileLoc.model_validate(value)
+        assert location.url == url
+        assert location.root.netloc == location.netloc == host
+        assert location.path == Path(path)
+        assert location.root.local_parent_path is None
+        assert location.root.remote_parent_path is None
+        assert fileloc(location, revalidate=True).url == url
+        for round_trip in (False, True):
+            restored = FileLoc.model_validate_json(
+                location.model_dump_json(round_trip=round_trip)
+            )
+            assert restored == location
+            assert restored.url == url
+
+
+def test_filesystem_path_and_rsync_keep_literal_characters():
+    location = fileloc(("host", "/data/a b#%23.nc"))
+    assert location.url == "file://host/data/a%20b%23%2523.nc"
+    assert location.path == Path("/data/a b#%23.nc")
+    assert location.as_rsync_arg() == "host:/data/a b#%23.nc"
+    assert fileloc(location.url).path == location.path
+
+
+@pytest.mark.parametrize("netloc", ["other", "", "example.org:8443"])
+def test_url_rejects_conflicting_hostname(netloc):
+    with pytest.raises(ValidationError, match="conflicts with URL hostname"):
+        FileLoc.model_validate(
+            {"url": "https://example.org:8443/a.nc", "netloc": netloc}
+        )
+
+
+@pytest.mark.parametrize(
+    ("url", "netloc", "host"),
+    [
+        ("https://example.org/a.nc", "example.org", "example.org"),
+        ("https://example.org/a.nc", None, "example.org"),
+        ("http://localhost/a.nc", "localhost", "localhost"),
+        ("file:///a.nc", "localhost", ""),
+    ],
+)
+def test_url_accepts_matching_or_unspecified_hostname(url, netloc, host):
+    location = FileLoc.model_validate({"url": url, "netloc": netloc})
+    assert location.root.netloc == location.netloc == host
+
+
+@pytest.mark.parametrize("host", ["example.org", "localhost"])
+def test_http_replacement_path_uses_remote_parent(host):
+    value = {
+        "url": f"https://{host}:8443/old.nc?q=a%26b#c%23d",
+        "path": "new file#%.nc",
+    }
+    location = FileLoc.model_validate(
+        value,
+        context={"local_parent_path": "/local", "remote_parent_path": "/remote"},
+    )
+    assert location.url == (
+        f"https://{host}:8443/remote/new%20file%23%25.nc?q=a%26b#c%23d"
+    )
+    with pytest.raises(ValidationError, match="remote path shall be absolute"):
+        FileLoc.model_validate(value, context={"local_parent_path": "/local"})
+
+
+def test_file_url_replacement_path_uses_local_parent():
+    location = FileLoc.model_validate(
+        {"url": "file:///old.nc", "path": "new.nc"},
+        context={"local_parent_path": "/local", "remote_parent_path": "/remote"},
+    )
+    assert location.url == "file:///local/new.nc"
+
+
+@pytest.mark.parametrize("parent", [None, "relative-parent"])
+def test_local_parent_remains_contextual(tmp_path, monkeypatch, parent):
+    monkeypatch.chdir(tmp_path)
+    location = fileloc("input.nc", local_parent_path=parent)
+    payload = location.model_dump_json()
+    path_relative = Path(parent or "") / "input.nc"
+    assert location.path == tmp_path / path_relative
+    assert location.root.local_parent_path == (None if parent is None else Path(parent))
+    assert location.root.remote_parent_path is None
+
+    monkeypatch.chdir(tmp_path.parent)
+    restored = FileLoc.model_validate_json(payload)
+    revalidated = fileloc(location, local_parent_path=parent, revalidate=True)
+    assert restored.path == revalidated.path == tmp_path.parent / path_relative
+    assert restored.root.local_parent_path == location.root.local_parent_path
+    assert restored.root.remote_parent_path is None
+    assert location.path == tmp_path / path_relative
+
+
+def test_home_relative_path_preserves_unset_parent():
+    location = fileloc("~/input.nc")
+    assert location.path == (Path.home() / "input.nc").resolve()
+    assert location.root.local_parent_path is None
+
+
+@pytest.mark.parametrize("host", ["", "archive"])
+def test_nested_json_and_revalidation_with_new_parent(host):
+    class Config(BaseModel):
+        source: FileLoc
+
+    parent_key = "remote_parent_path" if host else "local_parent_path"
+    config = Config.model_validate(
+        {"source": (host, "input.nc")}, context={parent_key: "/data"}
+    )
+    restored = Config.model_validate_json(config.model_dump_json())
+    assert restored == config
+    relocated = fileloc(config.source, **{parent_key: "/mirror"}, revalidate=True)
+    assert relocated.path == Path("/mirror/input.nc")
+    assert relocated.path_orig == Path("input.nc")
+    assert config.source.path == Path("/data/input.nc")
+
+
+def test_http_localhost_does_not_check_local_files(monkeypatch):
+    def unexpected(*args, **kwargs):
+        pytest.fail("HTTP location attempted a local existence check")
+
+    monkeypatch.setattr(Path, "exists", unexpected)
+    location = fileloc("http://localhost/a.nc")
+    assert location.is_remote()
+    assert not location.exists()
+
+
+def test_unsupported_url_is_not_parsed_as_host_path():
+    with pytest.raises(ValidationError):
+        fileloc("s3://bucket/a.nc")
