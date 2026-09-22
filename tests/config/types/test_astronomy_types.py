@@ -432,6 +432,22 @@ class TestSkyCoordField:
         assert first.separation(second).to_value(u.arcsec) == pytest.approx(0)
 
     @pytest.mark.parametrize(
+        ("ra", "dec"),
+        [
+            (72.34712708483526, 63.53595389117163),
+            (12.123456789012345, -45.987654321098765),
+            (359.99999999999994, 89.99999999999999),
+            (1e-9, -1e-9),
+        ],
+    )
+    def test_skycoord_retains_binary64_degrees(self, ra, dec):
+        adapter = TypeAdapter(SkyCoordField)
+        coord = SkyCoord(ra=ra * u.deg, dec=dec * u.deg, frame="icrs")
+        restored = adapter.validate_json(adapter.dump_json(coord))
+        assert restored.ra.deg == coord.ra.deg
+        assert restored.dec.deg == coord.dec.deg
+
+    @pytest.mark.parametrize(
         ("value", "error_type"),
         [
             (object(), "skycoord_type"),

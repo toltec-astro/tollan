@@ -118,7 +118,8 @@ def _serialize_skycoord(value: SkyCoord) -> str:
     icrs = value.icrs
     ra = icrs.ra.to_value(u.deg)
     dec = icrs.dec.to_value(u.deg)
-    return f"{ra:.15g}d {dec:.15g}d"
+    # Seventeen significant digits round-trip binary64 coordinate values.
+    return f"{ra:.17g}d {dec:.17g}d"
 
 
 type SkyCoordField = Annotated[
