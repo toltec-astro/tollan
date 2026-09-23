@@ -9,6 +9,8 @@ from functools import reduce
 from operator import or_
 from typing import TYPE_CHECKING, Any, TypeVar, get_args, get_origin
 
+from pydantic import BaseModel
+
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
@@ -85,12 +87,24 @@ def _declared_type_vars(cls: type) -> tuple[Any, ...]:
     return tuple(getattr(cls, "__type_params__", ()))
 
 
+def _generic_origin_and_args(value: Any) -> tuple[Any, tuple[Any, ...]]:
+    """Inspect a standard type expression or Pydantic model specialization."""
+    if isinstance(value, type) and issubclass(value, BaseModel):
+        # Pydantic subscriptions produce classes, not typing aliases. Read only
+        # this class's metadata: inherited metadata can describe a different base.
+        metadata = value.__dict__.get("__pydantic_generic_metadata__")
+        if metadata is not None and metadata["origin"] is not None:
+            return metadata["origin"], metadata["args"]
+    return get_origin(value), get_args(value)
+
+
 def _contains_type_parameter(value: Any) -> bool:
     if isinstance(value, TypeVar):
         return True
     if isinstance(value, list | tuple):
         return any(_contains_type_parameter(item) for item in value)
-    return any(_contains_type_parameter(item) for item in get_args(value))
+    _, parts = _generic_origin_and_args(value)
+    return any(_contains_type_parameter(item) for item in parts)
 
 
 def _substitute(value: Any, substitutions: dict[Any, Any]) -> Any:
@@ -106,7 +120,7 @@ def _substitute(value: Any, substitutions: dict[Any, Any]) -> Any:
             return list(resolved_items)
         return tuple(resolved_items)
 
-    parts = get_args(value)
+    _, parts = _generic_origin_and_args(value)
     if not parts:
         return value
     resolved_parts = tuple(_substitute(item, substitutions) for item in parts)
@@ -121,7 +135,7 @@ def _rebuild_type_expression(
     resolved: tuple[Any, ...],
 ) -> Any:
     """Rebuild a parameterized expression after TypeVar substitution."""
-    origin = get_origin(value)
+    origin, _ = _generic_origin_and_args(value)
     if origin is typing.Annotated:
         return typing.Annotated[resolved[0], *original_parts[1:]]
     if origin is typing.Literal:
@@ -184,6 +198,17 @@ def _walk_generic_paths(
     path: tuple[str, ...],
 ) -> Iterator[tuple[tuple[Any, ...], tuple[str, ...]]]:
     """Yield the target bindings reached by every inheritance path."""
+    current_origin, current_args = _generic_origin_and_args(current)
+    if current_origin is not None:
+        yield from _walk_generic_paths(
+            current_origin,
+            target_origin,
+            origin_type_vars,
+            _substitutions_for_base(current_origin, current_args, substitutions),
+            (*path, current_origin.__qualname__),
+        )
+        return
+
     if current is target_origin:
         resolved_types = tuple(
             _substitute(
@@ -196,7 +221,8 @@ def _walk_generic_paths(
         return
 
     for base_expression in types.get_original_bases(current):
-        base_origin = get_origin(base_expression) or base_expression
+        base_origin, base_args = _generic_origin_and_args(base_expression)
+        base_origin = base_origin or base_expression
         if not isinstance(base_origin, type) or base_origin is typing.Generic:
             continue
         try:
@@ -207,7 +233,7 @@ def _walk_generic_paths(
             continue
         base_substitutions = _substitutions_for_base(
             base_origin,
-            get_args(base_expression),
+            base_args,
             substitutions,
         )
         yield from _walk_generic_paths(
@@ -230,6 +256,9 @@ def resolve_generic_bindings(cls: type, origin: type) -> GenericBindings:
     An intermediate generic class returns bindings containing unresolved type
     variables. Consumers can use :attr:`GenericBindings.is_resolved` to
     defer materializing runtime class attributes until specialization.
+
+    Pydantic generic models are supported. For class-creation hooks on models,
+    call this from ``__pydantic_init_subclass__`` rather than ``__init_subclass__``.
     """
     if not isinstance(cls, type) or not isinstance(origin, type):
         msg = "resolve_generic_bindings expects class objects"
@@ -312,7 +341,9 @@ def resolve_concrete_generic_bindings(
 
     unresolved = tuple(name for name in bindings.unresolved if name in requirements)
     if unresolved:
-        if _declared_type_vars(cls):
+        # A Pydantic partial specialization is itself a class, created before
+        # the user's intermediate subclass declares its own type variables.
+        if _declared_type_vars(cls) or _generic_origin_and_args(cls)[0] is not None:
             return None
         msg = (
             f"{cls.__name__} must bind {origin.__name__}'s type variables: "

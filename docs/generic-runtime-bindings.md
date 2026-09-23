@@ -204,7 +204,7 @@ The code separates graph mechanics from Tollan framework policy.
 `resolve_generic_bindings(cls, origin)`:
 
 - has no side effects;
-- uses only public Python introspection APIs;
+- handles standard Python generics and Pydantic model specializations;
 - substitutes type variables through every relevant inheritance edge;
 - retains unresolved type variables for intermediate generic classes;
 - reports ambiguous diamonds.
@@ -265,13 +265,66 @@ behavior.
 ## Performance and lifetime
 
 Resolution cost is proportional to the relevant generic inheritance graph and
-is paid only in `__init_subclass__`. The materialized runtime attribute makes
+is paid in the subclass-creation hook. The materialized runtime attribute makes
 all later access an ordinary class-attribute lookup.
 
 There is no process-wide resolver cache. Python already prevents inheritance
 cycles, the graphs are small, and a global cache would retain dynamically
 created classes. Avoiding that lifetime risk is more important than memoizing a
 one-time class-definition operation.
+
+## Pydantic generic models
+
+Use `__pydantic_init_subclass__` to derive runtime attributes on a generic
+`BaseModel`. Pydantic has prepared the specialization's type information by
+this point; Python's earlier `__init_subclass__` hook is too early.
+
+```python
+from typing import Any, ClassVar
+
+from pydantic import BaseModel
+from tollan.utils.typing import (
+    GenericBindingRequirement,
+    resolve_concrete_generic_bindings,
+)
+
+
+class Factory[ModelT: BaseModel](BaseModel):
+    model_cls: ClassVar[type[BaseModel]]
+
+    @classmethod
+    def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
+        super().__pydantic_init_subclass__(**kwargs)
+        bindings = resolve_concrete_generic_bindings(
+            cls,
+            Factory,
+            ModelT=GenericBindingRequirement("model_cls", BaseModel),
+        )
+        if bindings is not None:
+            cls.model_cls = bindings["ModelT"]
+
+
+class User(BaseModel):
+    name: str
+
+
+class UserFactory(Factory[User]):
+    pass
+
+
+assert Factory[User].model_cls is User
+assert UserFactory.model_cls is User
+```
+
+Both generated specializations such as `Factory[User]` and named subclasses
+are supported. Intermediate generic models can forward type variables until a
+concrete subclass binds them, with the same bound and conflict checks as ordinary
+classes. Type variables nested inside generic models are resolved too.
+
+Pydantic creates real subclasses for model subscriptions, so `typing.get_args`
+does not expose their supplied types. Tollan reads Pydantic's
+`__pydantic_generic_metadata__` for those classes; ordinary Python generics
+continue to use standard-library introspection.
 
 ## Existing solutions considered
 
@@ -313,7 +366,8 @@ conflicting diamonds; and invalid targets. The policy tests cover concrete
 bound validation, intermediate deferral, bare-subclass rejection, and explicit
 runtime-attribute rejection. Consumer tests exercise the actual accessor,
 mapper, configuration, runtime-context, and pipeline declarations used by
-Tolteca.
+Tolteca. Pydantic cases also cover generated specializations, nested models,
+mixed model/ordinary-class inheritance, and the model subclass hook.
 
 When extending the resolver, add a minimal inheritance graph to
 `tests/utils/test_typing.py` first. Do not add a case merely because the

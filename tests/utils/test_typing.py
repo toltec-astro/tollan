@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, ClassVar, Literal
 
 import astropy.units as u
 import pytest
+from pydantic import BaseModel
 
 from tollan.utils.typing import (
     GenericBindingRequirement,
@@ -236,6 +237,165 @@ class TestResolveConcreteGenericBindings:
                 Target,
                 ValueT=requirement,
             )
+
+
+class TestPydanticGenericBindings:
+    """Resolve model specializations and their inherited runtime bindings."""
+
+    def test_specialization_and_named_subclass(self):
+        class Model[ValueT](BaseModel):
+            value: ValueT
+
+        class Concrete(Model[int]):
+            pass
+
+        for cls in (Model[int], Concrete):
+            assert resolve_generic_bindings(cls, Model).resolved_types == (int,)
+
+    def test_partial_reordered_and_nested_models(self):
+        class Item[ValueT](BaseModel):
+            value: ValueT
+
+        class Pair[LeftT, OtherT](BaseModel):
+            pass
+
+        class Reordered[FirstT, SecondT](Pair[SecondT, list[Item[FirstT]]]):
+            pass
+
+        partial = resolve_generic_bindings(Reordered, Pair)
+        assert partial.unresolved == ("LeftT", "OtherT")
+
+        class Concrete(Reordered[int, str]):
+            pass
+
+        for cls in (Reordered[int, str], Concrete):
+            bindings = resolve_generic_bindings(cls, Pair)
+            assert bindings.resolved_types == (str, list[Item[int]])
+            assert bindings.is_resolved
+
+    def test_unrelated_bases_and_mixed_python_generics(self):
+        class Plain[ValueT]:
+            pass
+
+        class Model[ValueT](BaseModel, Plain[ValueT]):
+            pass
+
+        class Unrelated[ValueT](BaseModel):
+            pass
+
+        class Concrete(Unrelated[str], Model[int]):
+            pass
+
+        assert resolve_generic_bindings(Concrete, Model).resolved_types == (int,)
+        assert resolve_generic_bindings(Concrete, Plain).resolved_types == (int,)
+
+    def test_model_argument_in_an_ordinary_generic(self):
+        class Item[ValueT](BaseModel):
+            value: ValueT
+
+        class Store[ValueT]:
+            pass
+
+        class BatchStore[ItemT](Store[list[Item[ItemT]]]):
+            pass
+
+        class Concrete(BatchStore[int]):
+            pass
+
+        assert resolve_generic_bindings(BatchStore, Store).unresolved == ("ValueT",)
+        assert resolve_generic_bindings(Concrete, Store).resolved_types == (
+            list[Item[int]],
+        )
+
+    def test_defaults_and_bare_subclasses(self):
+        class Defaulted[ValueT = int](BaseModel):
+            pass
+
+        class Concrete(Defaulted):
+            pass
+
+        assert resolve_generic_bindings(Concrete, Defaulted).resolved_types == (int,)
+
+        class Required[ValueT](BaseModel):
+            pass
+
+        class Bare(Required):
+            pass
+
+        assert resolve_generic_bindings(Bare, Required).unresolved == ("ValueT",)
+        with pytest.raises(TypeError, match="must bind Required's type variables"):
+            resolve_concrete_generic_bindings(
+                Bare, Required, ValueT=GenericBindingRequirement("value_cls")
+            )
+
+    def test_diamond_paths(self):
+        class Model[ValueT](BaseModel):
+            pass
+
+        class Left(Model[int]):
+            pass
+
+        class Right(Model[int]):
+            pass
+
+        class Other(Model[str]):
+            pass
+
+        class Consistent(Left, Right):
+            pass
+
+        class Conflicting(Left, Other):  # ty: ignore[invalid-generic-class]
+            pass
+
+        assert resolve_generic_bindings(Consistent, Model).resolved_types == (int,)
+        with pytest.raises(TypeError, match="Conflicting .*Model bindings"):
+            resolve_generic_bindings(Conflicting, Model)
+
+    def test_pydantic_subclass_hook(self):
+        class Model[ValueT: BaseModel](BaseModel):
+            value_cls: ClassVar[type[BaseModel]]
+
+            @classmethod
+            def __pydantic_init_subclass__(cls, **kwargs: Any) -> None:
+                super().__pydantic_init_subclass__(**kwargs)
+                bindings = resolve_concrete_generic_bindings(
+                    cls,
+                    Model,
+                    ValueT=GenericBindingRequirement("value_cls", BaseModel),
+                )
+                if bindings is not None:
+                    cls.value_cls = bindings["ValueT"]
+
+        class Item(BaseModel):
+            pass
+
+        class Other(BaseModel):
+            pass
+
+        class Intermediate[ValueT: BaseModel](Model[ValueT]):
+            pass
+
+        class Concrete(Intermediate[Item]):
+            pass
+
+        assert Concrete.value_cls is Item
+        assert Intermediate[Other].value_cls is Other
+        assert Model[Item].value_cls is Item
+        assert "value_cls" not in Intermediate.__dict__
+        assert "value_cls" not in Model.__dict__
+
+        with pytest.raises(TypeError, match="must bind Model's type variables"):
+
+            class Bare(Intermediate):
+                pass
+
+        with pytest.raises(TypeError, match="explicitly sets 'value_cls'"):
+
+            class Explicit(Model[Item]):
+                value_cls: ClassVar[type[BaseModel]] = Other
+
+        with pytest.raises(TypeError, match="must bind ValueT to a BaseModel subclass"):
+            Model[int]  # ty: ignore[invalid-type-arguments]
 
 
 class TestQuantityPhysicalType:
