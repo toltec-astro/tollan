@@ -26,6 +26,7 @@ dependencies = [
   "pyyaml",
   "typer",
   "typing-extensions",
+  "typing-inspection",
   "click",
   "rich",
   "loguru",

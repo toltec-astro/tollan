@@ -1,4 +1,4 @@
-"""Runtime resolution for user-defined generic class bindings."""
+"""Runtime inspection of literal types and generic class bindings."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ from operator import or_
 from typing import TYPE_CHECKING, Any, TypeVar, get_args, get_origin
 
 from pydantic import BaseModel
+from typing_inspection.introspection import get_literal_values as _get_literal_values
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -17,9 +18,54 @@ if TYPE_CHECKING:
 __all__ = [
     "GenericBindingRequirement",
     "GenericBindings",
+    "get_literal_value",
+    "get_literal_values",
     "resolve_concrete_generic_bindings",
     "resolve_generic_bindings",
 ]
+
+
+def get_literal_values(annotation: Any) -> list[Any]:
+    """Return the distinct values of a ``Literal`` or a named literal alias.
+
+    The result is always a new list, including for a one-value literal.
+    Raise ``TypeError`` for a non-literal annotation or an invalid literal value.
+
+    Examples
+    --------
+    >>> type FormatT = typing.Literal["csv", "json"]
+    >>> get_literal_values(FormatT)
+    ['csv', 'json']
+    """
+    aliases_seen = set()
+    while isinstance(annotation, typing.TypeAliasType):
+        if annotation in aliases_seen:
+            msg = f"Recursive alias does not resolve to a Literal: {annotation!r}"
+            raise TypeError(msg)
+        aliases_seen.add(annotation)
+        annotation = annotation.__value__
+    if get_origin(annotation) is not typing.Literal:
+        msg = f"Expected a Literal annotation, got {annotation!r}"
+        raise TypeError(msg)
+    return list(_get_literal_values(annotation, type_check=True))
+
+
+def get_literal_value(annotation: Any) -> Any:
+    """Return the sole value of a ``Literal`` or a named literal alias.
+
+    Raise ``ValueError`` unless there is exactly one distinct value.
+
+    Examples
+    --------
+    >>> type FormatT = typing.Literal["csv"]
+    >>> get_literal_value(FormatT)
+    'csv'
+    """
+    values = get_literal_values(annotation)
+    if len(values) != 1:
+        msg = f"Expected exactly one literal value, got {values!r}"
+        raise ValueError(msg)
+    return values[0]
 
 
 @dataclass(frozen=True)
