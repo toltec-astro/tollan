@@ -79,7 +79,7 @@ class TestFieldResolution:
         mapped_field = mapper.mapped_fields[mapper.schema.temp]
 
         assert mapped_field.name == "temperature"
-        assert mapped_field.source == MappedFieldSource.DATA_SOURCE
+        assert mapped_field.source == MappedFieldSource.data_source
         assert mapped_field.mapping is mapper.schema.temp
         assert mapped_field.mapping_resolved.names == ("temperature",)
 
@@ -116,7 +116,7 @@ class TestFieldResolution:
 
         assert mapped_field.name == "temperature"  # name is still set to first option
         assert mapped_field.value is MISSING
-        assert mapped_field.source == MappedFieldSource.MISSING
+        assert mapped_field.source == MappedFieldSource.missing
 
 
 class TestValueRetrieval:
@@ -308,12 +308,12 @@ class TestFromDefaults:
         temp_field = mapper.mapped_fields[mapper.schema.temp]
         assert temp_field.value is MISSING
         assert temp_field.value_default == 20.0
-        assert temp_field.source == MappedFieldSource.DEFAULT
+        assert temp_field.source == MappedFieldSource.default
 
         pressure_field = mapper.mapped_fields[mapper.schema.pressure]
         assert pressure_field.value is MISSING
         assert pressure_field.value_default == 101.3
-        assert pressure_field.source == MappedFieldSource.DEFAULT
+        assert pressure_field.source == MappedFieldSource.default
 
     def test_from_defaults_partial_defaults(self):
         """from_defaults with partial defaults marks others as MISSING."""
@@ -336,11 +336,11 @@ class TestFromDefaults:
         temp_field = mapper.mapped_fields[mapper.schema.temp]
         assert temp_field.value is MISSING
         assert temp_field.value_default == 20.0
-        assert temp_field.source == MappedFieldSource.DEFAULT
+        assert temp_field.source == MappedFieldSource.default
 
         # pressure should be MISSING
         pressure_field = mapper.mapped_fields[mapper.schema.pressure]
-        assert pressure_field.source == MappedFieldSource.MISSING
+        assert pressure_field.source == MappedFieldSource.missing
 
     def test_from_defaults_get_name_returns_default(self):
         """get_name returns default name for fields from from_defaults."""

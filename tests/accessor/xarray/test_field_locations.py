@@ -128,7 +128,7 @@ def test_variable_mapping_does_not_fall_back_to_attribute():
 def test_location_is_independent_of_default_provenance(source):
     mapping = NameMapping.attr("absent")
     mapper = make_mapper(mapping, source, {mapping: 42})
-    assert mapper.mapped_fields[mapping].source is MappedFieldSource.DEFAULT
+    assert mapper.mapped_fields[mapping].source is MappedFieldSource.default
     assert mapper.mapped_fields[mapping].location is FieldLocation.attr
     assert mapper.get_value_or_default(source, mapping) == 42
     with pytest.raises(KeyError, match="absent"):
@@ -136,7 +136,7 @@ def test_location_is_independent_of_default_provenance(source):
     assert not mapper.has_attr(source, mapping)
 
     missing = make_mapper(mapping, source)
-    assert missing.mapped_fields[mapping].source is MappedFieldSource.MISSING
+    assert missing.mapped_fields[mapping].source is MappedFieldSource.missing
     assert missing.mapped_fields[mapping].location is FieldLocation.attr
     with pytest.raises(KeyError, match="absent"):
         missing.get_value(source, mapping)

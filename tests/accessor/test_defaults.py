@@ -98,7 +98,7 @@ def test_missing_and_unknown_fields_do_not_have_implicit_defaults():
     field = NameMapping.attr("value", resolve_value=True)
     source = xr.Dataset()
     mapper = make_mapper(field, source)
-    assert mapper.mapped_fields[field].source is MappedFieldSource.MISSING
+    assert mapper.mapped_fields[field].source is MappedFieldSource.missing
     assert mapper.mapped_fields[field].value is MISSING
     assert mapper.mapped_fields[field].value_default is MISSING
     for current in (source, None):
@@ -183,7 +183,7 @@ def test_eager_resolution_uses_source_then_default_without_changing_later(has_ve
     assert mapped.value == (2 if has_version else 1)
     assert mapped.value_default == 1
     assert mapped.source is (
-        MappedFieldSource.DATA_SOURCE if has_version else MappedFieldSource.DEFAULT
+        MappedFieldSource.data_source if has_version else MappedFieldSource.default
     )
     assert mapper.get_value(source, mapper.schema.value) == (22 if has_version else 11)
 

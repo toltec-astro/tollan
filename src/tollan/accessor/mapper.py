@@ -225,7 +225,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                         name=candidate.name,
                         location=location,
                         value_default=value_default,
-                        source=MappedFieldSource.DATA_SOURCE,
+                        source=MappedFieldSource.data_source,
                         schema_path=schema_path,
                     )
                     break
@@ -239,16 +239,16 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                 location=candidate.location,
                 value_default=value_default,
                 source=(
-                    MappedFieldSource.DEFAULT
+                    MappedFieldSource.default
                     if value_default is not MISSING
-                    else MappedFieldSource.MISSING
+                    else MappedFieldSource.missing
                 ),
                 schema_path=schema_path,
             )
 
         if (
             mapping_resolved.resolve_value
-            and mapped.source != MappedFieldSource.MISSING
+            and mapped.source != MappedFieldSource.missing
         ):
             mapped = replace(
                 mapped, value=self._read_value_or_default(data_source, mapped)
@@ -269,7 +269,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
             True if field exists in data source
         """
         resolved = self.mapped_fields.get(mapping)
-        return resolved.source == MappedFieldSource.DATA_SOURCE if resolved else False
+        return resolved.source == MappedFieldSource.data_source if resolved else False
 
     def get_name(self, mapping: Mapping) -> str | None:
         """Get resolved physical field name.

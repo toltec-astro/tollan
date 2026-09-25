@@ -202,7 +202,7 @@ class TestMappedField:
         assert mf.name == "temperature"
         assert mf.value == 25.0
         assert mf.value_default is MISSING
-        assert mf.source == MappedFieldSource.DATA_SOURCE
+        assert mf.source == MappedFieldSource.data_source
 
     def test_with_missing_value(self):
         """MappedField with MISSING value."""
@@ -212,10 +212,10 @@ class TestMappedField:
             mapping_resolved=fm,
             name="",
             value=MISSING,
-            source=MappedFieldSource.MISSING,
+            source=MappedFieldSource.missing,
         )
         assert mf.value is MISSING
-        assert mf.source == MappedFieldSource.MISSING
+        assert mf.source == MappedFieldSource.missing
 
     def test_with_default_value(self):
         """MappedField with default value."""
@@ -225,11 +225,11 @@ class TestMappedField:
             mapping_resolved=fm,
             name="",
             value_default=0.0,
-            source=MappedFieldSource.DEFAULT,
+            source=MappedFieldSource.default,
         )
         assert mf.value is MISSING
         assert mf.value_default == 0.0
-        assert mf.source == MappedFieldSource.DEFAULT
+        assert mf.source == MappedFieldSource.default
 
     def test_with_schema_path(self):
         """MappedField with schema path."""
@@ -289,14 +289,21 @@ class TestMappedFieldSource:
 
     def test_enum_values(self):
         """Enum has correct values."""
-        assert MappedFieldSource.DATA_SOURCE
-        assert MappedFieldSource.DEFAULT
-        assert MappedFieldSource.MISSING
+        assert {
+            name: member.value for name, member in MappedFieldSource.__members__.items()
+        } == {
+            "data_source": "data_source",
+            "default": "default",
+            "missing": "missing",
+        }
+        for member in MappedFieldSource:
+            assert str(member) == member.value
+            assert MappedFieldSource(member.value) is member
 
     def test_enum_distinct(self):
         """Enum values are distinct."""
-        assert MappedFieldSource.DATA_SOURCE != MappedFieldSource.DEFAULT
-        assert MappedFieldSource.DEFAULT != MappedFieldSource.MISSING
+        assert MappedFieldSource.data_source != MappedFieldSource.default
+        assert MappedFieldSource.default != MappedFieldSource.missing
 
 
 class TestMissingSentinel:

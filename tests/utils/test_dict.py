@@ -10,6 +10,7 @@ from unittest.mock import patch
 import pytest
 
 from tollan.utils.dict import (
+    ListOperation,
     add_to_dict,
     dict_from_flat_dict,
     dict_from_regex_match,
@@ -20,6 +21,19 @@ from tollan.utils.dict import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+
+def test_list_operation_string_values():
+    assert {
+        name: operation.value for name, operation in ListOperation.__members__.items()
+    } == {
+        "update": "update",
+        "slice": "slice",
+    }
+    for operation in ListOperation:
+        assert operation == operation.value
+        assert str(operation) == operation.value
+        assert ListOperation(operation.value) is operation
 
 
 def test_dict_from_flat_dict():
@@ -439,32 +453,32 @@ def test_list_dsl_slice_syntax():
     # Test [:] - replace entire list
     dsl = ListDSL.parse("[:]")
     assert dsl is not None
-    assert dsl.operation == ListOperation.SLICE
+    assert dsl.operation == ListOperation.slice
     assert dsl.slice_obj == slice(None, None, None)
 
     # Test [:0] - prepend
     dsl = ListDSL.parse("[:0]")
     assert dsl is not None
-    assert dsl.operation == ListOperation.SLICE
+    assert dsl.operation == ListOperation.slice
     assert dsl.slice_obj == slice(None, 0, None)
 
     # Test [1:3] - replace slice
     dsl = ListDSL.parse("[1:3]")
     assert dsl is not None
-    assert dsl.operation == ListOperation.SLICE
+    assert dsl.operation == ListOperation.slice
     assert dsl.slice_obj == slice(1, 3, None)
 
     # Test [] - extend at end (special case)
     dsl = ListDSL.parse("[]")
     assert dsl is not None
-    assert dsl.operation == ListOperation.SLICE
+    assert dsl.operation == ListOperation.slice
     assert dsl.slice_obj is None
     assert dsl.to_slice(5) == slice(5, 5)
 
     # Test [2:2] - insert at position
     dsl = ListDSL.parse("[2:2]")
     assert dsl is not None
-    assert dsl.operation == ListOperation.SLICE
+    assert dsl.operation == ListOperation.slice
     assert dsl.slice_obj == slice(2, 2, None)
 
     # Test negative indices
@@ -480,18 +494,18 @@ def test_list_dsl_slice_syntax():
     # Test plain integer indices (now handled by DSL)
     dsl = ListDSL.parse("0")
     assert dsl is not None
-    assert dsl.operation == ListOperation.UPDATE
+    assert dsl.operation == ListOperation.update
     assert dsl.index == 0
 
     dsl = ListDSL.parse("-1")
     assert dsl is not None
-    assert dsl.operation == ListOperation.UPDATE
+    assert dsl.operation == ListOperation.update
     assert dsl.index == -1
 
     # Test bracket-wrapped integers
     dsl = ListDSL.parse("[0]")
     assert dsl is not None
-    assert dsl.operation == ListOperation.UPDATE
+    assert dsl.operation == ListOperation.update
     assert dsl.index == 0
 
     # Test non-DSL (should return None)

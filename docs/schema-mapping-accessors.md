@@ -109,7 +109,7 @@ MappedField(
     mapping_resolved=<the selected NameMapping>,
     name="Data.Signal",
     location=FieldLocation.var,
-    source=MappedFieldSource.DATA_SOURCE,
+    source=MappedFieldSource.data_source,
     value=MISSING,
 )
 ```

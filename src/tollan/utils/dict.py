@@ -12,7 +12,7 @@ import itertools
 import re
 from copy import copy
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum, auto
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
@@ -34,11 +34,11 @@ ST = collections.abc.MutableSequence
 _MISSING = object()
 
 
-class ListOperation(Enum):
+class ListOperation(StrEnum):
     """List update operations for rupdate DSL."""
 
-    UPDATE = "update"  # Update existing item at index
-    SLICE = "slice"  # Slice-based modification
+    update = auto()  # Update existing item at index
+    slice = auto()  # Slice-based modification
 
 
 @dataclass(frozen=True)
@@ -60,16 +60,16 @@ class ListDSL:
     Examples
     --------
     >>> ListDSL.parse("[:]")  # doctest: +NORMALIZE_WHITESPACE
-    ListDSL(operation=<ListOperation.SLICE: 'slice'>,
+    ListDSL(operation=<ListOperation.slice: 'slice'>,
             slice_obj=slice(None, None, None), index=None)
     >>> ListDSL.parse("[:0]")  # doctest: +NORMALIZE_WHITESPACE
-    ListDSL(operation=<ListOperation.SLICE: 'slice'>,
+    ListDSL(operation=<ListOperation.slice: 'slice'>,
             slice_obj=slice(None, 0, None), index=None)
     >>> ListDSL.parse("[1:3]")  # doctest: +NORMALIZE_WHITESPACE
-    ListDSL(operation=<ListOperation.SLICE: 'slice'>,
+    ListDSL(operation=<ListOperation.slice: 'slice'>,
             slice_obj=slice(1, 3, None), index=None)
     >>> ListDSL.parse("[]")
-    ListDSL(operation=<ListOperation.SLICE: 'slice'>, slice_obj=None, index=None)
+    ListDSL(operation=<ListOperation.slice: 'slice'>, slice_obj=None, index=None)
     """
 
     # Pattern for DSL: [start:stop:step], [], [N], [-N]
@@ -120,7 +120,7 @@ class ListDSL:
             # Check if it's [N] format (single integer captured by index group)
             index_str = groups.get("index")
             if index_str is not None:
-                return cls(ListOperation.UPDATE, index=int(index_str))
+                return cls(ListOperation.update, index=int(index_str))
 
             # Otherwise it's a slice pattern
             start_str = groups.get("start") or ""
@@ -134,19 +134,19 @@ class ListDSL:
                 and step_str == ""
                 and ":" not in key_str
             ):
-                return cls(ListOperation.SLICE, slice_obj=None)
+                return cls(ListOperation.slice, slice_obj=None)
 
             # Convert to integers for slice (empty string means None)
             start = int(start_str) if start_str else None
             stop = int(stop_str) if stop_str else None
             step = int(step_str) if step_str else None
 
-            return cls(ListOperation.SLICE, slice_obj=slice(start, stop, step))
+            return cls(ListOperation.slice, slice_obj=slice(start, stop, step))
 
         # Not a bracket pattern - try as plain integer
         try:
             index = int(key_str)
-            return cls(ListOperation.UPDATE, index=index)
+            return cls(ListOperation.update, index=index)
         except ValueError:
             # Not recognized as any valid pattern
             return None
@@ -196,7 +196,7 @@ class ListDSL:
             raise ValueError(msg)
 
         # For UPDATE operations (integer indices), validate range and get existing value
-        if dsl.operation == ListOperation.UPDATE:
+        if dsl.operation == ListOperation.update:
             assert dsl.index is not None  # UPDATE operation always has index
             try:
                 existing_value = lst[dsl.index]
@@ -234,7 +234,7 @@ class ListDSL:
             True if this was a slice operation (no further merging needed),
             False if this was an UPDATE operation (may need further merging)
         """
-        if self.operation == ListOperation.SLICE:
+        if self.operation == ListOperation.slice:
             # Handle slice assignment
             if self.slice_obj is None:
                 # Special case: [] means extend at end

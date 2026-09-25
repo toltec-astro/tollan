@@ -52,9 +52,9 @@ class FieldLocation(StrEnum):
 class MappedFieldSource(StrEnum):
     """Field availability when the mapper was resolved."""
 
-    DATA_SOURCE = auto()  # Field found and resolved from data source
-    DEFAULT = auto()  # Field not found, fallback available
-    MISSING = auto()  # Field not found and no default value
+    data_source = auto()  # Field found and resolved from data source
+    default = auto()  # Field not found, fallback available
+    missing = auto()  # Field not found and no default value
 
 
 class Mapping:
@@ -264,7 +264,7 @@ class MappedField:
     location: FieldLocation | None = None
     value: Any = MISSING
     value_default: Any = MISSING
-    source: MappedFieldSource = MappedFieldSource.DATA_SOURCE
+    source: MappedFieldSource = MappedFieldSource.data_source
     schema_path: str = ""
 
 
