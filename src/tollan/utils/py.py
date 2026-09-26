@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import importlib.util
 import sys
+from operator import attrgetter
 from pathlib import Path
 from typing import TYPE_CHECKING, Self
 
@@ -143,9 +144,22 @@ def rreload(m: ModuleType) -> None:
 
 
 def rgetattr(obj: object, attr: str, *args: object) -> object:
-    """Recursively get a nested attribute (e.g. 'a.b.c')."""
+    """Read a dotted attribute path, such as ``address.city``.
 
-    def _getattr(obj, attr):
-        return getattr(obj, attr, *args)
+    An optional positional default is passed to ``getattr`` at each path
+    segment. Traversal continues through that default when an intermediate
+    attribute is absent. Present values, including None, are returned unchanged.
+    Without a default, missing attributes raise AttributeError.
+    """
+    getter, parts = _rgetattr_path(attr)
+    if not args:
+        return getter(obj)
+    for part in parts:
+        obj = getattr(obj, part, *args)
+    return obj
 
-    return functools.reduce(_getattr, [obj, *attr.split(".")])
+
+@functools.lru_cache(maxsize=256)
+def _rgetattr_path(attr: str) -> tuple[attrgetter, tuple[str, ...]]:
+    """Prepare a path without retaining source objects, defaults, or values."""
+    return attrgetter(attr), tuple(attr.split("."))

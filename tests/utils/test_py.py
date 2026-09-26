@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
+from weakref import ref
 
 import pytest
 
@@ -252,3 +254,85 @@ class TestRgetattr:
 
         with pytest.raises(AttributeError):
             rgetattr(Obj, "nonexistent")
+
+    def test_rgetattr_preserves_present_none(self):
+        obj = SimpleNamespace(inner=SimpleNamespace(value=None))
+        assert rgetattr(obj, "inner.value", 42) is None
+        assert rgetattr(SimpleNamespace(inner=None), "inner.value", 42) == 42
+
+    def test_rgetattr_continues_through_intermediate_default(self):
+        default = SimpleNamespace(value=42)
+        assert rgetattr(SimpleNamespace(), "inner.value", default) == 42
+
+    @pytest.mark.parametrize("error", [AttributeError, ValueError])
+    def test_rgetattr_property_errors_follow_getattr(self, error):
+        class Obj:
+            @property
+            def value(self):
+                msg = "getter failed"
+                raise error(msg)
+
+        with pytest.raises(error, match="getter failed"):
+            rgetattr(Obj(), "value")
+        if error is AttributeError:
+            assert rgetattr(Obj(), "value", 42) == 42
+        else:
+            with pytest.raises(error, match="getter failed"):
+                rgetattr(Obj(), "value", 42)
+
+    def test_rgetattr_reads_current_values_and_dynamic_attributes(self):
+        calls = []
+
+        class Obj:
+            def __getattr__(self, name):
+                calls.append(name)
+                return len(calls)
+
+        obj = Obj()
+        assert rgetattr(obj, "value") == 1
+        assert rgetattr(obj, "value") == 2
+        assert rgetattr(Obj(), "value") == 3
+        assert calls == ["value", "value", "value"]
+
+    def test_rgetattr_accepts_unhashable_objects_and_defaults(self):
+        class Obj:
+            __hash__ = None
+
+            def __init__(self):
+                self.value = []
+
+        obj = Obj()
+        default = []
+        assert rgetattr(obj, "value") is obj.value
+        assert rgetattr(obj, "absent", default) is default
+        default.append(1)
+        assert rgetattr(obj, "absent", default) == [1]
+
+    def test_rgetattr_does_not_retain_objects_or_defaults(self):
+        class Obj:
+            value = 1
+
+        obj, default = Obj(), Obj()
+        source_ref, default_ref = ref(obj), ref(default)
+        assert rgetattr(obj, "value") == 1
+        assert rgetattr(obj, "absent", default) is default
+        del obj, default
+        assert source_ref() is None
+        assert default_ref() is None
+
+    def test_rgetattr_reuses_bounded_path_cache(self):
+        from tollan.utils.py import _rgetattr_path
+
+        _rgetattr_path.cache_clear()
+        obj = SimpleNamespace(value=42)
+        assert rgetattr(obj, "value") == 42
+        assert rgetattr(obj, "value", None) == 42
+        assert _rgetattr_path.cache_info().misses == 1
+        assert _rgetattr_path.cache_info().hits == 1
+        for index in range(300):
+            assert rgetattr(obj, f"missing_{index}", None) is None
+        assert _rgetattr_path.cache_info().currsize == 256
+
+    def test_rgetattr_extra_defaults_raise(self):
+        with pytest.raises(TypeError):
+            rgetattr(SimpleNamespace(), "value", 1, 2)
