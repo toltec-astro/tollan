@@ -75,6 +75,7 @@ from __future__ import annotations
 
 from .accessor import XarrayAccessorBase
 from .mapper import XarrayMapper
+from .table import dataset_to_qtable, select_table_rows
 from .units import UnitsAccessor
 from .utils import (
     XarrayPayloadT,
@@ -90,7 +91,9 @@ __all__ = [
     "XarrayMapper",
     "XarrayPayloadT",
     "XarraySourceT",
+    "dataset_to_qtable",
     "ensure_dataset",
     "ensure_datatree",
+    "select_table_rows",
     "unwrap_data_source",
 ]

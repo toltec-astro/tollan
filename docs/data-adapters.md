@@ -249,6 +249,41 @@ Keep the Dataset open until the reads are finished. Variable reads preserve
 netCDF4's automatic masking and scale/offset decoding. Attributes are returned
 unchanged, and dimension reads return their current integer length.
 
+## Project columnar xarray data into a QTable
+
+`dataset_to_qtable()` exposes one row dimension as an Astropy QTable. Numeric
+columns with a `units` attribute become Quantity columns; plain columns retain
+their dtypes. The Dataset remains the storage representation for netCDF/Zarr.
+
+```python
+from tollan.accessor.xarray import dataset_to_qtable, select_table_rows
+
+readings = xr.Dataset(
+    {
+        "batch": ("row", [0, 0, 1]),
+        "distance": ("row", [1.0, 2.0, 3.0], {"units": "km"}),
+    },
+    attrs={"label": "Survey"},
+)
+selected = select_table_rows(readings, readings["batch"] == 0, dim="row")
+table = dataset_to_qtable(selected, dim="row")
+assert table["distance"].to_value("m").tolist() == [1000.0, 2000.0]
+assert table.meta["label"] == "Survey"
+```
+
+Selection computes only the boolean mask; payload arrays remain lazy. It uses
+positions, preserving source row order without aligning mask coordinate labels.
+Contiguous selections share in-memory buffers. Projection materializes the
+selected columns, so keep the input open until it finishes. By default, table
+columns share buffers where possible; use `copy=True` for independently editable
+columns. Editing a table does not persist changes to its source file.
+
+All data variables are included by default. Use
+`columns={"length": "distance"}` to select and rename columns in output order;
+coordinates must be requested explicitly. Every selected column must have
+exactly the specified row dimension. The utility does not flatten or broadcast
+multidimensional data. A DataTree input selects the current node's dataset.
+
 ## Read a pandas DataFrame
 
 Use `.var()` for columns and `.attr()` for values in `DataFrame.attrs`:
@@ -290,5 +325,7 @@ values without the pandas index. Attribute values are returned unchanged by
 - {class}`tollan.accessor.xarray.XarrayMapper`
 - {class}`tollan.accessor.xarray.XarrayAccessorBase`
 - {class}`tollan.accessor.xarray.UnitsAccessor`
+- {func}`tollan.accessor.xarray.dataset_to_qtable`
+- {func}`tollan.accessor.xarray.select_table_rows`
 - {class}`tollan.accessor.netcdf4.NetCDF4Mapper`
 - {class}`tollan.accessor.pandas.DataFrameMapper`
