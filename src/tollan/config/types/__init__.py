@@ -11,6 +11,7 @@ data structures using astropy, including:
 
 from __future__ import annotations
 
+from .fileloc import FileLocField
 from .path import AbsAnyPath, AbsDirectoryPath, AbsFilePath, AnyPath, path_field
 from .pydantic import FieldDefaults
 from .quantity import (
@@ -33,6 +34,7 @@ __all__ = [
     "AnyPath",
     "DimensionlessQuantityField",
     "FieldDefaults",
+    "FileLocField",
     "FrequencyQuantityField",
     "IsoTimeField",
     "LengthQuantityField",

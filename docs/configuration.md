@@ -282,6 +282,12 @@ validation. Tollan's path types resolve them against
 Set that validation root explicitly when your configuration contains relative
 paths.
 
+Use `tollan.config.types.FileLocField` for file locations that should also use
+`rootpath`. It accepts the same local paths, URLs and dictionaries as `FileLoc`.
+An explicit `local_parent_path` (including `None`) takes precedence, and existing
+FileLoc objects retain their parent settings. Other fields using plain `FileLoc`
+are unaffected; the annotation does not modify the validation context.
+
 Source lists can be nested. List patches apply to values from preceding sources.
 For example, after a source supplies `items: [base]`, this appends `a` and `b`:
 
