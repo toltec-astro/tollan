@@ -16,6 +16,8 @@ from enum import StrEnum, auto
 from functools import partial
 from typing import TYPE_CHECKING, Any
 
+from .slice import parse_slice
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 
@@ -75,7 +77,7 @@ class ListDSL:
     # Pattern for DSL: [start:stop:step], [], [N], [-N]
     # Matches: [N], [-N], [N:M], [:M], [N:], [:], [N:M:S], []
     _PATTERN = re.compile(
-        r"^\[(?:(?P<index>-?\d+)|(?P<start>-?\d*):(?P<stop>-?\d*)?(?::(?P<step>-?\d*))?)?\]$",
+        r"^\[(?:(?P<index>-?\d+)|(?P<slice>-?\d*:-?\d*(?::-?\d*)?))?\]$",
     )
 
     operation: ListOperation
@@ -105,7 +107,7 @@ class ListDSL:
         Raises
         ------
         ValueError
-            If DSL pattern is invalid
+            If a recognized slice has invalid bounds or a zero step.
         """
         # Convert to string for consistent processing
         key_str = str(key_str)
@@ -114,34 +116,16 @@ class ListDSL:
         match = cls._PATTERN.match(key_str)
 
         if match is not None:
-            # Extract match groups
-            groups = match.groupdict()
-
             # Check if it's [N] format (single integer captured by index group)
-            index_str = groups.get("index")
+            index_str = match["index"]
             if index_str is not None:
                 return cls(ListOperation.update, index=int(index_str))
 
-            # Otherwise it's a slice pattern
-            start_str = groups.get("start") or ""
-            stop_str = groups.get("stop") or ""
-            step_str = groups.get("step") or ""
-
-            # Check for empty brackets [] - special case for extend
-            if (
-                start_str == ""
-                and stop_str == ""
-                and step_str == ""
-                and ":" not in key_str
-            ):
+            # Empty brackets append; they do not select the entire list.
+            slice_str = match["slice"]
+            if slice_str is None:
                 return cls(ListOperation.slice, slice_obj=None)
-
-            # Convert to integers for slice (empty string means None)
-            start = int(start_str) if start_str else None
-            stop = int(stop_str) if stop_str else None
-            step = int(step_str) if step_str else None
-
-            return cls(ListOperation.slice, slice_obj=slice(start, stop, step))
+            return cls(ListOperation.slice, slice_obj=parse_slice(slice_str))
 
         # Not a bracket pattern - try as plain integer
         try:

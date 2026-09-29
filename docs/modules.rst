@@ -59,6 +59,8 @@ Utilities
 
 .. automodapi:: tollan.utils.py
 
+.. automodapi:: tollan.utils.slice
+
 .. automodapi:: tollan.utils.sys
 
 .. automodapi:: tollan.utils.table

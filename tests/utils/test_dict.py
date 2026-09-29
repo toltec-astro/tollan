@@ -513,6 +513,64 @@ def test_list_dsl_slice_syntax():
     assert ListDSL.parse("+") is None
 
 
+@pytest.mark.parametrize(
+    "text", [":", "::", ":0", "1:3", "-3:-1", "::2", "::-1", "3:0:-2"]
+)
+def test_list_dsl_uses_slice_parser(text):
+    from tollan.utils.dict import ListDSL
+    from tollan.utils.slice import parse_slice
+
+    with patch("tollan.utils.dict.parse_slice", wraps=parse_slice) as parser:
+        dsl = ListDSL.parse(f"[{text}]")
+    parser.assert_called_once_with(text)
+    assert dsl == ListDSL(ListOperation.slice, slice_obj=parse_slice(text))
+
+
+@pytest.mark.parametrize(
+    ("key", "expected"),
+    [("0", 0), ("-1", -1), ("[0]", 0), ("[-1]", -1), ("+1", 1)],
+)
+def test_list_dsl_integer_update_is_not_slice_assignment(key, expected):
+    from tollan.utils.dict import ListDSL
+
+    assert ListDSL.parse(key) == ListDSL(ListOperation.update, index=expected)
+
+
+@pytest.mark.parametrize(
+    "key", ["[+1]", "[+1:3]", "[1:3:+1]", "[ 1:3 ]", "[1:2:3:4]", "1:3"]
+)
+def test_list_dsl_preserves_unrecognized_syntax(key):
+    from tollan.utils.dict import ListDSL
+
+    assert ListDSL.parse(key) is None
+
+
+def test_list_dsl_empty_brackets_append_without_parsing_slice():
+    from tollan.utils.dict import ListDSL
+
+    with patch("tollan.utils.dict.parse_slice") as parser:
+        dsl = ListDSL.parse("[]")
+    parser.assert_not_called()
+    assert dsl == ListDSL(ListOperation.slice)
+
+
+def test_list_dsl_rejects_zero_step_before_assignment():
+    from tollan.utils.dict import ListDSL
+
+    with pytest.raises(ValueError, match="step cannot be zero"):
+        ListDSL.parse("[::0]")
+    values = [0, 1, 2]
+    with pytest.raises(ValueError, match="step cannot be zero"):
+        rupdate(values, {"[::0]": [3]})
+    assert values == [0, 1, 2]
+
+
+def test_rupdate_reverse_slice_assignment():
+    values = [0, 1, 2]
+    rupdate(values, {"[::-1]": [10, 20, 30]})
+    assert values == [30, 20, 10]
+
+
 def test_rupdate_slice_prepend():
     """Test [:0] prepends to list."""
     d = {"items": [1, 2, 3]}
