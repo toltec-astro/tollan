@@ -415,7 +415,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
             If the variable or dimension is absent from the supplied source.
         """
         mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location is None:
+        if mapped is None or mapped.location in (None, FieldLocation.node):
             msg = (
                 f"Field {self.get_name(field) or field!r} "
                 f"not found in {type(data_source).__name__}"
@@ -533,6 +533,8 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                 return self._has_var(data_source, name)
             case FieldLocation.dim:
                 return self._has_dim(data_source, name)
+            case FieldLocation.node:
+                return self._has_node(data_source, name)
         return False
 
     def _read_value(
@@ -546,6 +548,8 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                 return self._read_var_values(self._get_var(data_source, name))
             case FieldLocation.dim:
                 return self._get_dim(data_source, name)
+            case FieldLocation.node:
+                return self._get_node(data_source, name)
         raise KeyError(name)
 
     def _read_value_or_default(
@@ -574,6 +578,14 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
     def _has_dim(self, data_source: DataSourceT, name: str) -> bool:
         """Check for a dimension without reading arrays; default is False."""
         return False
+
+    def _has_node(self, data_source: DataSourceT, name: str) -> bool:
+        """Check for a subtree without loading arrays; default is False."""
+        return False
+
+    def _get_node(self, data_source: DataSourceT, name: str) -> Any:
+        """Return a native subtree, or raise KeyError when unsupported."""
+        raise KeyError(name)
 
     def _get_attr(self, data_source: DataSourceT, name: str) -> Any:
         """Return an attribute by physical name."""

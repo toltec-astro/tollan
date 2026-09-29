@@ -725,8 +725,13 @@ class TestXarraySourceContract:
             dataset=xr.Dataset({"child_only": ("sample", [3.0, 4.0])}),
         )
 
-        with pytest.raises(TypeError, match="payload"):
-            SourceMapper.from_data_source(source)  # ty: ignore[invalid-argument-type]
+        tree_mapper = SourceMapper.from_data_source(source)
+        assert tree_mapper.get_arr(source, tree_mapper.schema.signal).identical(
+            source.dataset["signal"]
+        )
+        assert tree_mapper.get_value(source, tree_mapper.schema.meta) == "root"
+        assert tree_mapper.get_dim(source, tree_mapper.schema.n_sample) == 2
+        assert not tree_mapper.has_arr(source, tree_mapper.schema.child_only)
         accessor = SourceAccessor(source)
         mapper = accessor.mapper
         payload = accessor.data_source

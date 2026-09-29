@@ -12,7 +12,7 @@ resulting data through a domain-oriented API.
 | `Schema` | Declares a flat set of semantic fields |
 | `Mapping` | Defines the strategy interface for resolving one field |
 | `NameMapping` | Resolves a field from ordered name/location candidates |
-| `FieldLocation` | Identifies an attribute, variable, or dimension namespace |
+| `FieldLocation` | Identifies an attribute, variable, dimension, or subtree namespace |
 | `MappingContext` | Supplies the source, schema, and prior results during resolution |
 | `MappedField` | Records the immutable result of resolving one field |
 | `Mapper` | Holds a concrete mapping plan and implements source reads |
@@ -57,7 +57,7 @@ Schemas are flat catalogs. Related fields can share a schema without creating
 nested access paths. This keeps each field reference stable and makes mapper
 resolution order explicit.
 
-`NameMapping.var(...)`, `.attr(...)`, and `.dim(...)` try one name or a sequence
+`NameMapping.var(...)`, `.attr(...)`, `.dim(...)`, and `.node(...)` try one name or a sequence
 of names at the specified location. Variables include coordinates and table
 columns; dimensions return their integer lengths. A coordinate and its dimension
 are separate fields:
@@ -66,6 +66,52 @@ are separate fields:
 sample = NameMapping.var("sample")  # Coordinate values
 n_samples = NameMapping.dim("sample")  # Dimension length
 ```
+
+### Subtree paths
+
+Node mappings put tree layout in the schema alongside array and metadata names.
+They return a native subtree without copying it or loading its arrays:
+
+```python
+import xarray as xr
+from tollan.accessor.xarray import XarrayMapper
+
+
+@dataclass
+class SpectrumSchema(Schema):
+    result: Mapping = NameMapping.node(("analysis/spectrum", "spectrum", "."))
+    power: Mapping = NameMapping.var("power")
+
+
+class SpectrumMapper(XarrayMapper[SpectrumSchema]):
+    pass
+
+
+tree = xr.DataTree.from_dict({
+    "measurement/analysis/spectrum": xr.Dataset({"power": ("frequency", [1., 2.])})
+})
+scope = tree["measurement"]
+mapper = SpectrumMapper.from_data_source(scope)
+result = mapper.get_node(scope, mapper.schema.result)
+assert result is scope["analysis/spectrum"]
+assert mapper.get_arr(result, mapper.schema.power).sizes == {"frequency": 2}
+
+detached = scope.copy(deep=False)
+assert mapper.get_node(detached, mapper.schema.result) is detached["analysis/spectrum"]
+```
+
+Relative paths start at the supplied node; `.` selects that node. Absolute paths
+start at the containing tree's root. Prefer relative paths for subtrees that
+should remain usable when detached. A node mapping cannot resolve to a variable,
+even if indexing that path would return a DataArray. Flat Dataset and DataArray
+sources have no nodes.
+
+Node mappings do not implicitly change the scope of other fields. Variables,
+attributes and dimensions always refer to the supplied node's dataset. Select the
+subtree explicitly, then resolve a payload mapper there if variable candidates
+need to be chosen against that dataset. As with other mappings, `get_name()` gives
+the selected path; `from_defaults()` gives the first candidate for writing new
+output. `get_node()` and `has_node()` use the fixed plan on the supplied source.
 
 To try different locations in order, supply name/location pairs:
 
@@ -168,7 +214,9 @@ fallback. With neither available, `value` remains `MISSING`. Fields without
 the fallback is stored separately in `value_default`.
 
 The context belongs only to the resolution operation. The resulting mapper
-retains the concrete plan, not the data source.
+retains the concrete plan. Ordinary resolution does not retain the data source;
+explicitly capturing a node with `resolve_value=True` retains that native subtree
+and its parent relationship, without loading any arrays.
 
 ## Reading data
 
@@ -243,6 +291,7 @@ Implement these hooks for your source type:
 | `_get_attr(source, name)` | Attribute value, unchanged | Retrieve metadata, not array values |
 | `_get_dim(source, name)` | Current integer dimension length | Do not load coordinates or other variable values |
 | `_get_var(source, name)` | Native variable object | Preserve its backend and do not request its values |
+| `_has_node(source, path)`, `_get_node(source, path)` | Subtree existence and native subtree | Do not copy or load descendant arrays |
 | `_read_var_values(var)` | Values from the native variable | May perform substantial I/O or computation |
 | `_read_scalar_var(var)` | One scalar value | Check shape before reading |
 | `_read_str_var(var)` | Values representing one string, before decoding | Check shape and dtype before reading |
@@ -276,6 +325,6 @@ type arguments are `Any`.
 - A concrete mapper records names, defaults, missing fields, and explicit
   resolution metadata.
 - Ordinary source values are read on demand and are not stored in the mapper.
-- The source used for resolution is not retained by the mapper.
+- Ordinary resolution does not retain the source; explicit node captures do.
 - The concrete mapping plan is read-only to callers.
 - Accessors use the mapper API rather than duplicating storage-name logic.

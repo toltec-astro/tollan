@@ -50,7 +50,9 @@ def test_falsey_defaults_are_not_missing(value_default):
         mapper.get_value(source, field)
 
 
-@pytest.mark.parametrize("location", list(FieldLocation))
+@pytest.mark.parametrize(
+    "location", [FieldLocation.attr, FieldLocation.var, FieldLocation.dim]
+)
 def test_defaults_remain_available_across_sources(location):
     field = NameMapping([("value", location)])
     present = xr.Dataset({"value": ("value", [8, 9])}, attrs={"value": "present"})

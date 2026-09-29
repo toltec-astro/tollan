@@ -95,7 +95,9 @@ the supplied source. None substitutes values captured with `resolve_value=True`
 for a source read.
 
 Xarray also provides `get_shape()` to inspect a variable's shape without
-loading values.
+loading values. For trees, `get_node()` returns the native subtree and
+`has_node()` checks its presence. `get_value()` on a node mapping also returns
+the subtree without loading its arrays; node mappings are not scalar fields.
 
 For optional fields, check their availability before reading:
 
@@ -169,13 +171,17 @@ tree["processed"] = xr.DataTree(dataset=ds)
 assert tree["processed"].readings.temperature.identical(temperature)
 ```
 
-For direct mapper calls, pass a Dataset or DataArray. A DataArray exposes its
-own attributes, coordinates, and named array; an unnamed array uses the name
-`"data"`.
+Direct mapper calls also accept a DataTree. Variable, attribute and dimension
+mappings inspect its current node; `NameMapping.node(...)` selects a subtree.
+Use `mapper.get_node(tree, schema.result)` to retrieve that subtree without loading
+arrays. See [subtree paths](schema-mapping-accessors.md#subtree-paths) for a complete
+example. A DataArray exposes its own attributes, coordinates, and named array;
+an unnamed array uses the name `"data"`.
 
 Use `ensure_dataset()` or `ensure_datatree()` when an operation requires one of
-those containers. Accessors accept the resulting containers directly. For direct
-mapper calls, use `unwrap_data_source()` first:
+those containers. Accessors accept the resulting containers directly. To recover
+the original DataArray and its own attribute surface from a wrapper, use
+`unwrap_data_source()`:
 
 ```python
 from tollan.accessor.xarray import ensure_datatree, unwrap_data_source

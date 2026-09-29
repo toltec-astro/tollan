@@ -27,7 +27,11 @@ class NetCDF4Mapper[SchemaT: Schema = Schema](
         Schema type for this mapper (enables proper type hints)
     """
 
-    _supported_locations: ClassVar = tuple(FieldLocation)
+    _supported_locations: ClassVar = (
+        FieldLocation.attr,
+        FieldLocation.var,
+        FieldLocation.dim,
+    )
 
     def _has_attr(self, data_source: nc.Dataset, name: str) -> bool:
         """Check global attribute names without reading values."""

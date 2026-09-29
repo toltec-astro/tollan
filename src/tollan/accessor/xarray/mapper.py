@@ -16,13 +16,13 @@ if TYPE_CHECKING:
 
 from ..mapper import Mapper
 from ..schema import FieldLocation, Schema
-from .utils import XarrayPayloadT
+from .utils import XarraySourceT
 
 __all__ = ["XarrayMapper"]
 
 
 class XarrayMapper[SchemaT: Schema = Schema](
-    Mapper[SchemaT, XarrayPayloadT, "QDataArray"]
+    Mapper[SchemaT, XarraySourceT, "QDataArray"]
 ):
     """Mapper for xarray data sources.
 
@@ -59,45 +59,120 @@ class XarrayMapper[SchemaT: Schema = Schema](
 
     _supported_locations: ClassVar = tuple(FieldLocation)
 
-    get_arr = Mapper[SchemaT, XarrayPayloadT, "QDataArray"].get_var
-    has_arr = Mapper[SchemaT, XarrayPayloadT, "QDataArray"].has_var
+    get_arr = Mapper[SchemaT, XarraySourceT, "QDataArray"].get_var
+    has_arr = Mapper[SchemaT, XarraySourceT, "QDataArray"].has_var
 
     @classmethod
     def from_data_source(
         cls,
-        data_source: XarrayPayloadT | None,
+        data_source: XarraySourceT | None,
         defaults: dict[Mapping, Any] | None = None,
     ) -> Self:
-        """Resolve fields against an unwrapped Dataset or DataArray payload.
+        """Resolve fields against an xarray source without loading arrays.
 
-        Accessors select DataTree nodes and unwrap DataArray containers before
-        calling this method. None constructs a defaults-only mapper.
+        Parameters
+        ----------
+        data_source : Dataset, DataArray, DataTree or None
+            Source to inspect. Tree variables, attributes and dimensions belong
+            to the current node; node mappings select paths relative to it.
+            None constructs a defaults-only mapper.
+        defaults : dict[Mapping, Any], optional
+            Explicit fallbacks for absent fields.
+
+        Returns
+        -------
+        Self
+            Concrete mapping plan. Ordinary resolution does not retain the
+            source; ``resolve_value=True`` on a node mapping captures that node.
         """
         if data_source is not None and not isinstance(
-            data_source, xr.Dataset | xr.DataArray
+            data_source, xr.Dataset | xr.DataArray | xr.DataTree
         ):
-            msg = (
-                "Expected a Dataset or DataArray payload; "
-                "select or unwrap the source first"
-            )
+            msg = "Expected a Dataset, DataArray, or DataTree"
             raise TypeError(msg)
         return super().from_data_source(data_source, defaults)
 
-    def _has_attr(self, data_source: XarrayPayloadT, name: str) -> bool:
+    def has_node(self, data_source: XarraySourceT, field: Mapping) -> bool:
+        """Check whether the mapped subtree exists in the supplied source.
+
+        Parameters
+        ----------
+        data_source : Dataset, DataArray or DataTree
+            Source to inspect without loading arrays.
+        field : Mapping
+            Schema field resolved in the node namespace.
+
+        Returns
+        -------
+        bool
+            False for unknown fields, other namespaces, missing paths, or flat
+            sources. Otherwise True; the recorded path is not re-resolved.
+        """
+        mapped = self.mapped_fields.get(field)
+        return (
+            mapped is not None
+            and mapped.location == FieldLocation.node
+            and self._has_node(data_source, mapped.name)
+        )
+
+    def get_node(self, data_source: XarraySourceT, field: Mapping) -> xr.DataTree:
+        """Return a mapped subtree without copying or loading its arrays.
+
+        Parameters
+        ----------
+        data_source : Dataset, DataArray or DataTree
+            Source containing the subtree. Only DataTree sources have nodes.
+        field : Mapping
+            Schema field resolved in the node namespace.
+
+        Returns
+        -------
+        xarray.DataTree
+            Existing node with its descendants and parent relationship intact.
+
+        Raises
+        ------
+        KeyError
+            The field is unknown, selects another namespace, or its path does
+            not identify a DataTree node in the supplied source.
+        """
+        mapped = self.mapped_fields.get(field)
+        if mapped is None or mapped.location != FieldLocation.node:
+            msg = f"Node not found: {field}"
+            raise KeyError(msg)
+        return self._get_node(data_source, mapped.name)
+
+    def _has_node(self, data_source: XarraySourceT, name: str) -> bool:
+        try:
+            self._get_node(data_source, name)
+        except KeyError:
+            return False
+        return True
+
+    def _get_node(self, data_source: XarraySourceT, name: str) -> xr.DataTree:
+        if isinstance(data_source, xr.DataTree):
+            node = data_source[name]
+            if isinstance(node, xr.DataTree):
+                return node
+        raise KeyError(name)
+
+    def _has_attr(self, data_source: XarraySourceT, name: str) -> bool:
         """Check source attributes without reading values."""
         return name in data_source.attrs
 
-    def _has_var(self, data_source: XarrayPayloadT, name: str) -> bool:
+    def _has_var(self, data_source: XarraySourceT, name: str) -> bool:
         """Check variables or coordinates without reading values."""
+        if isinstance(data_source, xr.DataTree):
+            data_source = data_source.dataset
         if isinstance(data_source, xr.Dataset):
             return name in data_source.variables
         return name == (data_source.name or "data") or name in data_source.coords
 
-    def _has_dim(self, data_source: XarrayPayloadT, name: str) -> bool:
+    def _has_dim(self, data_source: XarraySourceT, name: str) -> bool:
         """Check dimension names without reading array values."""
         return name in data_source.sizes
 
-    def _get_attr(self, data_source: XarrayPayloadT, name: str) -> Any:
+    def _get_attr(self, data_source: XarraySourceT, name: str) -> Any:
         """Return a source attribute unchanged."""
         return data_source.attrs[name]
 
@@ -105,12 +180,14 @@ class XarrayMapper[SchemaT: Schema = Schema](
         """Read variable values as a NumPy array, computing lazy data if needed."""
         return var.to_numpy()
 
-    def _get_dim(self, data_source: XarrayPayloadT, name: str) -> int:
+    def _get_dim(self, data_source: XarraySourceT, name: str) -> int:
         """Return a dimension's current length without reading its coordinate."""
         return data_source.sizes[name]
 
-    def _get_var(self, data_source: XarrayPayloadT, name: str) -> QDataArray:
+    def _get_var(self, data_source: XarraySourceT, name: str) -> QDataArray:
         """Return the native variable or coordinate without loading values."""
+        if isinstance(data_source, xr.DataTree):
+            data_source = data_source.dataset
         if isinstance(data_source, xr.Dataset):
             # Dataset indexing alone can synthesize a coordinate for a bare dim.
             if name not in data_source.variables:
@@ -141,13 +218,13 @@ class XarrayMapper[SchemaT: Schema = Schema](
             raise TypeError(msg)
         return self._read_var_values(var)
 
-    def get_shape(self, data_source: XarrayPayloadT, field: Mapping) -> tuple[int, ...]:
+    def get_shape(self, data_source: XarraySourceT, field: Mapping) -> tuple[int, ...]:
         """Get shape of a field's data array.
 
         Parameters
         ----------
-        data_source : XarrayPayloadT
-            Unwrapped Dataset or DataArray payload to inspect
+        data_source : XarraySourceT
+            Dataset, DataArray, or current DataTree node to inspect.
         field : Mapping
             Field mapping from schema
 
@@ -166,7 +243,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
 
     def validate_ndim(
         self,
-        data_source: XarrayPayloadT,
+        data_source: XarraySourceT,
         field: Mapping,
         expected_ndim: int,
     ) -> None:
@@ -177,8 +254,8 @@ class XarrayMapper[SchemaT: Schema = Schema](
 
         Parameters
         ----------
-        data_source : XarrayPayloadT
-            Unwrapped Dataset or DataArray payload to validate
+        data_source : XarraySourceT
+            Dataset, DataArray, or current DataTree node to validate.
         field : Mapping
             Field mapping to validate
         expected_ndim : int
@@ -198,7 +275,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
 
     def validate_has_physical_type(
         self,
-        data_source: XarrayPayloadT,
+        data_source: XarraySourceT,
         field: Mapping,
         expected_physical_type: str | PhysicalType,
     ) -> None:
@@ -210,8 +287,8 @@ class XarrayMapper[SchemaT: Schema = Schema](
 
         Parameters
         ----------
-        data_source : XarrayPayloadT
-            Unwrapped Dataset or DataArray payload to validate
+        data_source : XarraySourceT
+            Dataset, DataArray, or current DataTree node to validate.
         field : Mapping
             Field mapping to validate
         expected_physical_type : str or astropy.units.PhysicalType

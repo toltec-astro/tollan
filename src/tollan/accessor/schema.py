@@ -41,12 +41,14 @@ class FieldLocation(StrEnum):
     """Storage namespace containing a field.
 
     ``var`` includes array variables, coordinates, and table columns. ``attr``
-    selects source attributes; ``dim`` selects dimension lengths.
+    selects source attributes; ``dim`` selects dimension lengths. ``node``
+    selects a subtree by path.
     """
 
     attr = auto()
     var = auto()
     dim = auto()
+    node = auto()
 
 
 class MappedFieldSource(StrEnum):
@@ -212,6 +214,27 @@ class NameMapping(Mapping):
     def dim(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
         """Try one or more dimension names in declaration order."""
         return cls._with_location(names, FieldLocation.dim, resolve_value=resolve_value)
+
+    @classmethod
+    def node(cls, paths: str | Sequence[str], *, resolve_value: bool = False) -> Self:
+        """Select a subtree from ordered path candidates.
+
+        Parameters
+        ----------
+        paths : str or sequence of str
+            Paths in lookup order. Relative paths start at the supplied node;
+            ``.`` selects that node. Absolute paths start at the tree root.
+        resolve_value : bool, default False
+            Capture the native subtree during resolution without loading arrays.
+
+        Returns
+        -------
+        NameMapping
+            Mapping in the node namespace. Variables never satisfy this mapping.
+        """
+        return cls._with_location(
+            paths, FieldLocation.node, resolve_value=resolve_value
+        )
 
     def resolve(
         self,

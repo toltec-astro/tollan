@@ -40,7 +40,9 @@ def test_coordinate_and_dimension_are_ambiguous(wrap):
         make_mapper(NameMapping(("sample", "fallback")), source)
 
 
-@pytest.mark.parametrize("location", list(FieldLocation))
+@pytest.mark.parametrize(
+    "location", [FieldLocation.attr, FieldLocation.var, FieldLocation.dim]
+)
 def test_explicit_location_with_colliding_names(source, location):
     mapper = make_mapper(NameMapping([("sample", location)]), source)
     field = mapper.schema.field
