@@ -23,6 +23,7 @@ __all__ = [
     "MappingContext",
     "NameMapping",
     "Schema",
+    "SubpathMapping",
 ]
 
 
@@ -41,14 +42,14 @@ class FieldLocation(StrEnum):
     """Storage namespace containing a field.
 
     ``var`` includes array variables, coordinates, and table columns. ``attr``
-    selects source attributes; ``dim`` selects dimension lengths. ``node``
-    selects a subtree by path.
+    selects source attributes; ``dim`` selects dimension lengths. ``path``
+    selects a subtree by its path.
     """
 
     attr = auto()
     var = auto()
     dim = auto()
-    node = auto()
+    path = auto()
 
 
 class MappedFieldSource(StrEnum):
@@ -216,7 +217,7 @@ class NameMapping(Mapping):
         return cls._with_location(names, FieldLocation.dim, resolve_value=resolve_value)
 
     @classmethod
-    def node(cls, paths: str | Sequence[str], *, resolve_value: bool = False) -> Self:
+    def path(cls, paths: str | Sequence[str], *, resolve_value: bool = False) -> Self:
         """Select a subtree from ordered path candidates.
 
         Parameters
@@ -230,10 +231,14 @@ class NameMapping(Mapping):
         Returns
         -------
         NameMapping
-            Mapping in the node namespace. Variables never satisfy this mapping.
+            Mapping with the supplied path candidates in lookup order.
+
+        See Also
+        --------
+        SubpathMapping : Restrict candidates to relative descendant paths.
         """
         return cls._with_location(
-            paths, FieldLocation.node, resolve_value=resolve_value
+            paths, FieldLocation.path, resolve_value=resolve_value
         )
 
     def resolve(
@@ -253,6 +258,65 @@ class NameMapping(Mapping):
             This instance.
         """
         return self
+
+
+@pydantic_dataclass(frozen=True)
+class SubpathMapping(NameMapping):
+    """Ordered relative descendant paths within a namespace.
+
+    Parameters
+    ----------
+    candidates : sequence of (str, FieldLocation)
+        Relative paths paired with ``FieldLocation.path``. Use the ``path``
+        factory to construct these pairs from strings. Candidates are tried in
+        declaration order.
+    resolve_value : bool, default False
+        Capture the selected subtree during mapper resolution.
+
+    Raises
+    ------
+    ValueError
+        A candidate uses another storage location, is absolute, or contains an
+        empty component, ``.`` or ``..``.
+
+    Examples
+    --------
+    >>> SubpathMapping.path(("samples", "_input")).names
+    ('samples', '_input')
+    >>> SubpathMapping.path("diagnostics/spectrum").names
+    ('diagnostics/spectrum',)
+    """
+
+    @field_validator("candidates")
+    @classmethod
+    def validate_subpaths(
+        cls, candidates: tuple[_Candidate, ...]
+    ) -> tuple[_Candidate, ...]:
+        """Validate relative descendant path candidates.
+
+        Parameters
+        ----------
+        candidates : tuple of _Candidate
+            Normalized path and storage-location pairs.
+
+        Returns
+        -------
+        tuple of _Candidate
+            The supplied candidates when every path identifies a descendant.
+
+        Raises
+        ------
+        ValueError
+            A candidate uses a location other than ``path``, is absolute, or
+            contains an empty component, ``.`` or ``..``.
+        """
+        for candidate in candidates:
+            if candidate.location != FieldLocation.path or any(
+                part in {"", ".", ".."} for part in candidate.name.split("/")
+            ):
+                msg = f"Expected a relative descendant path, got {candidate!r}"
+                raise ValueError(msg)
+        return candidates
 
 
 @dataclass(frozen=True, slots=True)

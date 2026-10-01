@@ -148,7 +148,7 @@ class TestEnsureDataTree:
         result = ensure_datatree(ds)
 
         assert isinstance(result, xr.DataTree)
-        assert result.name == "root"
+        assert result.name is None
         assert result.ds.equals(ds)  # pyright: ignore[reportArgumentType]
 
     def test_dataarray_to_datatree(self):
@@ -157,7 +157,7 @@ class TestEnsureDataTree:
         result = ensure_datatree(da)
 
         assert isinstance(result, xr.DataTree)
-        assert result.name == "root"
+        assert result.name is None
         assert "temp" in result.ds
 
     def test_dataarray_without_name(self):
@@ -930,3 +930,31 @@ class TestNetCDFFileIO:
         dt_loaded = xr.open_datatree(zarr_path, engine="zarr")
         view = AnalysisView(dt_loaded)
         assert view.result_values.tolist() == [1.0, 2.0, 3.0]
+
+
+def test_conversions_use_selected_node_without_changing_layout():
+    root = xr.DataTree.from_dict(
+        {
+            "input": xr.Dataset({"signal": ("time", [1.0, 2.0])}),
+            "unrelated": xr.Dataset({"other": 7}),
+        },
+        name="caller-label",
+    )
+    selected = root["input"]
+    assert ensure_datatree(selected) is selected
+    assert selected.parent is root
+    assert selected.path == "/input"
+    assert ensure_dataset(selected).identical(selected.to_dataset())
+    assert "other" not in ensure_dataset(selected)
+    converted = ensure_datatree(ensure_dataset(selected))
+    assert converted.path == "/"
+    assert converted.name is None
+    assert not converted.children
+
+
+def test_conversion_module_workflow_examples():
+    import doctest
+
+    from tollan.accessor.xarray import utils
+
+    assert doctest.testmod(utils, raise_on_error=True).attempted > 0

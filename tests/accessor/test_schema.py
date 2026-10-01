@@ -329,3 +329,28 @@ class TestMissingSentinel:
             value=MISSING,
         )
         assert mf.value is MISSING
+
+
+@pytest.mark.parametrize(
+    "path", ["", "/", ".", "..", "/absolute", "a//b", "a/../b", "a/./b", "a/"]
+)
+def test_subpath_mapping_rejects_non_descendants(path):
+    from tollan.accessor import SubpathMapping
+
+    with pytest.raises(ValueError, match="relative descendant"):
+        SubpathMapping.path(("valid", path))
+
+
+def test_subpath_mapping_retains_general_path_semantics_separately():
+    from tollan.accessor import SubpathMapping
+
+    mapping = SubpathMapping.path(("sweep", "_input"))
+    assert isinstance(mapping, NameMapping)
+    assert mapping.names == ("sweep", "_input")
+    assert NameMapping.path((".", "../sibling", "/root")).names == (
+        ".",
+        "../sibling",
+        "/root",
+    )
+    with pytest.raises(ValueError, match="relative descendant"):
+        SubpathMapping.var("data")

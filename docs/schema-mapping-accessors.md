@@ -1,4 +1,4 @@
-# Schema, mapping, and accessor design
+# Schemas, mappings, and accessors
 
 Tollan separates the meaning of a field from the name and structure
 used by a storage format. A schema defines the semantic vocabulary, a mapper
@@ -53,12 +53,11 @@ class ObservationSchema(Schema):
     timestamp: Mapping = NameMapping.var(("time", "timestamp"))
 ```
 
-Schemas are flat catalogs. Related fields can share a schema without creating
-nested access paths. This keeps each field reference stable and makes mapper
-resolution order explicit.
+Fields resolve in declaration order. A conditional mapping can use the results
+of fields declared before it.
 
-`NameMapping.var(...)`, `.attr(...)`, `.dim(...)`, and `.node(...)` try one name or a sequence
-of names at the specified location. Variables include coordinates and table
+`NameMapping.var(...)`, `.attr(...)`, `.dim(...)`, and `.path(...)` try candidates
+in order at the specified location. Variables include coordinates and table
 columns; dimensions return their integer lengths. A coordinate and its dimension
 are separate fields:
 
@@ -69,7 +68,7 @@ n_samples = NameMapping.dim("sample")  # Dimension length
 
 ### Subtree paths
 
-Node mappings put tree layout in the schema alongside array and metadata names.
+Path mappings put tree layout in the schema alongside array and metadata names.
 They return a native subtree without copying it or loading its arrays:
 
 ```python
@@ -79,7 +78,7 @@ from tollan.accessor.xarray import XarrayMapper
 
 @dataclass
 class SpectrumSchema(Schema):
-    result: Mapping = NameMapping.node(("analysis/spectrum", "spectrum", "."))
+    result: Mapping = NameMapping.path(("analysis/spectrum", "spectrum", "."))
     power: Mapping = NameMapping.var("power")
 
 
@@ -102,16 +101,29 @@ assert mapper.get_node(detached, mapper.schema.result) is detached["analysis/spe
 
 Relative paths start at the supplied node; `.` selects that node. Absolute paths
 start at the containing tree's root. Prefer relative paths for subtrees that
-should remain usable when detached. A node mapping cannot resolve to a variable,
+should remain usable when detached. A path mapping cannot resolve to a variable,
 even if indexing that path would return a DataArray. Flat Dataset and DataArray
 sources have no nodes.
 
-Node mappings do not implicitly change the scope of other fields. Variables,
+Path mappings do not implicitly change the scope of other fields. Variables,
 attributes and dimensions always refer to the supplied node's dataset. Select the
 subtree explicitly, then resolve a payload mapper there if variable candidates
 need to be chosen against that dataset. As with other mappings, `get_name()` gives
 the selected path; `from_defaults()` gives the first candidate for writing new
 output. `get_node()` and `has_node()` use the fixed plan on the supplied source.
+
+Use `SubpathMapping` when every candidate must be a descendant of the supplied
+node. It validates paths when the schema is declared:
+
+```python
+from tollan.accessor import SubpathMapping
+
+input_subpath = SubpathMapping.path(("samples", "_input"))
+assert input_subpath.names == ("samples", "_input")
+```
+
+Absolute paths, empty components, `.` and `..` are invalid for `SubpathMapping`.
+Use `NameMapping.path()` when those general tree selectors are needed.
 
 To try different locations in order, supply name/location pairs:
 
@@ -223,15 +235,25 @@ and its parent relationship, without loading any arrays.
 Read methods always receive the source explicitly:
 
 ```python
-mapper = ObservationMapper.from_data_source(reference_source)
+class ObservationMapper(XarrayMapper[ObservationSchema]):
+    pass
 
+
+reference_source = xr.Dataset({
+    "Data.Signal": ("sample", [1.0, 2.0]),
+    "timestamp": ("sample", [0.0, 1.0]),
+})
+mapper = ObservationMapper.from_data_source(reference_source)
+source = reference_source.copy(deep=True)
+source["Data.Signal"] = source["Data.Signal"] * 2
 signal = mapper.get_var(source, mapper.schema.signal)
 timestamp = mapper.get_var(source, mapper.schema.timestamp)
+assert signal.values.tolist() == [2.0, 4.0]
+assert timestamp.values.tolist() == [0.0, 1.0]
 ```
 
-This supports the established workflow in which a mapper is resolved once and
-reused with sources that have the same storage structure.
-Reads use the recorded name and location without trying candidates again. If
+Reuse a mapper with sources that have the same field names and locations.
+Reads use the recorded mapping without trying candidates again. If
 that field disappears from a later source, a same-named field in another
 namespace does not replace it. Resolve a new mapper to choose a different plan.
 
@@ -317,14 +339,3 @@ dispatch, and defaults. To give `get_var()` a precise return type, supply the
 native variable type as the third generic argument, for example
 `Mapper[MySchema, MySource, MyVariable]`. Defaults for the source and variable
 type arguments are `Any`.
-
-## Design invariants
-
-- A schema is a flat, ordered collection of semantic mappings.
-- A mapping strategy resolves to one immutable `NameMapping`.
-- A concrete mapper records names, defaults, missing fields, and explicit
-  resolution metadata.
-- Ordinary source values are read on demand and are not stored in the mapper.
-- Ordinary resolution does not retain the source; explicit node captures do.
-- The concrete mapping plan is read-only to callers.
-- Accessors use the mapper API rather than duplicating storage-name logic.

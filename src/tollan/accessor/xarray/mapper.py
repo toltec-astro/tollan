@@ -100,7 +100,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
         data_source : Dataset, DataArray or DataTree
             Source to inspect without loading arrays.
         field : Mapping
-            Schema field resolved in the node namespace.
+            Schema field resolved in the path namespace.
 
         Returns
         -------
@@ -111,7 +111,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
         mapped = self.mapped_fields.get(field)
         return (
             mapped is not None
-            and mapped.location == FieldLocation.node
+            and mapped.location == FieldLocation.path
             and self._has_node(data_source, mapped.name)
         )
 
@@ -123,7 +123,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
         data_source : Dataset, DataArray or DataTree
             Source containing the subtree. Only DataTree sources have nodes.
         field : Mapping
-            Schema field resolved in the node namespace.
+            Schema field resolved in the path namespace.
 
         Returns
         -------
@@ -137,7 +137,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
             not identify a DataTree node in the supplied source.
         """
         mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location != FieldLocation.node:
+        if mapped is None or mapped.location != FieldLocation.path:
             msg = f"Node not found: {field}"
             raise KeyError(msg)
         return self._get_node(data_source, mapped.name)

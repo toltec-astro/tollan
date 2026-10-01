@@ -148,6 +148,7 @@ from .schema import (
     MappingContext,
     NameMapping,
     Schema,
+    SubpathMapping,
 )
 
 __all__ = [
@@ -161,4 +162,5 @@ __all__ = [
     "MappingContext",
     "NameMapping",
     "Schema",
+    "SubpathMapping",
 ]

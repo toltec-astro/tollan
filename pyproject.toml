@@ -219,12 +219,14 @@ extend-immutable-calls = [
   "tollan.accessor.NameMapping.attr",
   "tollan.accessor.NameMapping.var",
   "tollan.accessor.NameMapping.dim",
-  "tollan.accessor.NameMapping.node",
+  "tollan.accessor.NameMapping.path",
+  "tollan.accessor.SubpathMapping.path",
+  "tollan.accessor.schema.SubpathMapping.path",
   "tollan.accessor.schema.NameMapping",
   "tollan.accessor.schema.NameMapping.attr",
   "tollan.accessor.schema.NameMapping.var",
   "tollan.accessor.schema.NameMapping.dim",
-  "tollan.accessor.schema.NameMapping.node",
+  "tollan.accessor.schema.NameMapping.path",
 ]
 
 [tool.ruff.lint.pydocstyle]

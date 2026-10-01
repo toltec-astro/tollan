@@ -415,7 +415,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
             If the variable or dimension is absent from the supplied source.
         """
         mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location in (None, FieldLocation.node):
+        if mapped is None or mapped.location in (None, FieldLocation.path):
             msg = (
                 f"Field {self.get_name(field) or field!r} "
                 f"not found in {type(data_source).__name__}"
@@ -533,7 +533,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                 return self._has_var(data_source, name)
             case FieldLocation.dim:
                 return self._has_dim(data_source, name)
-            case FieldLocation.node:
+            case FieldLocation.path:
                 return self._has_node(data_source, name)
         return False
 
@@ -548,7 +548,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                 return self._read_var_values(self._get_var(data_source, name))
             case FieldLocation.dim:
                 return self._get_dim(data_source, name)
-            case FieldLocation.node:
+            case FieldLocation.path:
                 return self._get_node(data_source, name)
         raise KeyError(name)
 

@@ -74,6 +74,18 @@ Utilities for data source conversion:
 from __future__ import annotations
 
 from .accessor import XarrayAccessorBase
+from .analysis import (
+    Analysis,
+    AnalysisInputMapper,
+    AnalysisInputSchema,
+    AnalysisInputView,
+    AnalysisMapper,
+    AnalysisSchemaMixin,
+    AnalysisView,
+    ensure_analysis_scope,
+    prepare_analysis_input_view,
+    unwrap_analysis_scope,
+)
 from .mapper import XarrayMapper
 from .table import dataset_to_qtable, select_table_rows
 from .units import UnitsAccessor
@@ -86,14 +98,24 @@ from .utils import (
 )
 
 __all__ = [
+    "Analysis",
+    "AnalysisInputMapper",
+    "AnalysisInputSchema",
+    "AnalysisInputView",
+    "AnalysisMapper",
+    "AnalysisSchemaMixin",
+    "AnalysisView",
     "UnitsAccessor",
     "XarrayAccessorBase",
     "XarrayMapper",
     "XarrayPayloadT",
     "XarraySourceT",
     "dataset_to_qtable",
+    "ensure_analysis_scope",
     "ensure_dataset",
     "ensure_datatree",
+    "prepare_analysis_input_view",
     "select_table_rows",
+    "unwrap_analysis_scope",
     "unwrap_data_source",
 ]

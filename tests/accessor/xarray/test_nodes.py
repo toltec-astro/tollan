@@ -14,9 +14,9 @@ from tollan.accessor.xarray import XarrayMapper
 
 @dataclass
 class TreeSchema(Schema):
-    result: Mapping = NameMapping.node(("analysis/spectrum", "spectrum"))
-    current: Mapping = NameMapping.node(".")
-    root: Mapping = NameMapping.node("/")
+    result: Mapping = NameMapping.path(("analysis/spectrum", "spectrum"))
+    current: Mapping = NameMapping.path(".")
+    root: Mapping = NameMapping.path("/")
 
 
 class TreeMapper(XarrayMapper[TreeSchema]):
@@ -47,7 +47,7 @@ def test_relative_paths_survive_detaching_without_loading(tree):
         assert mapper.get_node(scope, schema.current) is scope
         assert mapper.get_node(scope, schema.root) is scope.root
         assert isinstance(node.dataset.signal.data, da.Array)
-        assert mapper.mapped_fields[schema.result].location is FieldLocation.node
+        assert mapper.mapped_fields[schema.result].location is FieldLocation.path
         with pytest.raises(ValueError):
             mapper.get_scalar(scope, schema.result)
 
@@ -69,7 +69,7 @@ def test_candidates_are_resolved_once_and_reads_use_supplied_source(tree):
     assert resolved.get_node(other, schema.result) is other["analysis/spectrum"]
 
 
-def test_variables_cannot_satisfy_node_mapping():
+def test_variables_cannot_satisfy_path_mapping():
     source = xr.DataTree.from_dict(
         {"analysis": xr.Dataset({"spectrum": ("sample", [1, 2])})}
     )
@@ -96,7 +96,7 @@ def test_flat_sources_have_no_implicit_nodes(source):
 def test_node_defaults_and_capture_do_not_load_arrays(tree):
     @dataclass
     class CaptureSchema(Schema):
-        result: Mapping = NameMapping.node("scope", resolve_value=True)
+        result: Mapping = NameMapping.path("scope", resolve_value=True)
 
     class CaptureMapper(XarrayMapper[CaptureSchema]):
         pass
@@ -118,5 +118,5 @@ def test_node_and_attribute_with_same_name_require_location():
 
     tree = xr.DataTree.from_dict({"analysis": xr.Dataset()})
     tree.attrs["analysis"] = "config"
-    with pytest.raises(ValueError, match="Ambiguous field.*attr, node"):
+    with pytest.raises(ValueError, match="Ambiguous field.*attr, path"):
         AmbiguousMapper.from_data_source(tree)
