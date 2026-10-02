@@ -1,6 +1,6 @@
 """Shared analysis boundaries, scoped results and lazy array ownership."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import PurePosixPath
 
 import dask.array as da
@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 import xarray as xr
 
-from tollan.accessor import AccessorBase, Mapping, NameMapping, SubpathMapping
+from tollan.accessor import AccessorBase, Mapper, Mapping, NameMapping, SubpathMapping
 from tollan.accessor.xarray import (
     Analysis,
     AnalysisInputMapper,
@@ -22,14 +22,18 @@ from tollan.accessor.xarray import (
 
 
 @dataclass
-class SampleSchema(AnalysisSchemaMixin, AnalysisInputSchema):
-    namespace: Mapping = SubpathMapping.path("example.sample")
-    analysis: Mapping = NameMapping.attr("example.sample.analysis")
+class SampleSchema(AnalysisSchemaMixin):
+    _namespace: SubpathMapping = SubpathMapping.path("example.sample")
+    analysis: NameMapping = NameMapping.attr("example.sample.analysis")
     sample_subpath: Mapping = SubpathMapping.path("sample")
-    values: Mapping = NameMapping.var("values")
+    values: Mapping = sample_subpath / NameMapping.var("values")
 
 
-class SampleMapper(AnalysisMapper[SampleSchema], AnalysisInputMapper[SampleSchema]):
+class SampleMapper(AnalysisMapper[SampleSchema]):
+    pass
+
+
+class SampleInputMapper(AnalysisInputMapper[AnalysisInputSchema]):
     pass
 
 
@@ -38,8 +42,11 @@ class SampleInput:
         source = data.data_source if isinstance(data, AccessorBase) else data
         scope = ensure_analysis_scope(source, parent_namespace=parent_namespace)
         mapper = self._mapper_cls.from_data_source(scope)
-        namespace = PurePosixPath(mapper.get_name(mapper.schema.namespace))
-        input_path = PurePosixPath(mapper.get_name(mapper.schema.input_subpath))
+        namespace = PurePosixPath(mapper.namespace_path)
+        input_mapper = SampleInputMapper.from_data_source(scope)
+        input_path = PurePosixPath(
+            input_mapper.get_name(input_mapper.schema.input_subpath)
+        )
         if namespace.is_relative_to(input_path) or input_path.is_relative_to(namespace):
             msg = "Analysis input and namespace must be separate subtrees"
             raise ValueError(msg)
@@ -47,7 +54,7 @@ class SampleInput:
             data
             if isinstance(data, AccessorBase)
             else AccessorBase(
-                mapper.get_node(scope, mapper.schema.input_subpath).to_dataset(),
+                input_mapper.get_input_node(scope).to_dataset(),
                 mapper=XarrayMapper.from_defaults(),
             )
         )
@@ -122,15 +129,13 @@ def test_analysis_attribute_protocol_roundtrip(container):
     }[container]
     owner.attrs["description"] = "preserved"
     assert (
-        SampleAnalysis._load_from_attr(
-            owner, mapper=SampleMapper.from_data_source(owner)
-        )
+        SampleAnalysis._load_from_attr(owner, mapper=SampleMapper.from_defaults())
         is None
     )
     analysis = SampleAnalysis(step=3)
-    analysis._dump_to_attr(owner, mapper=SampleMapper.from_data_source(owner))
+    analysis._dump_to_attr(owner, mapper=SampleMapper.from_defaults())
     restored = SampleAnalysis._load_from_attr(
-        owner, mapper=SampleMapper.from_data_source(owner)
+        owner, mapper=SampleMapper.from_defaults()
     )
     assert type(restored) is SampleAnalysis
     assert restored == analysis
@@ -145,9 +150,7 @@ def test_analysis_attribute_protocol_roundtrip(container):
 def test_analysis_attribute_protocol_rejects_invalid_present_config(config):
     owner = xr.Dataset(attrs={"example.sample.analysis": config})
     with pytest.raises(ValueError):
-        SampleAnalysis._load_from_attr(
-            owner, mapper=SampleMapper.from_data_source(owner)
-        )
+        SampleAnalysis._load_from_attr(owner, mapper=SampleMapper.from_defaults())
     assert owner.attrs["example.sample.analysis"] == config
 
 
@@ -156,23 +159,21 @@ def test_analysis_attribute_protocol_reads_only_selected_owner():
         {"namespace": xr.Dataset(), "namespace/child": xr.Dataset()}
     )
     analysis = SampleAnalysis()
-    analysis._dump_to_attr(
-        tree["namespace"], mapper=SampleMapper.from_data_source(tree["namespace"])
-    )
+    analysis._dump_to_attr(tree["namespace"], mapper=SampleMapper.from_defaults())
     assert (
-        SampleAnalysis._load_from_attr(tree, mapper=SampleMapper.from_data_source(tree))
+        SampleAnalysis._load_from_attr(tree, mapper=SampleMapper.from_defaults())
         is None
     )
     assert (
         SampleAnalysis._load_from_attr(
             tree["namespace/child"],
-            mapper=SampleMapper.from_data_source(tree["namespace/child"]),
+            mapper=SampleMapper.from_defaults(),
         )
         is None
     )
     assert (
         SampleAnalysis._load_from_attr(
-            tree["namespace"], mapper=SampleMapper.from_data_source(tree["namespace"])
+            tree["namespace"], mapper=SampleMapper.from_defaults()
         )
         == analysis
     )
@@ -253,17 +254,26 @@ def test_local_scope_detachment_and_namespace_roundtrip(source, tmp_path):
     assert result is tree
     scope = result["measurements/one"]
     detached = scope["example.sample"].copy(deep=False)
-    for selected in (scope, detached, SampleView(detached).data_source):
-        view = SampleView(selected)
+    for selected, make_view in (
+        (scope, SampleView),
+        (detached, SampleView.from_namespace),
+        (scope["example.sample"], SampleView.from_namespace),
+    ):
+        view = make_view(selected)
         assert view._data_source is selected
         assert view.sample_analysis == SampleAnalysis(step=2)
         xr.testing.assert_identical(view.data_source, SampleView(scope).data_source)
     target = tmp_path / "analysis.zarr"
     detached.to_zarr(target)
     with xr.open_datatree(target, engine="zarr") as reopened:
-        restored = SampleView(reopened)
-        assert restored.sample_analysis == SampleView(detached).sample_analysis
-        xr.testing.assert_identical(restored.sample, SampleView(detached).sample)
+        restored = SampleView.from_namespace(reopened)
+        assert (
+            restored.sample_analysis
+            == SampleView.from_namespace(detached).sample_analysis
+        )
+        xr.testing.assert_identical(
+            restored.sample, SampleView.from_namespace(detached).sample
+        )
     assert "example.sample.analysis" not in detached["sample"].attrs
     assert detached.attrs["example.sample.analysis"] == '{"step":2}'
 
@@ -313,7 +323,7 @@ def test_analysis_promotion_preserves_dataarray_wrapper(name):
     expected = ensure_dataset(source)
     for supplied in (source, expected, ensure_analysis_scope(source)):
         result = SampleAnalysis()(supplied)
-        mapper = SampleMapper.from_data_source(result)
+        mapper = SampleInputMapper.from_data_source(result)
         payload = mapper.get_input_node(result)
         xr.testing.assert_identical(payload.to_dataset(), expected)
         restored = unwrap_data_source(payload)
@@ -400,7 +410,7 @@ def test_scope_rejects_inherited_context_while_view_remains_readable(ancestor):
     assert not node.to_dataset(inherit=False).variables
     with pytest.raises(ValueError, match="not an analysis scope"):
         ensure_analysis_scope(node)
-    assert SampleView(node).data_source is node
+    assert SampleView.from_namespace(node).data_source is node
 
 
 def test_scope_allows_uninherited_scalar_data_in_ancestors(source):
@@ -463,10 +473,16 @@ def test_invalid_installation_leaves_scope_unchanged(
 
     schema = replace(
         SampleMapper.schema,
-        namespace=SubpathMapping.path(namespace),
-        input_subpath=SubpathMapping.path(input_subpath),
+        _namespace=SubpathMapping.path(namespace),
     )
     monkeypatch.setattr(SampleMapper, "schema", schema)
+    monkeypatch.setattr(
+        SampleInputMapper,
+        "schema",
+        replace(
+            SampleInputMapper.schema, input_subpath=SubpathMapping.path(input_subpath)
+        ),
+    )
     tree = xr.DataTree.from_dict(
         {input_subpath: source, "other": xr.Dataset({"value": 1})}
     )
@@ -487,9 +503,10 @@ def test_input_candidates_prefer_existing_domain_payload(source, monkeypatch):
     from dataclasses import replace
 
     schema = replace(
-        SampleMapper.schema, input_subpath=SubpathMapping.path(("samples", "_input"))
+        SampleInputMapper.schema,
+        input_subpath=SubpathMapping.path(("samples", "_input")),
     )
-    monkeypatch.setattr(SampleMapper, "schema", schema)
+    monkeypatch.setattr(SampleInputMapper, "schema", schema)
     tree = xr.DataTree.from_dict({"samples": source, "_input": source * 100})
     assert SampleAnalysis()(tree) is tree
     xr.testing.assert_identical(
@@ -540,7 +557,7 @@ def test_configuration_comparison_uses_model_values(source):
 
 
 def test_container_view_rejects_bare_dataset(source):
-    with pytest.raises(TypeError, match="DataTree namespace"):
+    with pytest.raises(KeyError):
         SampleView(source)
 
 
@@ -552,10 +569,11 @@ def test_view_namespace_candidates_resolve_on_parent_scope(source, monkeypatch):
     parent = xr.DataTree.from_dict({"diagnostics/sample": namespace})
     schema = replace(
         SampleMapper.schema,
-        namespace=SubpathMapping.path(("absent", "diagnostics/sample")),
+        _namespace=SubpathMapping.path(("absent", "diagnostics/sample")),
     )
     monkeypatch.setattr(SampleMapper, "schema", schema)
     view = SampleView(parent)
+    assert view.mapper.namespace_path == "diagnostics/sample"
     assert view.data_source is parent["diagnostics/sample"]
     assert view.sample_analysis == SampleAnalysis()
 
@@ -581,9 +599,13 @@ def test_view_readability_does_not_require_a_writable_scope(select_parent):
     )
     tree = xr.DataTree.from_dict({"example.sample": payload})
     supplied = tree if select_parent else tree["example.sample"]
-    mapper = SampleMapper.from_data_source(supplied)
+    make_mapper = (
+        SampleMapper.from_data_source if select_parent else SampleMapper.from_namespace
+    )
+    make_view = SampleView if select_parent else SampleView.from_namespace
+    mapper = make_mapper(supplied)
     assert mapper.get_namespace(supplied) is tree["example.sample"]
-    assert SampleView(supplied).data_source is tree["example.sample"]
+    assert make_view(supplied).data_source is tree["example.sample"]
 
 
 @pytest.mark.parametrize(
@@ -637,7 +659,7 @@ def test_installation_rejects_inherited_dimension_without_altering_tree(
     from dataclasses import replace
 
     schema = replace(
-        SampleMapper.schema, namespace=SubpathMapping.path("diagnostics/sample")
+        SampleMapper.schema, _namespace=SubpathMapping.path("diagnostics/sample")
     )
     monkeypatch.setattr(SampleMapper, "schema", schema)
     tree = xr.DataTree.from_dict(
@@ -660,7 +682,7 @@ def test_namespace_creation_allows_scalar_data_in_parent(source, monkeypatch):
     from dataclasses import replace
 
     schema = replace(
-        SampleMapper.schema, namespace=SubpathMapping.path("diagnostics/group/sample")
+        SampleMapper.schema, _namespace=SubpathMapping.path("diagnostics/group/sample")
     )
     monkeypatch.setattr(SampleMapper, "schema", schema)
     tree = xr.DataTree.from_dict(
@@ -756,7 +778,7 @@ def test_failed_computation_leaves_no_prepared_namespace(source, monkeypatch):
     from dataclasses import replace
 
     schema = replace(
-        SampleMapper.schema, namespace=SubpathMapping.path("diagnostics/new/analysis")
+        SampleMapper.schema, _namespace=SubpathMapping.path("diagnostics/new/analysis")
     )
     monkeypatch.setattr(SampleMapper, "schema", schema)
     tree = xr.DataTree.from_dict({"_input": source})
@@ -767,12 +789,12 @@ def test_failed_computation_leaves_no_prepared_namespace(source, monkeypatch):
     assert "diagnostics" not in tree.children
 
 
-@pytest.mark.parametrize("mismatch", ["missing", "extra", "replaced"])
+@pytest.mark.parametrize("mismatch", ["extra", "replaced"])
 def test_computed_output_mismatch_leaves_existing_results_unchanged(source, mismatch):
     class UndeclaredOutputAnalysis(SampleAnalysis):
         def _compute_result(self, data, *, mapper, **kwargs):
             outputs = super()._compute_result(data, mapper=mapper, **kwargs)
-            if mismatch in {"missing", "replaced"}:
+            if mismatch == "replaced":
                 outputs.pop(mapper.schema.sample_subpath)
             if mismatch in {"extra", "replaced"}:
                 outputs[SubpathMapping.path("undeclared")] = data.data_source
@@ -780,9 +802,37 @@ def test_computed_output_mismatch_leaves_existing_results_unchanged(source, mism
 
     tree = SampleAnalysis()(source)
     before = tree.copy(deep=False)
-    with pytest.raises(ValueError, match="Computed output fields must match"):
+    with pytest.raises(ValueError, match="Computed output fields must belong"):
         UndeclaredOutputAnalysis()(tree, force=True)
     xr.testing.assert_identical(tree, before)
+
+
+@pytest.mark.parametrize("include_sample", [False, True])
+def test_computed_outputs_can_be_subset_of_declared_fields(source, include_sample):
+    @dataclass
+    class OptionalSchema(SampleSchema):
+        optional_subpath: SubpathMapping = SubpathMapping.path("optional")
+
+    class OptionalMapper(AnalysisMapper[OptionalSchema]):
+        pass
+
+    class OptionalAnalysis(SampleInput, Analysis[OptionalMapper]):
+        def _get_output_subpaths(self, *, mapper):
+            return (mapper.schema.sample_subpath, mapper.schema.optional_subpath)
+
+        def _compute_result(self, data, *, mapper, **kwargs):
+            if include_sample:
+                return {mapper.schema.sample_subpath: data.data_source}
+            return {}
+
+    tree = SampleAnalysis()(source)
+    tree["example.sample/optional"] = xr.DataTree(source)
+    result = OptionalAnalysis()(tree, force=True)
+    assert result is tree
+    namespace = tree["example.sample"]
+    assert set(namespace.children) == ({"sample"} if include_sample else set())
+    assert "example.sample.analysis" in namespace.attrs
+    xr.testing.assert_identical(tree["_input"].to_dataset(), source)
 
 
 def test_unregistered_output_declaration_fails_before_computation(source):
@@ -798,3 +848,143 @@ def test_unregistered_output_declaration_fails_before_computation(source):
     with pytest.raises(KeyError):
         InvalidLayoutAnalysis()(tree, force=True)
     xr.testing.assert_identical(tree, before)
+
+
+@pytest.mark.parametrize("source_kind", ["scope", "namespace", "detached"])
+@pytest.mark.parametrize("supply_mapper", [False, True])
+def test_view_keeps_single_mapper_and_readonly_source_protocol(
+    source, monkeypatch, source_kind, supply_mapper
+):
+    tree = SampleAnalysis()(source)
+    tree["absent"] = xr.DataTree(xr.Dataset({"values": ("time", [-99])}))
+    namespace = tree["example.sample"]
+    supplied = {
+        "scope": tree,
+        "namespace": namespace,
+        "detached": namespace.copy(deep=False),
+    }[source_kind]
+    before = tree.copy(deep=False)
+    schema = replace(
+        SampleMapper.schema,
+        sample_subpath=SubpathMapping.path(("absent", "sample")),
+        values=SampleSchema.sample_subpath / NameMapping.var(("absent", "values")),
+    )
+    monkeypatch.setattr(SampleMapper, "schema", schema)
+    factory = "from_data_source" if source_kind == "scope" else "from_namespace"
+    construct = getattr(SampleMapper, factory)
+    provided = construct(supplied) if supply_mapper else None
+    constructed = []
+    resolutions = []
+    resolve = NameMapping.resolve
+
+    @classmethod
+    def record_construct(cls, data_source, defaults=None):
+        mapper = construct(data_source, defaults)
+        constructed.append((data_source, mapper))
+        return mapper
+
+    def record_resolve(mapping, context):
+        resolutions.append((mapping, context.data_source))
+        return resolve(mapping, context)
+
+    monkeypatch.setattr(SampleMapper, factory, record_construct)
+    monkeypatch.setattr(NameMapping, "resolve", record_resolve)
+    view = (
+        SampleView(supplied, mapper=provided)
+        if source_kind == "scope" or supply_mapper
+        else SampleView.from_namespace(supplied)
+    )
+    assert AnalysisView.__init__ is AccessorBase.__init__
+    assert AnalysisMapper.__init__ is Mapper.__init__
+    assert AnalysisMapper._populate_from_schema is Mapper._populate_from_schema
+    assert (
+        AnalysisMapper.from_data_source.__func__
+        is XarrayMapper.from_data_source.__func__
+    )
+    assert view._data_source is supplied
+    assert view.data_source is (namespace if source_kind == "scope" else supplied)
+    if supply_mapper:
+        assert view.mapper is provided
+        assert not constructed
+        assert not resolutions
+    else:
+        assert len(constructed) == 1
+        assert constructed[0][0] is supplied
+        assert constructed[0][1] is view.mapper
+        for field in (
+            schema.analysis,
+            schema.sample_subpath,
+            schema.values,
+        ):
+            assert sum(mapping is field for mapping, _ in resolutions) == 1
+        if source_kind == "scope":
+            assert resolutions[0][0] is schema._namespace
+            assert resolutions[0][1] is supplied
+            output_resolutions = resolutions[1:]
+        else:
+            output_resolutions = resolutions
+        assert all(node is view.data_source for _, node in output_resolutions)
+    assert schema._namespace in view.mapper.mapped_fields
+    assert view.mapper.get_name(schema.sample_subpath) == "sample"
+    assert view.mapper.get_name(schema.values) == "values"
+    xr.testing.assert_identical(
+        view.mapper.get_arr(view.data_source, schema.values),
+        namespace["sample/values"],
+    )
+    xr.testing.assert_identical(tree, before)
+
+
+def test_scope_and_namespace_mappers_share_output_mappings(source):
+    tree = SampleAnalysis()(source)
+    namespace = tree["example.sample"]
+    from_scope = SampleMapper.from_data_source(tree)
+    from_namespace = SampleMapper.from_namespace(namespace)
+    namespace_field = SampleMapper.schema._namespace
+    assert from_scope.namespace_path == "example.sample"
+    assert from_namespace.namespace_path == "."
+    for field, resolved in from_scope.mapped_fields.items():
+        if field != namespace_field:
+            assert from_namespace.mapped_fields[field] == resolved
+    for original, data in ((from_scope, tree), (from_namespace, namespace)):
+        rebuilt = SampleMapper(original.mapped_fields)
+        assert rebuilt.namespace_path == original.namespace_path
+        assert rebuilt.get_namespace(data) is namespace
+        xr.testing.assert_identical(
+            rebuilt.get_arr(namespace, rebuilt.schema.values),
+            namespace["sample/values"],
+        )
+
+
+def test_missing_namespace_does_not_resolve_outputs_from_scope(monkeypatch):
+    schema = replace(
+        SampleMapper.schema,
+        sample_subpath=SubpathMapping.path(("missing", "sample")),
+    )
+    monkeypatch.setattr(SampleMapper, "schema", schema)
+    scope = xr.DataTree.from_dict({"sample": xr.Dataset({"values": 99})})
+    before = scope.copy(deep=False)
+    mapper = SampleMapper.from_data_source(scope)
+    assert mapper.namespace_path == "example.sample"
+    assert mapper.get_name(schema.sample_subpath) == "missing"
+    assert mapper.get_name(schema.values) == "values"
+    assert schema.values not in mapper
+    with pytest.raises(KeyError, match="example.sample"):
+        mapper.get_namespace(scope)
+    with pytest.raises(KeyError, match="example.sample"):
+        SampleView(scope)
+    xr.testing.assert_identical(scope, before)
+
+
+def test_configuration_attributes_do_not_select_namespace(source):
+    tree = SampleAnalysis()(source)
+    tree.attrs["example.sample.analysis"] = SampleAnalysis(step=9).model_dump_json()
+    view = SampleView(tree)
+    assert view.data_source is tree["example.sample"]
+    assert view.sample_analysis == SampleAnalysis()
+    detached = view.data_source.copy(deep=False)
+    with pytest.raises(KeyError, match="example.sample"):
+        SampleView(detached)
+    explicit = SampleView.from_namespace(detached)
+    assert explicit.data_source is detached
+    assert explicit.mapper.namespace_path == "."
+    xr.testing.assert_identical(explicit.sample, view.sample)

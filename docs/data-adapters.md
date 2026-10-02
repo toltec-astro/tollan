@@ -171,12 +171,16 @@ tree["processed"] = xr.DataTree(dataset=ds)
 assert tree["processed"].readings.temperature.identical(temperature)
 ```
 
-Direct mapper calls also accept a DataTree. Variable, attribute and dimension
-mappings inspect its current node; `NameMapping.path(...)` selects a subtree.
-Use `mapper.get_node(tree, schema.result)` to retrieve that subtree without loading
-arrays. See [subtree paths](schema-mapping-accessors.md#subtree-paths) for a complete
-example. A DataArray exposes its own attributes, coordinates, and named array;
-an unnamed array uses the name `"data"`.
+Direct mapper calls also accept a DataTree. A mapping's `parent` selects the
+containing subtree; without a parent, fields belong to the supplied node.
+`parent / NameMapping.var("signal")` is shorthand for
+`NameMapping.var("signal", parent=parent)`. Attributes, dimensions, and child
+paths support the same parent declaration. Variable mappings also accept direct
+slash paths to variables or coordinates. Use
+`mapper.get_node(tree, schema.result)` to retrieve a subtree without loading arrays.
+See [subtree paths](schema-mapping-accessors.md#subtree-paths) for a complete example.
+A DataArray exposes its own attributes, coordinates, and named array; an unnamed
+array uses the name `"data"`.
 
 Use `ensure_dataset()` or `ensure_datatree()` when an operation requires one of
 those containers. `ensure_dataset()` preserves a Dataset, selects the current
@@ -227,8 +231,8 @@ from tollan.accessor.xarray import (
 
 @dataclass
 class MeanSchema(AnalysisSchemaMixin):
-    namespace: SubpathMapping = SubpathMapping.path("example.mean")
-    analysis: Mapping = NameMapping.attr("example.mean.analysis")
+    _namespace: SubpathMapping = SubpathMapping.path("example.mean")
+    analysis: NameMapping = NameMapping.attr("example.mean.analysis")
     mean_subpath: SubpathMapping = SubpathMapping.path("mean")
 
 
@@ -243,7 +247,7 @@ class MeanAnalysis(Analysis[MeanMapper]):
         return (mapper.schema.mean_subpath,)
 
     def __call__(self, obj, *, output=None):
-        scope = ensure_analysis_scope(xr.DataTree() if output is None else output)
+        scope = xr.DataTree() if output is None else output
         mapper = self._mapper_cls.from_data_source(scope)
         return self._call(
             scope,
@@ -284,10 +288,11 @@ The result has this layout:
     └── mean              Dataset containing the mean variable
 ```
 
-`namespace` is relative to the working scope. Output subpaths are relative to the
-analysis namespace and must occupy separate subtrees. Use `SubpathMapping.path()`
-for these fields. `_get_output_subpaths()` declares the outputs before
-computation; the computation returns a Dataset for each declared field.
+The concrete schema must define `_namespace` as a `SubpathMapping` relative to
+the working scope. Output subpaths are relative to the analysis namespace and
+must occupy separate subtrees. Use `SubpathMapping.path()` for these fields.
+`_get_output_subpaths()` declares the outputs before computation; the computation
+returns Datasets keyed by a subset or all of these fields.
 
 ### Add results to an existing tree
 
@@ -342,7 +347,8 @@ input-selection pattern.
 
 ### Read and export results
 
-A result view accepts either a working scope or the analysis namespace itself.
+Construct a result view from the working scope, or use
+`MeanView.from_namespace(node)` for an explicitly selected analysis namespace.
 Its `data_source` is the selected namespace, and its configuration property
 returns the producing analysis. An existing view retains those results after
 recomputation; create a new view to read the replacement.
@@ -357,7 +363,7 @@ with TemporaryDirectory() as directory:
     store = Path(directory) / "mean.zarr"
     view.data_source.to_zarr(store)
     with xr.open_datatree(store, engine="zarr") as reopened:
-        restored = MeanView(reopened)
+        restored = MeanView.from_namespace(reopened)
         xr.testing.assert_identical(restored.mean, view.mean)
         assert restored.mean_analysis == analysis
 ```

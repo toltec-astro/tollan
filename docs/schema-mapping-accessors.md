@@ -9,13 +9,13 @@ resulting data through a domain-oriented API.
 
 | Object | Responsibility |
 | --- | --- |
-| `Schema` | Declares a flat set of semantic fields |
+| `Schema` | Gives consistent names to entities that may occur in data |
 | `Mapping` | Defines the strategy interface for resolving one field |
-| `NameMapping` | Resolves a field from ordered name/location candidates |
-| `FieldLocation` | Identifies an attribute, variable, dimension, or subtree namespace |
+| `NameMapping` | Declares candidate names, entity kinds, and a containing subtree |
+| `FieldLocation` | Identifies the entity kind: attribute, variable, dimension, or subtree |
 | `MappingContext` | Supplies the source, schema, and prior results during resolution |
 | `MappedField` | Records the immutable result of resolving one field |
-| `Mapper` | Holds a concrete mapping plan and implements source reads |
+| `Mapper` | Probes the data layout and provides access using the schema vocabulary |
 | `AccessorBase` | Exposes domain-level operations over a source and mapper |
 
 The normal data path is:
@@ -56,10 +56,10 @@ class ObservationSchema(Schema):
 Fields resolve in declaration order. A conditional mapping can use the results
 of fields declared before it.
 
-`NameMapping.var(...)`, `.attr(...)`, `.dim(...)`, and `.path(...)` try candidates
-in order at the specified location. Variables include coordinates and table
-columns; dimensions return their integer lengths. A coordinate and its dimension
-are separate fields:
+`NameMapping.var(...)`, `.attr(...)`, `.dim(...)`, and `.path(...)` declare
+candidate names or paths for one entity kind. The mapper selects the first
+existing candidate. Variables include coordinates and table columns; dimension
+reads return integer lengths. A coordinate and its dimension are separate fields:
 
 ```python
 sample = NameMapping.var("sample")  # Coordinate values
@@ -68,8 +68,9 @@ n_samples = NameMapping.dim("sample")  # Dimension length
 
 ### Subtree paths
 
-Path mappings put tree layout in the schema alongside array and metadata names.
-They return a native subtree without copying it or loading its arrays:
+Use path mappings to identify subtrees by a consistent schema field name.
+`mapper.get_node()` returns the mapped subtree without copying it or loading
+its arrays:
 
 ```python
 import xarray as xr
@@ -79,7 +80,7 @@ from tollan.accessor.xarray import XarrayMapper
 @dataclass
 class SpectrumSchema(Schema):
     result: Mapping = NameMapping.path(("analysis/spectrum", "spectrum", "."))
-    power: Mapping = NameMapping.var("power")
+    power: Mapping = result / NameMapping.var("power")
 
 
 class SpectrumMapper(XarrayMapper[SpectrumSchema]):
@@ -93,7 +94,7 @@ scope = tree["measurement"]
 mapper = SpectrumMapper.from_data_source(scope)
 result = mapper.get_node(scope, mapper.schema.result)
 assert result is scope["analysis/spectrum"]
-assert mapper.get_arr(result, mapper.schema.power).sizes == {"frequency": 2}
+assert mapper.get_arr(scope, mapper.schema.power).sizes == {"frequency": 2}
 
 detached = scope.copy(deep=False)
 assert mapper.get_node(detached, mapper.schema.result) is detached["analysis/spectrum"]
@@ -105,12 +106,61 @@ should remain usable when detached. A path mapping cannot resolve to a variable,
 even if indexing that path would return a DataArray. Flat Dataset and DataArray
 sources have no nodes.
 
-Path mappings do not implicitly change the scope of other fields. Variables,
-attributes and dimensions always refer to the supplied node's dataset. Select the
-subtree explicitly, then resolve a payload mapper there if variable candidates
-need to be chosen against that dataset. As with other mappings, `get_name()` gives
-the selected path; `from_defaults()` gives the first candidate for writing new
-output. `get_node()` and `has_node()` use the fixed plan on the supplied source.
+A field's `parent` declares the subtree containing it. The `/` operator is
+shorthand for the same declaration:
+
+```python
+assert SpectrumSchema.power == NameMapping.var("power", parent=SpectrumSchema.result)
+```
+
+Declare each parent as a schema field before its children; inherited field
+overrides retain that order. Invalid parent references raise `ValueError` when
+constructing the mapper.
+
+The first existing parent path applies to all its child fields. Their name
+candidates are tried within that node; a missing field does not select another
+parent. Reads use the same path on the source supplied to the read, so a mapper
+can also read a detached copy. `get_name()` returns the local field name.
+`from_defaults()` selects the first candidate for each parent path and child name.
+
+Parent mappings work for variables, coordinates, attributes, dimensions, and
+child paths. Coordinates use `NameMapping.var()`. A direct variable mapping such
+as `NameMapping.var("analysis/spectrum/power")` also works on DataTrees. For
+attributes and dimension sizes, use a parent mapping with the local attribute
+or dimension name. Backends without subtree support reject parent mappings.
+
+Override a parent field to read its children from a different subtree:
+
+```python
+@dataclass
+class AlternateSpectrumSchema(SpectrumSchema):
+    result: Mapping = NameMapping.path("products/spectrum")
+
+
+class AlternateSpectrumMapper(XarrayMapper[AlternateSpectrumSchema]):
+    pass
+
+
+alternate = xr.DataTree.from_dict({
+    "products/spectrum": xr.Dataset({"power": ("frequency", [3., 4.])})
+})
+other_mapper = AlternateSpectrumMapper.from_data_source(alternate)
+assert other_mapper.get_arr(alternate, other_mapper.schema.power).values.tolist() == [3., 4.]
+```
+
+A custom `Mapping.resolve()` can select a declared parent at resolution time by
+returning a `NameMapping` with that parent. Parent lookup follows the same schema
+overrides as a direct declaration.
+
+Compose deeper paths through named schema fields:
+
+```python
+@dataclass
+class NestedSpectrumSchema(Schema):
+    namespace: Mapping = NameMapping.path("analysis")
+    result: Mapping = namespace / NameMapping.path("spectrum")
+    power: Mapping = result / NameMapping.var("power")
+```
 
 Use `SubpathMapping` when every candidate must be a descendant of the supplied
 node. It validates paths when the schema is declared:
@@ -143,7 +193,7 @@ appear at different locations; duplicate pairs are rejected. `.names` returns
 the candidate names in order, for example when choosing names for output data.
 
 Bare names, such as `NameMapping("version")`, infer their location. Each name
-must occur in at most one supported namespace. Ambiguous names raise `ValueError`
+must identify at most one supported entity kind. Ambiguous names raise `ValueError`
 at resolution, rather than advancing to the next candidate. Specify a location
 when a name is shared by an attribute and variable, or a coordinate and dimension.
 
@@ -176,20 +226,20 @@ The resulting `MappedField` records:
 
 - `mapping`: the strategy declared on the schema;
 - `mapping_resolved`: the concrete `NameMapping` selected by that strategy;
-- `name`: the physical source name;
-- `location`: the storage namespace used for subsequent reads;
+- `name`: the physical name within the selected source;
+- `parent_path`: the containing subtree path, or `None` for the supplied source;
+- `location`: the entity kind used for subsequent reads;
 - `source`: whether the original resolution found a source field, a default,
   or neither;
 - `value`: resolution metadata captured when `resolve_value=True`;
 - `value_default`: the configured fallback, or `MISSING` if none was supplied;
-- `schema_path`: the semantic location of the field.
+- `schema_path`: the diagnostic identifier `SchemaClass.attribute`.
 
 `mapper.mapped_fields` is a read-only view of this plan.
 
 ## Mapping context and conditional mappings
 
-All fields resolved by one `from_data_source` call share a `MappingContext`.
-It contains:
+Each field resolves with a `MappingContext` containing:
 
 - `data_source`: the source being resolved;
 - `schema`: the mapper's schema instance;
@@ -254,8 +304,8 @@ assert timestamp.values.tolist() == [0.0, 1.0]
 
 Reuse a mapper with sources that have the same field names and locations.
 Reads use the recorded mapping without trying candidates again. If
-that field disappears from a later source, a same-named field in another
-namespace does not replace it. Resolve a new mapper to choose a different plan.
+that field disappears from a later source, a same-named entity of another kind
+does not replace it. Resolve a new mapper to select different data locations.
 
 The main lookup and read contracts are:
 
@@ -334,8 +384,8 @@ example `(FieldLocation.attr, FieldLocation.var, FieldLocation.dim)`, and implem
 the corresponding hooks. By default only `var` is supported, and all existence
 hooks return `False`. `from_defaults()` does not require source reads.
 
-The public methods accept schema fields and handle candidate ordering, location
-dispatch, and defaults. To give `get_var()` a precise return type, supply the
-native variable type as the third generic argument, for example
+Implement the hooks using data names and paths; callers use schema fields with
+the public methods. To give `get_var()` a precise return type, supply the native
+variable type as the third generic argument, for example
 `Mapper[MySchema, MySource, MyVariable]`. Defaults for the source and variable
 type arguments are `Any`.

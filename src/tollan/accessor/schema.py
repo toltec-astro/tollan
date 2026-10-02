@@ -1,10 +1,16 @@
-"""Schema definitions for accessor framework."""
+"""Define a consistent vocabulary for entities that may occur in data.
+
+Schemas give fields semantic names independent of storage conventions. Mappings
+describe how those fields may be represented in data, allowing a mapper to
+identify them in a particular source.
+"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import StrEnum, auto
-from typing import TYPE_CHECKING, Any, NamedTuple, Self
+from inspect import get_annotations
+from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self
 
 from pydantic import field_validator
 from pydantic.dataclasses import dataclass as pydantic_dataclass
@@ -39,7 +45,7 @@ MISSING = _MissingSentinel()
 
 
 class FieldLocation(StrEnum):
-    """Storage namespace containing a field.
+    """Kind of data entity represented by a mapping.
 
     ``var`` includes array variables, coordinates, and table columns. ``attr``
     selects source attributes; ``dim`` selects dimension lengths. ``path``
@@ -61,10 +67,11 @@ class MappedFieldSource(StrEnum):
 
 
 class Mapping:
-    """Strategy for resolving one semantic field.
+    """Specify a field mapping for a resolution context.
 
-    Subclass this class for conditional mappings. Direct ordered-name
-    resolution is provided by :class:`NameMapping`.
+    Subclasses implement ``resolve`` to return a ``NameMapping`` for the supplied
+    context. Use ``NameMapping`` directly for a fixed declaration of candidate
+    names, locations, and parent. The mapper selects among those candidates.
 
     Examples
     --------
@@ -79,7 +86,7 @@ class Mapping:
         self,
         context: MappingContext,
     ) -> NameMapping:
-        """Return the mapping to use for this data source.
+        """Return the name mapping for the supplied resolution context.
 
         Parameters
         ----------
@@ -89,14 +96,14 @@ class Mapping:
         Returns
         -------
         NameMapping
-            Concrete ordered-name mapping.
+            Candidate names, locations, and parent for this field.
         """
         msg = f"{self.__class__.__name__} must implement resolve()"
         raise NotImplementedError(msg)
 
 
 class _Candidate(NamedTuple):
-    """A physical field name and its optional storage location."""
+    """A data name or subtree path and its optional location."""
 
     name: str
     location: FieldLocation | None
@@ -104,18 +111,21 @@ class _Candidate(NamedTuple):
 
 @pydantic_dataclass(frozen=True)
 class NameMapping(Mapping):
-    """Resolve a semantic field from ordered names and storage locations.
+    """Candidate names, entity kinds, and containing subtree for a schema field.
 
     Parameters
     ----------
     candidates : str or sequence
         One name, a sequence of names, or a sequence of (name, location) pairs.
-        A name without a location must occur in exactly one supported namespace.
-        Candidates are tried in order; an ambiguous name raises ValueError.
+        Candidates in preference order. A name without a location may match at
+        most one supported entity kind; ambiguous matches raise ValueError.
     resolve_value : bool, default False
-        Whether to capture the value as part of the concrete mapper resolution.
-        Values not captured remain ``MISSING`` in the mapper and are read from
-        an explicitly supplied data source when requested.
+        Whether mapper resolution captures the value in ``MappedField.value``.
+        The default leaves that value ``MISSING``. Mapper getters read from
+        their supplied data source regardless of this setting.
+    parent : NameMapping, optional
+        Path mapping for the subtree containing this field. ``None`` denotes
+        a field on the mapping context's data source.
 
     Examples
     --------
@@ -131,10 +141,18 @@ class NameMapping(Mapping):
     ...     ('sample', FieldLocation.dim), ('count', FieldLocation.attr)
     ... ]).names
     ('sample', 'count')
+
+    >>> output = NameMapping.path(("results", "legacy_results"))
+    >>> signal = output / NameMapping.var("signal")
+    >>> signal == NameMapping.var("signal", parent=output)
+    True
+    >>> signal.names
+    ('signal',)
     """
 
     candidates: tuple[_Candidate, ...]
     resolve_value: bool = False
+    parent: NameMapping | None = None
 
     if TYPE_CHECKING:
 
@@ -145,6 +163,7 @@ class NameMapping(Mapping):
             | Sequence[tuple[str, FieldLocation | None]],
             *,
             resolve_value: bool = False,
+            parent: NameMapping | None = None,
         ) -> None: ...
 
     @field_validator("candidates", mode="before")
@@ -183,6 +202,42 @@ class NameMapping(Mapping):
             raise ValueError(msg)
         return candidates
 
+    @field_validator("parent")
+    @classmethod
+    def validate_parent(cls, parent: NameMapping | None) -> NameMapping | None:
+        """Require a parent mapping to identify a subtree."""
+        if parent is not None and any(
+            candidate.location != FieldLocation.path for candidate in parent.candidates
+        ):
+            msg = "A mapping parent must contain only path candidates"
+            raise ValueError(msg)
+        return parent
+
+    def __truediv__[ChildT: NameMapping](self, child: ChildT) -> ChildT:
+        """Return a child mapping with this path mapping as its parent.
+
+        Parameters
+        ----------
+        child : NameMapping
+            Declaration for a field within this subtree, with no parent set.
+
+        Returns
+        -------
+        NameMapping
+            Mapping of the same type as ``child``, with this path as its parent.
+
+        Raises
+        ------
+        ValueError
+            This mapping is not a path mapping, or the child already has a parent.
+        """
+        if not isinstance(child, NameMapping):
+            return NotImplemented
+        if child.parent is not None:
+            msg = "The child mapping already has a parent"
+            raise ValueError(msg)
+        return replace(child, parent=self)
+
     @property
     def names(self) -> tuple[str, ...]:
         """Physical names in candidate order, including cross-location repeats."""
@@ -195,38 +250,142 @@ class NameMapping(Mapping):
         location: FieldLocation,
         *,
         resolve_value: bool,
+        parent: NameMapping | None = None,
     ) -> Self:
         names = (names,) if isinstance(names, str) else names
-        return cls([(name, location) for name in names], resolve_value=resolve_value)
-
-    @classmethod
-    def attr(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
-        """Try one or more names in source attributes, in declaration order."""
-        return cls._with_location(
-            names, FieldLocation.attr, resolve_value=resolve_value
+        return cls(
+            [(name, location) for name in names],
+            resolve_value=resolve_value,
+            parent=parent,
         )
 
     @classmethod
-    def var(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
-        """Try one or more variable/coordinate/column names in declaration order."""
-        return cls._with_location(names, FieldLocation.var, resolve_value=resolve_value)
+    def attr(
+        cls,
+        names: str | Sequence[str],
+        *,
+        resolve_value: bool = False,
+        parent: NameMapping | None = None,
+    ) -> Self:
+        """Create an attribute mapping from ordered candidate names.
+
+        Parameters
+        ----------
+        names : str or sequence of str
+            Candidate attribute names within the containing subtree,
+            in preference order.
+        resolve_value : bool, default False
+            Store the selected attribute value in the resolved mapper.
+        parent : NameMapping, optional
+            Path mapping for the subtree containing the attribute. ``None``
+            denotes an attribute on the mapping context's data source.
+
+        Returns
+        -------
+        NameMapping
+            Mapping for the supplied attribute names and parent.
+
+        Raises
+        ------
+        ValueError
+            Candidates are empty or duplicated, or the parent is not a path mapping.
+        """
+        return cls._with_location(
+            names, FieldLocation.attr, resolve_value=resolve_value, parent=parent
+        )
 
     @classmethod
-    def dim(cls, names: str | Sequence[str], *, resolve_value: bool = False) -> Self:
-        """Try one or more dimension names in declaration order."""
-        return cls._with_location(names, FieldLocation.dim, resolve_value=resolve_value)
+    def var(
+        cls,
+        names: str | Sequence[str],
+        *,
+        resolve_value: bool = False,
+        parent: NameMapping | None = None,
+    ) -> Self:
+        """Create a variable mapping from ordered candidate names.
+
+        Parameters
+        ----------
+        names : str or sequence of str
+            Candidate variable, coordinate, or column names within the containing
+            subtree, in preference order.
+        resolve_value : bool, default False
+            Store the selected variable's values in the resolved mapper, loading
+            its array data. The default leaves values unloaded.
+        parent : NameMapping, optional
+            Path mapping for the subtree containing the variable. ``None``
+            denotes a variable on the mapping context's data source.
+
+        Returns
+        -------
+        NameMapping
+            Mapping for the supplied variable names and parent.
+
+        Raises
+        ------
+        ValueError
+            Candidates are empty or duplicated, or the parent is not a path mapping.
+        """
+        return cls._with_location(
+            names, FieldLocation.var, resolve_value=resolve_value, parent=parent
+        )
 
     @classmethod
-    def path(cls, paths: str | Sequence[str], *, resolve_value: bool = False) -> Self:
-        """Select a subtree from ordered path candidates.
+    def dim(
+        cls,
+        names: str | Sequence[str],
+        *,
+        resolve_value: bool = False,
+        parent: NameMapping | None = None,
+    ) -> Self:
+        """Create a dimension mapping from ordered candidate names.
+
+        Parameters
+        ----------
+        names : str or sequence of str
+            Candidate dimension names within the containing subtree,
+            in preference order.
+        resolve_value : bool, default False
+            Store the selected dimension size in the resolved mapper.
+        parent : NameMapping, optional
+            Path mapping for the subtree containing the dimension. ``None``
+            denotes a dimension on the mapping context's data source.
+
+        Returns
+        -------
+        NameMapping
+            Mapping for the supplied dimension names and parent.
+
+        Raises
+        ------
+        ValueError
+            Candidates are empty or duplicated, or the parent is not a path mapping.
+        """
+        return cls._with_location(
+            names, FieldLocation.dim, resolve_value=resolve_value, parent=parent
+        )
+
+    @classmethod
+    def path(
+        cls,
+        paths: str | Sequence[str],
+        *,
+        resolve_value: bool = False,
+        parent: NameMapping | None = None,
+    ) -> Self:
+        """Create a subtree mapping from ordered candidate paths.
 
         Parameters
         ----------
         paths : str or sequence of str
-            Paths in lookup order. Relative paths start at the supplied node;
-            ``.`` selects that node. Absolute paths start at the tree root.
+            Candidate paths in preference order. Relative paths are based on
+            ``parent``, or on the mapping context's data source for ``parent=None``.
+            ``.`` denotes that node; absolute paths are based on the tree root.
         resolve_value : bool, default False
             Capture the native subtree during resolution without loading arrays.
+        parent : NameMapping, optional
+            Path mapping for the node relative to which the candidate paths are
+            defined. ``None`` denotes the mapping context's data source.
 
         Returns
         -------
@@ -238,7 +397,7 @@ class NameMapping(Mapping):
         SubpathMapping : Restrict candidates to relative descendant paths.
         """
         return cls._with_location(
-            paths, FieldLocation.path, resolve_value=resolve_value
+            paths, FieldLocation.path, resolve_value=resolve_value, parent=parent
         )
 
     def resolve(
@@ -268,10 +427,13 @@ class SubpathMapping(NameMapping):
     ----------
     candidates : sequence of (str, FieldLocation)
         Relative paths paired with ``FieldLocation.path``. Use the ``path``
-        factory to construct these pairs from strings. Candidates are tried in
-        declaration order.
+        factory to construct these pairs from strings. The sequence defines
+        their preference order.
     resolve_value : bool, default False
         Capture the selected subtree during mapper resolution.
+    parent : NameMapping, optional
+        Path mapping for the node relative to which the candidate paths are
+        defined. ``None`` denotes the mapping context's data source.
 
     Raises
     ------
@@ -321,18 +483,20 @@ class SubpathMapping(NameMapping):
 
 @dataclass(frozen=True, slots=True)
 class MappedField:
-    """Result of field resolution.
+    """Selected data location and fallback value for one schema declaration.
 
     Parameters
     ----------
     mapping : Mapping
-        Original strategy declared by the schema.
+        Mapping declared by the schema attribute.
     mapping_resolved : NameMapping
-        Concrete name mapping returned by resolution.
+        Candidate specification returned by ``mapping.resolve(context)``.
     name : str
-        Physical field name resolved from data source.
+        Selected data name or subtree path within ``parent_path``. This is the
+        first candidate when none exists in the resolution data source.
     location : FieldLocation or None
-        Selected storage namespace. None for an unlocated default or missing field.
+        Selected entity kind: attribute, variable, dimension, or subtree.
+        ``None`` means no entity kind was identified.
     value : Any
         Source value or fallback captured with ``resolve_value=True``, or
         ``MISSING`` when no value was captured.
@@ -342,7 +506,11 @@ class MappedField:
     source : MappedFieldSource
         Whether the original resolution found a source field, a default, or neither.
     schema_path : str, optional
-        Dot-separated path in the schema.
+        Diagnostic identifier ``SchemaClass.attribute``, not a data-tree path.
+    parent_path : str, optional
+        Selected path of the containing subtree. Relative paths are based on
+        the mapping context's data source. ``None`` denotes that data source
+        itself. Access methods apply this path to their supplied data source.
     """
 
     mapping: Mapping
@@ -353,11 +521,23 @@ class MappedField:
     value_default: Any = MISSING
     source: MappedFieldSource = MappedFieldSource.data_source
     schema_path: str = ""
+    parent_path: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class MappingContext:
-    """Short-lived state available while resolving mappings."""
+    """Data source and schema fields available during mapping resolution.
+
+    Parameters
+    ----------
+    data_source : object or None
+        Container relative to which candidate names and paths are defined.
+        ``None`` requests resolution without inspecting data.
+    schema : Schema
+        Schema instance whose attributes include concrete field overrides.
+    mapped_fields : mapping
+        Read-only resolution records available to the current mapping.
+    """
 
     data_source: Any
     schema: Schema
@@ -366,7 +546,11 @@ class MappingContext:
 
 @dataclass
 class Schema:
-    """Base class for a flat collection of semantic fields.
+    """Define semantic names for entities that may occur in data.
+
+    Each field describes possible representations of an entity, such as a
+    variable, attribute, dimension, or subtree. Use these fields with a mapper
+    to access data through consistent names across storage formats.
 
     Examples
     --------
@@ -376,6 +560,34 @@ class Schema:
     ...     field1: Mapping = NameMapping('physical_name')
     ...     field2: Mapping = NameMapping(('alt1', 'alt2'))
     """
+
+    _path_field_names: ClassVar[dict[int, dict[type[Schema], str]]] = {}
+
+    def __init_subclass__(cls, **kwargs: Any) -> None:
+        """Record path mappings declared by this schema class."""
+        super().__init_subclass__(**kwargs)
+        for name in get_annotations(cls):
+            mapping = vars(cls).get(name)
+            if isinstance(mapping, NameMapping) and all(
+                candidate.location == FieldLocation.path
+                for candidate in mapping.candidates
+            ):
+                Schema._path_field_names.setdefault(id(mapping), {}).setdefault(
+                    cls, name
+                )
+
+    def _get_path_field_name(self, mapping: NameMapping) -> str | None:
+        """Return the schema attribute associated with a path declaration."""
+        names = {
+            owner: name
+            for owner, name in Schema._path_field_names.get(id(mapping), {}).items()
+            if isinstance(self, owner)
+        }
+        if not names:
+            return None
+        if len(names) == 1:
+            return next(iter(names.values()))
+        return names[min(names, key=type(self).__mro__.index)]
 
     @classmethod
     def get_schema_path(cls, attr_name: str) -> str:

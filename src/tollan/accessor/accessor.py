@@ -87,7 +87,7 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
 
     @property
     def data_source(self) -> DataSourceT:
-        """Data source containing the data."""
+        """Effective data source exposed by this accessor."""
         return self._data_source
 
     @property

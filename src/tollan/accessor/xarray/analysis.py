@@ -24,22 +24,21 @@ Paths are relative to the scope and namespace, respectively:
 ... )
 >>> @dataclass
 ... class MeanSchema(AnalysisSchemaMixin):
-...     namespace: SubpathMapping = SubpathMapping.path("example.mean")
-...     analysis: Mapping = NameMapping.attr("example.mean.analysis")
+...     _namespace: SubpathMapping = SubpathMapping.path("example.mean")
+...     analysis: NameMapping = NameMapping.attr("example.mean.analysis")
 ...     mean_subpath: SubpathMapping = SubpathMapping.path("mean")
 >>> class MeanMapper(AnalysisMapper[MeanSchema]):
 ...     pass
 
 Implement the input-specific call and declare the output fields. The computation
-returns a Dataset for each declared field:
+returns Datasets keyed by those fields:
 
 >>> class MeanAnalysis(Analysis[MeanMapper]):
 ...     axis: int | None = None
 ...     def _get_output_subpaths(self, *, mapper):
 ...         return (mapper.schema.mean_subpath,)
 ...     def __call__(self, obj, *, output=None):
-...         scope = ensure_analysis_scope(
-...             xr.DataTree() if output is None else output)
+...         scope = xr.DataTree() if output is None else output
 ...         mapper = self._mapper_cls.from_data_source(scope)
 ...         return self._call(
 ...             scope, mapper=mapper,
@@ -79,7 +78,7 @@ The analysis namespace contains both the outputs and their configuration. It can
 be copied or exported independently:
 
 >>> detached = MeanView(scope).data_source.copy(deep=False)
->>> MeanView(detached).mean["mean"].item()
+>>> MeanView.from_namespace(detached).mean["mean"].item()
 2.0
 
 For analyses that retain their xarray input, prepare an input view. A DataArray
@@ -128,7 +127,7 @@ by each analysis determines whether its outputs are eager or lazy.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import cached_property
 from itertools import combinations
 from pathlib import PurePosixPath
@@ -143,12 +142,20 @@ from tollan.utils.typing import (
 )
 
 from ..accessor import AccessorBase
-from ..schema import Mapping, Schema, SubpathMapping
+from ..schema import (
+    MISSING,
+    MappedFieldSource,
+    Mapping,
+    MappingContext,
+    NameMapping,
+    Schema,
+    SubpathMapping,
+)
 from .mapper import XarrayMapper
 from .utils import XarraySourceT, ensure_datatree, unwrap_data_source
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from collections.abc import Mapping as MappingABC
 
 __all__ = [
@@ -504,57 +511,158 @@ class AnalysisSchemaMixin(Schema):
 
     Attributes
     ----------
-    namespace : SubpathMapping
-        Analysis namespace relative to the working scope.
-    analysis : Mapping
+    _namespace : SubpathMapping
+        Required declaration of the analysis namespace relative to the working
+        scope. Concrete schemas must supply this mapping.
+    analysis : NameMapping
         Attribute containing the JSON configuration on the analysis namespace.
 
     Notes
     -----
     Subclasses declare a ``SubpathMapping`` field for each output Dataset,
-    relative to ``namespace``. Output paths must occupy separate subtrees.
+    relative to the selected namespace. Output paths must occupy separate subtrees.
+    ``_namespace`` is a protected declaration for the mapper; consumer code uses
+    ``mapper.namespace_path`` and ``mapper.get_namespace(source)``.
+    Input paths belong to a separate ``AnalysisInputSchema``.
     """
 
-    namespace: SubpathMapping
-    analysis: Mapping
+    _namespace: SubpathMapping
+    analysis: NameMapping
 
 
 class AnalysisMapper[SchemaT: AnalysisSchemaMixin](XarrayMapper[SchemaT]):
-    """Namespace selection within an analysis scope."""
+    """Resolve an analysis layout and provide access to configuration and outputs.
+
+    Use ``from_data_source(scope)`` for a working scope or
+    ``from_namespace(node)`` for an already selected analysis namespace.
+    Pass the scope to ``get_namespace`` and the returned node to output getters.
+
+    The schema's required ``_namespace`` field is relative to the scope; other
+    fields are relative to the analysis namespace. When no candidate namespace
+    exists, ``namespace_path`` gives the first declared path for new output.
+    ``get_namespace`` requires an existing node and raises ``KeyError`` otherwise.
+    """
+
+    @classmethod
+    def from_namespace(
+        cls,
+        namespace: xr.DataTree,
+        defaults: dict[Mapping, Any] | None = None,
+    ) -> Self:
+        """Resolve fields directly within a supplied analysis namespace.
+
+        Parameters
+        ----------
+        namespace : xarray.DataTree
+            Node containing the analysis configuration and output subtrees.
+        defaults : dict[Mapping, Any], optional
+            Fallback values for absent fields.
+
+        Returns
+        -------
+        Self
+            Mapper whose namespace path is ``.`` and whose fields are relative
+            to the supplied node.
+        """
+        mapper = cls()
+        mapper._populate_from_schema_for_namespace(namespace, defaults or {})
+        return mapper
+
+    def _populate_from_schema_for_namespace(
+        self, namespace: xr.DataTree, defaults: dict[Mapping, Any]
+    ) -> None:
+        """Populate fields with the supplied node selected as the namespace."""
+        field = self.schema._namespace
+        context = MappingContext(
+            data_source=namespace,
+            schema=self.schema,
+            mapped_fields=self.mapped_fields,
+        )
+        mapped_field = self._resolve_mapping(
+            mapping=NameMapping.path("."),
+            field_name="_namespace",
+            value_default=defaults.get(field, MISSING),
+            context=context,
+        )
+        self._mapped_fields[field] = replace(mapped_field, mapping=field)
+        self._populate_from_schema(namespace, defaults)
+
+    def _prepare_mapping_context(
+        self, context: MappingContext, defaults: dict[Mapping, Any]
+    ) -> MappingContext:
+        """Resolve the analysis namespace and select it for output mappings."""
+        field = self.schema._namespace
+        if field not in self.mapped_fields:
+            self._mapped_fields[field] = self._resolve_mapping(
+                mapping=field,
+                field_name="_namespace",
+                value_default=defaults.get(field, MISSING),
+                context=context,
+            )
+        mapped_field = self.mapped_fields[field]
+        namespace = (
+            self._get_node(context.data_source, mapped_field.name)
+            if mapped_field.source == MappedFieldSource.data_source
+            else None
+        )
+        return replace(context, data_source=namespace)
+
+    def _iter_schema_mappings(
+        self, context: MappingContext
+    ) -> Iterator[tuple[str, Mapping, MappingContext]]:
+        """Yield configuration and output mappings within the namespace."""
+        for field_name, mapping, context_namespace in super()._iter_schema_mappings(
+            context
+        ):
+            if field_name != "_namespace":
+                yield field_name, mapping, context_namespace
+
+    @property
+    def namespace_path(self) -> str:
+        """Resolved analysis installation path relative to the working scope."""
+        return self.mapped_fields[self.schema._namespace].name
 
     def get_namespace(self, data: xr.DataTree) -> xr.DataTree:
-        """Return the analysis namespace identified by this mapper.
+        """Return the node at this mapper's namespace path.
 
         Parameters
         ----------
         data : xarray.DataTree
-            Analysis namespace or its enclosing working scope.
+            Working scope, or the namespace itself for a mapper constructed
+            with ``from_namespace``.
 
         Returns
         -------
         xarray.DataTree
-            The supplied node if it contains the mapped configuration attribute;
-            otherwise, the node at the mapped namespace path. Its parent and
-            children are retained.
+            Node at ``namespace_path``, retaining its parent and children.
 
         Raises
         ------
-        TypeError
-            The supplied source is not a DataTree.
-        ValueError
-            Neither the configuration attribute nor the namespace path is present.
+        KeyError
+            The namespace path does not identify a tree node.
         """
-        if not isinstance(data, xr.DataTree):
-            msg = "An analysis container view requires a DataTree namespace"
-            raise TypeError(msg)
-        if self.has_attr(data, self.schema.analysis):
-            node = data
-        elif self.has_node(data, self.schema.namespace):
-            node = self.get_node(data, self.schema.namespace)
-        else:
-            msg = "No analysis namespace found"
-            raise ValueError(msg)
-        return node
+        return self.get_node(data, self.schema._namespace)
+
+    def validate_output_subpaths(self, fields: tuple[SubpathMapping, ...]) -> None:
+        """Require mapped output paths to occupy separate subtrees.
+
+        Parameters
+        ----------
+        fields : tuple of SubpathMapping
+            Schema fields identifying the output Datasets within the namespace.
+
+        Raises
+        ------
+        KeyError
+            A field is not registered in the mapper.
+        ValueError
+            Output paths coincide or one contains another.
+        """
+        paths = [PurePosixPath(self.mapped_fields[field].name) for field in fields]
+        for left, right in combinations(paths, 2):
+            if left.is_relative_to(right) or right.is_relative_to(left):
+                msg = "Analysis output subpaths must be separate subtrees"
+                raise ValueError(msg)
 
 
 class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
@@ -566,12 +674,11 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
     model fields. Implement ``_get_output_subpaths`` to return the schema fields
     for the output Datasets.
 
-    The subclass's ``__call__`` validates its inputs, prepares a scope with
-    ``ensure_analysis_scope``, and resolves a mapper with
-    ``self._mapper_cls.from_data_source(scope)``. It then calls ``self._call``
-    with that scope, mapper, and a computation returning Datasets keyed by the
-    declared output fields. A ``can_reuse`` callback can validate existing results
-    when the saved configuration matches.
+    The subclass's ``__call__`` validates its inputs and obtains a valid scope.
+    It resolves a mapper with ``self._mapper_cls.from_data_source(scope)`` and
+    calls ``self._call`` with that scope, mapper, and a computation returning
+    Datasets keyed by declared output fields. A ``can_reuse`` callback can validate
+    existing results when the saved configuration matches.
 
     Each result namespace stores its producing configuration as JSON at the
     schema's ``analysis`` attribute. ``AnalysisView`` restores that configuration
@@ -650,7 +757,7 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
         -------
         tuple of SubpathMapping
             Fields identifying all output Datasets relative to the analysis
-            namespace. The computation must return exactly these fields as keys.
+            namespace. Computed outputs may use any subset of these fields as keys.
 
         Notes
         -----
@@ -673,7 +780,8 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
         Parameters
         ----------
         scope : xarray.DataTree
-            Output scope validated by ``ensure_analysis_scope``.
+            Output scope with no variables, coordinates, or dimensions, including
+            inherited ones. Attributes and children are allowed.
         mapper : AnalysisMapper
             Mapper identifying the namespace, output paths, and configuration attribute.
         compute : callable
@@ -697,8 +805,7 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
         ------
         ValueError
             The destination namespace is invalid, output paths overlap, the saved
-            configuration is invalid, or returned output fields differ from the
-            declaration.
+            configuration is invalid, or a returned output field is undeclared.
         KeyError
             A declared output field is not registered in the mapper.
 
@@ -709,9 +816,8 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
         failures leave the existing namespace unchanged. Lazy arrays remain lazy.
         """
         fields = self._get_output_subpaths(mapper=mapper)
-        paths = [mapper.mapped_fields[field].name for field in fields]
-        self._validate_output_subpaths(paths)
-        namespace = mapper.mapped_fields[mapper.schema.namespace].name
+        mapper.validate_output_subpaths(fields)
+        namespace = mapper.namespace_path
         saved = _validate_namespace_in_scope(scope, namespace)
         if not force and saved is not None:
             config = self._load_from_attr(saved, mapper=mapper)
@@ -723,46 +829,37 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
             ):
                 return scope
         outputs = compute()
-        if outputs.keys() != set(fields):
-            msg = "Computed output fields must match the declared output subpaths"
+        if not outputs.keys() <= set(fields):
+            msg = "Computed output fields must belong to the declared output subpaths"
             raise ValueError(msg)
         result_tree = xr.DataTree()
-        for field, path in zip(fields, paths, strict=True):
-            result_tree[path] = xr.DataTree(dataset=outputs[field])
+        for field, dataset in outputs.items():
+            result_tree[mapper.mapped_fields[field].name] = xr.DataTree(dataset=dataset)
         self._dump_to_attr(result_tree, mapper=mapper)
         scope[namespace] = result_tree
         return scope
-
-    @staticmethod
-    def _validate_output_subpaths(output_subpaths: list[str]) -> None:
-        """Require the declared output Datasets to occupy separate leaves."""
-        output_paths = [PurePosixPath(path) for path in output_subpaths]
-        for left, right in combinations(output_paths, 2):
-            if left.is_relative_to(right) or right.is_relative_to(left):
-                msg = "Analysis output subpaths must be separate subtrees"
-                raise ValueError(msg)
 
 
 class AnalysisView[MapperT: AnalysisMapper, AnalysisT: Analysis](
     AccessorBase[xr.DataTree, MapperT]
 ):
-    """View of analysis outputs and their producing configuration.
+    """Read-only view of analysis outputs and their producing configuration.
 
     Parameters
     ----------
     data_source : xarray.DataTree
-        Analysis namespace or its enclosing working scope.
+        Working scope containing the schema's analysis namespace. Use
+        ``from_namespace`` to view an already selected namespace.
     mapper : AnalysisMapper, optional
-        Namespace and output mappings. If omitted, resolve the view's mapper
-        class against the supplied tree.
+        Namespace and output mappings. If omitted, construct the view's mapper
+        from the supplied tree.
 
     Raises
     ------
-    TypeError
-        The supplied source is not a DataTree.
+    KeyError
+        The namespace path does not identify a tree node.
     ValueError
-        The namespace or its configuration is absent, or the configuration is
-        invalid for the analysis class.
+        The configuration is absent or invalid for the analysis class.
 
     Notes
     -----
@@ -788,6 +885,29 @@ class AnalysisView[MapperT: AnalysisMapper, AnalysisT: Analysis](
         )
         if bindings is not None:
             cls._analysis_cls = bindings["AnalysisT"]
+
+    @classmethod
+    def from_namespace(cls, namespace: xr.DataTree) -> Self:
+        """View an explicitly supplied analysis namespace.
+
+        Parameters
+        ----------
+        namespace : xarray.DataTree
+            Node containing the analysis configuration and output subtrees.
+
+        Returns
+        -------
+        Self
+            Read-only view whose data source is the supplied node.
+
+        Raises
+        ------
+        KeyError
+            A required output node or field is absent.
+        ValueError
+            The producing configuration or outputs are invalid.
+        """
+        return cls(namespace, mapper=cls._mapper_cls.from_namespace(namespace))
 
     @cached_property
     def data_source(self) -> xr.DataTree:

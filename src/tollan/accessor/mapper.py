@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import fields, replace
+from pathlib import PurePosixPath
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, Self, cast
 
 import numpy as np
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from collections.abc import Mapping as MappingABC
 
 from ..utils.typing import (
@@ -32,12 +34,11 @@ __all__ = [
 
 
 class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
-    """Resolve schema fields and provide data access interface.
+    """Resolve schema fields and provide a data access interface.
 
-    Mapper resolves schema field mappings against a data source and retains
-    the resulting physical names and explicitly requested resolution values.
-    The data source is passed to read methods rather than stored as instance
-    state, allowing mapper reuse across multiple datasets.
+    Use ``from_data_source`` to resolve a schema for a particular source, then
+    pass a source and schema field to the read methods. A mapper can be reused
+    with sources that have the same data layout.
 
     Type Parameters
     ---------------
@@ -81,13 +82,20 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         self,
         mapped_fields: MappingABC[Mapping, MappedField] | None = None,
     ) -> None:
-        """Initialize the mapper's private resolution state."""
+        """Initialize a mapper from existing resolution records.
+
+        Parameters
+        ----------
+        mapped_fields : mapping, optional
+            Existing resolution records keyed by schema mappings. ``None`` creates
+            an empty mapper. Use ``from_data_source`` to resolve against data.
+        """
         self._mapped_fields = dict(mapped_fields or {})
         self._mapped_fields_view = MappingProxyType(self._mapped_fields)
 
     @property
     def mapped_fields(self) -> MappingABC[Mapping, MappedField]:
-        """Read-only view of the concrete mapping plan."""
+        """Read-only resolution records keyed by schema mappings."""
         return self._mapped_fields_view
 
     @classmethod
@@ -96,12 +104,13 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         data_source: DataSourceT | None,
         defaults: dict[Mapping, Any] | None = None,
     ) -> Self:
-        """Create mapper resolved against data source.
+        """Resolve the schema against a data source.
 
         Parameters
         ----------
         data_source : DataSourceT or None
-            Data source to resolve against (xarray.Dataset, pd.DataFrame, etc.)
+            Container used to select candidate names and paths. ``None`` selects
+            the first candidate of each field without inspecting data.
         defaults : dict[Mapping, Any] | None
             Fallbacks used by get_value_or_default() and eager resolution when
             the field is absent. Retained even when data_source has the field.
@@ -109,7 +118,7 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         Returns
         -------
         Self
-            Mapper with resolved field mappings
+            Mapper with resolved field mappings.
         """
         mapper = cls()
         mapper._populate_from_schema(data_source, defaults or {})
@@ -120,106 +129,133 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         cls,
         defaults: dict[Mapping, Any] | None = None,
     ) -> Self:
-        """Create mapper resolved using only default values.
+        """Resolve the schema without a data source.
 
         Parameters
         ----------
         defaults : dict[Mapping, Any] | None
-            Default values for fields
+            Fallback values keyed by schema mappings. These are values, not
+            replacement names or paths.
 
         Returns
         -------
         Self
-            Mapper with resolved field mappings
+            Mapper containing first-candidate names and paths with the supplied
+            fallback values.
         """
         return cls.from_data_source(
             data_source=None,
             defaults=defaults,
         )
 
+    def _iter_schema_mappings(
+        self, context: MappingContext
+    ) -> Iterator[tuple[str, Mapping, MappingContext]]:
+        """Yield schema names, mappings, and contexts in declaration order."""
+        for field in fields(context.schema):
+            mapping = getattr(context.schema, field.name)
+            if isinstance(mapping, Mapping):
+                yield field.name, mapping, context
+
+    def _prepare_mapping_context(
+        self, context: MappingContext, defaults: dict[Mapping, Any]
+    ) -> MappingContext:
+        """Prepare the context for schema field resolution.
+
+        Parameters
+        ----------
+        context : MappingContext
+            Source, schema, and existing mappings.
+        defaults : dict[Mapping, Any]
+            Fallback values keyed by schema mappings.
+
+        Returns
+        -------
+        MappingContext
+            Context for the schema iterator. The base implementation returns
+            the supplied context unchanged.
+        """
+        return context
+
     def _populate_from_schema(
         self,
         data_source: DataSourceT | None,
         defaults: dict[Mapping, Any],
     ) -> None:
-        """Resolve each field in a flat schema in declaration order.
+        """Populate resolution records for the schema's mapping declarations.
 
         Parameters
         ----------
         data_source : DataSourceT or None
-            Data source to check for field existence and read values
+            Data source used to resolve the schema mappings.
         defaults : dict[Mapping, Any]
-            Default values for fields not found in data source
+            Fallback values keyed by schema mappings.
         """
         schema = cast("SchemaT", type(self).schema)
-        context = MappingContext(
+        context_initial = MappingContext(
             data_source=data_source,
             schema=schema,
             mapped_fields=self.mapped_fields,
         )
+        context_initial = self._prepare_mapping_context(context_initial, defaults)
 
-        # Earlier fields are visible to later conditional mappings.
-        for schema_field in fields(schema):
-            field_name = schema_field.name
-            mapping = getattr(schema, field_name)
-            if not isinstance(mapping, Mapping):
-                continue
-
-            # Build schema path using schema's get_schema_path method
-            schema_path = schema.get_schema_path(field_name)
-
-            # Get default value for this mapping (or MISSING sentinel)
+        for field_name, mapping, context in self._iter_schema_mappings(context_initial):
             value_default = defaults.get(mapping, MISSING)
 
             self._mapped_fields[mapping] = self._resolve_mapping(
-                data_source=data_source,
                 mapping=mapping,
+                field_name=field_name,
                 value_default=value_default,
-                schema_path=schema_path,
                 context=context,
             )
 
     def _resolve_mapping(
         self,
-        data_source: DataSourceT | None,
         mapping: Mapping,
+        field_name: str,
         value_default: Any,
         context: MappingContext,
-        schema_path: str = "",
     ) -> MappedField:
-        """Resolve a single field mapping.
-
-        Calls ``mapping.resolve(context)`` to handle conditional mappings.
+        """Select one field's data location from its candidate specification.
 
         Parameters
         ----------
-        data_source : DataSourceT or None
-            Data source to check for field existence and read values
         mapping : Mapping
-            Mapping to resolve (may be conditional)
+            Schema declaration whose ``resolve`` method supplies a ``NameMapping``.
+        field_name : str
+            Schema attribute name for this mapping.
         value_default : Any
-            Default value if field not found in data source
+            Fallback value retained in the resolution record.
         context : MappingContext
-            Short-lived source and resolution state for custom mappings.
-        schema_path : str
-            Schema path for error messages
+            Data source, concrete schema, and previously resolved fields.
 
         Returns
         -------
         MappedField
-            Concrete resolution state for the semantic field.
+            Selected name, entity kind, containing path, and optional captured value.
         """
+        schema_path = context.schema.get_schema_path(field_name)
         mapping_resolved = mapping.resolve(context)
-        mapped = None
+        parent_path = None
+        data_source = context.data_source
+        data_source_lookup = data_source
+        if mapping_resolved.parent is not None:
+            parent_path = self._get_parent_path(mapping_resolved.parent, context)
+            if data_source is not None:
+                data_source_lookup = (
+                    self._get_node(data_source, parent_path)
+                    if self._has_node(data_source, parent_path)
+                    else None
+                )
+        mapped_field = None
 
-        # Try to resolve from data_source first
-        if data_source is not None:
+        if data_source_lookup is not None:
             for candidate in mapping_resolved.candidates:
                 location = self._resolve_location(
-                    data_source, candidate.name, candidate.location
+                    data_source_lookup, candidate.name, candidate.location
                 )
                 if location is not None:
-                    mapped = MappedField(
+                    mapped_field = MappedField(
                         mapping=mapping,
                         mapping_resolved=mapping_resolved,
                         name=candidate.name,
@@ -227,12 +263,13 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                         value_default=value_default,
                         source=MappedFieldSource.data_source,
                         schema_path=schema_path,
+                        parent_path=parent_path,
                     )
                     break
 
-        if mapped is None:
+        if mapped_field is None:
             candidate = mapping_resolved.candidates[0]
-            mapped = MappedField(
+            mapped_field = MappedField(
                 mapping=mapping,
                 mapping_resolved=mapping_resolved,
                 name=candidate.name,
@@ -244,19 +281,41 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
                     else MappedFieldSource.missing
                 ),
                 schema_path=schema_path,
+                parent_path=parent_path,
             )
 
         if (
             mapping_resolved.resolve_value
-            and mapped.source != MappedFieldSource.missing
+            and mapped_field.source != MappedFieldSource.missing
         ):
-            mapped = replace(
-                mapped, value=self._read_value_or_default(data_source, mapped)
+            mapped_field = replace(
+                mapped_field,
+                value=self._read_value_or_default(data_source, mapped_field),
             )
-        return mapped
+        return mapped_field
+
+    def _get_parent_path(self, parent: NameMapping, context: MappingContext) -> str:
+        """Compose the containing path from the parent's existing resolution record."""
+        if FieldLocation.path not in self._supported_locations:
+            msg = f"{type(self).__name__} does not support mapping parents"
+            raise ValueError(msg)
+        parent_field_name = context.schema._get_path_field_name(parent)
+        if parent_field_name is not None:
+            parent = getattr(context.schema, parent_field_name)
+        parent_mapped_field = context.mapped_fields.get(parent)
+        if parent_mapped_field is None:
+            msg = "A parent mapping must be declared before its child in the schema"
+            raise ValueError(msg)
+        if parent_mapped_field.location != FieldLocation.path:
+            msg = "A mapping parent must resolve to a subtree"
+            raise ValueError(msg)
+        return str(
+            PurePosixPath(parent_mapped_field.parent_path or ".")
+            / parent_mapped_field.name
+        )
 
     def __contains__(self, mapping: Mapping) -> bool:
-        """Check if field exists in data source (enables `mapping in mapper`).
+        """Return whether the schema field was found during mapper resolution.
 
         Parameters
         ----------
@@ -266,17 +325,22 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         Returns
         -------
         bool
-            True if field exists in data source
+            Whether the resolution record identifies data found in the source
+            used to construct this mapper. This does not inspect a current source.
         """
-        resolved = self.mapped_fields.get(mapping)
-        return resolved.source == MappedFieldSource.data_source if resolved else False
+        mapped_field = self.mapped_fields.get(mapping)
+        return (
+            mapped_field.source == MappedFieldSource.data_source
+            if mapped_field
+            else False
+        )
 
     def get_name(self, mapping: Mapping) -> str | None:
-        """Get resolved physical field name.
+        """Return the selected data name or subtree path for a schema field.
 
         For fields resolved from a data source, returns the actual field name found.
         For fields with default values or missing fields, returns the first name
-        from the mapping's name list (already set in resolved.name by _resolve_mapping).
+        from the mapping's candidate list.
 
         Parameters
         ----------
@@ -288,14 +352,14 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         str | None
             Physical field name, or None if mapping not resolved
         """
-        resolved = self.mapped_fields.get(mapping)
-        return resolved.name if resolved else None
+        mapped_field = self.mapped_fields.get(mapping)
+        return mapped_field.name if mapped_field else None
 
     def get_value(self, data_source: DataSourceT, mapping: Mapping) -> Any:
         """Read a field value from the supplied data source.
 
         Values captured during mapping resolution remain available in
-        ``mapped_fields`` as part of the concrete mapper, but do not replace a
+        ``mapped_fields[mapping].value``, but do not replace a
         read from ``data_source``. Configured defaults are not used; call
         ``get_value_or_default()`` to allow a fallback for an absent field.
 
@@ -317,13 +381,19 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
             If the mapping has no resolved location or the field is absent.
             Backend-specific lookup and read errors propagate unchanged.
         """
-        resolved = self.mapped_fields.get(mapping)
+        mapped_field = self.mapped_fields.get(mapping)
 
-        if resolved is None or resolved.location is None:
+        if mapped_field is None or mapped_field.location is None:
             msg = f"Field not found: {mapping}"
             raise KeyError(msg)
+        if mapped_field.parent_path is not None:
+            data_source = self._get_node(data_source, mapped_field.parent_path)
 
-        return self._read_value(data_source, resolved.name, resolved.location)
+        return self._read_value(
+            data_source,
+            mapped_field.name,
+            mapped_field.location,
+        )
 
     def get_value_or_default(
         self, data_source: DataSourceT | None, mapping: Mapping
@@ -354,26 +424,58 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
             If the mapping is unknown, or neither a source field nor a
             fallback is available.
         """
-        mapped = self.mapped_fields[mapping]
-        return self._read_value_or_default(data_source, mapped)
+        mapped_field = self.mapped_fields[mapping]
+        return self._read_value_or_default(data_source, mapped_field)
 
     def has_attr(self, data_source: DataSourceT, field: Mapping) -> bool:
-        """Return whether the mapped attribute exists in the supplied source."""
-        mapped = self.mapped_fields.get(field)
-        return (
-            mapped is not None
-            and mapped.location == FieldLocation.attr
-            and self._has_attr(data_source, mapped.name)
-        )
+        """Return whether the mapped attribute exists in the supplied source.
+
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Source to inspect at the recorded parent path and name.
+        field : Mapping
+            Schema mapping for the attribute.
+
+        Returns
+        -------
+        bool
+            Whether the attribute exists at its mapped location. Unknown mappings
+            and mappings for other locations return False.
+        """
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.attr:
+            return False
+        if mapped_field.parent_path is not None:
+            if not self._has_node(data_source, mapped_field.parent_path):
+                return False
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._has_attr(data_source, mapped_field.name)
 
     def has_var(self, data_source: DataSourceT, field: Mapping) -> bool:
-        """Return whether the mapped variable exists in the supplied source."""
-        mapped = self.mapped_fields.get(field)
-        return (
-            mapped is not None
-            and mapped.location == FieldLocation.var
-            and self._has_var(data_source, mapped.name)
-        )
+        """Return whether the mapped variable exists in the supplied source.
+
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Source to inspect at the recorded parent path and name.
+        field : Mapping
+            Schema mapping for the variable.
+
+        Returns
+        -------
+        bool
+            Whether the variable exists at its mapped location. Unknown mappings
+            and mappings for other locations return False.
+        """
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.var:
+            return False
+        if mapped_field.parent_path is not None:
+            if not self._has_node(data_source, mapped_field.parent_path):
+                return False
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._has_var(data_source, mapped_field.name)
 
     def get_var(self, data_source: DataSourceT, field: Mapping) -> VariableT:
         """Return the native variable without requesting its values.
@@ -382,6 +484,18 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         pandas. Labels, metadata, and the variable's backend remain available.
         Defaults do not substitute for a native variable.
 
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Source to read at the recorded parent path and name.
+        field : Mapping
+            Schema mapping identifying the data to read.
+
+        Returns
+        -------
+        VariableT
+            Native variable with its backend and metadata preserved.
+
         Raises
         ------
         ValueError
@@ -389,14 +503,16 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         KeyError
             If the variable does not exist in the supplied source.
         """
-        mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location != FieldLocation.var:
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.var:
             msg = (
                 f"Field {self.get_name(field) or field!r} not found as a variable "
                 f"in {type(data_source).__name__}"
             )
             raise ValueError(msg)
-        return self._get_var(data_source, mapped.name)
+        if mapped_field.parent_path is not None:
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._get_var(data_source, mapped_field.name)
 
     def get_scalar(self, data_source: DataSourceT, field: Mapping) -> Any:
         """Read an attribute, scalar variable, or dimension length.
@@ -407,6 +523,18 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         Variable shape is checked before loading values. This method reads the
         supplied source, not defaults or captured resolution values.
 
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Source to read at the recorded parent path and name.
+        field : Mapping
+            Schema mapping identifying the data to read.
+
+        Returns
+        -------
+        Any
+            Attribute value, scalar variable value, or dimension length.
+
         Raises
         ------
         ValueError
@@ -414,16 +542,22 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         KeyError
             If the variable or dimension is absent from the supplied source.
         """
-        mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location in (None, FieldLocation.path):
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location in (None, FieldLocation.path):
             msg = (
                 f"Field {self.get_name(field) or field!r} "
                 f"not found in {type(data_source).__name__}"
             )
             raise ValueError(msg)
-        if mapped.location == FieldLocation.var:
-            return self._read_scalar_var(self._get_var(data_source, mapped.name))
-        return self._read_value(data_source, mapped.name, mapped.location)
+        if mapped_field.parent_path is not None:
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        if mapped_field.location == FieldLocation.var:
+            return self._read_scalar_var(self._get_var(data_source, mapped_field.name))
+        return self._read_value(
+            data_source,
+            mapped_field.name,
+            mapped_field.location,
+        )
 
     def get_str(
         self,
@@ -440,6 +574,20 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         and dtype are checked before loading; object values are checked afterward.
         Defaults and captured resolution values do not replace a source read.
 
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Source to read at the recorded parent path and name.
+        field : Mapping
+            Schema mapping identifying the data to read.
+        encoding : str, default "utf-8"
+            Character encoding used to decode bytes.
+
+        Returns
+        -------
+        str
+            Decoded text with outer null and whitespace padding removed.
+
         Raises
         ------
         KeyError
@@ -451,24 +599,46 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         UnicodeDecodeError
             If bytes cannot be decoded using the requested encoding.
         """
-        mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location is None:
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location is None:
             msg = f"Field not found: {field}"
             raise KeyError(msg)
-        if mapped.location == FieldLocation.var:
-            value = self._read_str_var(self._get_var(data_source, mapped.name))
+        if mapped_field.parent_path is not None:
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        if mapped_field.location == FieldLocation.var:
+            value = self._read_str_var(self._get_var(data_source, mapped_field.name))
         else:
-            value = self._read_value(data_source, mapped.name, mapped.location)
-        return _decode_str(value, name=mapped.name, encoding=encoding)
+            value = self._read_value(
+                data_source,
+                mapped_field.name,
+                mapped_field.location,
+            )
+        return _decode_str(value, name=mapped_field.name, encoding=encoding)
 
     def has_dim(self, data_source: DataSourceT, field: Mapping) -> bool:
-        """Return whether the mapped dimension exists in the supplied source."""
-        mapped = self.mapped_fields.get(field)
-        return (
-            mapped is not None
-            and mapped.location == FieldLocation.dim
-            and self._has_dim(data_source, mapped.name)
-        )
+        """Return whether the mapped dimension exists in the supplied source.
+
+        Parameters
+        ----------
+        data_source : DataSourceT
+            Source to inspect at the recorded parent path and name.
+        field : Mapping
+            Schema mapping for the dimension.
+
+        Returns
+        -------
+        bool
+            Whether the dimension exists at its mapped location. Unknown mappings
+            and mappings for other locations return False.
+        """
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.dim:
+            return False
+        if mapped_field.parent_path is not None:
+            if not self._has_node(data_source, mapped_field.parent_path):
+                return False
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._has_dim(data_source, mapped_field.name)
 
     def get_dim(self, data_source: DataSourceT, field: Mapping) -> int:
         """Read the current length of a mapped dimension without loading arrays.
@@ -491,11 +661,13 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
             If the mapping is absent, selects another location, or the dimension
             does not exist in the supplied source.
         """
-        mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location != FieldLocation.dim:
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.dim:
             msg = f"Dimension not found: {field}"
             raise KeyError(msg)
-        return self._get_dim(data_source, mapped.name)
+        if mapped_field.parent_path is not None:
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._get_dim(data_source, mapped_field.name)
 
     def _resolve_location(
         self, data_source: DataSourceT, name: str, location: FieldLocation | None
@@ -553,18 +725,26 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         raise KeyError(name)
 
     def _read_value_or_default(
-        self, data_source: DataSourceT | None, mapped: MappedField
+        self, data_source: DataSourceT | None, mapped_field: MappedField
     ) -> Any:
-        """Read an existing mapped field, otherwise use its configured fallback."""
+        """Read a mapped value, or return its configured fallback."""
+        if data_source is not None and mapped_field.parent_path is not None:
+            data_source = (
+                self._get_node(data_source, mapped_field.parent_path)
+                if self._has_node(data_source, mapped_field.parent_path)
+                else None
+            )
         if (
             data_source is not None
-            and mapped.location is not None
-            and self._has_field(data_source, mapped.name, mapped.location)
+            and mapped_field.location is not None
+            and self._has_field(data_source, mapped_field.name, mapped_field.location)
         ):
-            return self._read_value(data_source, mapped.name, mapped.location)
-        if mapped.value_default is not MISSING:
-            return mapped.value_default
-        msg = f"Field not found: {mapped.name}"
+            return self._read_value(
+                data_source, mapped_field.name, mapped_field.location
+            )
+        if mapped_field.value_default is not MISSING:
+            return mapped_field.value_default
+        msg = f"Field not found: {mapped_field.name}"
         raise KeyError(msg)
 
     def _has_attr(self, data_source: DataSourceT, name: str) -> bool:
@@ -579,13 +759,13 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         """Check for a dimension without reading arrays; default is False."""
         return False
 
-    def _has_node(self, data_source: DataSourceT, name: str) -> bool:
-        """Check for a subtree without loading arrays; default is False."""
+    def _has_node(self, data_source: DataSourceT, path: str) -> bool:
+        """Check for a subtree at a path without loading arrays; default is False."""
         return False
 
-    def _get_node(self, data_source: DataSourceT, name: str) -> Any:
-        """Return a native subtree, or raise KeyError when unsupported."""
-        raise KeyError(name)
+    def _get_node(self, data_source: DataSourceT, path: str) -> Any:
+        """Return a native subtree at a path, or raise KeyError when unsupported."""
+        raise KeyError(path)
 
     def _get_attr(self, data_source: DataSourceT, name: str) -> Any:
         """Return an attribute by physical name."""
@@ -618,8 +798,8 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
     def validate_has_field(self, field: Mapping) -> None:
         """Validate that a required field was found during mapping.
 
-        This checks the concrete plan resolved from the mapper's reference
-        source. It does not inspect the source supplied to a later read.
+        This checks the resolution record created during mapper construction.
+        It does not inspect the source supplied to a later read.
 
         Parameters
         ----------

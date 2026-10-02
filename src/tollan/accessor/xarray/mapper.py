@@ -68,22 +68,26 @@ class XarrayMapper[SchemaT: Schema = Schema](
         data_source: XarraySourceT | None,
         defaults: dict[Mapping, Any] | None = None,
     ) -> Self:
-        """Resolve fields against an xarray source without loading arrays.
+        """Resolve schema fields against an xarray source.
+
+        Candidate lookup does not load array values. A variable mapping with
+        ``resolve_value=True`` loads its values during resolution.
 
         Parameters
         ----------
         data_source : Dataset, DataArray, DataTree or None
-            Source to inspect. Tree variables, attributes and dimensions belong
-            to the current node; node mappings select paths relative to it.
-            None constructs a defaults-only mapper.
+            Source to inspect. A mapping's parent identifies its containing subtree;
+            without a parent, fields belong to the supplied source. Tree variable
+            mappings also accept slash paths to variables and coordinates.
+            ``None`` constructs a defaults-only mapper.
         defaults : dict[Mapping, Any], optional
             Explicit fallbacks for absent fields.
 
         Returns
         -------
         Self
-            Concrete mapping plan. Ordinary resolution does not retain the
-            source; ``resolve_value=True`` on a node mapping captures that node.
+            Mapper with resolved names, locations, and parent paths. A path
+            mapping with ``resolve_value=True`` retains its selected tree node.
         """
         if data_source is not None and not isinstance(
             data_source, xr.Dataset | xr.DataArray | xr.DataTree
@@ -100,20 +104,22 @@ class XarrayMapper[SchemaT: Schema = Schema](
         data_source : Dataset, DataArray or DataTree
             Source to inspect without loading arrays.
         field : Mapping
-            Schema field resolved in the path namespace.
+            Schema mapping for a subtree path.
 
         Returns
         -------
         bool
-            False for unknown fields, other namespaces, missing paths, or flat
+            False for unknown fields, other entity kinds, missing paths, or flat
             sources. Otherwise True; the recorded path is not re-resolved.
         """
-        mapped = self.mapped_fields.get(field)
-        return (
-            mapped is not None
-            and mapped.location == FieldLocation.path
-            and self._has_node(data_source, mapped.name)
-        )
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.path:
+            return False
+        if mapped_field.parent_path is not None:
+            if not self._has_node(data_source, mapped_field.parent_path):
+                return False
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._has_node(data_source, mapped_field.name)
 
     def get_node(self, data_source: XarraySourceT, field: Mapping) -> xr.DataTree:
         """Return a mapped subtree without copying or loading its arrays.
@@ -123,7 +129,7 @@ class XarrayMapper[SchemaT: Schema = Schema](
         data_source : Dataset, DataArray or DataTree
             Source containing the subtree. Only DataTree sources have nodes.
         field : Mapping
-            Schema field resolved in the path namespace.
+            Schema mapping for a subtree path.
 
         Returns
         -------
@@ -133,28 +139,30 @@ class XarrayMapper[SchemaT: Schema = Schema](
         Raises
         ------
         KeyError
-            The field is unknown, selects another namespace, or its path does
+            The field is unknown, selects another entity kind, or its path does
             not identify a DataTree node in the supplied source.
         """
-        mapped = self.mapped_fields.get(field)
-        if mapped is None or mapped.location != FieldLocation.path:
+        mapped_field = self.mapped_fields.get(field)
+        if mapped_field is None or mapped_field.location != FieldLocation.path:
             msg = f"Node not found: {field}"
             raise KeyError(msg)
-        return self._get_node(data_source, mapped.name)
+        if mapped_field.parent_path is not None:
+            data_source = self._get_node(data_source, mapped_field.parent_path)
+        return self._get_node(data_source, mapped_field.name)
 
-    def _has_node(self, data_source: XarraySourceT, name: str) -> bool:
+    def _has_node(self, data_source: XarraySourceT, path: str) -> bool:
         try:
-            self._get_node(data_source, name)
+            self._get_node(data_source, path)
         except KeyError:
             return False
         return True
 
-    def _get_node(self, data_source: XarraySourceT, name: str) -> xr.DataTree:
+    def _get_node(self, data_source: XarraySourceT, path: str) -> xr.DataTree:
         if isinstance(data_source, xr.DataTree):
-            node = data_source[name]
+            node = data_source[path]
             if isinstance(node, xr.DataTree):
                 return node
-        raise KeyError(name)
+        raise KeyError(path)
 
     def _has_attr(self, data_source: XarraySourceT, name: str) -> bool:
         """Check source attributes without reading values."""
@@ -163,7 +171,10 @@ class XarrayMapper[SchemaT: Schema = Schema](
     def _has_var(self, data_source: XarraySourceT, name: str) -> bool:
         """Check variables or coordinates without reading values."""
         if isinstance(data_source, xr.DataTree):
-            data_source = data_source.dataset
+            try:
+                return isinstance(data_source[name], xr.DataArray)
+            except KeyError:
+                return False
         if isinstance(data_source, xr.Dataset):
             return name in data_source.variables
         return name == (data_source.name or "data") or name in data_source.coords
@@ -187,7 +198,10 @@ class XarrayMapper[SchemaT: Schema = Schema](
     def _get_var(self, data_source: XarraySourceT, name: str) -> QDataArray:
         """Return the native variable or coordinate without loading values."""
         if isinstance(data_source, xr.DataTree):
-            data_source = data_source.dataset
+            value = data_source[name]
+            if not isinstance(value, xr.DataArray):
+                raise KeyError(name)
+            return cast("QDataArray", value)
         if isinstance(data_source, xr.Dataset):
             # Dataset indexing alone can synthesize a coordinate for a bare dim.
             if name not in data_source.variables:
