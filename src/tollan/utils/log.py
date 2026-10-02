@@ -97,6 +97,7 @@ class logit(ContextDecorator):  # noqa: N801
         self._log_func(f"{self._msg} done")
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        """Decorate a callable with entry and exit logging."""
         self._rebind(offset_depth=2)
         return super().__call__(*args, **kwargs)
 
@@ -225,6 +226,17 @@ def reset_logger(
     Reset the global logger to default configuration.
 
     Removes all handlers and adds a new one with the given options.
+
+    Parameters
+    ----------
+    sink : object, optional
+        Loguru sink for the new handler, by default standard error.
+    verbose : bool, optional
+        Log the reset through the previous handlers, by default True.
+    level : str, optional
+        Minimum level for the new handler, by default ``"DEBUG"``.
+    **kwargs
+        Additional options forwarded to ``logger.add()``.
     """
     if verbose:
         logger.debug(f"reset logger with {sink=} {level=}")

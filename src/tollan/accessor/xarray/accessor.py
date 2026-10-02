@@ -93,7 +93,7 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[XarraySourceT, MapperT]):
 
     @functools.cached_property
     def data_source(self) -> XarrayPayloadT:
-        """Return the unwrapped payload supplied to mapper operations.
+        """Unwrapped payload supplied to mapper operations.
 
         DataTrees select their current node. Override this property to select a
         different node for a view. DataArrays retain their own attributes.

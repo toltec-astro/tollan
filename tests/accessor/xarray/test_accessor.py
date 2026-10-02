@@ -405,7 +405,7 @@ class TestXarrayAccessorBaseResolution:
 
         # Should raise error during initialization (when creating mapper)
         with pytest.raises(ValueError, match="No analysis child found"):
-            accessor = CustomAccessor(dt)
+            CustomAccessor(dt)
 
 
 class TestXarrayAccessorBaseDualRegistration:
@@ -718,7 +718,7 @@ class TestXarrayAccessorBaseValidation:
                 validation_called.append(True)
 
         ds = xr.Dataset({"required": (["x"], [1, 2, 3])})
-        accessor = ValidatingAccessor(ds)
+        ValidatingAccessor(ds)
 
         assert len(validation_called) == 1
 

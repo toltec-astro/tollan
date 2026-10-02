@@ -53,14 +53,36 @@ class EnvHandler(ConfigHandler[EnvConfig, RuntimeContext[Any]]):
 
     @classmethod
     def prepare_config_data(cls, runtime_config: RuntimeConfig) -> DictConfigT:
-        """Extract the environment namespace, using an empty mapping if absent."""
+        """Extract the environment namespace, using an empty mapping if absent.
+
+        Parameters
+        ----------
+        runtime_config : RuntimeConfig
+            Validated application configuration.
+
+        Returns
+        -------
+        dict
+            This handler's environment section, prior to string conversion.
+        """
         if cls._namespace in type(runtime_config).model_fields:
             return getattr(runtime_config, cls._namespace)
         return (runtime_config.model_extra or {}).get(cls._namespace, {})
 
     @classmethod
     def prepare_runtime_config_data(cls, config_data: DictConfigT) -> DictConfigT:
-        """Wrap an environment patch under this handler's namespace."""
+        """Wrap an environment patch under this handler's namespace.
+
+        Parameters
+        ----------
+        config_data : dict
+            Environment variables to merge into the runtime.
+
+        Returns
+        -------
+        dict
+            Runtime patch containing the supplied values under the namespace.
+        """
         return {cls._namespace: config_data}
 
     def as_environ(self) -> dict[str, str]:

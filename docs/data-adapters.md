@@ -11,7 +11,7 @@ conditional mappings, and defaults.
 Declare variables with `NameMapping.var()`, attributes with
 `NameMapping.attr()`, and dimension lengths with `NameMapping.dim()`:
 
-```python
+```{testcode}
 from dataclasses import dataclass
 
 import xarray as xr
@@ -101,7 +101,7 @@ the subtree without loading its arrays; node mappings are not scalar fields.
 
 For optional fields, check their availability before reading:
 
-```python
+```{testcode}
 if mapper.schema.label in mapper:
     label = mapper.get_str(ds, mapper.schema.label)
 ```
@@ -115,7 +115,7 @@ mapper when you need to select different names or locations.
 
 Pass defaults when creating the mapper, then use `get_value_or_default()`:
 
-```python
+```{testcode}
 label_field = ReadingsMapper.schema.label
 mapper_with_defaults = ReadingsMapper.from_data_source(
     ds, defaults={label_field: "Unknown"}
@@ -145,7 +145,7 @@ and you want to reuse the same mapper.
 
 Use `XarrayAccessorBase` to expose the reads your application uses frequently:
 
-```python
+```{testcode}
 from tollan.accessor.xarray import XarrayAccessorBase
 
 
@@ -166,7 +166,7 @@ assert tree.readings.temperature.identical(temperature)
 An accessor accepts a Dataset, DataArray, or DataTree. With a DataTree, it reads
 the current node. To read a child, use the accessor on that child:
 
-```python
+```{testcode}
 tree["processed"] = xr.DataTree(dataset=ds)
 assert tree["processed"].readings.temperature.identical(temperature)
 ```
@@ -193,7 +193,7 @@ Dataset at an unnamed root. Accessors accept the resulting containers directly.
 To recover a wrapped DataArray with its variable attributes, use
 `unwrap_data_source()`:
 
-```python
+```{testcode}
 from tollan.accessor.xarray import ensure_datatree, unwrap_data_source
 
 container = ensure_datatree(ds["temp"])
@@ -214,7 +214,7 @@ Define the namespace, configuration attribute, and output paths in a schema.
 Implement the computation in an `Analysis` subclass and expose the results
 through an `AnalysisView`:
 
-```python
+```{testcode}
 from dataclasses import dataclass
 
 import numpy as np
@@ -300,7 +300,7 @@ Select a working scope with `ensure_analysis_scope()`. A valid scope has no
 variables, coordinates, or dimensions, including inherited ones. It can contain
 attributes and child nodes:
 
-```python
+```{testcode}
 tree = xr.DataTree.from_dict({"measurement": xr.Dataset()})
 scope = ensure_analysis_scope(tree, parent_namespace="measurement")
 assert analysis([2.0, 4.0], output=scope) is scope
@@ -323,7 +323,7 @@ Use `prepare_analysis_input_view()` to retain a DataArray or Dataset under
 `_input` in a new scope. The view's `data_source` selects that input node, and
 `unwrap()` recovers the original container type:
 
-```python
+```{testcode}
 from tollan.accessor.xarray import prepare_analysis_input_view
 
 signal = xr.DataArray([1.0, 2.0, 3.0], dims="sample", name="signal")
@@ -355,7 +355,7 @@ recomputation; create a new view to read the replacement.
 
 Export the namespace to store its outputs and configuration together:
 
-```python
+```{testcode}
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -372,7 +372,7 @@ with TemporaryDirectory() as directory:
 
 Importing `tollan.accessor.xarray` enables the DataArray `u` accessor:
 
-```python
+```{testcode}
 from astropy import units as u
 
 length = xr.DataArray([1.0, 2.0], dims="sample").u.set(u.m)
@@ -395,7 +395,7 @@ returns the DataArray itself.
 Bind a schema to `NetCDF4Mapper`, then pass an open Dataset to its read methods.
 This example creates a small temporary file with the fields used above:
 
-```python
+```{testcode}
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -435,7 +435,7 @@ unchanged, and dimension reads return their current integer length.
 columns with a `units` attribute become Quantity columns; plain columns retain
 their dtypes. The Dataset remains the storage representation for netCDF/Zarr.
 
-```python
+```{testcode}
 from tollan.accessor.xarray import dataset_to_qtable, select_table_rows
 
 readings = xr.Dataset(
@@ -468,7 +468,7 @@ multidimensional data. A DataTree input selects the current node's dataset.
 
 Use `.var()` for columns and `.attr()` for values in `DataFrame.attrs`:
 
-```python
+```{testcode}
 import pandas as pd
 from tollan.accessor.pandas import DataFrameMapper
 

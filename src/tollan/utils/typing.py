@@ -28,8 +28,20 @@ __all__ = [
 def get_literal_values(annotation: Any) -> list[Any]:
     """Return the distinct values of a ``Literal`` or a named literal alias.
 
-    The result is always a new list, including for a one-value literal.
-    Raise ``TypeError`` for a non-literal annotation or an invalid literal value.
+    Parameters
+    ----------
+    annotation : object
+        Literal annotation or named type alias resolving to one.
+
+    Returns
+    -------
+    list
+        New list of distinct literal values in declaration order.
+
+    Raises
+    ------
+    TypeError
+        The annotation is not a Literal or contains an invalid literal value.
 
     Examples
     --------
@@ -53,7 +65,22 @@ def get_literal_values(annotation: Any) -> list[Any]:
 def get_literal_value(annotation: Any) -> Any:
     """Return the sole value of a ``Literal`` or a named literal alias.
 
-    Raise ``ValueError`` unless there is exactly one distinct value.
+    Parameters
+    ----------
+    annotation : object
+        Literal annotation or named type alias resolving to one.
+
+    Returns
+    -------
+    object
+        The single literal value.
+
+    Raises
+    ------
+    TypeError
+        The annotation is not a valid Literal.
+    ValueError
+        More than one distinct value is allowed.
 
     Examples
     --------
@@ -72,10 +99,12 @@ def get_literal_value(annotation: Any) -> Any:
 class GenericBindingRequirement:
     """Runtime policy for one origin type variable used by a framework class.
 
-    ``runtime_attr`` names the class attribute derived from the resolved type. It
-    is used to reject a second, conflicting source of truth. ``bound`` enables
-    the common requirement that the resolved type be a subclass of a runtime
-    base.
+    Parameters
+    ----------
+    runtime_attr : str
+        Derived class attribute; assigning it explicitly on the subclass is rejected.
+    bound : type or None, optional
+        Required base class for the resolved type, or None for no bound check.
     """
 
     runtime_attr: str
@@ -294,17 +323,29 @@ def _walk_generic_paths(
 def resolve_generic_bindings(cls: type, origin: type) -> GenericBindings:
     """Resolve ``origin`` type variables as inherited by ``cls``.
 
-    Unlike a recursive ``get_args`` scan, resolution is tied to one exact
-    generic origin. Type variables are substituted at every inheritance edge,
-    unrelated generic bases are ignored, and conflicting diamond paths fail
-    explicitly.
+    - Check :attr:`GenericBindings.is_resolved` before using bindings from an
+      intermediate generic class.
+    - For Pydantic models, call from ``__pydantic_init_subclass__``.
+    - For ordinary classes, call from ``__init_subclass__``.
 
-    An intermediate generic class returns bindings containing unresolved type
-    variables. Consumers can use :attr:`GenericBindings.is_resolved` to
-    defer materializing runtime class attributes until specialization.
+    Parameters
+    ----------
+    cls : type
+        Class whose inherited type arguments are inspected.
+    origin : type
+        Exact generic ancestor declaring the type parameters of interest.
 
-    Pydantic generic models are supported. For class-creation hooks on models,
-    call this from ``__pydantic_init_subclass__`` rather than ``__init_subclass__``.
+    Returns
+    -------
+    GenericBindings
+        Bindings in the origin's declaration order, retaining unresolved
+        variables for intermediate classes.
+
+    Raises
+    ------
+    TypeError
+        Inputs are not classes, the origin is absent from the hierarchy, or
+        multiple inheritance paths disagree about its bindings.
     """
     if not isinstance(cls, type) or not isinstance(origin, type):
         msg = "resolve_generic_bindings expects class objects"
@@ -359,14 +400,31 @@ def resolve_concrete_generic_bindings(
 ) -> GenericBindings | None:
     """Apply the common class-creation policy to generic bindings.
 
-    The low-level resolver only describes the inheritance graph. Framework
-    consumers additionally need the same three rules: a runtime class
-    attribute cannot be set explicitly, an intermediate generic class may
-    defer materialization, and a concrete resolved type may need a class bound.
+    Parameters
+    ----------
+    cls : type
+        Subclass whose runtime binding policy is being checked.
+    origin : type
+        Generic ancestor declaring the required type parameters.
+    **requirements : GenericBindingRequirement
+        Requirements keyed by origin type-variable name. Each names the derived
+        runtime attribute and optionally requires a subclass of a given bound.
 
-    ``None`` means that one of the requested type variables remains unresolved on
-    a genuinely generic intermediate class. A bare concrete subclass with the
-    same unresolved type variable is rejected.
+    Returns
+    -------
+    GenericBindings or None
+        Validated bindings, or None when an intermediate class defers binding.
+        The caller remains responsible for assigning the runtime attributes.
+
+    Raises
+    ------
+    ValueError
+        No requirements were supplied.
+    KeyError
+        A requirement names an unknown origin type variable.
+    TypeError
+        Bindings conflict, violate bounds, remain unresolved on a concrete
+        class, or the subclass explicitly assigns a derived runtime attribute.
     """
     if not requirements:
         msg = "At least one generic binding requirement is needed"

@@ -26,8 +26,7 @@ class ListConfigSource(ConfigSourceBase):
 
     Examples
     --------
-    >>> from . import ConfigSourceList
-    >>> from .dict_ import DictConfigSource
+    >>> from tollan.config.sources import ConfigSourceList, DictConfigSource
     >>> sources = ConfigSourceList(data=[
     ...     DictConfigSource(order=0, source={"base": True}),
     ...     DictConfigSource(order=1, source={"override": True})
@@ -96,7 +95,13 @@ class ListConfigSource(ConfigSourceBase):
         return self
 
     def enable_cache(self, *, enabled: bool = True) -> None:
-        """Configure read caching for the contained sources."""
+        """Configure read caching for the contained sources.
+
+        Parameters
+        ----------
+        enabled : bool, optional
+            Reuse file reads in this list and its nested lists, by default True.
+        """
         self.source.enable_cache(enabled=enabled)
 
     def invalidate_cache(self) -> None:

@@ -18,20 +18,44 @@ Data Accessors
 .. automodapi:: tollan.accessor.pandas
 
 .. automodapi:: tollan.accessor.xarray
+   :skip: Analysis
+
+.. autodata:: tollan.accessor.xarray.utils.XarraySourceT
+   :no-value:
+
+.. autodata:: tollan.accessor.xarray.utils.XarrayPayloadT
+   :no-value:
 
 Configuration System
 --------------------
 
 .. automodapi:: tollan.config
+   :skip: ConfigSourceFormat, EnvConfig, FrozenBaseModel, RuntimeConfig, RuntimeInfo
 
 .. automodapi:: tollan.config.sources
+   :skip: ConfigSourceFormat, ConfigSourceList, DictConfigSource, EnvFileConfigSource, ListConfigSource, YamlConfigSource
+
+See :doc:`models` for configuration fields, defaults, validators, and JSON schemas.
 
 .. automodapi:: tollan.config.types
+   :skip: quantity_field
+
+The annotation aliases are described in :doc:`validation-types`.
+
+.. autodata:: tollan.config.types.path.PathType
+   :no-value:
+
+   Accepted path checks: ``"file"``, ``"dir"``, or ``"new"``.
+
+.. autofunction:: tollan.config.types.quantity.quantity_field
+
+.. autofunction:: tollan.config.types.quantity.get_physical_type_from_quantity_type
 
 Pipeline
 --------
 
 .. automodapi:: tollan.pipeline
+   :skip: StepConfig, StepContext
 
 Plotting
 --------
@@ -50,6 +74,14 @@ Utilities
 .. automodapi:: tollan.utils.file
 
 .. automodapi:: tollan.utils.fileloc
+   :skip: FileLoc, fileloc
+
+.. autofunction:: tollan.utils.fileloc.fileloc
+
+.. autodata:: tollan.utils.fileloc.FileLocUrl
+   :no-value:
+
+   A Pydantic URL restricted to ``file``, ``http``, or ``https`` schemes.
 
 .. automodapi:: tollan.utils.fmt
 

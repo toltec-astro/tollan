@@ -22,6 +22,7 @@ __all__ = [
 ]
 
 
+#: Configuration values keyed by names or integer list-update positions.
 type DictConfigT = dict[str | int, Any]
 
 
@@ -43,9 +44,13 @@ class ConfigSourceBase(BaseModel):
     model_config = {"frozen": True}
 
     order: int
+    """Merge priority within the list; later sources override earlier ones."""
     name: str | None = None
+    """Optional source label for lookup and diagnostics."""
     enabled: bool = True
+    """Whether the source may contribute configuration."""
     enable_if: str | None = None
+    """Trusted pandas query expression evaluated against the loading context."""
 
     def is_enabled_for(self, context: dict[str, Any] | None = None) -> bool:
         """Evaluate whether this source is enabled for the given context.
@@ -120,7 +125,14 @@ class ConfigSourceBase(BaseModel):
         return not result.empty
 
     def enable_cache(self, *, enabled: bool = True) -> None:
-        """Configure cached reads, if the source has any."""
+        """Configure cached reads, if the source has any.
+
+        Parameters
+        ----------
+        enabled : bool, optional
+            Reuse file read results, by default True. Dictionary sources have
+            no read cache. This base implementation does nothing.
+        """
 
     def invalidate_cache(self) -> None:
         """Clear cached reads, if the source has any."""

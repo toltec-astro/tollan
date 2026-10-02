@@ -16,6 +16,7 @@ rebuild-lockfiles:
 qa:
     uv run --locked pre-commit run --all-files
     uv run --locked coverage run -m pytest
+    just doc-test
 
 # Run tests with coverage
 coverage:
@@ -53,10 +54,17 @@ clean:
 
 # Build the docs
 doc-build:
-    uv run --locked --group docs sphinx-build -M html docs docs/_build -T
+    rm -rf docs/api docs/_build
+    uv run --locked --group docs sphinx-build -M html docs docs/_build -E -a -n -W --keep-going -T
+
+# Render first, then execute examples in a fresh process using the same doctrees.
+# This also avoids autodoc's annotation mutations affecting Pydantic examples.
+doc-test: doc-build
+    uv run --locked --group docs sphinx-build -M doctest docs docs/_build -n -W --keep-going -T
 
 # Serve docs locally with live reload
 doc:
+    rm -rf docs/api
     uv run --locked --group docs sphinx-autobuild docs docs/_build/html --port 8888 --open-browser
 
 # Deploy docs to GitHub Pages

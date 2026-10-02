@@ -101,7 +101,7 @@ class UnitsAccessor:
 
     @property
     def unit_str(self) -> str | None:
-        """Get the unit string from the DataArray.
+        """Unit string stored on the DataArray.
 
         Returns
         -------
@@ -121,7 +121,7 @@ class UnitsAccessor:
 
     @property
     def unit(self) -> Unit | None:
-        """Get the Astropy Unit object from the DataArray.
+        """Astropy Unit represented by the DataArray metadata.
 
         Returns
         -------
@@ -152,7 +152,7 @@ class UnitsAccessor:
 
     @property
     def quantity(self) -> Quantity | DaskArray | xr.DataArray:
-        """Get the data with its unit attached when one is present.
+        """Data with its unit attached when one is present.
 
         NumPy-backed data becomes a no-copy Astropy Quantity view.
         Dask-backed data remains lazy and computes to a Quantity. If no unit is

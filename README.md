@@ -19,7 +19,7 @@ Tollan is a Python utility library designed for astronomy projects, providing:
 
 - **Python**: 3.13+
 - **Core**: pydantic, pyyaml, typer, loguru
-- **Astronomy**: astropy, astroquery
+- **Astronomy**: astropy
 - **Plotting**: matplotlib, plotly, dash
 
 ## Installation
@@ -32,6 +32,7 @@ git clone https://github.com/toltec-astro/tollan.git
 cd tollan
 
 # Install with uv (recommended)
+uv venv
 uv pip install -e .
 
 # Or with pip
@@ -42,21 +43,22 @@ pip install -e .
 
 ```python
 from tollan.config import RuntimeContext
-from pathlib import Path
 
-# Multi-source configuration with precedence
+# A complete in-memory example: later sources override earlier ones.
 rc = RuntimeContext(
     config_sources=[
         {"format": "dict", "source": {"host": "localhost"}, "order": 0},
-        {"format": "yaml", "source": Path("config.yaml"), "order": 10},
-        {"format": "envfile", "source": Path(".env"), "order": 20},
+        {"format": "dict", "source": {"host": "example.org"}, "order": 10},
     ]
 )
 
 # Access merged configuration
 config = rc.config_dict
-print(config["host"])
+assert config["host"] == "example.org"
 ```
+
+See the [configuration guide](https://toltec-astro.github.io/tollan/configuration.html)
+for YAML files, dotenv files, CLI options, and validated component settings.
 
 ## Development
 

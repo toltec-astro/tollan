@@ -41,7 +41,7 @@ Accessor properties and domain operations
 Schemas are standard-library dataclasses. Each field is annotated with
 `Mapping`, allowing either a `NameMapping` or another mapping strategy.
 
-```python
+```{testcode}
 from dataclasses import dataclass
 
 from tollan.accessor import Mapping, NameMapping, Schema
@@ -61,7 +61,7 @@ candidate names or paths for one entity kind. The mapper selects the first
 existing candidate. Variables include coordinates and table columns; dimension
 reads return integer lengths. A coordinate and its dimension are separate fields:
 
-```python
+```{testcode}
 sample = NameMapping.var("sample")  # Coordinate values
 n_samples = NameMapping.dim("sample")  # Dimension length
 ```
@@ -72,7 +72,7 @@ Use path mappings to identify subtrees by a consistent schema field name.
 `mapper.get_node()` returns the mapped subtree without copying it or loading
 its arrays:
 
-```python
+```{testcode}
 import xarray as xr
 from tollan.accessor.xarray import XarrayMapper
 
@@ -109,7 +109,7 @@ sources have no nodes.
 A field's `parent` declares the subtree containing it. The `/` operator is
 shorthand for the same declaration:
 
-```python
+```{testcode}
 assert SpectrumSchema.power == NameMapping.var("power", parent=SpectrumSchema.result)
 ```
 
@@ -131,7 +131,7 @@ or dimension name. Backends without subtree support reject parent mappings.
 
 Override a parent field to read its children from a different subtree:
 
-```python
+```{testcode}
 @dataclass
 class AlternateSpectrumSchema(SpectrumSchema):
     result: Mapping = NameMapping.path("products/spectrum")
@@ -154,7 +154,7 @@ overrides as a direct declaration.
 
 Compose deeper paths through named schema fields:
 
-```python
+```{testcode}
 @dataclass
 class NestedSpectrumSchema(Schema):
     namespace: Mapping = NameMapping.path("analysis")
@@ -165,7 +165,7 @@ class NestedSpectrumSchema(Schema):
 Use `SubpathMapping` when every candidate must be a descendant of the supplied
 node. It validates paths when the schema is declared:
 
-```python
+```{testcode}
 from tollan.accessor import SubpathMapping
 
 input_subpath = SubpathMapping.path(("samples", "_input"))
@@ -177,7 +177,7 @@ Use `NameMapping.path()` when those general tree selectors are needed.
 
 To try different locations in order, supply name/location pairs:
 
-```python
+```{testcode}
 from tollan.accessor import FieldLocation
 
 n_samples = NameMapping(
@@ -248,7 +248,7 @@ Each field resolves with a `MappingContext` containing:
 
 A custom strategy may use any of this information to return a `NameMapping`:
 
-```python
+```{testcode}
 from dataclasses import dataclass
 
 from tollan.accessor import Mapping, MappingContext, NameMapping, Schema
@@ -284,7 +284,7 @@ and its parent relationship, without loading any arrays.
 
 Read methods always receive the source explicitly:
 
-```python
+```{testcode}
 class ObservationMapper(XarrayMapper[ObservationSchema]):
     pass
 
@@ -336,7 +336,7 @@ Bind your schema and source type to `Mapper`, then implement existence checks
 and reads for the locations your source supports. For a dictionary-like source,
 implement `_has_var()` and `_get_var()`:
 
-```python
+```{testcode}
 from typing import Any
 
 from tollan.accessor import Mapper

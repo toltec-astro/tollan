@@ -185,6 +185,25 @@ type UnixTimeField = Annotated[Time, *_UNIX_TIME_METADATA]
 def time_field(
     formats_allowed: str | Sequence[str] | None = None,
 ) -> TypeForm[Time]:
-    """Build a reusable scalar Time annotation from Astropy format names."""
+    """Build a reusable scalar Time annotation from Astropy format names.
+
+    Parameters
+    ----------
+    formats_allowed : str or sequence of str, optional
+        Formats to try in order, such as ``"mjd"`` or ``("isot", "iso")``.
+        None delegates format inference to Astropy. Numeric inputs require
+        an explicit format. Existing scalar Time objects are accepted directly.
+
+    Returns
+    -------
+    typing_extensions.TypeForm
+        Pydantic annotation producing a scalar Time. Serialization uses the
+        first allowed format, or ``isot`` by default. String output uses UTC.
+
+    Raises
+    ------
+    ValueError
+        A format is unknown or does not produce a scalar JSON string or number.
+    """
     formats = _normalize_formats(formats_allowed)
     return Annotated[Time, *_time_metadata(formats)]

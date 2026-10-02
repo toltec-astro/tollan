@@ -1,11 +1,9 @@
 """Pipeline step base classes.
 
-Provides a typed, context-aware pipeline system over ``xr.DataTree`` (or any
-container with an ``.attrs`` dict).  The design mirrors the v2
-``tolteca_kids.pipeline`` module, adapted for v3 xarray-first data model:
+Provides typed steps over containers with an ``.attrs`` or ``.meta`` mapping:
 
-- Context is stored in ``data.attrs["__pipeline_context__"]`` (equivalent to
-  v2's ``data.meta["__pipeline_context__"]``).
+- Context is stored in ``data.attrs["__pipeline_context__"]`` or the corresponding
+  entry in ``data.meta`` when ``attrs`` is absent.
 - :class:`Step` subclasses declare typed :class:`StepConfig` /
   :class:`StepContext` type-variable bindings; ``Step.get_context(data)`` returns
   the typed context without dict-key lookups at the call site.
@@ -105,10 +103,7 @@ class StepContext[StepT: "Step", ConfigT: "StepConfig"](BaseModel):
     ``completed`` is set to ``True`` by :class:`Step.__call__` after
     :meth:`Step.run` returns ``True``.
 
-    Notes
-    -----
-    ``step_cls`` and ``config_cls`` are :class:`~typing.ClassVar` back-links
-    injected by :meth:`Step.__init_subclass__`.
+    ``make_step()`` reconstructs a step using the saved configuration.
     """
 
     step_cls: ClassVar[type[Any]]
@@ -264,6 +259,13 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
 
         ctx = OtherStep.get_context(data)   # returns OtherStepContext
         ctx.data.my_table                   # typed, no dict key needed
+
+    Parameters
+    ----------
+    *args
+        Optional single instance of the bound configuration model.
+    **kwargs
+        Configuration fields to validate, overriding a supplied model's values.
     """
 
     config_cls: ClassVar[type[StepConfig]]
@@ -327,7 +329,18 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         return self._config
 
     def create_context(self, data: Any) -> ContextT:
-        """Create (or replace) this step's context on *data*."""
+        """Create or replace this step's context on the data container.
+
+        Parameters
+        ----------
+        data : object
+            Container exposing an attrs or meta mapping.
+
+        Returns
+        -------
+        StepContext
+            New context with this step's configuration and completed=False.
+        """
         pctx = get_pipeline_contexts(data)
         context_cls = cast("type[ContextT]", self.context_cls)
         ctx = context_cls(
@@ -339,7 +352,19 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
 
     @classmethod
     def has_context(cls, data: Any) -> bool:
-        """Return ``True`` if a context for this step exists on *data*."""
+        """Check whether this step has a stored context.
+
+        Parameters
+        ----------
+        data : object
+            Container exposing an attrs or meta mapping. An empty context store
+            is attached on first lookup if none exists.
+
+        Returns
+        -------
+        bool
+            Whether this step's key is present, regardless of completion status.
+        """
         pctx = get_pipeline_contexts(data)
         return cls.context_key in pctx
 
@@ -465,7 +490,18 @@ class Pipeline:
 
     @staticmethod
     def get_contexts(data: Any) -> StepContextDict:
-        """Return the pipeline context dict for *data*."""
+        """Return the pipeline context dictionary for a container.
+
+        Parameters
+        ----------
+        data : object
+            Container exposing an attrs or meta mapping.
+
+        Returns
+        -------
+        StepContextDict
+            Attached context store, created empty on first access.
+        """
         return get_pipeline_contexts(data)
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
@@ -486,9 +522,21 @@ class SequentialPipeline(Pipeline):
 
     Examples
     --------
-    >>> pipeline = SequentialPipeline(steps=[StepA(...), StepB(...)])
-    >>> data = pipeline(raw_data)
-    >>> StepA.get_context(data).data   # typed access
+    >>> import xarray as xr
+    >>> class CountConfig(StepConfig):
+    ...     increment: int = 1
+    >>> class CountContext(StepContext["CountStep", CountConfig]):
+    ...     data: int = 0
+    >>> class CountStep(Step[CountConfig, CountContext]):
+    ...     @classmethod
+    ...     def run(cls, data, context):
+    ...         context.data = context.config.increment
+    ...         data.attrs["count"] = context.data
+    ...         return True
+    >>> pipeline = SequentialPipeline(steps=[CountStep(increment=3)])
+    >>> data = pipeline(xr.Dataset())
+    >>> CountStep.get_context(data).data
+    3
     """
 
     steps: list[Step]

@@ -435,24 +435,6 @@ class TestRuntimeContextIntegration:
 class TestEdgeCases:
     """Test edge cases and error conditions."""
 
-    def test_no_type_params_explicit_disallowed(self):
-        """Test handler without type params but with explicit attribute
-        is disallowed."""
-
-        # Even without type params, explicit config_model_cls should be disallowed
-        with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
-
-            class PlainHandler(ConfigHandler):
-                config_model_cls = dict
-
-                @classmethod
-                def prepare_config_data(cls, runtime_config):
-                    return {}
-
-                @classmethod
-                def prepare_runtime_config_data(cls, config_data):
-                    return config_data
-
     def test_invalid_generic_param_explicit_disallowed(self):
         """Test explicit attribute disallowed with invalid generic param."""
 

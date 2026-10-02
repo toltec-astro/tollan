@@ -79,22 +79,28 @@ class RuntimeConfig[RuntimeInfoT: RuntimeInfo = RuntimeInfo](FrozenBaseModel):
 class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     """Entry point for runtime-aware configuration management.
 
-    RuntimeContext manages a ConfigSourceList with a four-tier architecture:
-    1. Default tier (order=-1) - Base defaults, lowest priority
-    2. User sources (order=0+) - From config files/dicts
-    3. Info tier (order=1000) - Runtime info dict data
-    4. Override tier (order=1001) - Runtime overrides, highest priority
+    Load and validate settings lazily, in increasing priority:
 
-    It provides:
-    - Lazy-loaded, cached config model object via `.config` cached property
-    - Cached config dict via `.config_dict` cached property
-    - Context management for temporary config overrides
-    - Registration system for ConfigHandler subclasses
-    - Factory methods for common setups (from_cli, etc.)
+    1. Defaults (order -1).
+    2. User files and dictionaries (orders 0 through 999).
+    3. Runtime information (order 1000).
+    4. Explicit overrides (order 1001).
+
+    Use ``config_dict`` for merged values, ``config`` for the validated model,
+    and ``with_config()`` to create a runtime with patched settings.
+    Existing handlers retain their validated settings when this runtime changes.
+
+    Parameters
+    ----------
+    config_sources : pathlib.Path, dict, list, or ConfigSourceList, optional
+        Source declarations, a configuration file/directory, or a resolved
+        source list. None creates a runtime with no user sources. Explicit
+        top-level source orders must be between 0 and 999, inclusive.
 
     Type Parameters
     ---------------
-        RuntimeConfigT: Runtime config class (subclass of RuntimeConfig)
+    RuntimeConfigT : RuntimeConfig
+        Configuration model to validate; defaults to RuntimeConfig.
 
     Examples
     --------
@@ -564,7 +570,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
     @property
     def config_sources(self) -> ConfigSourceList:
-        """Get the ConfigSourceList.
+        """Ordered configuration source list.
 
         This is the underlying source list that can be used to access
         individual sources, inspect the configuration pipeline, or
@@ -572,13 +578,14 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
         Returns
         -------
-            ConfigSourceList instance
+        ConfigSourceList
+            Sources available for inspection or loading with a selected context.
         """
         return self._config_sources
 
     @cached_property
     def config_dict(self) -> DictConfigT:
-        """Get the loaded and merged configuration as a dictionary.
+        """Loaded and merged configuration dictionary.
 
         This loads config with the current context and caches the result.
         Cache is invalidated when context changes or when update_*_config
@@ -586,7 +593,9 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
         Returns
         -------
-            Merged configuration dictionary (DictConfigT)
+        DictConfigT
+            Cached merged values. Treat nested data as read-only and use the
+            runtime's update methods to change settings.
         """
         # Get context from info tier's validation_context dict
         context = self._get_validation_context()
@@ -594,14 +603,15 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
     @cached_property
     def config(self) -> RuntimeConfigT:
-        """Get the validated configuration model.
+        """Validated configuration model for the current settings.
 
         This validates the merged config dict using the RuntimeConfig model
         (or a subclass defined in runtime_config_cls). The result is cached.
 
         Returns
         -------
-            Validated RuntimeConfig instance
+        RuntimeConfig
+            Cached instance of the configured runtime model class.
         """
         runtime_config_cls = cast(
             "type[RuntimeConfigT]",
@@ -613,11 +623,12 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
     @property
     def runtime_info(self) -> RuntimeInfo:
-        """Get runtime info from the validated config.
+        """Runtime information from the validated configuration.
 
         Returns
         -------
-            Runtime info instance from config.runtime_info
+        RuntimeInfo
+            The current model's runtime_info value.
         """
         return self.config.runtime_info
 
@@ -794,7 +805,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         self.set_config(cfg, tier="default")
 
     def set_override_config(self, cfg: DictConfigT) -> None:
-        """Set override configuration (order=1001 tier).
+        """Replace the highest-priority override configuration.
 
         This invalidates RuntimeContext caches. Dictionary tiers have no
         separate read cache.
@@ -820,7 +831,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         self.update_config(cfg, tier="default")
 
     def update_override_config(self, cfg: DictConfigT) -> None:
-        """Merge override configuration (order=1001 tier).
+        """Merge values into the highest-priority override configuration.
 
         This invalidates RuntimeContext caches. Dictionary tiers have no
         separate read cache.
@@ -840,7 +851,9 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
 
         Returns
         -------
-            Reloaded configuration dictionary
+        DictConfigT
+            Newly loaded and merged settings. Existing handlers and other
+            runtimes' loaded configurations are unchanged.
         """
         # Invalidate ConfigSourceList cache
         self.config_sources.invalidate_cache()

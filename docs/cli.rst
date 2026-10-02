@@ -167,6 +167,6 @@ Tollan's built-in commands
 
 .. typer:: tollan.cli:app
     :prog: tollan
-    :width: 80
+    :width: 70
     :preferred: text
     :show-nested:

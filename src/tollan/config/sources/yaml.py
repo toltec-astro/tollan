@@ -34,15 +34,14 @@ class YamlConfigSource(FileConfigSourceBase):
 
     Examples
     --------
-    >>> import tempfile
-    >>> with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-    ...     _ = f.write("key: value")
-    ...     path = f.name
-    >>> src = YamlConfigSource(order=0, source=Path(path))
-    >>> src.format
-    'yaml'
-    >>> src.load()
-    {'key': 'value'}
+    >>> from pathlib import Path
+    >>> from tempfile import TemporaryDirectory
+    >>> with TemporaryDirectory() as directory:
+    ...     path = Path(directory) / "settings.yaml"
+    ...     _ = path.write_text("key: value")
+    ...     src = YamlConfigSource(order=0, source=path)
+    ...     print(src.format, src.load())
+    yaml {'key': 'value'}
     """
 
     format: Literal["yaml"] = "yaml"

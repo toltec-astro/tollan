@@ -485,7 +485,30 @@ def dict_to_flat_dict(  # noqa: C901
     *,
     list_index_as_key: bool = False,
 ) -> dict[str, Any]:
-    """Return dict from dict with nested dicts."""
+    """Flatten a nested dictionary into keys identifying its leaf values.
+
+    Parameters
+    ----------
+    dct : dict
+        Dictionary containing nested dictionaries or lists. Empty containers
+        contribute no leaves; the input is not modified.
+    key_prefix : str, optional
+        Text prepended to every output key, without an implicit separator.
+    list_index_as_key : bool, optional
+        Use dotted indices such as ``items.0`` instead of ``items[0]``.
+        Defaults to False.
+
+    Returns
+    -------
+    dict
+        Flattened keys mapped to the original leaf values. Keys containing
+        separator characters are not escaped; this is not a lossless encoding.
+
+    Raises
+    ------
+    TypeError
+        The input is not a dictionary.
+    """
 
     def _dk(key):
         return f".{key}"
@@ -530,8 +553,21 @@ def dict_to_flat_dict(  # noqa: C901
 def add_to_dict(d: MutableMapping, key: Any, *, exist_ok: bool = True) -> Any:
     """Return a decorator to add decorated item to dict.
 
-    When key is callable, it generate the actual key by
-    invoking it with the decorated item.
+    Parameters
+    ----------
+    d : mutable mapping
+        Registry to update when the returned decorator is applied.
+    key : object or callable
+        Registry key, or a callable receiving the decorated object and returning
+        its key.
+    exist_ok : bool, optional
+        Allow an existing entry to be replaced, by default True.
+
+    Returns
+    -------
+    callable
+        Decorator that registers and returns the same object. It raises
+        ValueError on duplicate keys when ``exist_ok=False``.
     """
 
     def decorator(thing: Any) -> Any:
@@ -557,14 +593,19 @@ def dict_from_regex_match(
     Parameters
     ----------
     pattern : str, `re.Pattern`
-        The regex that matches to the `input_`.
+        Regular expression matched from the start of ``string``.
 
-    input_ : str
+    string : str
         The string to be matched.
 
-    type_dispatcher : dict
-        This specifies how the matched group values are handled after being
-        extracted.
+    type_dispatcher : dict, optional
+        Callables keyed by named capture group. Each receives that group's
+        non-None value. Groups without a converter retain their string or None.
+
+    Returns
+    -------
+    dict or None
+        Named capture groups, or None when the expression does not match.
     """
     if type_dispatcher is None:
         type_dispatcher = {}

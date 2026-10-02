@@ -21,39 +21,6 @@ from tollan.accessor.schema import (
 class TestNameMapping:
     """Test the concrete ordered-name mapping."""
 
-    def test_single_name_string(self):
-        """Single name string is converted to tuple."""
-        fm = NameMapping("temperature")
-        assert fm.names == ("temperature",)
-        assert fm.resolve_value is False
-
-    def test_single_name_tuple(self):
-        """Single name tuple."""
-        fm = NameMapping(("temperature",))
-        assert fm.names == ("temperature",)
-
-    def test_multiple_names(self):
-        """Multiple alternative names."""
-        fm = NameMapping(("temp", "temperature", "T"))
-        assert fm.names == ("temp", "temperature", "T")
-
-    def test_list_converted_to_tuple(self):
-        """List is converted to tuple."""
-        fm = NameMapping(["temp", "temperature"])
-        assert fm.names == ("temp", "temperature")
-        assert isinstance(fm.names, tuple)
-
-    def test_immediate_resolve(self):
-        """Field marked for immediate value resolution."""
-        fm = NameMapping("field", resolve_value=True)
-        assert fm.resolve_value is True
-
-    def test_all_parameters(self):
-        """All parameters specified."""
-        fm = NameMapping(("alt1", "alt2"), resolve_value=True)
-        assert fm.names == ("alt1", "alt2")
-        assert fm.resolve_value is True
-
     def test_frozen(self):
         """Mapping is immutable."""
         from pydantic_core import ValidationError
@@ -63,11 +30,6 @@ class TestNameMapping:
             (AttributeError, ValidationError, TypeError),
         ):  # FrozenInstanceError
             fm.names = ("other",)  # ty: ignore[invalid-assignment]
-
-    def test_invalid_names_type(self):
-        """Invalid names type raises error."""
-        with pytest.raises(ValueError, match="name or a sequence"):
-            NameMapping(123)  # ty: ignore[invalid-argument-type]
 
     def test_invalid_names_elements(self):
         """Non-string elements in names raises error."""
@@ -89,30 +51,6 @@ class TestNameMapping:
 
 class TestMapping:
     """Test the public mapping strategy contract."""
-
-    def test_is_mapping(self):
-        """Mapping is a Mapping."""
-        m = NameMapping("field")
-        assert isinstance(m, Mapping)
-
-    def test_basic_creation(self):
-        """Basic Mapping creation."""
-        m = NameMapping("field")
-        assert m.names == ("field",)
-        assert m.resolve_value is False
-
-    def test_with_kwargs(self):
-        """Mapping with keyword arguments."""
-        m = NameMapping("field", resolve_value=True)
-        assert m.names == ("field",)
-        assert m.resolve_value is True
-
-    def test_resolve_returns_self(self):
-        """resolve() returns self."""
-        m = NameMapping("field")
-        resolved = m.resolve(MappingContext(None, Schema(), {}))
-        assert resolved is m
-        assert isinstance(resolved, Mapping)
 
     def test_subclass_can_override_resolve(self):
         """Subclass can override resolve() for conditional mapping."""

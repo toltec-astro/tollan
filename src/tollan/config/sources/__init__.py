@@ -50,7 +50,7 @@ __all__ = [
     "resolve_config_sources",
 ]
 
-# Union type for all config sources
+#: YAML, dictionary, dotenv, or nested-list source selected by its ``format`` field.
 type ConfigSource = Annotated[
     YamlConfigSource | DictConfigSource | EnvFileConfigSource | ListConfigSource,
     Field(discriminator="format"),

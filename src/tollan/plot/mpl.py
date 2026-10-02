@@ -1,14 +1,19 @@
 """Matplotlib utility functions."""
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 __all__ = ["move_axes"]
 
 
 # https://gist.github.com/digitalsignalperson/546e80ae1965b83df0a82ba12ae8aac7
-def move_axes(ax: Any, ax_new: Any, *, remove: bool = True) -> None:
+def move_axes(ax: Any, ax_new: Any, *, remove: bool = True) -> Axes:
     """Move an Axes object from a figure to a new one.
 
     Parameters
@@ -19,6 +24,12 @@ def move_axes(ax: Any, ax_new: Any, *, remove: bool = True) -> None:
         New Axes object (will be replaced by ax)
     remove : bool, optional
         If True, close the old figure, by default True
+
+    Returns
+    -------
+    matplotlib.axes.Axes
+        The original axes, now attached to the destination figure and occupying
+        ax_new's position. The placeholder ax_new is removed from that figure.
     """
     # get a reference to the old figure context so we can release it
     old_fig = ax.figure

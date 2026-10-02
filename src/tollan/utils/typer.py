@@ -323,7 +323,21 @@ class TollanTyper(typer.Typer):
         super().__init__(**kwargs)
 
     def command(self, name: str | None = None, **kwargs: Any) -> Callable:
-        """Register a command, using its Python function name by default."""
+        """Register a command, using its Python function name by default.
+
+        Parameters
+        ----------
+        name : str, optional
+            Explicit command name. By default, preserve the callback's Python
+            name, including underscores.
+        **kwargs
+            Options forwarded to Typer's command decorator.
+
+        Returns
+        -------
+        callable
+            Decorator that registers the callback and returns it unchanged.
+        """
         kwargs.setdefault("cls", _Command)
 
         def decorator(callback: Callable) -> Callable:
@@ -366,7 +380,7 @@ def MultiOption(  # noqa: N802
 
     Accept several values after one option flag, or repeat the flag to add more
     values. Values are converted and validated according to the parameter's
-    annotation and the supplied :func:`typer.Option` arguments. Use ``--``
+    annotation and the supplied ``typer.Option()`` arguments. Use ``--``
     to separate subsequent positional arguments.
 
     Parameters

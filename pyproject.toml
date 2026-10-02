@@ -111,15 +111,16 @@ version_file = "src/tollan/_version.py"
 [tool.pytest.ini_options]
 minversion = "9.0"
 log_level = "DEBUG"
-testpaths = ["tests", "docs"]
+# Collect public docstring examples as well as the behavioral test suite.
+# Sphinx's doctest builder owns guide examples (see just doc-test).
+testpaths = ["tests", "src/tollan"]
 norecursedirs = [".*", "docs[\\/]_build", "docs[\\/]generated", "examples"]
 doctest_plus = "enabled"
-text_file_format = "rst"
 remote_data_strict = true
 addopts = [
   "-ra",
   "--color=yes",
-  "--doctest-rst",
+  "--doctest-modules",
   "--strict-config",
   "--strict-markers",
   "-p no:legacypath",
@@ -159,7 +160,6 @@ lint.ignore = [
   "ANN401", # using Any type annotation
   "ANN002", # missing type args
   "ANN003", # missing type kwargs
-  "D102",   # missing docs in public method
   "D105",   # missing docs in magic method
   "TRY003", # f-string in exception
   "ERA001", # commented out code
@@ -187,7 +187,6 @@ lint.ignore = [
   "RUF043",  # pytest regex
   "PLC0415", # not top level imports
   "ANN202",  # missing return type annotation
-  "F841",    # local variable assigned but never used
 ]
 
 "docs/conf.py" = [
@@ -250,8 +249,6 @@ exclude_also = [
   "if TYPE_CHECKING:",
   "@abstractmethod",
   "@overload",
-  "except.*Error.*:",
-  "except.*Exception.*:",
 ]
 
 [tool.repo-review]

@@ -63,7 +63,9 @@ from __future__ import annotations
 import xarray as xr
 
 type XarraySourceT = xr.Dataset | xr.DataArray | xr.DataTree
+"""Dataset, DataArray, or DataTree accepted by xarray adapters."""
 type XarrayPayloadT = xr.Dataset | xr.DataArray
+"""Dataset or DataArray exposed by an xarray accessor after unwrapping."""
 
 _DATAARRAY_WRAPPER_ATTR = "_tollan_accessor_xarray_dataarray_name"
 _MISSING = object()

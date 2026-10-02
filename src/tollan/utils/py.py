@@ -80,7 +80,28 @@ class ObjectProxy[T](wrapt.ObjectProxy):
 
 
 def getobj(name: str, *args: object) -> object:
-    """Return a Python object by dotted path (e.g. 'module:attr.subattr')."""
+    """Import a module or look up an object within it.
+
+    Parameters
+    ----------
+    name : str
+        Importable module name, optionally followed by ``:attr.subattr``.
+    *args : object
+        Optional positional fallback returned when importing the module raises
+        an exception. Missing attributes after a successful import still raise.
+
+    Returns
+    -------
+    object
+        Imported module, selected attribute, or supplied fallback.
+
+    Raises
+    ------
+    TypeError
+        The name is not a string.
+    AttributeError
+        An attribute is missing from an imported module or nested object.
+    """
     if not isinstance(name, str):
         msg = "name must be a string."
         raise TypeError(msg)
@@ -100,7 +121,26 @@ def getobj(name: str, *args: object) -> object:
 
 
 def getname(obj: object, sep: str = ":") -> str:
-    """Return the specifier name of a Python object (opposite of getobj)."""
+    """Return an object's module and qualified name.
+
+    Parameters
+    ----------
+    obj : object
+        Object exposing ``__module__`` and ``__qualname__``.
+    sep : str, optional
+        Separator between module and qualified name, by default ``":"``.
+
+    Returns
+    -------
+    str
+        Object specifier. Builtins omit the module prefix; local objects may
+        contain ``<locals>``. These forms are not importable by ``getobj()``.
+
+    Raises
+    ------
+    TypeError
+        The object does not have a qualified name.
+    """
     if not hasattr(obj, "__qualname__"):
         msg = "invalid object type."
         raise TypeError(msg)
@@ -112,7 +152,25 @@ def getname(obj: object, sep: str = ":") -> str:
 
 
 def module_from_path(filepath: str | Path, name: str | None = None) -> ModuleType:
-    """Load a Python module from a file path."""
+    """Load and execute a Python module from a file path.
+
+    Parameters
+    ----------
+    filepath : str or pathlib.Path
+        Python source file to execute.
+    name : str, optional
+        Module name; defaults to ``_module_from_path_`` plus the filename stem.
+
+    Returns
+    -------
+    types.ModuleType
+        Executed module. It is not registered in ``sys.modules``.
+
+    Raises
+    ------
+    ImportError
+        The path has no usable import specification or loader.
+    """
     filepath = Path(filepath)
     if name is None:
         name = f"_module_from_path_{filepath.stem}"
@@ -129,7 +187,15 @@ def module_from_path(filepath: str | Path, name: str | None = None) -> ModuleTyp
 
 
 def rreload(m: ModuleType) -> None:
-    """Recursively reload a module and all its submodules."""
+    """Reload a module and its already imported submodules.
+
+    Parameters
+    ----------
+    m : types.ModuleType
+        Module whose entries in ``sys.modules`` are reloaded, deepest first.
+        Existing references held elsewhere are not replaced. Import errors
+        propagate after any preceding reloads have already taken effect.
+    """
     name = m.__name__  # get the name that is used in sys.modules
     name_ext = name + "."  # support finding sub modules or packages
 
@@ -150,6 +216,25 @@ def rgetattr(obj: object, attr: str, *args: object) -> object:
     segment. Traversal continues through that default when an intermediate
     attribute is absent. Present values, including None, are returned unchanged.
     Without a default, missing attributes raise AttributeError.
+
+    Parameters
+    ----------
+    obj : object
+        Starting object for attribute traversal.
+    attr : str
+        Dot-separated attribute names.
+    *args : object
+        At most one positional default for missing attributes.
+
+    Returns
+    -------
+    object
+        Value found after traversing every path segment.
+
+    Raises
+    ------
+    AttributeError
+        An attribute is absent and no default was supplied.
     """
     getter, parts = _rgetattr_path(attr)
     if not args:

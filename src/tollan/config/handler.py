@@ -155,7 +155,7 @@ class ConfigHandler[
 
     @property
     def config(self) -> ConfigModelT:
-        """Return the validated domain configuration.
+        """Validated domain configuration.
 
         Returns
         -------
@@ -167,7 +167,7 @@ class ConfigHandler[
 
     @property
     def runtime_info(self) -> RuntimeInfo:
-        """Return the runtime information used to validate this handler.
+        """Runtime information used to validate this handler.
 
         Returns
         -------

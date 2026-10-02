@@ -117,7 +117,25 @@ def path_field(
     exists: bool = True,
     resolve: bool = True,
 ) -> TypeForm[Path]:
-    """Build a context-aware Path annotation with filesystem constraints."""
+    """Build a context-aware Path annotation with filesystem constraints.
+
+    Parameters
+    ----------
+    path_type : {'file', 'dir', 'new', None}, optional
+        Require an existing file or directory, a new path with an existing
+        parent, or an unconstrained Path. Defaults to None.
+    exists : bool, optional
+        Require existence for an unconstrained Path, by default True.
+        Typed paths always apply their own checks regardless of this flag.
+    resolve : bool, optional
+        Expand the user directory and resolve to absolute form, by default True.
+        A validation-context ``rootpath`` is applied before these checks.
+
+    Returns
+    -------
+    typing_extensions.TypeForm
+        Path annotation usable by Pydantic models and TypeAdapter.
+    """
     base_type = _PATH_BASE_TYPES[path_type]
     # FilePath, DirectoryPath, and NewPath own their filesystem checks and
     # standard Pydantic error messages. Only an unconstrained Path needs the

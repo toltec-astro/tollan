@@ -30,14 +30,17 @@ def _get_field_default_accessor(cls: type[BaseModel]) -> _FieldDefaultAccessor:
 class FieldDefaults:
     """Descriptor for accessing model field defaults.
 
-    Provides convenient access to default values of model fields.
+    Index the descriptor by field name to read the declared default without
+    constructing a model. Default factories are not called; factory-backed and
+    required fields return Pydantic's undefined sentinel. Unknown names raise
+    ``KeyError``. Use a concrete ``ClassVar[FieldDefaults]`` annotation.
 
     Examples
     --------
     >>> from tollan.config import FrozenBaseModel
     >>> from typing import ClassVar
     >>> class MyModel(FrozenBaseModel):
-    ...     defaults: ClassVar = FieldDefaults()
+    ...     defaults: ClassVar[FieldDefaults] = FieldDefaults()
     ...     value: int = 42
     >>> MyModel.defaults['value']
     42

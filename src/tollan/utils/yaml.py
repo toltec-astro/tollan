@@ -1,8 +1,8 @@
 """
 YAML utilities for tollan.
 
-This module provides custom YAML dumpers and loaders with support for
-astronomy-specific types (Time, Quantity, SkyCoord).
+Read plain YAML safely and serialize scalar scientific values as ordinary YAML
+strings and numbers. Loading does not reconstruct their original Python types.
 
 Examples
 --------
@@ -226,7 +226,14 @@ YamlDumper.add_multi_representer(Enum, _enum_representer)
 
 # from astropy: https://github.com/astropy/astropy/blob/main/astropy/io/misc/yaml.py
 def add_numpy_scalar_representers(dumper_cls: type[SafeDumper]) -> None:
-    """Add representers for numpy types to the given dumper class."""
+    """Register NumPy scalar serialization on a YAML dumper class.
+
+    Parameters
+    ----------
+    dumper_cls : type of yaml.SafeDumper
+        Dumper class to modify in place. NumPy booleans, strings, integers,
+        and floats are emitted using their Python values.
+    """
     dumper_cls.add_representer(np.bool_, lambda s, d: s.represent_bool(d.item()))
     dumper_cls.add_representer(np.str_, lambda s, d: s.represent_str(d.item()))
     for np_type in [
@@ -315,7 +322,8 @@ def yaml_load(source: str | os.PathLike | TextIO) -> object:
         The YAML source. Can be:
         - File path: read from file
         - File object: read from stream
-        - String: parse as YAML
+        - String naming an existing file: read that file
+        - Other string: parse as YAML text (use yaml_loads to force this behavior)
 
     Returns
     -------

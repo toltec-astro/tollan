@@ -39,6 +39,16 @@ def pformat_yaml(obj: Any) -> str:
 
     If the object has a __wrapped__ attribute, formats the wrapped object instead.
 
+    Parameters
+    ----------
+    obj : object
+        Value supported by pyaml, including registered NumPy scalar types.
+
+    Returns
+    -------
+    str
+        Formatted YAML with a leading newline.
+
     Example
     -------
     >>> data = {'a': 1, 'b': [2, 3]}
@@ -59,6 +69,17 @@ def pformat_fancy_index(
 ) -> str:
     """
     Pretty-format a numpy fancy index, slice, or mask.
+
+    Parameters
+    ----------
+    arg : slice, numpy.ndarray, or list
+        Slice, boolean mask, or list of indices to format recursively.
+        Arrays are treated as masks and summarized by their sum and size.
+
+    Returns
+    -------
+    str
+        Compact index or mask representation.
 
     Examples
     --------
@@ -98,6 +119,16 @@ def pformat_mask(mask: npt.NDArray[np.bool_]) -> str:
     """
     Pretty-format a boolean mask as 'selected/total (percentage)'.
 
+    Parameters
+    ----------
+    mask : numpy.ndarray
+        Nonempty boolean array; all dimensions contribute to the count.
+
+    Returns
+    -------
+    str
+        Selected count, total count, and percentage to two decimal places.
+
     Example
     -------
     >>> import numpy as np
@@ -115,7 +146,18 @@ def bitmask_stats(bm_cls: type[Flag], bitmask: npt.NDArray) -> pd.DataFrame:
     """
     Compute statistics for each flag in a bitmask.
 
-    Returns a DataFrame with columns: name, selected, total, frac, summary.
+    Parameters
+    ----------
+    bm_cls : type of enum.Flag
+        Flag definitions, including aliases and combined masks.
+    bitmask : numpy.ndarray
+        Integer mask values. A value is selected when any bit of the flag is set.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Columns ``name``, ``selected``, ``total``, ``frac``, and ``summary`` in
+        flag declaration order. Empty input gives NaN fractions.
     """
     records = []
     for name, value in bm_cls.__members__.items():
@@ -169,7 +211,7 @@ class BitmaskStats:
 
     @property
     def stats(self) -> pd.DataFrame:
-        """Get the statistics table.
+        """Statistics table for the supplied bitmask.
 
         Returns
         -------
@@ -192,6 +234,18 @@ class BitmaskStats:
 def pformat_bitmask(bm_cls: type[Flag], bitmask: npt.NDArray) -> str:
     """
     Pretty-format bitmask statistics as a summary table.
+
+    Parameters
+    ----------
+    bm_cls : type of enum.Flag
+        Flag definitions used to label the rows.
+    bitmask : numpy.ndarray
+        Integer masks summarized using ``bitmask_stats()``.
+
+    Returns
+    -------
+    str
+        Table of flag names and selected/total percentages.
 
     Example
     -------

@@ -1,4 +1,4 @@
-"""Test Mapping convenience syntax for field mapping."""
+"""Mapping construction, candidate locations, identity, and schema integration."""
 
 from __future__ import annotations
 
@@ -61,40 +61,6 @@ def test_candidate_dict_is_not_an_input_form(candidates):
         NameMapping(candidates)
 
 
-def test_mapping_from_string():
-    """Test creating Mapping from a string field name."""
-    m = NameMapping("field_name")
-    assert isinstance(m, Mapping)
-    assert m.names == ("field_name",)
-    assert m.resolve_value is False
-
-
-def test_mapping_from_string_with_kwargs():
-    """Test creating Mapping from string with keyword arguments."""
-    m = NameMapping("field_name", resolve_value=True)
-    assert m.names == ("field_name",)
-    assert m.resolve_value is True
-
-
-def test_mapping_from_tuple():
-    """Test creating Mapping from tuple of alternative field names."""
-    m = NameMapping(("field1", "field2", "field3"))
-    assert m.names == ("field1", "field2", "field3")
-
-
-def test_mapping_from_tuple_with_kwargs():
-    """Test creating Mapping from tuple with keyword arguments."""
-    m = NameMapping(("alt1", "alt2"), resolve_value=True)
-    assert m.names == ("alt1", "alt2")
-    assert m.resolve_value is True
-
-
-def test_mapping_from_list():
-    """Test creating Mapping from list (converted to tuple internally)."""
-    m = NameMapping(["field1", "field2"])
-    assert m.names == ("field1", "field2")
-
-
 def test_mapping_rejects_invalid_names():
     """Test that invalid names types are caught by validation."""
     with pytest.raises(ValueError, match="name or a sequence"):
@@ -106,8 +72,9 @@ def test_mapping_equality():
     m1 = NameMapping("test", resolve_value=True)
     m2 = NameMapping("test", resolve_value=True)
 
-    assert m1.names == m2.names
-    assert m1.resolve_value == m2.resolve_value
+    assert m1 == m2
+    assert hash(m1) == hash(m2)
+    assert m1 != NameMapping("test", resolve_value=False)
 
 
 def test_mapping_resolve():
@@ -140,3 +107,21 @@ def test_mapping_in_schema():
     assert schema.simple.names == ("simple_field",)
     assert schema.alternatives.names == ("alt1", "alt2")
     assert schema.with_resolve.resolve_value is True
+
+
+@pytest.mark.parametrize(
+    ("names", "expected", "resolve_value"),
+    [
+        ("field", ("field",), False),
+        ("field", ("field",), True),
+        (("field",), ("field",), False),
+        (("first", "second"), ("first", "second"), False),
+        (("first", "second"), ("first", "second"), True),
+        (["first", "second"], ("first", "second"), False),
+    ],
+)
+def test_name_mapping_input_forms(names, expected, resolve_value):
+    mapping = NameMapping(names, resolve_value=resolve_value)
+    assert isinstance(mapping, Mapping)
+    assert mapping.names == expected
+    assert mapping.resolve_value is resolve_value

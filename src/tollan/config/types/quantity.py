@@ -160,16 +160,42 @@ def quantity_field(
 ) -> TypeForm[Quantity]:
     """Build a reusable scalar Quantity annotation.
 
-    ``physical_types_allowed`` uses Astropy's public physical-type registry, so
-    aliases and synonyms evolve with Astropy rather than a Tollan-maintained
-    table.
+    Parameters
+    ----------
+    physical_types_allowed : str or sequence of str, optional
+        Astropy physical types to accept, such as ``"length"`` or ``"speed"``.
+        None accepts any physical type. Numbers represent dimensionless values;
+        strings and existing scalar Quantities retain their units.
+
+    Returns
+    -------
+    typing_extensions.TypeForm
+        Pydantic annotation that validates a scalar Quantity and serializes it
+        as a value-and-unit string. Arrays and booleans are rejected.
+
+    Raises
+    ------
+    ValueError
+        An allowed physical type is unknown to Astropy.
     """
     physical_types = _normalize_physical_types(physical_types_allowed)
     return Annotated[Quantity, *_quantity_metadata(physical_types)]
 
 
 def get_physical_type_from_quantity_type(cls: Any) -> u.PhysicalType | None:
-    """Return the single physical-type constraint carried by an annotation."""
+    """Return the single physical-type constraint carried by an annotation.
+
+    Parameters
+    ----------
+    cls : object
+        Quantity annotation, including a named alias or Annotated metadata.
+
+    Returns
+    -------
+    astropy.units.PhysicalType or None
+        The sole physical-type constraint, or None if there are zero or multiple
+        distinct constraints.
+    """
     pending = [cls]
     seen: set[int] = set()
     physical_types: set[u.PhysicalType] = set()

@@ -1,0 +1,89 @@
+Models and configuration fields
+===============================
+
+These references are generated from Pydantic models. Use :doc:`configuration`
+to load settings, :doc:`validation-types` to declare validated fields, and
+:doc:`data-adapters` to implement an analysis.
+
+Runtime settings
+----------------
+
+.. autopydantic_model:: tollan.config.FrozenBaseModel
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.config.RuntimeConfig
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.config.RuntimeInfo
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.config.EnvConfig
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+Configuration sources
+---------------------
+
+.. autodoc-pydantic 2.2 cannot resolve the raw Annotated types in three source
+   models' summaries. Their field definitions below show the resolved types.
+
+
+.. autodata:: tollan.config.sources.base.DictConfigT
+   :no-value:
+
+.. autodata:: tollan.config.sources.ConfigSource
+   :no-value:
+
+.. autoclass:: tollan.config.sources.base.ConfigSourceFormat
+   :members:
+
+.. autopydantic_model:: tollan.config.sources.base.ConfigSourceBase
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.config.sources.base.FileConfigSourceBase
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.config.sources.ConfigSourceList
+   :model-show-field-summary: False
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.config.sources.DictConfigSource
+   :model-show-field-summary: False
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+.. autopydantic_model:: tollan.config.sources.YamlConfigSource
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+.. autopydantic_model:: tollan.config.sources.EnvFileConfigSource
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+.. autopydantic_model:: tollan.config.sources.ListConfigSource
+   :model-show-field-summary: False
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+Analysis and pipeline configuration
+-----------------------------------
+
+.. autopydantic_model:: tollan.accessor.xarray.Analysis
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.pipeline.StepConfig
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.pipeline.StepContext
+   :class-doc-from: class
+   :model-show-json: False
+
+``StepContext`` is a generic base. Generate JSON schema from a concrete subclass
+after binding its configuration type.
+
+File locations
+--------------
+
+.. autopydantic_model:: tollan.utils.fileloc.FileLoc
+   :class-doc-from: class
+   :inherited-members: BaseModel
