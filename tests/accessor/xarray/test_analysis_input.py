@@ -19,11 +19,13 @@ from tollan.accessor.xarray import (
 def test_direct_input_and_prepared_scope_share_arrays(kind):
     values = da.arange(12, chunks=4)
     source = xr.DataArray(values, dims="time", name="signal", attrs={"units": "K"})
+    expected = source
     if kind == "dataset":
         source = source.to_dataset()
+        expected = source
     elif kind == "unnamed_array":
         source = source.rename(None)
-    expected = source.rename("data") if kind == "unnamed_array" else source
+        expected = source.rename("data")
     view = prepare_analysis_input_view(source)
     mapper = AnalysisInputMapper.from_data_source(view._data_source)
     node = mapper.get_input_node(view._data_source)
@@ -97,5 +99,5 @@ def test_direct_view_requires_scope_without_converting_payload(kind):
         source = source.to_dataset()
     before = source.copy(deep=False)
     with pytest.raises(TypeError, match="requires a DataTree scope"):
-        AnalysisInputView(source)
+        AnalysisInputView(source)  # ty: ignore[invalid-argument-type] -- reject non-tree input
     xr.testing.assert_identical(source, before)

@@ -25,7 +25,7 @@ from tollan.accessor.xarray import (
 class SampleSchema(AnalysisSchemaMixin):
     _namespace: SubpathMapping = SubpathMapping.path("example.sample")
     analysis: NameMapping = NameMapping.attr("example.sample.analysis")
-    sample_subpath: Mapping = SubpathMapping.path("sample")
+    sample_subpath: SubpathMapping = SubpathMapping.path("sample")
     values: Mapping = sample_subpath / NameMapping.var("values")
 
 
@@ -37,16 +37,19 @@ class SampleInputMapper(AnalysisInputMapper[AnalysisInputSchema]):
     pass
 
 
-class SampleInput:
+class SampleInput[MapperT: AnalysisMapper](Analysis[MapperT]):
+    def _compute_result(self, data, *, mapper, **kwargs):
+        raise NotImplementedError
+
     def __call__(self, data, *, parent_namespace=None, force=False, **kwargs):
         source = data.data_source if isinstance(data, AccessorBase) else data
         scope = ensure_analysis_scope(source, parent_namespace=parent_namespace)
         mapper = self._mapper_cls.from_data_source(scope)
         namespace = PurePosixPath(mapper.namespace_path)
         input_mapper = SampleInputMapper.from_data_source(scope)
-        input_path = PurePosixPath(
-            input_mapper.get_name(input_mapper.schema.input_subpath)
-        )
+        input_name = input_mapper.get_name(input_mapper.schema.input_subpath)
+        assert input_name is not None
+        input_path = PurePosixPath(input_name)
         if namespace.is_relative_to(input_path) or input_path.is_relative_to(namespace):
             msg = "Analysis input and namespace must be separate subtrees"
             raise ValueError(msg)
@@ -68,7 +71,7 @@ class SampleInput:
         return source if isinstance(source, xr.DataTree) else scope
 
 
-class SampleAnalysis(SampleInput, Analysis[SampleMapper]):
+class SampleAnalysis(SampleInput[SampleMapper]):
     step: int = 2
 
     def _get_output_subpaths(self, *, mapper):
@@ -407,6 +410,7 @@ def test_scope_rejects_inherited_context_while_view_remains_readable(ancestor):
         }
     )
     node = tree["intermediate/selected"]
+    assert isinstance(node, xr.DataTree)
     assert not node.to_dataset(inherit=False).variables
     with pytest.raises(ValueError, match="not an analysis scope"):
         ensure_analysis_scope(node)
@@ -446,7 +450,7 @@ def test_multiple_outputs_have_independent_coordinates(source):
     class MultipleMapper(AnalysisMapper[MultipleSchema]):
         pass
 
-    class MultipleAnalysis(SampleInput, Analysis[MultipleMapper]):
+    class MultipleAnalysis(SampleInput[MultipleMapper]):
         def _get_output_subpaths(self, *, mapper):
             return (mapper.schema.fine, mapper.schema.coarse)
 
@@ -599,6 +603,7 @@ def test_view_readability_does_not_require_a_writable_scope(select_parent):
     )
     tree = xr.DataTree.from_dict({"example.sample": payload})
     supplied = tree if select_parent else tree["example.sample"]
+    assert isinstance(supplied, xr.DataTree)
     make_mapper = (
         SampleMapper.from_data_source if select_parent else SampleMapper.from_namespace
     )
@@ -624,7 +629,7 @@ def test_overlapping_outputs_fail_before_computation_or_reuse(
     class MultipleMapper(AnalysisMapper[MultipleSchema]):
         pass
 
-    class MultipleAnalysis(SampleInput, Analysis[MultipleMapper]):
+    class MultipleAnalysis(SampleInput[MultipleMapper]):
         def _get_output_subpaths(self, *, mapper):
             return (mapper.schema.sample_subpath, mapper.schema.other_subpath)
 
@@ -714,6 +719,7 @@ def test_namespace_validation_leaves_missing_and_existing_destinations_unchanged
         }
     )
     parent = tree["record"]
+    assert isinstance(parent, xr.DataTree)
     input_node = parent["input"]
     unrelated = tree["unrelated"]
     before = tree.copy(deep=False)
@@ -754,6 +760,7 @@ def test_namespace_helper_rejects_inherited_context_without_creating_nodes(
 
     tree = xr.DataTree.from_dict({"selected/diagnostics": ancestor})
     selected = tree["selected"]
+    assert isinstance(selected, xr.DataTree)
     if existing:
         selected["diagnostics/analysis"] = xr.DataTree()
     before = tree.copy(deep=False)
@@ -816,7 +823,7 @@ def test_computed_outputs_can_be_subset_of_declared_fields(source, include_sampl
     class OptionalMapper(AnalysisMapper[OptionalSchema]):
         pass
 
-    class OptionalAnalysis(SampleInput, Analysis[OptionalMapper]):
+    class OptionalAnalysis(SampleInput[OptionalMapper]):
         def _get_output_subpaths(self, *, mapper):
             return (mapper.schema.sample_subpath, mapper.schema.optional_subpath)
 
