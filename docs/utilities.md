@@ -11,6 +11,7 @@ application framework. See the [API reference](modules.rst) for full signatures.
 | Parse dotted command-line overrides | `tollan.utils.cli.dict_from_cli_args` |
 | Read or write YAML | `tollan.utils.yaml` |
 | Convert units or select table rows | `tollan.utils.np`, `tollan.utils.table` |
+| Summarize labeled arrays with median and scatter | `tollan.utils.xarray.reduce_median_mad` |
 | Arrange plots | `tollan.plot.plotly`, `tollan.plot.mpl` |
 | Log operations or format display values | `tollan.utils.log`, `tollan.utils.fmt` |
 
@@ -91,6 +92,32 @@ conversion explicit. For labeled xarray data, use the
 `tollan.utils.table.TableValidator` checks table requirements and evaluates row
 queries. Use [xarray table projection](data-adapters.md#project-columnar-xarray-data-into-a-qtable)
 when your source is a columnar Dataset and you need an Astropy QTable.
+
+## Reduce labeled arrays to median and scatter
+
+`reduce_median_mad(data, dim=...)` returns two Datasets: the median and the median
+absolute deviation multiplied by 1.4826. Only variables carrying `dim`
+participate. Variable attributes, including units, and the remaining dimensions
+and coordinates are retained. NaNs propagate.
+
+```{testcode}
+import xarray as xr
+from astropy import units as u
+from tollan.utils.xarray import reduce_median_mad
+
+values = xr.DataArray(
+    [1.0, 2.0, 8.0], dims="sample", name="signal",
+).u.set(u.V).chunk(sample=1)
+median, scatter = reduce_median_mad(values, dim="sample")
+assert median.signal.compute().item() == 2.0
+assert scatter.signal.compute().item() == 1.4826
+assert scatter.signal.u.unit == u.V
+```
+
+Results are lazy, including for NumPy input. Each task combines the full
+reduction dimension; select the relevant samples before calling to limit memory
+use. Normalize values first when their relative scales should differ. Scaled MAD
+describes scatter among the values, not uncertainty in the median.
 
 ## Build a Plotly figure
 

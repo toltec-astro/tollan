@@ -12,6 +12,7 @@ This package provides various utility modules including:
 - py: Python utilities
 - sys: System utilities
 - table: Table/DataFrame utilities
+- xarray: Lazy reductions for labeled arrays
 """
 
 __all__ = []

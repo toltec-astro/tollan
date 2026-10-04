@@ -101,4 +101,6 @@ Utilities
 
 .. automodapi:: tollan.utils.typing
 
+.. automodapi:: tollan.utils.xarray
+
 .. automodapi:: tollan.utils.yaml
