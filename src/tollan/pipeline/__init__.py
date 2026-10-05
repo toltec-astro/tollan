@@ -27,6 +27,8 @@ from .step import (
     StepConfig,
     StepContext,
     StepContextDict,
+    StepFailure,
+    StepFailureKind,
     get_pipeline_contexts,
 )
 
@@ -41,5 +43,7 @@ __all__ = [
     "StepConfig",
     "StepContext",
     "StepContextDict",
+    "StepFailure",
+    "StepFailureKind",
     "get_pipeline_contexts",
 ]

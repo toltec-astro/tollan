@@ -40,6 +40,9 @@ class _MissingSentinel:
     def __repr__(self) -> str:
         return "MISSING"
 
+    def __reduce__(self) -> str:
+        return "MISSING"
+
 
 MISSING = _MissingSentinel()
 

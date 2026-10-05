@@ -1,5 +1,6 @@
 """Shared analysis boundaries, scoped results and lazy array ownership."""
 
+import pickle
 from dataclasses import dataclass, replace
 from pathlib import PurePosixPath
 
@@ -7,6 +8,7 @@ import dask.array as da
 import numpy as np
 import pytest
 import xarray as xr
+from pydantic import ConfigDict, Field
 
 from tollan.accessor import AccessorBase, Mapper, Mapping, NameMapping, SubpathMapping
 from tollan.accessor.xarray import (
@@ -19,6 +21,7 @@ from tollan.accessor.xarray import (
     XarrayMapper,
     ensure_analysis_scope,
 )
+from tollan.pipeline import Step, StepConfig, StepContext
 
 
 @dataclass
@@ -95,6 +98,52 @@ class SampleView(AnalysisView[SampleMapper, SampleAnalysis]):
         return self.mapper.get_node(
             self.data_source, self.mapper.schema.sample_subpath
         ).to_dataset()
+
+
+class SampleStepConfig(StepConfig):
+    analysis: SampleAnalysis = Field(default_factory=SampleAnalysis)
+
+
+class SampleStepContext(StepContext["SampleStep", SampleStepConfig]):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    data: SampleView | None = Field(default=None, exclude=True)
+
+
+class SampleStep(Step[SampleStepConfig, SampleStepContext]):
+    @classmethod
+    def run(cls, data: xr.DataTree, context: SampleStepContext) -> None:
+        context.data = SampleView(context.config.analysis(data))
+
+
+def test_pickle_restores_live_contexts_and_result_views(source, monkeypatch):
+    tree = ensure_analysis_scope(source)
+    SampleStep()(tree)
+    SampleStep(alias="second", analysis=SampleAnalysis(step=3))(tree)
+    snapshot = pickle.dumps(tree)
+
+    def unexpected_computation(*args, **kwargs):
+        pytest.fail("Loading a view must not recompute the analysis")
+
+    monkeypatch.setattr(SampleAnalysis, "_compute_result", unexpected_computation)
+    restored = pickle.loads(snapshot)  # noqa: S301 -- test-owned tree
+    first = SampleStep.get_context(restored)
+    second = SampleStep.get_context(restored, alias="second")
+    assert first.completed
+    assert second.completed
+    assert first.data is not None
+    assert second.data is not None
+    assert first.data._data_source is restored
+    assert second.data.data_source is restored["example.sample"]
+    assert (
+        second.data.sample["values"].data
+        is restored["example.sample/sample/values"].data
+    )
+    assert isinstance(second.data.sample["values"].data, da.Array)
+    assert first.data.sample_analysis == SampleAnalysis(step=2)
+    assert second.data.sample_analysis == SampleAnalysis(step=3)
+    assert first.data.sample["values"].values.tolist() == [0, 2, 4, 6, 8, 10]
+    assert second.data.sample["values"].values.tolist() == [0, 3, 6, 9]
+    assert second.make_step().config.alias == "second"
 
 
 def test_analysis_snapshot_is_captured_at_view_construction(source):

@@ -1,5 +1,6 @@
 """Sphinx configuration; inherit the Astropy documentation defaults."""
 
+from pathlib import Path
 from typing import get_type_hints
 
 from docutils import nodes
@@ -40,6 +41,8 @@ myst_heading_anchors = 3
 nitpicky = True
 # Pytest owns Python docstrings; Sphinx executes the explicit guide examples.
 doctest_test_doctest_blocks = ""
+# Import the same example classes in guide tests and ordinary pickle round trips.
+doctest_path = [str(Path(__file__).parent / "examples")]
 
 # These are non-object labels emitted by generic-base / Pydantic renderers.
 # Keep this exact allowlist separate from real public API references.
@@ -113,6 +116,8 @@ _REFERENCE_ALIASES = {
     "ModuleType": "types.ModuleType",
     "ArgsKwargs": "pydantic_core.ArgsKwargs",
     "ValidationInfo": "pydantic.ValidationInfo",
+    # The field renderer requests a class; Pydantic documents this alias as data.
+    "pydantic.types.JsonValue": "pydantic.types.JsonValue",
 }
 _REFERENCE_URLS = {
     "nc.Dataset": "https://unidata.github.io/netcdf4-python/#netCDF4.Dataset",

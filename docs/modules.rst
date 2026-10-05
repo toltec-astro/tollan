@@ -55,7 +55,7 @@ Pipeline
 --------
 
 .. automodapi:: tollan.pipeline
-   :skip: StepConfig, StepContext
+   :skip: StepConfig, StepContext, StepFailure
 
 Plotting
 --------

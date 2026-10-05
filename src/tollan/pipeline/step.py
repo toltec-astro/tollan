@@ -10,35 +10,51 @@ Provides typed steps over containers with an ``.attrs`` or ``.meta`` mapping:
 - :class:`SequentialPipeline` executes a list of steps in order, skipping
   disabled ones.
 
-Typical usage::
+Store scientific products in the working container and publish what downstream
+steps need through a typed ``context.data`` field. This can be a view of those
+products or a bundle of views, arrays, tables, figures, and file locations.
+Leave it as None when the step does not need to publish a payload.
 
-    class MyConfig(StepConfig):
-        threshold: float = 0.5
+Use ``Step.dump_context()`` to obtain JSON for export. The product writer selects
+which contexts to save and where to store the returned strings. Read saved values
+through the producing step's ``load_context()``; excluded live payloads are not
+reconstructed.
 
-    class MyData(BaseModel):
-        result: float | None = None
+Examples
+--------
+Install a result variable while preserving the input variable. This minimal
+step leaves ``context.data`` as None; the pipeline guide demonstrates publishing
+a typed result view for downstream steps.
 
-    class MyContext(StepContext["MyStep", MyConfig]):
-        data: MyData | None = None
-
-    class MyStep(Step[MyConfig, MyContext]):
-        @classmethod
-        def run(cls, data, context):
-            context.data = MyData(result=42.0)
-            return True
-
-    step = MyStep(threshold=0.9)
-    data = step(data)                          # executes, stores context in data.attrs
-    ctx = MyStep.get_context(data)             # typed MyContext
-    ctx.data.result                            # 42.0
+>>> import xarray as xr
+>>> class ScaleConfig(StepConfig):
+...     factor: float = 2.0
+>>> class ScaleContext(StepContext["Scale", ScaleConfig]):
+...     pass
+>>> class Scale(Step[ScaleConfig, ScaleContext]):
+...     @classmethod
+...     def run(cls, data, context):
+...         data["scaled"] = data["signal"] * context.config.factor
+>>> source = xr.Dataset({"signal": ("sample", [1.0, 2.0])})
+>>> Scale(factor=3.0)(source) is source
+True
+>>> source["signal"].values.tolist(), source["scaled"].values.tolist()
+([1.0, 2.0], [3.0, 6.0])
+>>> context = Scale.get_context(source)
+>>> source.attrs[PIPELINE_CONTEXT_KEY][Scale] is context
+True
+>>> context.completed, context.data, context.config.factor
+(True, None, 3.0)
 """
 
 from __future__ import annotations
 
+import json
 from collections import UserDict
+from collections.abc import Mapping
 from dataclasses import dataclass
+from enum import StrEnum, auto
 from typing import (
-    TYPE_CHECKING,
     Any,
     ClassVar,
     Literal,
@@ -47,7 +63,7 @@ from typing import (
     overload,
 )
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 from ..utils.log import logger, timeit
 from ..utils.py import getname
@@ -55,9 +71,6 @@ from ..utils.typing import (
     GenericBindingRequirement,
     resolve_concrete_generic_bindings,
 )
-
-if TYPE_CHECKING:
-    from typing import Self
 
 __all__ = [
     "PIPELINE_CONTEXT_KEY",
@@ -67,6 +80,8 @@ __all__ = [
     "StepConfig",
     "StepContext",
     "StepContextDict",
+    "StepFailure",
+    "StepFailureKind",
     "get_pipeline_contexts",
 ]
 
@@ -86,35 +101,127 @@ class StepConfig(BaseModel):
     """Base pydantic model for pipeline step configuration.
 
     Subclasses add domain-specific config fields.  The ``enabled`` flag
-    is honoured by :class:`SequentialPipeline` to skip disabled steps.
+    is honoured by :class:`SequentialPipeline` to skip disabled steps. Set
+    ``alias`` to keep separate invocation contexts for repeated steps.
     """
 
     model_config = ConfigDict(frozen=True)
 
-    enabled: bool = Field(default=True, description="Set False to skip this step.")
+    enabled: bool = Field(
+        default=True, description="Set False to skip this step in a SequentialPipeline."
+    )
+    alias: str | None = Field(
+        default=None,
+        description=(
+            "Invocation label for a separate context; "
+            "None selects the primary operation."
+        ),
+    )
+
+
+class StepFailureKind(StrEnum):
+    """Categories of failures encountered during an operation."""
+
+    #: A required input or prior result is unavailable.
+    missing_input = auto()
+    #: An available input cannot be used by this operation.
+    invalid_input = auto()
+    #: An Exception escaped the step's run method.
+    exception = auto()
+    #: A failure described by its message and details.
+    other = auto()
+
+
+class StepFailure(BaseModel):
+    """Failure encountered during an operation.
+
+    Append instances to ``context.failures`` as failures occur. Use ``kind`` to
+    group failures and ``details`` for information specific to the operation.
+
+    Parameters
+    ----------
+    message : str
+        Description of the failure.
+    kind : StepFailureKind, optional
+        Failure category. Defaults to other.
+    exception_type : str, optional
+        Exception class name, or None for a failure reported without raising.
+    details : dict of str to JSON values, optional
+        Additional information such as an input name or channel. Defaults to an
+        empty mapping.
+    """
+
+    message: str = Field(description="Description of the failure.")
+    kind: StepFailureKind = Field(
+        default=StepFailureKind.other, description="Category of the failure."
+    )
+    exception_type: str | None = Field(
+        default=None, description="Escaping exception's class name, when applicable."
+    )
+    details: dict[str, JsonValue] = Field(
+        default_factory=dict, description="Operation-specific JSON-compatible details."
+    )
 
 
 class StepContext[StepT: "Step", ConfigT: "StepConfig"](BaseModel):
-    """Per-step state object stored in ``data.attrs[PIPELINE_CONTEXT_KEY]``.
+    """Results and execution status for one step invocation.
 
-    Subclasses override ``data`` with a typed field holding step outputs
-    (tables, arrays, pydantic models).  The ``config`` field records the
-    config that produced this context (useful for cache invalidation).
-    ``completed`` is set to ``True`` by :class:`Step.__call__` after
-    :meth:`Step.run` returns ``True``.
+    :meth:`Step.create_context` attaches a fresh context to the working container
+    before each run. Subclasses can publish typed results through ``data``;
+    fields need defaults so the context can exist before results are available.
+    A payload can contain views of products in the working container and other
+    objects needed by downstream steps.
 
-    ``make_step()`` reconstructs a step using the saved configuration.
+    Parameters
+    ----------
+    step_cls : type of Step
+        Producing step class. Excluded from model dumps; restore exported fields
+        through that producer's :meth:`Step.load_context`.
+    config : StepConfig
+        Settings used for this invocation, including its alias.
+    data : None, optional
+        Published results or views. Subclasses specify the payload type and its
+        initial value. Defaults to None when no payload is needed.
+    completed : bool, optional
+        Initially False. The step sets True after a normal return with no failures.
+        Lazy results may still require computation.
+    failures : list of StepFailure, optional
+        Failures in append order; each invocation starts with an empty list.
+
+    Notes
+    -----
+    An ``Exception`` escaping ``run()`` adds its message and class name to
+    ``failures`` before being re-raised. Completion describes this invocation;
+    it does not establish that stored results are fresh for later input data.
+    Deferred computation errors are recorded by the step that evaluates the
+    results. Evaluating them outside a step does not update invocation contexts.
     """
 
-    step_cls: ClassVar[type[Any]]
-    config_cls: ClassVar[type[Any]]
+    step_cls: type[Any] = Field(
+        exclude=True, repr=False, description="Concrete step class for this invocation."
+    )
 
     config: ConfigT
     data: None = None
     completed: bool = False
+    failures: list[StepFailure] = Field(
+        default_factory=list, description="Failures encountered during this invocation."
+    )
+
+    @property
+    def config_cls(self) -> type[StepConfig]:
+        """Configuration model of the producing step."""
+        return self.step_cls.config_cls
 
     def make_step(self) -> StepT:
-        """Reconstruct the step from the stored config."""
+        """Reconstruct the producing step with this invocation's settings.
+
+        Returns
+        -------
+        Step
+            New instance of ``step_cls``, retaining the saved configuration and
+            alias. Reconstructing a step does not run it or restore input data.
+        """
         return cast("StepT", self.step_cls(self.config))
 
 
@@ -143,23 +250,29 @@ class StepContextDict(UserDict[str, StepContext]):
         Returns
         -------
         str
-            The context key string.
+            The context key string. An instance includes its configured alias;
+            a class selects the primary invocation.
+
+        Raises
+        ------
+        TypeError
+            The argument is neither a supported key nor a named callable.
         """
         if isinstance(arg, str):
             return arg
         if isinstance(arg, type) and issubclass(arg, Step):
             return arg.context_key
         if isinstance(arg, Step):
-            return type(arg).context_key
+            return arg.context_key
         if callable(arg):
             return getname(arg)
         msg = f"invalid step context key arg: {arg!r}"
         raise TypeError(msg)
 
-    def __setitem__(self, key: Any, item: Any) -> None:
+    def __setitem__(self, key: Any, item: StepContext) -> None:
         super().__setitem__(self.resolve_key(key), item)
 
-    def __getitem__(self, key: Any) -> Any:  # type: ignore[override]
+    def __getitem__(self, key: Any) -> StepContext:
         return super().__getitem__(self.resolve_key(key))
 
     def __contains__(self, key: Any) -> bool:  # type: ignore[override]
@@ -220,17 +333,14 @@ class _ContextKeyDescriptor:
 
     Works on both the class (``SweepCheck.context_key``) and instances
     (``step_instance.context_key``) without requiring ``@classproperty``.
-    Accounts for the ``alias()`` mechanism.
+    Instance access includes the configured alias; class access selects the primary key.
     """
 
-    def __get__(self, obj: Any, cls: type | None = None) -> str:
+    def __get__(self, obj: Any, cls: type[Step] | None = None) -> str:
         if cls is None:
             cls = type(obj)
-        basename: str = getattr(cls, "_orig_context_key", None) or getname(cls)
-        alias: str | None = getattr(cls, "_alias_name", None)
-        if alias:
-            return f"{basename}_{alias}"
-        return basename
+        alias = obj.config.alias if obj is not None else None
+        return cls.get_context_key(alias=alias)
 
 
 # ---------------------------------------------------------------------------
@@ -247,13 +357,12 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
             @classmethod
             def run(cls, data, context):
                 ...
-                return True
 
     The step instance holds its config.  Calling the step on *data*:
 
-    1. Creates a :class:`StepContext` in ``data.attrs["__pipeline_context__"]``.
+    1. Creates a :class:`StepContext` in the container's attrs or meta mapping.
     2. Calls :meth:`run`.
-    3. Sets ``context.completed = True`` if :meth:`run` returns ``True``.
+    3. Marks the context complete when ``run()`` finishes without failures.
 
     Cross-step access is typed::
 
@@ -266,13 +375,20 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         Optional single instance of the bound configuration model.
     **kwargs
         Configuration fields to validate, overriding a supplied model's values.
+
+    Raises
+    ------
+    ValueError
+        More than one positional argument is supplied, or it is not an instance
+        of the bound configuration model.
+    pydantic.ValidationError
+        Configuration fields fail validation.
     """
 
     config_cls: ClassVar[type[StepConfig]]
     context_cls: ClassVar[type[StepContext]]
-    _alias_name: ClassVar[str | None] = None
-    _orig_context_key: ClassVar[str | None] = None
 
+    #: Context-store key: the instance's alias, or the primary invocation on a class.
     context_key = _ContextKeyDescriptor()
 
     _config: ConfigT
@@ -299,8 +415,6 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
 
         cls.config_cls = config_cls
         cls.context_cls = context_cls
-        cls.context_cls.step_cls = cls
-        cls.context_cls.config_cls = cls.config_cls
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         if not args:
@@ -339,11 +453,19 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         Returns
         -------
         StepContext
-            New context with this step's configuration and completed=False.
+            New context with this step's producer, configuration, completed=False,
+            and an empty failure list. Replaces the entry for this instance's
+            alias without running the step or clearing results on the container.
+
+        Raises
+        ------
+        TypeError
+            The container has neither an attrs nor a meta mapping.
         """
         pctx = get_pipeline_contexts(data)
         context_cls = cast("type[ContextT]", self.context_cls)
         ctx = context_cls(
+            step_cls=type(self),
             config=self._config,
             completed=False,
         )
@@ -351,7 +473,7 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         return ctx
 
     @classmethod
-    def has_context(cls, data: Any) -> bool:
+    def has_context(cls, data: Any, *, alias: str | None = None) -> bool:
         """Check whether this step has a stored context.
 
         Parameters
@@ -359,55 +481,76 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         data : object
             Container exposing an attrs or meta mapping. An empty context store
             is attached on first lookup if none exists.
+        alias : str or None, optional
+            Invocation label. None selects the primary operation.
 
         Returns
         -------
         bool
             Whether this step's key is present, regardless of completion status.
+
+        Raises
+        ------
+        TypeError
+            The container has neither an attrs nor a meta mapping.
         """
         pctx = get_pipeline_contexts(data)
-        return cls.context_key in pctx
+        return cls.get_context_key(alias=alias) in pctx
 
     @classmethod
-    def get_context(cls, data: Any) -> ContextT:
+    def get_context(cls, data: Any, *, alias: str | None = None) -> ContextT:
         """Return the typed context for this step from *data*.
 
         Parameters
         ----------
         data : Any
             Data container that has been processed by this step.
+        alias : str or None, optional
+            Invocation label. None selects the primary operation, including when
+            this class method is called through a configured instance.
 
         Returns
         -------
         ContextT
-            The typed step context.
+            The attached live context, shared with the pipeline context store.
 
         Raises
         ------
         KeyError
-            If this step has not run on *data* yet.
+            No context is stored for the requested alias.
+        TypeError
+            The container has neither an attrs nor a meta mapping.
         """
         pctx = get_pipeline_contexts(data)
-        return cast("ContextT", pctx[cls.context_key])
+        return cast("ContextT", pctx[cls.get_context_key(alias=alias)])
 
     @classmethod
-    def run(cls, data: Any, context: ContextT) -> bool:  # type: ignore[misc]
-        """Execute the step's computation.
+    def run(cls, data: Any, context: ContextT) -> None:  # type: ignore[misc]
+        """Perform this operation on the shared working data.
 
-        Subclasses must implement this.  Populate ``context.data`` with
-        outputs.  Return ``True`` on success (sets ``context.completed``).
+        Subclasses select their inputs from the available data and prior step
+        contexts. Record failures when the operation cannot complete, including
+        before an early return. Subsequent steps decide which results they require.
 
         Parameters
         ----------
         data : Any
             The data container (``xr.DataTree`` or similar).
         context : ContextT
-            The step's context object — write outputs here.
+            This invocation's context for recording step-specific state. Append
+            StepFailure instances to ``context.failures`` as failures occur.
 
         Returns
         -------
-        bool
-            ``True`` if the step completed successfully.
+        None
+            Results and failures are stored on the data and context. A containing
+            SequentialPipeline continues after a normal return, including when
+            failures were recorded.
+
+        Raises
+        ------
+        NotImplementedError
+            The subclass has not implemented this method.
         """
         raise NotImplementedError
 
@@ -430,6 +573,11 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
     def __call__(self, data: Any, *, return_context: bool = False) -> Any:
         """Run the step, storing context in *data*.
 
+        Each call replaces the context for this instance's alias. After a normal
+        return, the context is marked complete only when no failures were recorded.
+        Direct calls run even when ``config.enabled`` is False.
+        Lazy results are evaluated only if ``run()`` requests their computation.
+
         Parameters
         ----------
         data : Any
@@ -440,44 +588,109 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         Returns
         -------
         Any or tuple[Any, ContextT]
-            The (possibly mutated) data container, plus context if requested.
+            The supplied data container, possibly mutated, plus context if requested.
+
+        Raises
+        ------
+        TypeError
+            The container has neither an attrs nor a meta mapping.
+        Exception
+            Exceptions escaping ``run()`` are recorded on the attached context
+            and re-raised. Earlier failures and data mutations remain. Process
+            control exceptions such as KeyboardInterrupt propagate without a record.
         """
         context = self.create_context(data)
-        if self.run(data, context):
-            context.completed = True
+        try:
+            self.run(data, context)
+        except Exception as exc:
+            context.failures.append(
+                StepFailure(
+                    message=str(exc),
+                    kind=StepFailureKind.exception,
+                    exception_type=type(exc).__name__,
+                )
+            )
+            raise
+        context.completed = not context.failures
         if return_context:
             return data, context
         return data
 
     @classmethod
-    def alias(cls, name: str) -> type[Self]:
-        """Return a step subclass with an alternative context key.
-
-        Useful when the same step class is used twice in one pipeline with
-        different configs (e.g. two ``KidsFind`` passes).
+    def get_context_key(cls, *, alias: str | None = None) -> str:
+        """Return the context key for an invocation.
 
         Parameters
         ----------
-        name : str
-            Suffix appended to the base context key.
+        alias : str or None, optional
+            Invocation label. None selects the primary operation.
 
         Returns
         -------
-        type[Self]
-            A new step class sharing implementation but with a distinct key.
+        str
+            Key for looking up this step's context in the working data.
         """
-        return cast(
-            "type[Self]",
-            type(
-                cls.__name__,
-                (cls,),
-                {
-                    "_alias_name": name,
-                    "_orig_context_key": getattr(cls, "_orig_context_key", None)
-                    or cls.context_key,
-                },
-            ),
-        )
+        name = getname(cls)
+        return f"{name}:{alias}" if alias is not None else name
+
+    @classmethod
+    def dump_context(cls, context: ContextT) -> str:
+        """Serialize this step's context as JSON for export.
+
+        Parameters
+        ----------
+        context : StepContext
+            This producer's invocation context. Its model field exclusions apply;
+            exclude live views or other objects that cannot be serialized.
+
+        Returns
+        -------
+        str
+            JSON containing the included context fields. The caller chooses where
+            to store it and reads it with this step's ``load_context()``.
+
+        Raises
+        ------
+        pydantic_core.PydanticSerializationError
+            An included value cannot be serialized as JSON.
+        """
+        return context.model_dump_json()
+
+    @classmethod
+    def load_context(cls, value: ContextT | str | Mapping[str, Any]) -> ContextT:
+        """Read a live or exported context for this step.
+
+        Parameters
+        ----------
+        value : StepContext, str, or mapping
+            This producer's live context, JSON from ``dump_context()``, or decoded
+            context fields. Use the original producing class; exported fields
+            do not identify it. The saved configuration includes the invocation
+            alias.
+
+        Returns
+        -------
+        StepContext
+            The live context unchanged, or a validated context that can recreate
+            this step with ``make_step()``. Loading does not attach the returned
+            context to a data container. Excluded fields take their model defaults;
+            result views are not reconstructed.
+
+        Raises
+        ------
+        json.JSONDecodeError
+            The string is not valid JSON.
+        pydantic.ValidationError
+            The decoded value is not a context object, or its fields fail
+            validation as this step's context model.
+        """
+        if isinstance(value, StepContext):
+            return cast("ContextT", value)
+        if isinstance(value, str):
+            value = json.loads(value)
+        if isinstance(value, Mapping):
+            value = {**value, "step_cls": cls}
+        return cast("ContextT", cls.context_cls.model_validate(value))
 
 
 # ---------------------------------------------------------------------------
@@ -513,7 +726,11 @@ class Pipeline:
 class SequentialPipeline(Pipeline):
     """Pipeline that executes a list of :class:`Step` instances sequentially.
 
-    Steps with ``config.enabled = False`` are logged and skipped.
+    Steps with ``config.enabled = False`` are logged and skipped; any context from
+    an earlier call remains. A step
+    recording failures in ``run()`` leaves its context incomplete; later steps
+    still run and select their own inputs. Exceptions propagate and stop the
+    sequence. Changes made before stopping remain.
 
     Parameters
     ----------
@@ -532,7 +749,6 @@ class SequentialPipeline(Pipeline):
     ...     def run(cls, data, context):
     ...         context.data = context.config.increment
     ...         data.attrs["count"] = context.data
-    ...         return True
     >>> pipeline = SequentialPipeline(steps=[CountStep(increment=3)])
     >>> data = pipeline(xr.Dataset())
     >>> CountStep.get_context(data).data
@@ -543,13 +759,25 @@ class SequentialPipeline(Pipeline):
 
     @timeit  # type: ignore[invalid-argument-type]
     def __call__(self, data: Any) -> Any:
-        """Execute all enabled steps sequentially."""
+        """Run enabled operations in order on the working data.
+
+        Parameters
+        ----------
+        data : object
+            Working container passed to each step.
+
+        Returns
+        -------
+        object
+            The working container after all enabled operations have run.
+            Recorded failures do not stop the sequence; an exception does.
+        """
         _data = data
         for step in self.steps:
             if step.config.enabled:
                 _data = step(_data)
             else:
                 logger.debug(
-                    f"step {type(step).context_key!r} is disabled, skipping",
+                    f"step {step.context_key!r} is disabled, skipping",
                 )
         return _data

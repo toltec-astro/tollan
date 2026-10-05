@@ -1,20 +1,25 @@
 # Run a sequence of configured steps
 
-Run configured computations in order and inspect each step's results on the
-data container.
+Run configured operations on a shared working data container and inspect each
+operation's state and results.
 
 | Need | Use |
 | --- | --- |
 | Validate a step's settings | A `StepConfig` subclass |
-| Store completion status and outputs | A `StepContext` subclass |
+| Record settings, completion, and failures | A `StepContext` subclass |
+| Publish a view or a bundle of results for downstream steps | A typed `context.data` field on that subclass |
+| Read scientific results from the working container | A result view using a schema and mapper |
+| Record failures during an operation | Append `StepFailure` instances to `context.failures` |
 | Run one computation | A `Step` subclass implementing `run()` |
 | Run enabled steps in order | `SequentialPipeline` |
+| Export selected context fields | `Step.dump_context()` and a product writer |
 | Export result datasets with their producing configuration | [xarray analyses](data-adapters.md#store-analysis-results-in-a-datatree) |
 
 ## Define and run a step
 
 1. Declare settings on a `StepConfig` subclass.
-2. Declare outputs on a `StepContext` subclass.
+2. Define a `StepContext` subclass with a typed `data` field for the results
+   downstream steps need. Leave it as None if no payload is needed.
 3. Bind both to a `Step` and implement `run(data, context)`.
 4. Call the step or add it to a `SequentialPipeline`.
 
@@ -26,38 +31,80 @@ digraph step {
     Step -> StepContext [label="creates per call"];
     Step -> "data container" [label="run()"];
     "data container" -> StepContext [label="get_context()"];
+    "result view" -> "data container" [label="reads products"];
 }
 ```
 
+### Keep input and result datasets in the working tree
+
+This example scales a signal into a new dataset. The input remains in `raw`;
+the step writes `scaled`. Only the leaf nodes carry arrays, so each dataset can
+use its own coordinates. The root holds the invocation contexts:
+
+```text
+/                               working DataTree
+├── attrs["__pipeline_context__"]
+│   └── Scale.context_key        ScaleContext
+│       ├── config.factor       3.0
+│       ├── data                ScaleView → scaled Dataset
+│       ├── completed           True
+│       └── failures            []
+├── raw                         Dataset: signal(sample) = [1.0, 2.0]
+└── scaled                      Dataset: signal(sample) = [3.0, 6.0]
+```
+
+`raw` and `scaled` are paths chosen for this example, not paths required by
+Tollan. The schema and mapper give the step and view access to both signals:
+
+```{literalinclude} examples/pipeline_example.py
+:language: python
+:start-at: from __future__ import annotations
+:end-before: class ScaleConfig
+```
+
+The step installs the result in the supplied tree and publishes a view of that
+result through `context.data`. The view shares the result's array storage.
+`arbitrary_types_allowed=True` permits the view as a Pydantic field;
+`exclude=True` omits it from model dumps while preserving it in pickle:
+
+```{literalinclude} examples/pipeline_example.py
+:language: python
+:start-at: class ScaleConfig
+:end-before: class WriteSignalConfig
+```
+
+Save the {download}`complete example <examples/pipeline_example.py>` as `pipeline_example.py`
+in your Python import path, then run it on a tree:
+
 ```{testcode}
 import xarray as xr
-from tollan.pipeline import SequentialPipeline, Step, StepConfig, StepContext
-
-
-class ScaleConfig(StepConfig):
-    factor: float = 2.0
-
-
-class ScaleContext(StepContext["Scale", ScaleConfig]):
-    data: float | None = None
-
-
-class Scale(Step[ScaleConfig, ScaleContext]):
-    @classmethod
-    def run(cls, data, context):
-        data["signal"] = data["signal"] * context.config.factor
-        context.data = float(data["signal"].mean())
-        return True
-
+from pipeline_example import Scale, ScaleContext, ScaleView, WriteSignal
+from tollan.pipeline import (
+    PIPELINE_CONTEXT_KEY,
+    SequentialPipeline,
+    Step, StepConfig, StepContext,
+    StepFailure, StepFailureKind,
+)
 
 source = xr.Dataset({"signal": ("sample", [1.0, 2.0])})
+tree = xr.DataTree.from_dict({"raw": source})
 pipeline = SequentialPipeline(steps=[Scale(factor=3.0)])
-assert pipeline(source) is source
-context = Scale.get_context(source)
+assert pipeline(tree) is tree
+assert source["signal"].values.tolist() == [1.0, 2.0]
+assert tree["raw"].to_dataset().identical(source)
+context = Scale.get_context(tree)
+assert tree.attrs[PIPELINE_CONTEXT_KEY][Scale] is context
 assert context.completed
-assert context.data == 4.5
+assert context.data.signal.values.tolist() == [3.0, 6.0]
+assert context.data.signal.data is tree["scaled/signal"].data
 assert context.config.factor == 3.0
 ```
+
+Steps may also update an existing dataset in place. The concrete step determines
+which inputs it preserves and which products it replaces. For a computation
+with its own configuration and multiple result datasets, use an
+[xarray analysis](data-adapters.md#store-analysis-results-in-a-datatree) inside
+`run()` and expose its products through the analysis view.
 
 Construct a step with a configuration model, keyword settings, or both.
 Keywords override a supplied model's values and are validated again. The step
@@ -67,41 +114,341 @@ and context must bind the same configuration type.
 | --- | --- |
 | `step(source)` | Runs the step; replaces its previous context. |
 | `step(source, return_context=True)` | Returns `(source, context)`. |
-| `run()` returns `True` | Marks the context complete; the pipeline continues. |
-| `run()` returns `False` | Leaves the context incomplete; the pipeline continues. |
-| `run()` raises | Propagates the exception and stops the pipeline; prior mutations remain. |
+| `run()` finishes without failures | Marks the context complete; the pipeline continues. |
+| `run()` finishes with failures | Leaves the context incomplete; the pipeline continues. |
+| `run()` raises an `Exception` | Appends its message and class name to `context.failures`, then re-raises; prior mutations remain. |
 | `Step.get_context(source)` before execution | Raises `KeyError`. |
 
 Context lookup, including `has_context()`, attaches an empty context store when
 the container has none.
 
+### Consume a prior step's results and publish a new result
+
+`context.data` can be one view or a typed bundle of views, arrays, tables,
+figures, and file locations. Publish what later steps need from the invocation.
+A view gives access to the same products stored in the tree.
+
+The writer below obtains the prior result through `Scale.get_context(data).data`,
+exports its dataset, and publishes the file location after the write succeeds:
+
+```{literalinclude} examples/pipeline_example.py
+:language: python
+:start-at: class WriteSignalConfig
+```
+
+If the Scale context or its payload is absent, the writer records `missing_input`
+and returns, allowing later steps to run. An available payload can be used even
+when its producing context is incomplete. The destination's parent directory
+must exist; an existing file is overwritten when writing begins.
+
+```{testcode}
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+with TemporaryDirectory() as directory:
+    path = Path(directory) / "scaled.nc"
+    assert WriteSignal(path=path)(tree) is tree
+    publication = WriteSignal.get_context(tree)
+    assert publication.completed
+    assert publication.data.path == path
+    assert tree.attrs[PIPELINE_CONTEXT_KEY][WriteSignal] is publication
+    with xr.open_dataset(publication.data.path) as reopened:
+        reopened_view = ScaleView(reopened)
+        xr.testing.assert_identical(reopened_view.signal, context.data.signal)
+        assert PIPELINE_CONTEXT_KEY not in reopened.attrs
+```
+
+The tree now holds both contexts. `ScaleContext.data` contains the result view;
+`WriteSignalContext.data` contains the published path. The exported file contains
+the signal dataset. Reopening it provides data for a new view; it does not
+restore the working tree's live contexts or raw input.
+
+With lazy input arrays, `Scale` prepares the calculation without evaluating it.
+Its completion means that `run()` returned without recorded failures.
+`WriteSignal` evaluates the arrays when writing. A deferred computation error
+is recorded on the writer's context and propagates; the Scale context remains
+completed. A failed write can leave an incomplete file.
+
+## Handle missing inputs and inspect failures
+
+Each step selects its inputs from the available data and prior step contexts.
+`run()` returns nothing. A step requiring an unavailable result records the reason
+in its context before returning; a step accepting another input can use that input
+and complete. Both outcomes allow later steps to run. Completion remains False
+while `run()` is executing, even when its failure list is still empty.
+
+Append `StepFailure` instances to `context.failures` as failures occur. Use `kind`
+to group records and `details` for JSON-compatible information about each failure.
+The list retains every record in append order.
+
+| Kind | Meaning |
+| --- | --- |
+| `missing_input` | A required input or prior result is unavailable. |
+| `invalid_input` | An available input cannot be used by this operation. |
+| `exception` | An exception escaped `run()`. |
+| `other` | Another failure; describe it with `message` and `details`. |
+
+For a small operation publishing scalar results in its context, a consumer can
+use an estimated offset when available:
+
+```{testcode}
+class EstimateOffsetContext(StepContext["EstimateOffset", StepConfig]):
+    data: float | None = None
+
+
+class EstimateOffset(Step[StepConfig, EstimateOffsetContext]):
+    @classmethod
+    def run(cls, data, context):
+        if "reference" not in data:
+            context.failures.append(
+                StepFailure(
+                    kind=StepFailureKind.missing_input,
+                    message="No reference signal is available.",
+                    details={"input": "reference"},
+                )
+            )
+            return
+        context.data = float(data["reference"].mean())
+
+
+class SummarizeContext(StepContext["Summarize", StepConfig]):
+    data: float | None = None
+
+
+class Summarize(Step[StepConfig, SummarizeContext]):
+    @classmethod
+    def run(cls, data, context):
+        signal = data["signal"]
+        if EstimateOffset.has_context(data):
+            offset = EstimateOffset.get_context(data).data
+            if offset is not None:
+                signal = signal - offset
+        context.data = float(signal.mean())
+
+
+source = xr.Dataset({"signal": ("sample", [1.0, 2.0])})
+pipeline = SequentialPipeline(steps=[EstimateOffset(), Summarize()])
+assert pipeline(source) is source
+assert not EstimateOffset.get_context(source).completed
+failures = EstimateOffset.get_context(source).failures
+assert len(failures) == 1
+failure = failures[0]
+assert failure.kind is StepFailureKind.missing_input
+assert failure.details == {"input": "reference"}
+assert Summarize.get_context(source).completed
+assert Summarize.get_context(source).data == 1.5
+
+source["reference"] = xr.DataArray(0.5)
+pipeline(source)
+assert EstimateOffset.get_context(source).completed
+assert EstimateOffset.get_context(source).failures == []
+assert Summarize.get_context(source).data == 1.0
+```
+
+The consumer decides whether the offset is required. Completing `Summarize`
+does not change the outcome recorded by `EstimateOffset`.
+
+Each call starts with a fresh context and an empty failure list. Records from
+earlier calls remain on their original contexts. Failure kinds and details are
+preserved by model dumps and restoration through `Step.load_context()`.
+
+An `Exception` escaping `run()` appends its message and class name to
+`context.failures`, preserving earlier records, before being re-raised. Inspect
+that invocation with `Step.get_context(source)` after catching the exception.
+`KeyboardInterrupt` and `SystemExit` propagate without being recorded as
+operation failures.
+
 ## Disable or repeat a step
 
 `SequentialPipeline` skips steps with `config.enabled=False`. Calling a disabled
-step directly still runs it. Distinct instances of the same step class share one
-context key, so the later execution replaces the earlier context. Use `alias()`
-to give repeated steps distinct keys:
+step directly still runs it. Skipping leaves any earlier context and results in
+place; `completed=True` does not prove the step ran in the latest sequence.
+
+Repeating a step with the same alias replaces its previous context, without
+clearing results from the data container. Configure distinct aliases to keep
+separate invocation records. Aliases do not copy or isolate the working data:
 
 ```{testcode}
-SecondScale = Scale.alias("second")
 source = xr.Dataset({"signal": ("sample", [1.0, 2.0])})
-pipeline = SequentialPipeline(steps=[Scale(factor=2.0), SecondScale(factor=3.0)])
-pipeline(source)
-assert Scale.get_context(source).data == 3.0
-assert SecondScale.get_context(source).data == 9.0
+aliased_tree = xr.DataTree.from_dict({"raw": source})
+second = Scale(alias="second", factor=3.0)
+pipeline = SequentialPipeline(steps=[Scale(factor=2.0), second])
+pipeline(aliased_tree)
+assert Scale.get_context(aliased_tree).config.factor == 2.0
+assert Scale.get_context(aliased_tree, alias="second").config.factor == 3.0
+assert Scale.get_context(aliased_tree).data.signal.values.tolist() == [2.0, 4.0]
+second_context = Scale.get_context(aliased_tree, alias="second")
+assert second_context.data.signal.values.tolist() == [3.0, 6.0]
+assert ScaleView(aliased_tree["scaled"]).signal.values.tolist() == [3.0, 6.0]
+assert Scale.has_context(aliased_tree, alias="second")
+assert second.context_key == Scale.get_context_key(alias="second")
 ```
 
-```{warning}
-Creating an alias can currently change which step `context.make_step()`
-reconstructs for an existing context. Construct the intended step class
-explicitly when reusing its configuration.
+Both calls read `raw` and replace `scaled`. Each published view retains the
+dataset selected for its invocation: the first result remains available through
+its context, while `scaled` contains the second result. To export both results
+as tree leaves, the step would need distinct result locations.
+
+| Lookup | Selected invocation |
+| --- | --- |
+| `Scale.get_context(aliased_tree)` | Primary (`alias=None`) |
+| `Scale.get_context(aliased_tree, alias="second")` | Alias `"second"` |
+| `second.get_context(aliased_tree)` | Primary: the lookup is a class method |
+| `pipeline.get_contexts(aliased_tree)[second]` | The configured instance's alias |
+
+`has_context()` follows the same explicit-alias rule as `get_context()`.
+Use `step.context_key` or `Step.get_context_key(alias=...)` when a string key is
+needed.
+
+## Recreate a step or restore exported context
+
+Use `context.make_step()` to recreate the producer with its saved settings.
+Use `Step.dump_context()` to obtain a JSON string. Your writer chooses where to
+store it. Read the saved value with `Step.load_context()` on the original
+producing class. This example stores the string in a netCDF attribute:
+
+```{testcode}
+original = Scale.get_context(aliased_tree)
+aliased = Scale.get_context(aliased_tree, alias="second")
+product = aliased_tree["scaled"].to_dataset().copy(deep=False)
+product.attrs[second.context_key] = Scale.dump_context(aliased)
+with TemporaryDirectory() as directory:
+    path = Path(directory) / "scaled.nc"
+    product.to_netcdf(path)
+    with xr.open_dataset(path) as reopened:
+        saved = reopened.attrs[second.context_key]
+        assert isinstance(saved, str)
+        restored = Scale.load_context(saved)
+        assert ScaleView(reopened).signal.values.tolist() == [3.0, 6.0]
+assert type(original.make_step()) is Scale
+assert type(restored.make_step()) is Scale
+assert restored.make_step().config.alias == "second"
+assert restored.make_step().config.factor == 3.0
+assert restored.make_step().context_key == second.context_key
+assert aliased.data is not None
+assert restored.data is None
 ```
+
+| Operation | Result |
+| --- | --- |
+| `context.make_step()` | A new step with the saved configuration and alias; does not execute it. |
+| `Scale.load_context(context)` | The live context unchanged. |
+| `Scale.dump_context(context)` | JSON for included fields; the producer class is excluded. This example also excludes its live result view. |
+| `Scale.load_context(saved)` | A new validated context from JSON or decoded fields; does not attach it to a container. |
+
+Exported fields do not identify the producer. Keep that choice with the exported
+record, and restore through the same class. `ScaleContext` excludes its view, so
+`load_context()` restores settings and status with `data=None`. It does not
+construct a result view. Select the reopened dataset or namespace and construct
+its view explicitly. Exclude live payload fields with `Field(exclude=True)` when
+defining the context model; included fields must be JSON serializable. The
+exporter chooses which contexts to save and which node holds their attributes.
+Use the
+[analysis workflow](data-adapters.md#store-analysis-results-in-a-datatree) for result
+datasets.
+
+Generate a schema for the **exported** fields using Pydantic's serialization mode:
+
+```{testcode}
+schema = ScaleContext.model_json_schema(mode="serialization")
+assert "step_cls" not in schema["properties"]
+assert "data" not in schema["properties"]
+assert "config" in schema["required"]
+```
+
+The default validation schema cannot describe the live Python class in `step_cls`.
+See the {ref}`generated model reference <pipeline-models>`
+for configuration fields and failure categories.
+
+## Save and restore the working tree with pickle
+
+Pickle saves the working container and its attached contexts and views together,
+preserving their shared references. Lazy arrays retain their deferred reads and
+external resource dependencies. Keep the step, view,
+mapper, and model classes in an importable module, as in
+`pipeline_example.py`. All other stored objects must also support pickle.
+
+```{testcode}
+import pickle
+
+snapshot = pickle.dumps(tree)
+recovered = pickle.loads(snapshot)
+assert recovered is not tree
+xr.testing.assert_identical(
+    recovered["raw"].to_dataset(), tree["raw"].to_dataset()
+)
+xr.testing.assert_identical(
+    ScaleView(recovered["scaled"]).signal, context.data.signal
+)
+recovered_context = Scale.get_context(recovered)
+assert recovered_context is recovered.attrs[PIPELINE_CONTEXT_KEY][Scale]
+assert recovered_context is not context
+assert recovered_context.completed
+assert recovered_context.data is not context.data
+assert recovered_context.data.signal.data is recovered["scaled/signal"].data
+assert recovered_context.data.signal.values.tolist() == [3.0, 6.0]
+assert recovered_context.make_step().config == context.config
+assert WriteSignal.get_context(recovered).data == publication.data
+
+recovered_aliases = pickle.loads(pickle.dumps(aliased_tree))
+alias_context = Scale.get_context(recovered_aliases, alias="second")
+assert alias_context.make_step().config == second.config
+assert alias_context.data.signal.values.tolist() == [3.0, 6.0]
+first_result = Scale.get_context(recovered_aliases).data
+assert first_result.signal.values.tolist() == [2.0, 4.0]
+```
+
+The restored tree can be passed to another step or inspected through the same
+views. Xarray reopens path-based sources on demand; their original handles need
+not stay open. Keep source files available while evaluating restored lazy arrays, or
+materialize all required data before pickling. A completed context can still
+contain deferred reads that fail if a source has disappeared.
+
+For a self-contained snapshot of this example, load the input before running
+either invocation:
+
+```{testcode}
+with TemporaryDirectory() as directory:
+    path = Path(directory) / "source.nc"
+    xr.Dataset({"signal": ("sample", [1.0, 2.0])}).to_netcdf(path)
+    with xr.open_dataset(path, chunks={"sample": 1}) as raw:
+        raw.load()
+        portable_tree = xr.DataTree.from_dict({"raw": raw})
+        SequentialPipeline(steps=[Scale(), Scale(alias="second", factor=3)])(
+            portable_tree
+        )
+        portable_snapshot = pickle.dumps(portable_tree)
+    path.unlink()
+    portable = pickle.loads(portable_snapshot)
+    first = Scale.get_context(portable).data
+    second = Scale.get_context(portable, alias="second").data
+    assert first.signal.values.tolist() == [2.0, 4.0]
+    assert second.signal.values.tolist() == [3.0, 6.0]
+```
+
+Loading the current tree after both invocations is insufficient: an earlier
+context can retain a dataset that was replaced in the tree. Load those retained
+payloads as well if they still depend on external resources. A published file
+path is restored as a path; pickle does not include that file's contents.
+Load pickle files only from trusted sources.
 
 ## Context lifetime and storage
 
-- Supply a container with an `attrs` mapping, or a `meta` mapping if `attrs` is absent.
+- For the default context store, supply a container with an `attrs` mapping, or a
+  `meta` mapping if `attrs` is absent. It need not be an xarray object.
 - Reserve `__pipeline_context__` for the live Python context objects.
-- Remove that entry before netCDF/Zarr export, or use the analysis workflow to
-  persist result datasets and configuration.
+- `Step.get_context()` and the context store return the same attached object.
+  Read saved JSON separately with `Step.load_context()`; it returns a detached
+  context. Keep serialized values out of the live store.
+- Before netCDF/Zarr export, omit that live store from the exported copy. Use
+  `Step.dump_context()` for any invocation metadata the product should retain.
 - Use `DictContextHandlerMixin` or `MetadataContextHandlerMixin` for typed context
   lookup alone; these mixins do not run steps or track completion.
+
+Choose the export according to what you need to recover:
+
+| Retain | Save | Recover |
+| --- | --- | --- |
+| Analysis results and producing settings | Export the [analysis namespace](data-adapters.md#read-and-export-results), which already contains its configuration attr | Construct the analysis view on the reopened data |
+| Step configuration, status, and included context fields | Write the JSON returned by `Step.dump_context()` | Call the producer's `Step.load_context()` |
+| The working container with live contexts and views | Pickle the container and its attached objects | Unpickle with the defining classes available; retain external resources for any lazy arrays |

@@ -65,6 +65,8 @@ Configuration sources
    :class-doc-from: class
    :inherited-members: BaseModel
 
+.. _pipeline-models:
+
 Analysis and pipeline configuration
 -----------------------------------
 
@@ -74,12 +76,17 @@ Analysis and pipeline configuration
 .. autopydantic_model:: tollan.pipeline.StepConfig
    :class-doc-from: class
 
+.. autopydantic_model:: tollan.pipeline.StepFailure
+   :class-doc-from: class
+
 .. autopydantic_model:: tollan.pipeline.StepContext
    :class-doc-from: class
    :model-show-json: False
 
-``StepContext`` is a generic base. Generate JSON schema from a concrete subclass
-after binding its configuration type.
+To describe a concrete context's exported fields, use
+``ContextSubclass.model_json_schema(mode="serialization")``. The default
+validation schema cannot represent the live producer class in ``step_cls``.
+See :doc:`pipelines` for restoring exported contexts and inspecting failures.
 
 File locations
 --------------

@@ -93,6 +93,30 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
         self._mapped_fields = dict(mapped_fields or {})
         self._mapped_fields_view = MappingProxyType(self._mapped_fields)
 
+    def __getstate__(self) -> dict[str, Any]:
+        """Return picklable mapper state."""
+        state = self.__dict__.copy()
+        del state["_mapped_fields_view"]
+        field_names = {
+            mapping: field.name
+            for field in fields(self.schema)
+            if isinstance(mapping := getattr(self.schema, field.name), Mapping)
+        }
+        state["_mapped_fields"] = {
+            field_names.get(mapping, mapping): mapped_field
+            for mapping, mapped_field in self._mapped_fields.items()
+        }
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        """Restore field bindings without resolving against a source."""
+        self.__dict__.update(state)
+        self._mapped_fields = {}
+        for key, mapped_field in state["_mapped_fields"].items():
+            mapping = getattr(self.schema, key) if isinstance(key, str) else key
+            self._mapped_fields[mapping] = replace(mapped_field, mapping=mapping)
+        self._mapped_fields_view = MappingProxyType(self._mapped_fields)
+
     @property
     def mapped_fields(self) -> MappingABC[Mapping, MappedField]:
         """Read-only resolution records keyed by schema mappings."""

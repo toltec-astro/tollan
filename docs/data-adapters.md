@@ -368,6 +368,16 @@ with TemporaryDirectory() as directory:
         assert restored.mean_analysis == analysis
 ```
 
+The analysis call already stores its configuration as JSON in the namespace's
+mapped `analysis` attribute. Export that namespace and use the view's
+configuration property after reopening; a separate config dump is unnecessary.
+
+When running an analysis inside a pipeline step, use the analysis view for
+scientific results and producing settings. Use the step context for invocation
+status, failures, and published payloads. Follow the
+[context export example](pipelines.md#recreate-a-step-or-restore-exported-context)
+to include those invocation fields in a product as well.
+
 ## Work with xarray units
 
 Importing `tollan.accessor.xarray` enables the DataArray `u` accessor:
