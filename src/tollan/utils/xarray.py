@@ -24,25 +24,40 @@ def reduce_median_mad(
     Parameters
     ----------
     data : xarray.DataArray or xarray.Dataset
-        Values to summarize. Only variables carrying ``dim`` participate.
+        Real-valued samples to summarize. Only variables carrying ``dim`` participate.
         Select or normalize the supplied values before calling to choose which
         samples and relative scales to combine.
     dim : str
-        Dimension to reduce. All other dimensions are retained.
+        Dimension to reduce. Other dimensions of participating variables are retained.
 
     Returns
     -------
-    median, mad_std : tuple of xarray.Dataset
-        Lazy median and median absolute deviation multiplied by 1.4826.
-        Variable names, units, and attributes are retained; an unnamed DataArray
-        uses the variable name ``data``. NaNs propagate. The full reduction
-        dimension is combined per task. The scaled MAD describes scatter among
-        the supplied values, not uncertainty in the median.
+    median : xarray.Dataset
+        Median of each participating variable along ``dim``. An unnamed DataArray
+        uses the variable name ``data``.
+    mad_std : xarray.Dataset
+        Median absolute deviation from ``median``, multiplied by 1.4826.
+        Describes scatter among samples, not uncertainty in the median.
+
+        Both outputs are lazy, including for NumPy input. Names and dataset/variable
+        attributes (including units) are retained. Coordinates of participating
+        variables are retained unless they depend on ``dim``. NaNs propagate
+        in each reduced slice. Each variable follows NumPy's median dtype rules:
+        integer inputs yield float64; float32 and float64 retain their precision.
 
     Raises
     ------
     ValueError
-        No variables carry the requested dimension.
+        No variables carry the requested dimension, or that dimension is empty.
+
+    Notes
+    -----
+    Variable selection and dimension checks occur immediately; numerical work
+    runs on ``compute()`` or ``persist()``. Keep source files available until the
+    results have been loaded; xarray can reopen path-based sources as needed.
+    Each task needs the full reduction dimension in
+    memory; select samples and chunk the other dimensions to limit memory use.
+    Compute the two outputs together with :func:`dask.compute` to share work.
 
     Examples
     --------
@@ -63,6 +78,9 @@ def reduce_median_mad(
     if not names:
         msg = f"No variables on dimension {dim!r}"
         raise ValueError(msg)
+    if data.sizes[dim] == 0:
+        msg = f"Cannot reduce empty dimension {dim!r}"
+        raise ValueError(msg)
     data = data[names]
 
     def median(values: xr.Dataset) -> xr.Dataset:
@@ -72,7 +90,6 @@ def reduce_median_mad(
             input_core_dims=[[dim]],
             kwargs={"axis": -1},
             dask="parallelized",
-            output_dtypes=[float],
             keep_attrs=True,
         )
 

@@ -95,12 +95,20 @@ when your source is a columnar Dataset and you need an Astropy QTable.
 
 ## Reduce labeled arrays to median and scatter
 
-`reduce_median_mad(data, dim=...)` returns two Datasets: the median and the median
-absolute deviation multiplied by 1.4826. Only variables carrying `dim`
-participate. Variable attributes, including units, and the remaining dimensions
-and coordinates are retained. NaNs propagate.
+Use {func}`~tollan.utils.xarray.reduce_median_mad` to summarize real-valued samples
+along one dimension. It returns two Datasets:
+
+| Output | Meaning |
+| --- | --- |
+| `median` | Median of each variable carrying `dim`. |
+| `mad_std` | Median absolute deviation from the median, multiplied by 1.4826; scatter among samples, not uncertainty in the median. |
+
+Dataset and variable attributes, including units, are retained, along with the
+participating variables' coordinates that do not depend on `dim`. NaNs propagate
+in each reduced slice. An unnamed DataArray becomes a variable named `data`.
 
 ```{testcode}
+import dask
 import xarray as xr
 from astropy import units as u
 from tollan.utils.xarray import reduce_median_mad
@@ -109,15 +117,27 @@ values = xr.DataArray(
     [1.0, 2.0, 8.0], dims="sample", name="signal",
 ).u.set(u.V).chunk(sample=1)
 median, scatter = reduce_median_mad(values, dim="sample")
-assert median.signal.compute().item() == 2.0
-assert scatter.signal.compute().item() == 1.4826
+median, scatter = dask.compute(median, scatter)
+assert median.signal.item() == 2.0
+assert scatter.signal.item() == 1.4826
 assert scatter.signal.u.unit == u.V
 ```
 
-Results are lazy, including for NumPy input. Each task combines the full
-reduction dimension; select the relevant samples before calling to limit memory
-use. Normalize values first when their relative scales should differ. Scaled MAD
-describes scatter among the values, not uncertainty in the median.
+1. Select the samples to combine, and normalize first if their scales should differ.
+2. Call the reduction. It checks dimension membership immediately and raises
+   `ValueError` if no variable carries `dim` or that dimension is empty;
+   numerical work remains lazy even
+   for NumPy input.
+3. Compute both outputs together to share work. Keep source files available
+   until the results have been loaded. Xarray can reopen path-based sources;
+   their original handles need not stay open.
+
+Each variable follows NumPy's median dtype rules: integer inputs yield float64,
+while float32 and float64 retain their precision. The lazy dtype matches the
+computed result.
+
+Each task needs the full reduction dimension in memory. Select samples and chunk
+the other dimensions to control memory use.
 
 ## Build a Plotly figure
 
