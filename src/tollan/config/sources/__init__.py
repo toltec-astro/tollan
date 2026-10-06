@@ -93,23 +93,24 @@ class ConfigSourceList(BaseModel):
     their enable_if conditions, and merges them in order. Nested lists are
     traversed in their local order and share one accumulated result.
 
-    Caching
-    -------
+    Notes
+    -----
     File sources cache their read-and-parse results by default. Dictionary
     sources return their in-memory data. Conditions and merging run for each
     context. Cache selection and invalidation delegate to the sources.
 
-    Example:
-        >>> sources = ConfigSourceList(data=[
-        ...     {"format": "dict", "source": {"base": True}, "order": 0},
-        ...     {
-        ...         "format": "dict", "source": {"override": True},
-        ...         "order": 1, "enable_if": "env == 'dev'"
-        ...     }
-        ... ])
-        >>> config = sources.load(context={"env": "dev"})
-        >>> config
-        {'base': True, 'override': True}
+    Examples
+    --------
+    >>> sources = ConfigSourceList(data=[
+    ...     {"format": "dict", "source": {"base": True}, "order": 0},
+    ...     {
+    ...         "format": "dict", "source": {"override": True},
+    ...         "order": 1, "enable_if": "env == 'dev'"
+    ...     }
+    ... ])
+    >>> config = sources.load(context={"env": "dev"})
+    >>> config
+    {'base': True, 'override': True}
     """
 
     model_config = {"frozen": True}

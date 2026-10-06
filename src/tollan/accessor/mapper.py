@@ -40,15 +40,17 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
     pass a source and schema field to the read methods. A mapper can be reused
     with sources that have the same data layout.
 
-    Type Parameters
-    ---------------
-    SchemaT : Schema
-        Schema type for this mapper (auto-instantiated as class variable)
-    DataSourceT
+    Notes
+    -----
+    Bind these type parameters when subclassing:
+
+    ``SchemaT``
+        Schema class defining the fields to resolve.
+    ``DataSourceT``
         Source type accepted by this mapper. Defaults to Any; storage-specific
         mapper classes supply their source type.
-    VariableT
-        Native variable type returned by get_var(). Defaults to Any.
+    ``VariableT``
+        Native variable type returned by ``get_var()``. Defaults to Any.
     """
 
     # Set on concrete subclasses by __init_subclass__; runtime type: SchemaT.

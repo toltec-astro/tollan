@@ -21,10 +21,9 @@ class NetCDF4Mapper[SchemaT: Schema = Schema](
 ):
     """Mapper for netCDF4.Dataset.
 
-    Type Parameters
-    ---------------
-    SchemaT : Schema
-        Schema type for this mapper (enables proper type hints)
+    Notes
+    -----
+    Bind ``SchemaT`` to the schema class defining the fields to resolve.
     """
 
     _supported_locations: ClassVar = (

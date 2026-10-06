@@ -21,10 +21,9 @@ class DataFrameMapper[SchemaT: Schema = Schema](
     Use get_col() and has_col() as aliases for get_var() and
     has_var(). Column reads return native Series with their index and dtype.
 
-    Type Parameters
-    ---------------
-    SchemaT : Schema
-        Schema type for this mapper (enables proper type hints)
+    Notes
+    -----
+    Bind ``SchemaT`` to the schema class defining the fields to resolve.
     """
 
     _supported_locations: ClassVar = (FieldLocation.attr, FieldLocation.var)

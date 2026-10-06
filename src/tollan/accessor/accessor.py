@@ -27,12 +27,14 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
 
     The mapper class is auto-detected from the generic type parameter.
 
-    Type Parameters
-    ---------------
-    DataSourceT
-        Type of data source (e.g., xr.Dataset, pandas.DataFrame)
-    MapperT : Mapper
-        Type of mapper used for field resolution
+    Notes
+    -----
+    Bind these type parameters when subclassing:
+
+    ``DataSourceT``
+        Type of data source, such as xarray.Dataset or pandas.DataFrame.
+    ``MapperT``
+        Mapper class used for field resolution.
     """
 
     # Set on concrete subclasses by __init_subclass__; runtime type: type[MapperT].

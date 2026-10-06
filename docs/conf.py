@@ -1,5 +1,6 @@
 """Sphinx configuration; inherit the Astropy documentation defaults."""
 
+import warnings
 from pathlib import Path
 from typing import get_type_hints
 
@@ -29,6 +30,10 @@ extensions += [
     "sphinxcontrib.autodoc_pydantic",
     "sphinxcontrib.typer",
 ]
+
+# Numpydoc's parser emits Python warnings that Sphinx -W does not catch.
+# Fail on malformed docstrings instead of silently dropping their content.
+warnings.filterwarnings("error", category=UserWarning, module=r"numpydoc\.docscrape$")
 
 # autodoc-pydantic 2.2 requires the Documenter API. With Sphinx 9's default,
 # model methods/properties disappear. Remove when the extension supports it.

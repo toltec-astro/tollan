@@ -62,10 +62,9 @@ class XarrayAccessorBase[MapperT: Mapper](AccessorBase[XarraySourceT, MapperT]):
     Extends AccessorBase to handle Dataset, DataArray, and DataTree objects.
     Stores the original source and exposes its Dataset or DataArray payload.
 
-    Type Parameters
-    ---------------
-    MapperT : Mapper
-        Type of mapper for field resolution
+    Notes
+    -----
+    Bind ``MapperT`` to the mapper class used for field resolution.
     """
 
     def __init__(

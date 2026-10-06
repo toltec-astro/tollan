@@ -29,10 +29,9 @@ class XarrayMapper[SchemaT: Schema = Schema](
     Use get_arr() and has_arr() as aliases for get_var() and
     has_var(). Array reads return native DataArrays without loading values.
 
-    Type Parameters
-    ---------------
-    SchemaT : Schema
-        Schema type for this mapper
+    Notes
+    -----
+    Bind ``SchemaT`` to the schema class defining the fields to resolve.
 
     Examples
     --------

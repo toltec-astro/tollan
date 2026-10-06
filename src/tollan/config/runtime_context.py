@@ -47,9 +47,10 @@ class RuntimeConfig[RuntimeInfoT: RuntimeInfo = RuntimeInfo](FrozenBaseModel):
 
     This is the base model for runtime configurations.
 
-    Type Parameters
-    ---------------
-        RuntimeInfoT: Runtime info model class (subclass of RuntimeInfo)
+    Notes
+    -----
+    Bind ``RuntimeInfoT`` to the RuntimeInfo subclass used for runtime
+    information. Defaults to RuntimeInfo.
 
     Examples
     --------
@@ -97,10 +98,10 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
         source list. None creates a runtime with no user sources. Explicit
         top-level source orders must be between 0 and 999, inclusive.
 
-    Type Parameters
-    ---------------
-    RuntimeConfigT : RuntimeConfig
-        Configuration model to validate; defaults to RuntimeConfig.
+    Notes
+    -----
+    Bind ``RuntimeConfigT`` to the configuration model to validate.
+    Defaults to RuntimeConfig.
 
     Examples
     --------

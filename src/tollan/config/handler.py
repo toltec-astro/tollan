@@ -46,15 +46,15 @@ class ConfigHandler[
     model is available as `config`, and its execution context as `runtime_info`.
     Use ordinary `functools.cached_property` for resources built from the config.
 
-    Type Parameters
-    ---------------
-    ConfigModelT
-        Pydantic model used to validate the domain configuration.
-    RuntimeContextT
-        Accepted runtime context type; defaults to RuntimeContext.
-
     Notes
     -----
+    Bind these type parameters when subclassing:
+
+    ``ConfigModelT``
+        Pydantic model used to validate the domain configuration.
+    ``RuntimeContextT``
+        Accepted runtime context type; defaults to RuntimeContext.
+
     Subclasses implement `prepare_config_data` to extract their domain and
     `prepare_runtime_config_data` to wrap domain patches for temporary variants.
     `SubConfigKeyTransformer` supplies both methods for a single runtime key.

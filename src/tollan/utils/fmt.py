@@ -49,8 +49,8 @@ def pformat_yaml(obj: Any) -> str:
     str
         Formatted YAML with a leading newline.
 
-    Example
-    -------
+    Examples
+    --------
     >>> data = {'a': 1, 'b': [2, 3]}
     >>> print(pformat_yaml(data))
     a: 1
@@ -129,8 +129,8 @@ def pformat_mask(mask: npt.NDArray[np.bool_]) -> str:
     str
         Selected count, total count, and percentage to two decimal places.
 
-    Example
-    -------
+    Examples
+    --------
     >>> import numpy as np
     >>> mask = np.array([True, False, True, True, False])
     >>> pformat_mask(mask)
@@ -185,8 +185,8 @@ class BitmaskStats:
 
     Use .pformat() for a summary table.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from enum import Flag, auto
     >>> import numpy as np
     >>> class Status(Flag):
@@ -247,8 +247,8 @@ def pformat_bitmask(bm_cls: type[Flag], bitmask: npt.NDArray) -> str:
     str
         Table of flag names and selected/total percentages.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from enum import Flag, auto
     >>> import numpy as np
     >>> class Status(Flag):

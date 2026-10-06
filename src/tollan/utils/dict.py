@@ -313,23 +313,33 @@ def rupdate(
     None
         Dict `d` is updated in place.
 
-    List DSL Syntax
-    ---------------
-    Integer keys (0, 1, -1):
-        Update value at index (e.g., {0: 'new'} replaces first item)
+    Notes
+    -----
+    List updates accept integer keys and bracketed slice strings:
 
-    Slice notation keys:
-        "[:]"      : Replace entire list
-        "[:0]"     : Prepend to list
-        "[N:M]"    : Replace slice [N:M] (empty list deletes elements)
-        "[N:N]"    : Insert at position N
-        "[]"       : Extend list at end (special case)
+    .. list-table:: List update keys
+       :header-rows: 1
 
-    Chaining Operations:
-        Multiple operations can be combined in a single rupdate call.
-        Operations are applied in dict iteration order (Python 3.7+).
-        Index-based operations refer to the current state after previous
-        operations have been applied.
+       * - Key
+         - Effect
+       * - Integer, such as ``0`` or ``-1``
+         - Update the item at that index.
+       * - ``"[:]"``
+         - Replace the entire list.
+       * - ``"[:0]"``
+         - Prepend items.
+       * - ``"[N:M]"``
+         - Replace a slice; an empty list deletes its items.
+       * - ``"[N:N]"``
+         - Insert items at position N.
+       * - ``"[]"``
+         - Extend the list at the end.
+
+    Slice assignments follow Python's list behavior. Updates run in dictionary
+    insertion order; each index refers to the list after preceding updates.
+    See [1]_.
+
+    .. [1] https://stackoverflow.com/a/52099238/1824372
 
     Examples
     --------
@@ -362,19 +372,6 @@ def rupdate(
     >>> rupdate(d, {"items": {"[]": [4, 5], -1: 10}})  # Chain: extend then update
     >>> d["items"]
     [1, 2, 3, 4, 10]
-
-    Notes
-    -----
-    Follows Python's native list slice assignment behavior.
-
-    **Operation Ordering**: Since Python 3.7+, dict insertion order is preserved.
-    Operations are applied in the order they appear in the update dict. When
-    chaining operations, index-based operations (like -1) refer to the list
-    state after previous operations have been applied.
-
-    See [1]_.
-
-    .. [1] https://stackoverflow.com/a/52099238/1824372
 
     """
     stack = [(d, u)]
