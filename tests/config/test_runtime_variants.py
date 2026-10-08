@@ -4,10 +4,33 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+import yaml
+
 from tollan.config import RuntimeConfig, RuntimeContext
 from tollan.config.sources import ConfigSourceList, DictConfigSource, ListConfigSource
 from tollan.config.sources.yaml import YamlConfigSource
 from tollan.config.types import AbsAnyPath
+
+
+@pytest.mark.parametrize("kind", ["dictionary", "yaml", "explicit", "nested"])
+def test_settings_keys_have_the_same_meaning_across_sources(tmp_path, kind):
+    settings: dict[str | int, Any] = {
+        "data": [{"source": "not-an-include.yaml"}],
+        "name": "observation",
+    }
+    if kind == "yaml":
+        source = tmp_path / "settings.yaml"
+        source.write_text(yaml.safe_dump(settings))
+    elif kind == "explicit":
+        source = ConfigSourceList(data=[DictConfigSource(order=0, source=settings)])
+    elif kind == "nested":
+        source = [ListConfigSource(order=0, source={"data": [{"source": settings}]})]
+    else:
+        source = {"data": [{"source": settings}]}
+    runtime = RuntimeContext(config_sources=source)
+    assert runtime.config_dict["data"] == settings["data"]
+    assert runtime.config_dict["name"] == settings["name"]
 
 
 def test_variant_preserves_tier_precedence_and_runtime_info():

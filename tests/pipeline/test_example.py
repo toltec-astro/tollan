@@ -1,6 +1,9 @@
-"""Example consumers, deferred failures, and file-backed pickle lifetimes."""
+"""Example consumers, deferred failures, and diagnostic context transport."""
 
+import json
 import pickle
+import subprocess
+import sys
 
 import dask
 import dask.array as da
@@ -95,41 +98,33 @@ def test_lazy_computation_failure_belongs_to_writer(tmp_path):
     assert scale_context.failures == []
 
 
-@pytest.mark.parametrize(
-    "preparation", ["lazy", "reopen", "tree", "inputs", "all_results"]
-)
-def test_pickle_retained_views_keep_their_source_dependencies(
-    source, tmp_path, preparation
-):
-    path = tmp_path / "source.nc"
-    source.to_netcdf(path, engine="scipy")
-    with xr.open_dataset(path, engine="scipy", chunks={"sample": 1}) as opened:
-        if preparation == "inputs":
-            opened.load()
-        tree = xr.DataTree.from_dict({"raw": opened})
-        SequentialPipeline(steps=[Scale(), Scale(alias="second", factor=3)])(tree)
-        if preparation in {"tree", "all_results"}:
-            tree.load()
-        if preparation == "all_results":
-            for alias in (None, "second"):
-                result = Scale.get_context(tree, alias=alias).data
-                assert result is not None
-                result.data_source.load()
-        snapshot = pickle.dumps(tree)
-    if preparation != "reopen":
-        path.unlink()
-
-    recovered = pickle.loads(snapshot)  # noqa: S301 -- test-owned snapshot
-    for alias, expected in [(None, [2.0, 4.0]), ("second", [3.0, 6.0])]:
-        context = Scale.get_context(recovered, alias=alias)
-        assert context.completed
-        result = context.data
-        assert result is not None
-        needs_source = preparation == "lazy" or (
-            preparation == "tree" and alias is None
-        )
-        if needs_source:
-            with pytest.raises(FileNotFoundError):
-                result.signal.compute()
-        else:
-            assert result.signal.compute().values.tolist() == expected
+@pytest.mark.parametrize("alias", [None, "diagnostic"])
+def test_context_supports_diagnostics_in_another_process(source, alias):
+    tree = xr.DataTree.from_dict({"raw": source})
+    Scale(alias=alias, factor=3)(tree)
+    context = Scale.get_context(tree, alias=alias)
+    diagnostic = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import json, pickle, sys; "
+                "from docs.examples.pipeline_example import Scale; "
+                "Scale.run = lambda *args, **kwargs: sys.exit('unexpected step run'); "
+                "context = pickle.loads(sys.stdin.buffer.read()); "
+                "print(json.dumps({'mean': context.data.signal.mean().item(), "
+                "'factor': context.config.factor, 'alias': context.config.alias, "
+                "'completed': context.completed, 'failures': len(context.failures)}))"
+            ),
+        ],
+        input=pickle.dumps(context),
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(diagnostic.stdout) == {
+        "mean": 4.5,
+        "factor": 3.0,
+        "alias": alias,
+        "completed": True,
+        "failures": 0,
+    }

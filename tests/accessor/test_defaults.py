@@ -108,7 +108,7 @@ def test_missing_and_unknown_fields_do_not_have_implicit_defaults():
             mapper.get_value_or_default(current, field)
         with pytest.raises(KeyError):
             mapper.get_value_or_default(current, NameMapping.attr("unrelated"))
-    source.attrs["value"] = "present"
+    source = xr.Dataset(attrs={"value": "present"})
     assert mapper.get_value(source, field) == "present"
     assert mapper.get_value_or_default(source, field) == "present"
     assert mapper.get_str(source, field) == "present"
@@ -189,10 +189,12 @@ def test_eager_resolution_uses_source_then_default_without_changing_later(has_ve
     )
     assert mapper.get_value(source, mapper.schema.value) == (22 if has_version else 11)
 
-    source.attrs["version"] = 3
-    assert mapper.get_value_or_default(source, version) == 3
-    del source.attrs["version"]
-    assert mapper.get_value_or_default(source, version) == 1
+    # Reuse the resolved layout with another member of the same batch.
+    other = xr.Dataset(
+        {"value_v1": xr.DataArray(33), "value_v2": xr.DataArray(44)},
+        attrs={"version": 2} if has_version else {},
+    )
+    assert mapper.get_value_or_default(other, version) == (2 if has_version else 1)
     assert mapper.mapped_fields[version] is mapped
     assert mapped.value == (2 if has_version else 1)
-    assert mapper.get_value(source, mapper.schema.value) == (22 if has_version else 11)
+    assert mapper.get_value(other, mapper.schema.value) == (44 if has_version else 33)

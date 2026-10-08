@@ -517,11 +517,6 @@ def make_range(
     tuple[float, float]
         (min_value - padding, max_value + padding)
 
-    Raises
-    ------
-    ValueError
-        If both pad and pad_frac are specified.
-
     Examples
     --------
     >>> vmin, vmax = make_range([1, 2, 3, 4, 5])

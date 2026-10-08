@@ -16,6 +16,7 @@ from tollan.utils.fmt import (
     pformat_mask,
     pformat_yaml,
 )
+from tollan.utils.yaml import yaml_loads
 
 
 class TestPformatYaml:
@@ -58,9 +59,10 @@ class TestPformatYaml:
             "int64": np.int64(100),
         }
         result = pformat_yaml(data)
-        # Should handle numpy types without errors
-        assert "float64" in result
-        assert "int32" in result
+        loaded = yaml_loads(result)
+        assert loaded == pytest.approx(
+            {"float64": 3.14, "float32": 2.71, "int32": 42, "int64": 100}
+        )
 
 
 class TestPformatFancyIndex:

@@ -1,65 +1,87 @@
-# Configure an application
+# Application configuration
 
 Use `RuntimeContext` to load configuration and `ConfigHandler` to validate the
 settings used by a component. A handler keeps its validated settings and any
 resources it creates, even if the runtime is updated later.
 
-## Add configuration options to a CLI
+| Task | Start here |
+| --- | --- |
+| Add configuration options to an application | [CLI setup and launch commands](cli.md#configure-and-launch-an-application) |
+| Load settings without a CLI | [Load configuration from Python](#load-configuration-from-python) |
+| Validate a component's settings | [Define a model and handler](#configure-a-component) |
+| Run with different settings | [Try temporary settings](#try-temporary-settings) |
 
-Use `RuntimeContext.add_cli_options()` to add `--config_paths` (or `-c`) and
-`--env_paths` to a command or group callback. Construct the runtime inside your
-callback with `from_cli_ctx()`:
+## Configure a component
+
+Define a Pydantic model and a handler. `SubConfigKeyTransformer` selects the
+component's section of the runtime configuration:
 
 ```python
-import typer
+import re
+from functools import cached_property
+from typing import Literal
 
-from tollan.config import RuntimeContext
-from tollan.utils.typer import create_cli
-
-app = create_cli(version="1.0")
-
-
-@app.callback()
-@RuntimeContext.add_cli_options()
-def main(ctx: typer.Context, profile: str = "default"):
-    rc = RuntimeContext.from_cli_ctx(ctx)
-    rc.update_default_config({"profile": profile})
-    ctx.obj = rc
+from pydantic import BaseModel
+from tollan.config import ConfigHandler, RuntimeContext, SubConfigKeyTransformer
 
 
-@app.command()
-def show(ctx: typer.Context):
-    print(ctx.obj.config_dict.get("profile"))
+class SearchConfig(BaseModel):
+    pattern: str
 
 
-if __name__ == "__main__":
-    app()
+class SearchHandler(
+    SubConfigKeyTransformer[Literal["search"]],
+    ConfigHandler[SearchConfig],
+):
+    @cached_property
+    def compiled_pattern(self):
+        return re.compile(self.config.pattern)
+
+
+rc = RuntimeContext()
+rc.update_default_config({"search": {"pattern": "error"}})
+handler = SearchHandler(rc)
+assert handler.compiled_pattern.search("an error occurred") is not None
 ```
 
-```console
-python app.py --profile local --config_paths settings.yaml -- show
-python app.py -c config.d local.yaml --env_paths env.d local.env -- show
-```
+Construction validates the settings immediately. Use `handler.config` for
+validated settings and `handler.runtime_info` for execution information.
+Use `cached_property` for expensive resources; each new handler has its own
+resource cache.
 
-Each path may be a file or directory. Both options accept several paths at once
-or repeated occurrences. Use `--` to end a list of paths before a subcommand or
-positional inputs.
+
+
+## Configuration sources and precedence
 
 Later paths override earlier ones. Within a directory, files such as
 `00_defaults.yaml`, `10_site.env`, and `20_local.yaml` load in numeric order;
 their numeric prefixes must be unique. Environment paths override configuration
 paths, and command-line overrides override both.
 
-To put options on a command instead, apply `add_cli_options()` below
-`@app.command()`. `from_cli_ctx()` reads the options on that callback's context;
-it does not inherit path options from a parent group. Store the runtime on
-`ctx.obj`, as above, when child commands should use the parent's runtime.
+Runtime defaults apply before loaded sources. Runtime overrides apply after
+sources and CLI overrides. For in-memory configuration, set these tiers or
+pass a dictionary source to `RuntimeContext`.
 
-The helper also works with `TollanTyper()` for a single-command application.
-See [command-line applications](cli.rst) for a command with variadic inputs and
-an example accepting dotted configuration overrides.
+Pass a list of source declarations to combine sources, or use a collection
+dictionary with required `data` and optional `name`. `ConfigSourceList` and
+`resolve_config_sources` use the same input structure; the resolver supplies
+validation context through its keyword arguments. Put in-memory settings inside
+a dictionary source:
 
-## Load configuration from Python
+```{doctest}
+>>> from tollan.config.sources import resolve_config_sources
+>>> sources = resolve_config_sources({
+...     "name": "site",
+...     "data": [{"source": {"data": [1, 2], "name": "observation"}}],
+... })
+>>> sources.load()
+{'data': [1, 2], 'name': 'observation'}
+```
+
+A bare settings dictionary such as `{"a": 1}` is not a source collection.
+Collection dictionaries reject keys other than `data` and `name`.
+
+### Load configuration from Python
 
 Use the same loading rules without Typer:
 
@@ -91,7 +113,76 @@ none. This filters the supplied paths and directory entries, not explicit
 includes inside a YAML file. `env_paths` always selects dotenv files only.
 Pass the same `config_formats` setting to `from_cli_ctx()` in a CLI callback.
 
-## Use dotenv values
+### Include configuration files
+
+A YAML mapping supplies settings directly. A YAML list includes other sources:
+
+```yaml
+- source: base.yaml
+- source: local.env
+- enable_if: workers >= 4
+  source:
+    search:
+      pattern: warning
+```
+
+Load either form with `RuntimeContext(config_sources=Path("settings.yaml"))`.
+List entries load in order; optional explicit `order` values must be unique
+within their list. A disabled source contributes no settings.
+
+Included filenames are relative to the containing YAML file. File formats are
+inferred from their suffix unless a declaration specifies `format`.
+
+Paths *inside settings* are different: they remain unchanged until model
+validation. Tollan's path types resolve them against
+`validation_context["rootpath"]`, not the directory of each included file.
+Set that validation root explicitly when your configuration contains relative
+paths.
+
+Use `tollan.config.types.FileLocField` for file locations that should also use
+`rootpath`. It accepts the same local paths, URLs and dictionaries as `FileLoc`.
+An explicit `local_parent_path` (including `None`) takes precedence, and existing
+FileLoc objects retain their parent settings. Other fields using plain `FileLoc`
+are unaffected; the annotation does not modify the validation context.
+
+Source lists can be nested. List patches apply to values from preceding sources.
+For example, after a source supplies `items: [base]`, this appends `a` and `b`:
+
+```yaml
+- source:
+    - source: {items: {"[]": [a]}}
+    - source: {items: {"[]": [b]}}
+```
+
+The result is `items: [base, a, b]`. Disabling the containing source skips both
+entries. Empty YAML files contribute no settings; malformed documents raise
+errors.
+
+### Select sources with conditions
+
+Use `enable_if` to select a source using context variables. Expressions use
+[pandas query syntax](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html),
+including `&`, `|`, `~`, `in`, and `not in`:
+
+```python
+from tollan.config.sources import DictConfigSource
+
+source = DictConfigSource(
+    order=0,
+    source={"logging": {"level": "DEBUG"}},
+    enable_if='workers >= 4 & environment in ["staging", "production"]',
+)
+assert source.is_enabled_for({"workers": 8, "environment": "production"})
+assert not source.is_enabled_for({"workers": 2, "environment": "production"})
+```
+
+Provide a dictionary containing all variables used in an expression. Missing
+context or an undefined variable disables the source; other expression errors
+propagate. Do not rely on short-circuit evaluation.
+
+Only use trusted expressions: pandas query evaluation is not a sandbox.
+
+### Use dotenv values
 
 Request an environment handler when you need to pass configured variables to
 another process:
@@ -130,7 +221,7 @@ are not changed. The selected section must be a mapping with string keys.
 Without `return_env_handler=True`, both factories return only the runtime and
 leave configuration loading lazy.
 
-### Choose an environment namespace
+#### Choose an environment namespace
 
 Dotenv values are stored under `ENV_NAMESPACE_DEFAULT` (`"_env"`), exported
 by `tollan.config`. Choose a different namespace when needed:
@@ -169,47 +260,6 @@ the file is read. It does not interpolate against merged YAML settings or other
 configuration sources. Command-line overrides use YAML value parsing, so quote
 a numeric value as a YAML string when its type must remain a string.
 
-## Validate a component's settings
-
-Define a Pydantic model and a handler. `SubConfigKeyTransformer` selects the
-component's section of the runtime configuration:
-
-```python
-import re
-from functools import cached_property
-from typing import Literal
-
-from pydantic import BaseModel
-from tollan.config import ConfigHandler, RuntimeContext, SubConfigKeyTransformer
-
-
-class SearchConfig(BaseModel):
-    pattern: str
-
-
-class SearchHandler(
-    SubConfigKeyTransformer[Literal["search"]],
-    ConfigHandler[SearchConfig],
-):
-    @cached_property
-    def compiled_pattern(self):
-        return re.compile(self.config.pattern)
-
-
-rc = RuntimeContext()
-rc.update_default_config({"search": {"pattern": "error"}})
-handler = SearchHandler(rc)
-assert handler.compiled_pattern.search("an error occurred") is not None
-```
-
-Construction validates the settings immediately. Use `handler.config` for
-validated settings and `handler.runtime_info` for execution information.
-Use `cached_property` for expensive resources; each new handler has its own
-resource cache.
-
-Runtime defaults apply before loaded sources. Runtime overrides apply after
-sources and CLI overrides. For in-memory configuration, set these tiers or
-pass a dictionary source to `RuntimeContext`.
 
 ## Try temporary settings
 
@@ -256,75 +306,6 @@ assert handler.config.pattern == "error"
 copy of the original handler's settings. Keep the original handler when you
 need its previous configuration.
 
-## Include configuration files
-
-A YAML mapping supplies settings directly. A YAML list includes other sources:
-
-```yaml
-- source: base.yaml
-- source: local.env
-- enable_if: workers >= 4
-  source:
-    search:
-      pattern: warning
-```
-
-Load either form with `RuntimeContext(config_sources=Path("settings.yaml"))`.
-List entries load in order; optional explicit `order` values must be unique
-within their list. A disabled source contributes no settings.
-
-Included filenames are relative to the containing YAML file. File formats are
-inferred from their suffix unless a declaration specifies `format`.
-
-Paths *inside settings* are different: they remain unchanged until model
-validation. Tollan's path types resolve them against
-`validation_context["rootpath"]`, not the directory of each included file.
-Set that validation root explicitly when your configuration contains relative
-paths.
-
-Use `tollan.config.types.FileLocField` for file locations that should also use
-`rootpath`. It accepts the same local paths, URLs and dictionaries as `FileLoc`.
-An explicit `local_parent_path` (including `None`) takes precedence, and existing
-FileLoc objects retain their parent settings. Other fields using plain `FileLoc`
-are unaffected; the annotation does not modify the validation context.
-
-Source lists can be nested. List patches apply to values from preceding sources.
-For example, after a source supplies `items: [base]`, this appends `a` and `b`:
-
-```yaml
-- source:
-    - source: {items: {"[]": [a]}}
-    - source: {items: {"[]": [b]}}
-```
-
-The result is `items: [base, a, b]`. Disabling the containing source skips both
-entries. Empty YAML files contribute no settings; malformed documents raise
-errors.
-
-## Select sources with conditions
-
-Use `enable_if` to select a source using context variables. Expressions use
-[pandas query syntax](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.query.html),
-including `&`, `|`, `~`, `in`, and `not in`:
-
-```python
-from tollan.config.sources import DictConfigSource
-
-source = DictConfigSource(
-    order=0,
-    source={"logging": {"level": "DEBUG"}},
-    enable_if='workers >= 4 & environment in ["staging", "production"]',
-)
-assert source.is_enabled_for({"workers": 8, "environment": "production"})
-assert not source.is_enabled_for({"workers": 2, "environment": "production"})
-```
-
-Provide a dictionary containing all variables used in an expression. Missing
-context or an undefined variable disables the source; other expression errors
-propagate. Do not rely on short-circuit evaluation.
-
-Only use trusted expressions: pandas query evaluation is not a sandbox.
-
 ## Reload changed files
 
 File contents and dotenv interpolation are cached. Creating a runtime variant
@@ -346,3 +327,10 @@ configuration; reload that runtime too when it needs the new values.
 For a file that must be read on every load, use
 `source.enable_cache(enabled=False)`. For a temporary validation context, prefer
 `rc.with_config(validation_context=...)` when scopes may overlap.
+
+
+```{toctree}
+:maxdepth: 1
+
+validation-types
+```

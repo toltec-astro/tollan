@@ -106,13 +106,11 @@ def test_native_variable_does_not_read_values(native_case, monkeypatch):
         assert variable is source.variables["signal"]
 
 
-def test_backend_aliases_use_the_shared_implementation(native_case):
+def test_backend_aliases_read_the_same_native_fields(native_case):
     kind, source, mapper = native_case
     suffix = {"xarray": "arr", "netcdf4": "var", "pandas": "col"}[kind]
     get_native = getattr(mapper, f"get_{suffix}")
     has_native = getattr(mapper, f"has_{suffix}")
-    assert get_native.__func__ is mapper.get_var.__func__
-    assert has_native.__func__ is mapper.has_var.__func__
     assert has_native(source, mapper.schema.signal)
     assert not has_native(source, mapper.schema.label)
     assert not has_native(source, mapper.schema.missing)
@@ -130,28 +128,31 @@ def test_backend_aliases_use_the_shared_implementation(native_case):
 
 
 @pytest.mark.parametrize("method", ["get_value", "get_value_or_default"])
-def test_value_read_looks_up_and_materializes_once(native_case, monkeypatch, method):
+def test_value_read_returns_native_values(native_case, method):
     _, source, mapper = native_case
-    get_var = mapper._get_var
-    read_values = mapper._read_var_values
-    events = []
-
-    def get(source, name):
-        var = get_var(source, name)
-        events.append(("get", var))
-        return var
-
-    def read(var):
-        events.append(("read", var))
-        return read_values(var)
-
-    monkeypatch.setattr(mapper, "_get_var", get)
-    monkeypatch.setattr(mapper, "_read_var_values", read)
     np.testing.assert_array_equal(
         getattr(mapper, method)(source, mapper.schema.signal), [1, 2, 3]
     )
-    assert [action for action, _ in events] == ["get", "read"]
-    assert events[0][1] is events[1][1]
+
+
+@pytest.mark.parametrize("method", ["get_value", "get_value_or_default"])
+def test_value_read_materializes_deferred_source_once(method):
+    reads = []
+
+    @delayed
+    def values():
+        reads.append(True)
+        return np.array([1, 2, 3])
+
+    source = xr.Dataset(
+        {"signal": ("sample", da.from_delayed(values(), shape=(3,), dtype=int))}
+    )
+    mapper = ArrayMapper.from_data_source(source)
+    assert reads == []
+    np.testing.assert_array_equal(
+        getattr(mapper, method)(source, mapper.schema.signal), [1, 2, 3]
+    )
+    assert reads == [True]
 
 
 def test_shared_attribute_scalar_and_string_reads(native_case):

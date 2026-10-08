@@ -10,50 +10,15 @@ interfaces that separate those decisions from reusable operations.
 
 ### Concepts and responsibilities
 
-- Each domain below defines its own contracts. Integrated workflows specify the
-  handoffs between domains without redefining those contracts.
+- Each domain defines its own contracts and the handoffs needed for its workflows.
+- Data access and application configuration are independent entry paths. Analyses
+  and execution combine them; callers may use each domain independently.
 - Wrapping a borrowed source does not transfer responsibility for its resources
   to Tollan.
 - Configuration, execution state, and scientific results are distinct objects
   with distinct lifetimes.
 
 ## Domains
-
-### Configuration and validation
-
-Scientific applications run the same operations with different input-dependent,
-site, and invocation settings. The configuration system supports modular settings
-and composition from multiple locations and formats. It provides consistent,
-convenient entry points for defaults and overrides. Validation gives each
-component typed settings before it uses them.
-
-#### Configuration sources and precedence
-
-- Configuration sources compose modular settings from different locations and
-  formats through a common loading interface.
-- Source composition defines the order in which settings override earlier values.
-- Evaluation context supplies values used to select or evaluate settings.
-- Callers can refresh settings from external sources separately from evaluating
-  settings for a particular input.
-
-#### Runtime context and component settings
-
-- Runtime configuration supports applying shared settings to input-dependent
-  component instances.
-- A runtime context maintains the application's configuration sources, overrides,
-  and evaluation context.
-- A configured component captures validated settings from the runtime.
-- Subsequent runtime changes do not alter an existing component's settings.
-  Recreating the component captures settings from the updated runtime.
-
-#### Scientific value types
-
-- Scientific field types make physical values and resource locations usable in
-  validated configuration and metadata models.
-- A field serializer produces the representation used to restore the validated
-  value. The representation need not preserve the original input syntax.
-- Callers can inspect declared defaults without instantiating a configured
-  component or executing code that generates a default value.
 
 ### Data access and representation
 
@@ -84,17 +49,6 @@ an intended mode of operation, not an exception.
 - Reusing layout bindings preserves each source's values and identity; it does
   not substitute values from another source in the batch.
 
-#### Backend adapters
-
-- Backend adapters expose schema-based access through each container's native
-  data model.
-- An adapter implements entity resolution and access for its backend.
-- Hierarchical access uses an explicitly selected source scope. View boundaries
-  follow [accessors and views](#accessors-and-views).
-- Container conversion preserves the selected data's meaning. Its contract states
-  whether the result is independently editable and whether conversion requires
-  evaluating deferred data.
-
 #### Accessors and views
 
 - An accessor combines a source and mapper into a domain API.
@@ -110,6 +64,17 @@ an intended mode of operation, not an exception.
 - The concrete accessor defines compatibility validation and the operations that
   require additional validation.
 
+#### Backend adapters
+
+- Backend adapters expose schema-based access through each container's native
+  data model.
+- An adapter implements entity resolution and access for its backend.
+- Hierarchical access uses an explicitly selected source scope. View boundaries
+  follow [accessors and views](#accessors-and-views).
+- Container conversion preserves the selected data's meaning. Its contract states
+  whether the result is independently editable and whether conversion requires
+  evaluating deferred data.
+
 #### Units and table conversion
 
 - Unit and table adapters let scientific consumers use Astropy quantities and
@@ -117,7 +82,8 @@ an intended mode of operation, not an exception.
 - Their scope is the conversion between numeric arrays with unit metadata and
   Astropy representations; source containers need not store Astropy objects.
 - Quantity access interprets the source's unit metadata and presents values with
-  their physical units.
+  their physical units. Unit attachment presents a view of the existing data
+  wherever its representation permits, without unnecessary copying or evaluation.
 - Table projection presents selected data as an Astropy quantity-aware table,
   preserving row correspondence, values, and units.
 - Conversion performs the data access needed to construct the Astropy
@@ -133,21 +99,84 @@ an intended mode of operation, not an exception.
 - Tollan does not trigger computation or fetch all source data when the requested
   operation does not require it.
 
+#### Read and inspect scientific data
+
+- **Handoff:** opened or borrowed source → mapper → accessor → requested values.
+- The application chooses the source and concrete reader. Validation follows
+  [accessors and views](#accessors-and-views).
+- Borrowed and owned resources follow
+  [lazy data and resource ownership](#lazy-data-and-resource-ownership).
+
+
+### Application configuration
+
+Scientific applications run the same operations with different input-dependent,
+site, and invocation settings. The configuration system supports modular settings
+and composition from multiple locations and formats. It provides consistent,
+convenient entry points for defaults and overrides. Validation gives each
+component typed settings before it uses them.
+
+#### Runtime context and component settings
+
+- Runtime configuration supports applying shared settings to input-dependent
+  component instances.
+- A runtime context maintains the application's configuration sources, overrides,
+  and evaluation context.
+- A configured component captures validated settings from the runtime.
+- Subsequent runtime changes do not alter an existing component's settings.
+  Recreating the component captures settings from the updated runtime.
+
+#### Configuration sources and precedence
+
+- Configuration sources compose modular settings from different locations and
+  formats through a common loading interface.
+- Source-collection dictionaries contain collection fields, including the source
+  declarations. Unknown collection fields are rejected. In-memory settings belong
+  to an explicit dictionary source.
+- Source composition defines the order in which settings override earlier values.
+- Evaluation context supplies values used to select or evaluate settings.
+- Callers can refresh settings from external sources separately from evaluating
+  settings for a particular input.
+
+#### Scientific value types
+
+- Scientific field types make physical values and resource locations usable in
+  validated configuration and metadata models.
+- A field serializer produces the representation used to restore the validated
+  value. The representation need not preserve the original input syntax.
+- Time serialization preserves precision independently of display settings.
+- Callers can inspect declared defaults without instantiating a configured
+  component or executing code that generates a default value.
+
+### Command-line applications
+
+Applications need consistent command-line entry points without repeating common
+CLI setup. Tollan provides a specialized Typer class for this purpose, so each
+application can concentrate on its commands and their behavior.
+
+#### Configuration integration
+
+- Configuration integration gives command-line applications access to the shared
+  runtime configuration system.
+- It translates selected arguments into inputs to
+  [configuration sources and precedence](#configuration-sources-and-precedence).
+
+#### Configure and launch an application
+
+- **Handoff:** application arguments and selected sources → runtime → configured
+  component → application callback.
+- CLI arguments enter the runtime through
+  [configuration integration](#configuration-integration).
+- The application supplies evaluation context before constructing components
+  whose settings depend on it.
+
+
 ### Analyses and results
 
 Scientific users apply configured calculations to selected data, compare results,
 and inspect computed outputs. Analyses associate results
 with the settings that produced them. Result access is independent of the
 application that scheduled the calculation.
-
-#### Inputs and output scopes
-
-- Input selection and output scopes let analyses operate within a larger data
-  hierarchy without taking ownership of unrelated data.
-- An analysis receives selected inputs and an output scope.
-- The analysis identifies the outputs it owns. Outputs can use independent
-  coordinate systems without constraining one another.
-- Output installation preserves data outside the owned locations.
 
 #### Computation and producing configuration
 
@@ -162,9 +191,25 @@ application that scheduled the calculation.
 #### Result views
 
 - A result view resolves analysis outputs and their producing configuration.
-- Constructing a result view requires the result data and metadata, not the
-  original pipeline invocation.
+- A result view accepts a reopened result namespace whose layout and producing
+  configuration metadata satisfy the analysis contract. It reconstructs the
+  concrete analysis and its recorded settings without the original analysis
+  instance, pipeline invocation, or recomputation.
+- This input contract covers interpretation of restored result metadata. It does
+  not require Tollan to save results or guarantee storage-backend round trips.
 - View lifetime follows [accessors and views](#accessors-and-views).
+
+#### Inputs and output scopes
+
+- Input selection and output scopes let analyses operate within a larger data
+  hierarchy without taking ownership of unrelated data.
+- An analysis receives selected inputs and a shared output scope. Multiple
+  analyses may use the same scope, each owning a distinct result namespace.
+- Shared scopes may retain scalar data variables. Scope nodes must have no local
+  or inherited dimensions or coordinates.
+- The analysis identifies the outputs it owns. Outputs can use independent
+  coordinate systems without constraining one another.
+- Output installation preserves data outside the owned locations.
 
 #### Result reuse and replacement
 
@@ -172,8 +217,19 @@ application that scheduled the calculation.
   the requested analysis. Replacement updates results within the analysis scope.
 - The concrete analysis defines the conditions for reusing an existing result.
   Configuration equality alone does not establish input equivalence.
-- Replacement applies to the analysis-owned output locations defined under
+- An analysis composes its complete result namespace before installation.
+  Successful installation replaces that namespace as a unit, including any
+  partial or previous contents. Failed composition leaves installed results
+  unchanged. Other namespaces in the shared scope remain unchanged.
+
+#### Compute and inspect analysis results
+
+- **Handoff:** selected input view and settings → analysis output scope → result view.
+- The caller selects inputs and an output scope as defined under
   [inputs and output scopes](#inputs-and-output-scopes).
+- If a step invokes the analysis, the step records execution separately from the
+  analysis's producing configuration.
+
 
 ### Steps and pipelines
 
@@ -230,21 +286,20 @@ by a directed acyclic graph (DAG).
   execution history is a separate responsibility.
 - Context export produces a serialized value and leaves the attached live record
   unchanged.
-- Context restoration requires the known producing operation.
+- Restoring an exported context requires the known producing operation.
+- A context supports pickle transport to another process for inspection and
+  further diagnostics, including its published diagnostic payload. The receiving
+  process must have the defining classes and resources required by that payload.
 - Context serialization does not define a scientific product format.
 
-### Command-line applications
+#### Run a processing pipeline
 
-Applications need consistent command-line entry points without repeating common
-CLI setup. Tollan provides a specialized Typer class for this purpose, so each
-application can concentrate on its commands and their behavior.
-
-#### Configuration integration
-
-- Configuration integration gives command-line applications access to the shared
-  runtime configuration system.
-- It translates selected arguments into inputs to
-  [configuration sources and precedence](#configuration-sources-and-precedence).
+- **Handoff:** prepared working data and configured steps → invocation contexts
+  and outputs → application outcome decision.
+- Steps may invoke analyses and publish result views for subsequent consumers.
+- The application selects an execution driver. When it uses a sequential
+  pipeline, execution follows
+  [sequential execution and failure handling](#sequential-execution-and-failure-handling).
 
 ### Supporting utilities
 
@@ -262,39 +317,3 @@ so application components do not maintain separate implementations.
   resolved types are used.
 - Creating a subclass must not change another class's resolved bindings or
   producer ownership.
-
-## Integrated workflows
-
-### Configure and launch an application
-
-- **Handoff:** application arguments and selected sources → runtime → configured
-  component → application callback.
-- CLI arguments enter the runtime through
-  [configuration integration](#configuration-integration).
-- The application supplies evaluation context before constructing components
-  whose settings depend on it.
-
-### Read and inspect scientific data
-
-- **Handoff:** opened or borrowed source → mapper → accessor → requested values.
-- The application chooses the source and concrete reader. Validation follows
-  [accessors and views](#accessors-and-views).
-- Borrowed and owned resources follow
-  [lazy data and resource ownership](#lazy-data-and-resource-ownership).
-
-### Compute and inspect analysis results
-
-- **Handoff:** selected input view and settings → analysis output scope → result view.
-- The caller selects inputs and an output scope as defined under
-  [inputs and output scopes](#inputs-and-output-scopes).
-- If a step invokes the analysis, the step records execution separately from the
-  analysis's producing configuration.
-
-### Run a processing pipeline
-
-- **Handoff:** prepared working data and configured steps → invocation contexts
-  and outputs → application outcome decision.
-- Steps may invoke analyses and publish result views for subsequent consumers.
-- The application selects an execution driver. When it uses a sequential
-  pipeline, execution follows
-  [sequential execution and failure handling](#sequential-execution-and-failure-handling).

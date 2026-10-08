@@ -186,6 +186,7 @@ class TestMultiOption:
         assert result.exit_code == 0
         assert "ID: 100 (type: int)" in result.stdout
         assert "ID: 200 (type: int)" in result.stdout
+        assert "ID: 300 (type: int)" in result.stdout
 
     def test_multi_option_invalid_conversion(self, runner):
         """Test automatic type conversion with invalid values."""
@@ -204,9 +205,26 @@ class TestMultiOption:
         assert result.exit_code != 0
         assert "invalid" in result.output.lower()
 
-    def test_multi_option_does_not_patch_typer_globally(self):
-        """Importing Tollan leaves Typer's parameter factory untouched."""
-        assert typer.main.get_click_param.__module__ == "typer.main"
+    def test_multi_option_does_not_change_plain_typer(self, runner):
+        """Tollan's variadic parsing stays local to Tollan applications."""
+        plain = typer.Typer()
+        tollan = TollanTyper()
+
+        @plain.command()
+        @tollan.command()
+        def cmd(values: Annotated[list[str] | None, MultiOption()] = None):
+            typer.echo(str(values))
+
+        for app, args, expected_code in (
+            (plain, ["--values", "a", "b"], 2),
+            (tollan, ["--values", "a", "b"], 0),
+            (plain, ["--values", "a", "b"], 2),
+            (plain, ["--values", "a", "--values", "b"], 0),
+        ):
+            result = runner.invoke(app, args)
+            assert result.exit_code == expected_code, result.output
+            if expected_code == 0:
+                assert result.stdout == "['a', 'b']\n"
 
     def test_multiple_multi_options(self, runner):
         """Test command with multiple multi-options."""
@@ -544,9 +562,7 @@ class TestMultiOption:
             if name:
                 typer.echo(f"Name: {name}")
 
-        # --option=a --option=b c: By the time parser_process is called,
-        # Click has already split --option=b into value='b', so we can't distinguish
-        # between --option=b c and --option b c. Both consume until next option.
+        # Both equals and separate-value syntax consume until the next option.
         result = runner.invoke(app, ["--values=a", "--values=b", "c"])
         assert result.exit_code == 0
         assert "Values: ['a', 'b', 'c']" in result.stdout

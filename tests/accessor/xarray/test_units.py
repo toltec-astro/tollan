@@ -184,9 +184,10 @@ class TestQuantityProperty:
         da = xr.DataArray([1, 2, 3])
         assert da.u.quantity is da
 
-    def test_quantity_with_units(self):
-        """Test quantity returns Astropy Quantity object."""
-        da = xr.DataArray([1.0, 2.0, 3.0])
+    @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.complex128])
+    def test_quantity_with_units_shares_storage(self, dtype):
+        """Unit attachment presents compatible arrays without copying values."""
+        da = xr.DataArray(np.array([1.0, 2.0, 3.0], dtype=dtype))
         da_km = da.u.set("km")
 
         qty = da_km.u.quantity
@@ -502,6 +503,9 @@ class TestEdgeCases:
         assert result.dims == source.dims
         assert result.encoding == {}
         assert result.attrs == {"units": "cm", "description": "science"}
+        np.testing.assert_array_equal(
+            result.to_numpy(), [[0, 100, 200], [300, 400, 500]]
+        )
         assert set(result.coords) == set(source.coords)
         for name in source.coords:
             assert result.coords[name].identical(source.coords[name])
@@ -511,8 +515,7 @@ class TestEdgeCases:
         da = xr.DataArray([1.0, 2.0, 3.0])
         da_ms = da.u.set("m/s")
 
-        # Astropy may format with or without spaces
-        assert "m" in da_ms.attrs["units"] and "s" in da_ms.attrs["units"]
+        assert da_ms.u.unit == u.m / u.s
 
         da_kms = da_ms.u.to("km/s")
         np.testing.assert_allclose(da_kms.values, [0.001, 0.002, 0.003])
@@ -550,7 +553,8 @@ class TestIntegrationWithXarray:
 
         selected = da_km.sel(x=1)
 
-        assert selected.attrs["units"] == "km"
+        assert selected.u.quantity.unit == u.km
+        assert selected.u.quantity.value == 2.0
 
     def test_units_survive_copy(self):
         """Test that units are preserved with .copy()."""
@@ -559,7 +563,8 @@ class TestIntegrationWithXarray:
 
         copied = da_km.copy()
 
-        assert copied.attrs["units"] == "km"
+        assert copied.u.quantity.unit == u.km
+        np.testing.assert_array_equal(copied.u.quantity.value, [1.0, 2.0, 3.0])
 
     def test_dataset_coord_units(self):
         """Test setting units on dataset coordinates."""

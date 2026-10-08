@@ -38,7 +38,9 @@ class Mapper[SchemaT: Schema, DataSourceT = Any, VariableT = Any]:
 
     Use ``from_data_source`` to resolve a schema for a particular source, then
     pass a source and schema field to the read methods. A mapper can be reused
-    with sources that have the same data layout.
+    across a batch of sources with compatible layouts. Each read requires only
+    the resolved names and paths it uses; unused fields may be absent and extra
+    fields do not prevent reuse.
 
     Notes
     -----

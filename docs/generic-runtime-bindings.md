@@ -1,4 +1,4 @@
-# Bind generic classes at runtime
+# Runtime generic bindings
 
 Bind type arguments when subclassing Tollan's generic bases to select the
 schema, mapper, configuration, or context your class will use.

@@ -38,13 +38,16 @@ def test_projection_preserves_columns_units_and_metadata(dataset):
     assert dataset.attrs["observer"] == "example"
 
 
-@pytest.mark.parametrize("copy", [False, True])
-def test_projection_copy_contract(dataset, copy):
-    table = dataset_to_qtable(dataset, dim="row", copy=copy)
-    for name in ("group", "distance", "valid"):
-        assert np.shares_memory(table[name], dataset[name].data) is not copy
+def test_independently_editable_projection_preserves_source(dataset):
+    before = dataset.copy(deep=True)
+    table = dataset_to_qtable(dataset, dim="row", copy=True)
     table["group"][0] = 9
-    assert dataset["group"][0].item() == (0 if copy else 9)
+    table["distance"][0] = 5 * u.km
+    table["valid"][0] = False
+    assert table["group"][0] == 9
+    assert table["distance"][0] == 5 * u.km
+    assert not table["valid"][0]
+    xr.testing.assert_identical(dataset, before)
 
 
 def test_explicit_columns_include_coordinates_and_rename(dataset):
@@ -96,8 +99,6 @@ def test_selection_retains_original_row_order_and_units(dataset, indices):
     table = dataset_to_qtable(selected, dim="row")
     assert len(table) == len(indices)
     assert table["distance"].unit == u.km
-    if indices and np.all(np.diff(indices) == 1):
-        assert np.shares_memory(table["distance"], dataset["distance"].data)
 
 
 def test_mask_is_positional_without_coordinate_alignment(dataset):

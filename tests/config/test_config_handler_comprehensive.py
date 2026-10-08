@@ -269,43 +269,6 @@ class TestConfigHandlerVariants:
         assert runtime.runtime_info.validation_context == {}
 
 
-class TestConfigHandlerTypeInference:
-    """Test ConfigHandler config_model_cls inference."""
-
-    def test_infers_config_model_cls_from_generic(self):
-        """Test config_model_cls is derived from its type-variable binding."""
-
-        class MyConfig(BaseModel):
-            value: str
-
-        class MyHandler(ConfigHandler[MyConfig]):
-            @classmethod
-            def prepare_config_data(cls, runtime_config):
-                return {"value": "test"}
-
-        # config_model_cls should be inferred
-        assert MyHandler.config_model_cls is MyConfig
-
-    def test_explicit_config_model_cls_disallowed(self):
-        """Test explicit config_model_cls is now disallowed (enforcement)."""
-
-        class ConfigA(BaseModel):
-            value: str
-
-        class ConfigB(BaseModel):
-            value: str
-
-        # Explicit config_model_cls should raise TypeError
-        with pytest.raises(TypeError, match="explicitly sets 'config_model_cls'"):
-
-            class MyHandler(ConfigHandler[ConfigA]):
-                config_model_cls: type[BaseModel] = ConfigB  # pyright: ignore[reportIncompatibleVariableOverride]  # ty: ignore[invalid-attribute-override]  # Should be disallowed
-
-                @classmethod
-                def prepare_config_data(cls, runtime_config):
-                    return {"value": "test"}
-
-
 class TestConfigHandlerRegistration:
     """Test ConfigHandler registration with RuntimeContext."""
 

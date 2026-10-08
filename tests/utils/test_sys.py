@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import os
 import pwd
+import signal
 import socket
+import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from tollan.utils.sys import get_hostname, get_username, pty_run
 
@@ -70,12 +74,18 @@ class TestPtyRun:
             assert result == 0
             mock_spawn.assert_called_once_with(["echo", "hello world"])
 
-    def test_pty_run_nonzero_exit(self):
-        """Test pty_run returns nonzero exit code."""
-        with patch("pty.spawn", return_value=1) as mock_spawn:
-            result = pty_run("false")
-            assert result == 1
-            mock_spawn.assert_called_once()
+    @pytest.mark.parametrize("exit_code", [0, 1, 7])
+    def test_pty_run_exit_code(self, exit_code):
+        """Report the child exit code, not its encoded wait status."""
+        assert (
+            pty_run([sys.executable, "-c", f"raise SystemExit({exit_code})"])
+            == exit_code
+        )
+
+    def test_pty_run_signal_exit(self):
+        """Report signal termination with a negative signal number."""
+        command = "import os, signal; os.kill(os.getpid(), signal.SIGTERM)"
+        assert pty_run([sys.executable, "-c", command]) == -signal.SIGTERM
 
     def test_pty_run_command_with_args(self):
         """Test pty_run with command and arguments."""

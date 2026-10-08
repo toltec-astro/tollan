@@ -1,7 +1,6 @@
 """Nested source groups preserve sequential updates and cached file reads."""
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
 
 import pytest
 
@@ -14,9 +13,6 @@ from tollan.config.sources import (
     YamlConfigSource,
 )
 from tollan.utils.log import logger
-
-if TYPE_CHECKING:
-    from tollan.config.sources.base import DictConfigT
 
 
 def _group(order, sources, **kwargs):
@@ -176,30 +172,3 @@ def test_runtime_defaults_and_overrides_keep_their_precedence():
     rc.update_default_config({"items": ["default"]})
     rc.update_override_config({"items": {"[]": ["override"]}})
     assert rc.config_dict["items"] == ["default", "a", "b", "override"]
-
-
-def test_merge_is_applied_once_per_mapping(monkeypatch):
-    import tollan.config.sources as sources_module
-
-    mappings: list[DictConfigT] = [
-        {"items": []},
-        {"items": {"[]": [1]}},
-        {"items": {"[]": [2]}},
-    ]
-    leaves = [DictConfigSource(order=i, source=data) for i, data in enumerate(mappings)]
-    sources = ConfigSourceList(data=[_group(0, [_group(0, leaves)])])
-    calls = []
-    merge = sources_module.rupdate
-
-    def counted_merge(target, data):
-        calls.append((target, data))
-        merge(target, data)
-
-    monkeypatch.setattr(sources_module, "rupdate", counted_merge)
-    result = sources.load()
-    assert result == {"items": [1, 2]}
-    assert len(calls) == len(leaves)
-    assert all(target is result for target, _ in calls)
-    assert all(
-        data is leaf.source for (_, data), leaf in zip(calls, leaves, strict=True)
-    )

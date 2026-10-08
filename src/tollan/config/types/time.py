@@ -125,7 +125,9 @@ def _serialize_time(value: Time, *, output_format: str) -> str | float:
     if _time_format_kind(output_format) == "string":
         # Astropy's scalar string formats do not encode the time scale. Emit
         # UTC so parsing the string back with the same format preserves time.
-        output_value = value if value.scale == "utc" else value.utc
+        # Display precision must not round the serialized fractional seconds.
+        output_value = value.utc.replicate()
+        output_value.precision = 9
         result = output_value.to_value(output_format)
     else:
         result = value.to_value(output_format)
@@ -198,7 +200,9 @@ def time_field(
     -------
     typing_extensions.TypeForm
         Pydantic annotation producing a scalar Time. Serialization uses the
-        first allowed format, or ``isot`` by default. String output uses UTC.
+        first allowed format, or ``isot`` by default. String output uses UTC,
+        full subformats, and nine fractional-second digits where supported,
+        independently of the input object's display settings.
 
     Raises
     ------

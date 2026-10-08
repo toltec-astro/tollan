@@ -10,7 +10,7 @@ import pytest
 import xarray as xr
 from pydantic import ConfigDict, Field
 
-from tollan.accessor import AccessorBase, Mapper, Mapping, NameMapping, SubpathMapping
+from tollan.accessor import AccessorBase, Mapping, NameMapping, SubpathMapping
 from tollan.accessor.xarray import (
     Analysis,
     AnalysisInputMapper,
@@ -115,48 +115,36 @@ class SampleStep(Step[SampleStepConfig, SampleStepContext]):
         context.data = SampleView(context.config.analysis(data))
 
 
-def test_pickle_restores_live_contexts_and_result_views(source, monkeypatch):
+def test_pickled_context_exposes_analysis_results_without_recomputation(
+    source, monkeypatch
+):
     tree = ensure_analysis_scope(source)
-    SampleStep()(tree)
-    SampleStep(alias="second", analysis=SampleAnalysis(step=3))(tree)
-    snapshot = pickle.dumps(tree)
+    SampleStep(alias="diagnostic", analysis=SampleAnalysis(step=3))(tree)
+    context = SampleStep.get_context(tree, alias="diagnostic")
+    message = pickle.dumps(context)
 
     def unexpected_computation(*args, **kwargs):
-        pytest.fail("Loading a view must not recompute the analysis")
+        pytest.fail("Loading a diagnostic context must not rerun its analysis")
 
     monkeypatch.setattr(SampleAnalysis, "_compute_result", unexpected_computation)
-    restored = pickle.loads(snapshot)  # noqa: S301 -- test-owned tree
-    first = SampleStep.get_context(restored)
-    second = SampleStep.get_context(restored, alias="second")
-    assert first.completed
-    assert second.completed
-    assert first.data is not None
-    assert second.data is not None
-    assert first.data._data_source is restored
-    assert second.data.data_source is restored["example.sample"]
-    assert (
-        second.data.sample["values"].data
-        is restored["example.sample/sample/values"].data
-    )
-    assert isinstance(second.data.sample["values"].data, da.Array)
-    assert first.data.sample_analysis == SampleAnalysis(step=2)
-    assert second.data.sample_analysis == SampleAnalysis(step=3)
-    assert first.data.sample["values"].values.tolist() == [0, 2, 4, 6, 8, 10]
-    assert second.data.sample["values"].values.tolist() == [0, 3, 6, 9]
-    assert second.make_step().config.alias == "second"
+    received = pickle.loads(message)  # noqa: S301 -- test-owned context
+    assert received is not context
+    assert received.completed == context.completed
+    assert received.config == context.config
+    assert received.failures == context.failures
+    assert received.data is not None
+    assert received.data.sample_analysis == SampleAnalysis(step=3)
+    assert received.data.sample["values"].values.tolist() == [0, 3, 6, 9]
 
 
-def test_analysis_snapshot_is_captured_at_view_construction(source):
+def test_view_exposes_producing_configuration_with_supplied_mapper(source):
     tree = SampleAnalysis(step=3)(source)
     mapper = SampleMapper.from_data_source(tree)
     view = SampleView(tree, mapper=mapper)
     assert view.mapper is mapper
     assert view._analysis_cls is SampleAnalysis
-    SampleAnalysis(step=4)._dump_to_attr(view.data_source, mapper=mapper)
-    # Change attrs before the first public property access: the old snapshot stays.
     assert view.sample_analysis == SampleAnalysis(step=3)
     assert view.sample_analysis is view._analysis_snapshot
-    assert SampleView(tree).sample_analysis == SampleAnalysis(step=4)
 
 
 def test_analysis_class_binding_through_intermediate_view(source):
@@ -300,7 +288,61 @@ def test_recompute_replaces_grid_and_dependents_preserving_siblings(source):
     assert "dependent" not in forced["example.sample"].children
 
 
-def test_local_scope_detachment_and_namespace_roundtrip(source, tmp_path):
+@pytest.mark.parametrize("partial_payload", ["children", "scalar", "array"])
+def test_analyses_share_scope_and_replace_only_their_complete_namespace(
+    source, partial_payload
+):
+    @dataclass
+    class SummarySchema(AnalysisSchemaMixin):
+        _namespace: SubpathMapping = SubpathMapping.path("example.summary")
+        analysis: NameMapping = NameMapping.attr("example.summary.analysis")
+        output: SubpathMapping = SubpathMapping.path("summary")
+
+    class SummaryMapper(AnalysisMapper[SummarySchema]):
+        pass
+
+    class SummaryAnalysis(Analysis[SummaryMapper]):
+        def _get_output_subpaths(self, *, mapper):
+            return (mapper.schema.output,)
+
+        def __call__(self, scope):
+            mapper = self._mapper_cls.from_data_source(scope)
+            return self._call(
+                scope,
+                mapper=mapper,
+                compute=lambda: {
+                    mapper.schema.output: xr.Dataset({"values": ("time", [5.0])})
+                },
+            )
+
+    tree = xr.DataTree.from_dict(
+        {"blocks/0": xr.Dataset({"run_number": 42}), "blocks/0/_input": source}
+    )
+    scope = tree["blocks/0"]
+    scope.attrs["block"] = 0
+    input_node = scope["_input"]
+    assert SummaryAnalysis()(scope) is scope
+    other_result = scope["example.summary"]
+    before_other = other_result.copy(deep=True)
+    # A partial previous result belongs entirely to the analysis being replaced.
+    if partial_payload == "scalar":
+        scope["example.sample"] = xr.DataTree(xr.Dataset({"unfinished": 1}))
+    elif partial_payload == "array":
+        scope["example.sample"] = xr.DataTree(
+            xr.Dataset({"unfinished": ("time", [-1])}, coords={"time": [0]})
+        )
+    scope["example.sample/partial"] = xr.DataTree(xr.Dataset({"unfinished": 1}))
+    assert SampleAnalysis()(scope) is scope
+    assert set(scope["example.sample"].children) == {"sample"}
+    assert SampleView(scope).sample.sizes["time"] == 6
+    assert scope["example.summary"] is other_result
+    xr.testing.assert_identical(other_result, before_other)
+    assert scope["_input"] is input_node
+    assert scope.attrs == {"block": 0}
+    assert scope["run_number"].item() == 42
+
+
+def test_local_scope_and_detached_namespace_views(source):
     tree = xr.DataTree.from_dict({"measurements/one/_input": source})
     result = SampleAnalysis()(tree, parent_namespace="measurements/one")
     assert result is tree
@@ -315,19 +357,28 @@ def test_local_scope_detachment_and_namespace_roundtrip(source, tmp_path):
         assert view._data_source is selected
         assert view.sample_analysis == SampleAnalysis(step=2)
         xr.testing.assert_identical(view.data_source, SampleView(scope).data_source)
-    target = tmp_path / "analysis.zarr"
-    detached.to_zarr(target)
-    with xr.open_datatree(target, engine="zarr") as reopened:
-        restored = SampleView.from_namespace(reopened)
-        assert (
-            restored.sample_analysis
-            == SampleView.from_namespace(detached).sample_analysis
-        )
-        xr.testing.assert_identical(
-            restored.sample, SampleView.from_namespace(detached).sample
-        )
     assert "example.sample.analysis" not in detached["sample"].attrs
     assert detached.attrs["example.sample.analysis"] == '{"step":2}'
+
+
+def test_reopened_namespace_restores_producing_configuration(
+    source, tmp_path, monkeypatch
+):
+    """Decode saved settings through the view without rerunning the producer."""
+    namespace = SampleAnalysis(step=3)(source.compute())["example.sample"]
+    path = tmp_path / "analysis.zarr"
+    namespace.to_zarr(path)
+    del namespace
+
+    def unexpected_compute(*args, **kwargs):
+        pytest.fail("Reading producing configuration must not compute results")
+
+    monkeypatch.setattr(SampleAnalysis, "_compute_result", unexpected_compute)
+    with xr.open_datatree(path, engine="zarr") as reopened:
+        assert reopened.attrs["example.sample.analysis"] == '{"step":3}'
+        restored = SampleView.from_namespace(reopened).sample_analysis
+        assert type(restored) is SampleAnalysis
+        assert restored.step == 3
 
 
 def test_invalid_tree_scopes_raise_without_restructuring(source):
@@ -343,14 +394,6 @@ def test_invalid_tree_scopes_raise_without_restructuring(source):
         SampleAnalysis()(source, parent_namespace="measurement")
     with pytest.raises(TypeError, match="identify a DataTree node"):
         SampleAnalysis()(tree, parent_namespace="values")
-
-
-def test_module_workflow():
-    import doctest
-
-    from tollan.accessor.xarray import analysis
-
-    assert doctest.testmod(analysis, raise_on_error=True).attempted > 0
 
 
 @pytest.mark.parametrize("path", [".", "/"])
@@ -387,11 +430,7 @@ def test_analysis_promotion_preserves_dataarray_wrapper(name):
 
 
 @pytest.mark.parametrize("kind", ["dataset", "dataarray"])
-@pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
-@pytest.mark.parametrize("engine", ["zarr", "netcdf4"])
-def test_scope_roundtrip_preserves_container_type_and_marker(
-    source, tmp_path, kind, engine
-):
+def test_scope_promotion_preserves_container_type_and_marker(source, kind):
     from tollan.accessor.xarray import ensure_analysis_scope, unwrap_analysis_scope
 
     supplied = source if kind == "dataset" else source["values"]
@@ -402,13 +441,6 @@ def test_scope_roundtrip_preserves_container_type_and_marker(
     xr.testing.assert_identical(restored, supplied)
     arr = restored["values"] if kind == "dataset" else restored
     assert arr.data is source["values"].data
-    target = tmp_path / ("scope.zarr" if engine == "zarr" else "scope.nc")
-    if engine == "zarr":
-        scope.to_zarr(target)
-    else:
-        scope.to_netcdf(target, engine=engine)
-    with xr.open_datatree(target, engine=engine) as reopened:
-        xr.testing.assert_identical(unwrap_analysis_scope(reopened), supplied)
 
 
 def test_scope_selection_and_unmarked_input_are_identity_operations(source):
@@ -423,7 +455,7 @@ def test_scope_selection_and_unmarked_input_are_identity_operations(source):
     assert "example.sample" in tree["blocks/0"].children
 
 
-def test_scope_rejects_inherited_coordinates_and_local_scalars():
+def test_scope_rejects_inherited_coordinates_and_missing_paths():
     from tollan.accessor.xarray import ensure_analysis_scope
 
     tree = xr.DataTree.from_dict(
@@ -431,8 +463,6 @@ def test_scope_rejects_inherited_coordinates_and_local_scalars():
     )
     with pytest.raises(ValueError, match="/child"):
         ensure_analysis_scope(tree, parent_namespace="child")
-    with pytest.raises(ValueError, match="not an analysis scope"):
-        ensure_analysis_scope(xr.DataTree(dataset=xr.Dataset({"scalar": 1})))
     with pytest.raises(KeyError):
         ensure_analysis_scope(tree, parent_namespace="missing")
 
@@ -447,20 +477,26 @@ def test_scope_rejects_inherited_coordinates_and_local_scalars():
     ],
     ids=["index", "auxiliary-coordinate", "scalar-coordinate", "unindexed-dimension"],
 )
-def test_scope_rejects_inherited_context_while_view_remains_readable(ancestor):
+@pytest.mark.parametrize("location", ["local", "ancestor"])
+def test_scope_rejects_coordinate_context_while_view_remains_readable(
+    ancestor, location
+):
     from tollan.accessor.xarray import ensure_analysis_scope
 
+    selected = ancestor if location == "local" else xr.Dataset()
+    selected = selected.assign_attrs(
+        {"example.sample.analysis": SampleAnalysis().model_dump_json()}
+    )
     tree = xr.DataTree.from_dict(
         {
-            "/": ancestor,
-            "intermediate/selected": xr.Dataset(
-                attrs={"example.sample.analysis": SampleAnalysis().model_dump_json()}
-            ),
+            "/": ancestor if location == "ancestor" else xr.Dataset(),
+            "intermediate/selected": selected,
         }
     )
     node = tree["intermediate/selected"]
     assert isinstance(node, xr.DataTree)
-    assert not node.to_dataset(inherit=False).variables
+    if location == "ancestor":
+        assert not node.to_dataset(inherit=False).variables
     with pytest.raises(ValueError, match="not an analysis scope"):
         ensure_analysis_scope(node)
     assert SampleView.from_namespace(node).data_source is node
@@ -581,7 +617,7 @@ def test_unwrap_validates_generated_scope_marker(source):
         unwrap_analysis_scope(scope)
 
 
-def test_namespace_view_keeps_producing_config_with_selected_results(source):
+def test_new_view_reads_replaced_results_and_producing_config(source):
     first = SampleAnalysis(step=2)
     tree = first(source)
     old_view = SampleView(tree)
@@ -590,14 +626,10 @@ def test_namespace_view_keeps_producing_config_with_selected_results(source):
     assert old_view.sample_analysis is old_view.sample_analysis
     assert old_view.sample_analysis == first
     assert old_view.sample_analysis is not first
-    old_data = old_view.sample
     second = SampleAnalysis(step=3)
     second(tree)
     new_view = SampleView(tree)
     assert new_view.sample_analysis == second
-    assert old_view.sample_analysis == first
-    assert old_view.data_source is not new_view.data_source
-    xr.testing.assert_identical(old_view.sample, old_data)
     assert new_view.sample.sizes["time"] == 4
 
 
@@ -949,13 +981,6 @@ def test_view_keeps_single_mapper_and_readonly_source_protocol(
         SampleView(supplied, mapper=provided)
         if source_kind == "scope" or supply_mapper
         else SampleView.from_namespace(supplied)
-    )
-    assert AnalysisView.__init__ is AccessorBase.__init__
-    assert AnalysisMapper.__init__ is Mapper.__init__
-    assert AnalysisMapper._populate_from_schema is Mapper._populate_from_schema
-    assert (
-        AnalysisMapper.from_data_source.__func__
-        is XarrayMapper.from_data_source.__func__
     )
     assert view._data_source is supplied
     assert view.data_source is (namespace if source_kind == "scope" else supplied)

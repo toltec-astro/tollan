@@ -65,17 +65,6 @@ class TestAccessorBaseCreation:
         assert accessor.mapper is mapper
         assert accessor.data_source is ds
 
-    def test_generic_intermediate_class(self):
-        """Generic intermediate class doesn't require concrete mapper."""
-
-        class GenericAccessor[DataSourceT, MapperT: Mapper](
-            AccessorBase[DataSourceT, MapperT],
-        ):
-            pass
-
-        # Should not raise during class definition
-        assert GenericAccessor is not None
-
     def test_mapper_cls_auto_detected(self):
         """Verify _mapper_cls is auto-detected via __init_subclass__."""
 
@@ -127,25 +116,6 @@ class TestAccessorBaseCreation:
 
 class TestAccessorBaseDataSourceTypes:
     """Test AccessorBase with different data source types."""
-
-    def test_xarray_dataset(self):
-        """AccessorBase works with xr.Dataset."""
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = NameMapping("temp")
-
-        class TestMapper(XarrayMapper[TestSchema]):
-            pass
-
-        class TestAccessor(AccessorBase[xr.Dataset, TestMapper]):
-            pass
-
-        ds = xr.Dataset({"temp": ("x", [1, 2, 3])})
-        accessor = TestAccessor(ds)
-
-        assert isinstance(accessor.data_source, xr.Dataset)
-        assert accessor.data_source is ds
 
     def test_dict_data_source(self):
         """AccessorBase works with dict data source."""
@@ -266,24 +236,6 @@ class TestAccessorBaseProperties:
         assert isinstance(accessor.mapper, TestMapper)
         assert accessor.mapper.schema.temp in accessor.mapper
 
-    def test_data_source_property(self):
-        """data_source property returns the data source."""
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = NameMapping("temp")
-
-        class TestMapper(XarrayMapper[TestSchema]):
-            pass
-
-        class TestAccessor(AccessorBase[xr.Dataset, TestMapper]):
-            pass
-
-        ds = xr.Dataset({"temp": ("x", [1, 2, 3])})
-        accessor = TestAccessor(ds)
-
-        assert accessor.data_source is ds
-
 
 class TestAccessorBaseAsXarrayAccessor:
     """Test AccessorBase used as xarray accessor."""
@@ -340,26 +292,6 @@ class TestAccessorBaseAsView:
         # Create view with pre-existing mapper
         view = TestView(ds, mapper)
         assert view.mapper is mapper
-        assert view.data_source is ds
-
-    def test_view_pattern_auto_mapper(self):
-        """AccessorBase can be used as view with auto-created mapper."""
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = NameMapping("temp")
-
-        class TestMapper(XarrayMapper[TestSchema]):
-            pass
-
-        class TestView(AccessorBase[xr.Dataset, TestMapper]):
-            pass
-
-        ds = xr.Dataset({"temp": ("x", [1, 2, 3])})
-
-        # Create view without mapper - should auto-create
-        view = TestView(ds)
-        assert isinstance(view.mapper, TestMapper)
         assert view.data_source is ds
 
 

@@ -22,6 +22,7 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
     """Base class for data accessors and views with generic support.
 
     This class provides a unified pattern for:
+
     1. xarray accessors: Create mapper from data_source automatically
     2. Data views: Accept existing mapper and data_source
 
@@ -67,7 +68,7 @@ class AccessorBase[DataSourceT, MapperT: Mapper]:
         Parameters
         ----------
         data_source : DataSourceT
-            Data source to access
+            Data source to access. Treat it as read-only for the accessor's lifetime.
         mapper : MapperT, optional
             Field mapper for data access. If not provided, creates one
             using _mapper_cls.from_data_source(data_source).

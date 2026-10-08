@@ -190,7 +190,7 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
             logger.debug(f"Loaded {len(user_sources.data)} user config source(s)")
             tier_sources.extend(user_sources.data)
 
-        self._config_sources = ConfigSourceList.model_validate(tier_sources)
+        self._config_sources = ConfigSourceList(data=tier_sources)
 
         # Inject runtime_info dict into info tier
         # This must happen after _config_sources is set

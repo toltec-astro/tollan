@@ -49,13 +49,14 @@ def pty_run(cmd: str | list[str]) -> int:
     Returns
     -------
     int
-        The exit code of the command.
+        The exit code of the command, or the negative signal number if terminated
+        by a signal.
     """
     if isinstance(cmd, str):
         cmd = shlex.split(cmd)
     cmd = list(map(str, cmd))
     cmd_str = shlex.join(cmd)
     logger.info(f"run {cmd_str} ...")
-    returncode = pty.spawn(cmd)
+    returncode = os.waitstatus_to_exitcode(pty.spawn(cmd))
     logger.info(f"{returncode=}: {cmd_str}")
     return returncode

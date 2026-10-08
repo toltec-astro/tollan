@@ -154,7 +154,9 @@ class UnitsAccessor:
     def quantity(self) -> Quantity | DaskArray | xr.DataArray:
         """Data with its unit attached when one is present.
 
-        NumPy-backed data becomes a no-copy Astropy Quantity view.
+        NumPy-backed floating-point and complex data becomes a shared-storage
+        Astropy Quantity view. Representation changes, such as promoting integers
+        to floating point, may require a copy. Treat the result as read-only.
         Dask-backed data remains lazy and computes to a Quantity. If no unit is
         set, the original DataArray is returned unchanged.
 
@@ -190,6 +192,7 @@ class UnitsAccessor:
         """Set units on the DataArray.
 
         Only sets units if:
+
         - No units are currently set, OR
         - The current units are the same as the new units (no-op)
 

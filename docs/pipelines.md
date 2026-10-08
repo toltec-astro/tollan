@@ -1,7 +1,10 @@
-# Run a sequence of configured steps
+# Steps and pipelines
 
 Run configured operations on a shared working data container and inspect each
-operation's state and results.
+operation's state and results. `SequentialPipeline` runs enabled steps in the
+order you supply; arrange required producers before their consumers. The step
+and context interfaces do not require this driver and can be used by other
+orchestrators.
 
 | Need | Use |
 | --- | --- |
@@ -13,9 +16,10 @@ operation's state and results.
 | Run one computation | A `Step` subclass implementing `run()` |
 | Run enabled steps in order | `SequentialPipeline` |
 | Export selected context fields | `Step.dump_context()` and a product writer |
-| Export result datasets with their producing configuration | [xarray analyses](data-adapters.md#store-analysis-results-in-a-datatree) |
+| Export result datasets with their producing configuration | [xarray analyses](analyses.md#computation-and-producing-configuration) |
 
-## Define and run a step
+(define-and-run-a-step)=
+## Define and invoke a step
 
 1. Declare settings on a `StepConfig` subclass.
 2. Define a `StepContext` subclass with a typed `data` field for the results
@@ -103,7 +107,7 @@ assert context.config.factor == 3.0
 Steps may also update an existing dataset in place. The concrete step determines
 which inputs it preserves and which products it replaces. For a computation
 with its own configuration and multiple result datasets, use an
-[xarray analysis](data-adapters.md#store-analysis-results-in-a-datatree) inside
+[xarray analysis](analyses.md#computation-and-producing-configuration) inside
 `run()` and expose its products through the analysis view.
 
 Construct a step with a configuration model, keyword settings, or both.
@@ -122,7 +126,7 @@ and context must bind the same configuration type.
 Context lookup, including `has_context()`, attaches an empty context store when
 the container has none.
 
-### Consume a prior step's results and publish a new result
+## Compose steps and publish results
 
 `context.data` can be one view or a typed bundle of views, arrays, tables,
 figures, and file locations. Publish what later steps need from the invocation.
@@ -169,7 +173,10 @@ Its completion means that `run()` returned without recorded failures.
 is recorded on the writer's context and propagates; the Scale context remains
 completed. A failed write can leave an incomplete file.
 
-## Handle missing inputs and inspect failures
+(handle-missing-inputs-and-inspect-failures)=
+## Sequential execution and failure handling
+
+### Handle missing inputs and inspect failures
 
 Each step selects its inputs from the available data and prior step contexts.
 `run()` returns nothing. A step requiring an unavailable result records the reason
@@ -258,7 +265,7 @@ that invocation with `Step.get_context(source)` after catching the exception.
 `KeyboardInterrupt` and `SystemExit` propagate without being recorded as
 operation failures.
 
-## Disable or repeat a step
+### Disable or repeat a step
 
 `SequentialPipeline` skips steps with `config.enabled=False`. Calling a disabled
 step directly still runs it. Skipping leaves any earlier context and results in
@@ -300,7 +307,10 @@ as tree leaves, the step would need distinct result locations.
 Use `step.context_key` or `Step.get_context_key(alias=...)` when a string key is
 needed.
 
-## Recreate a step or restore exported context
+(recreate-a-step-or-restore-exported-context)=
+## Context identity and serialization
+
+### Recreate a step or restore exported context
 
 Use `context.make_step()` to recreate the producer with its saved settings.
 Use `Step.dump_context()` to obtain a JSON string. Your writer chooses where to
@@ -344,7 +354,7 @@ its view explicitly. Exclude live payload fields with `Field(exclude=True)` when
 defining the context model; included fields must be JSON serializable. The
 exporter chooses which contexts to save and which node holds their attributes.
 Use the
-[analysis workflow](data-adapters.md#store-analysis-results-in-a-datatree) for result
+[analysis workflow](analyses.md#computation-and-producing-configuration) for result
 datasets.
 
 Generate a schema for the **exported** fields using Pydantic's serialization mode:
@@ -360,79 +370,31 @@ The default validation schema cannot describe the live Python class in `step_cls
 See the {ref}`generated model reference <pipeline-models>`
 for configuration fields and failure categories.
 
-## Save and restore the working tree with pickle
+### Send a context to another process for diagnostics
 
-Pickle saves the working container and its attached contexts and views together,
-preserving their shared references. Lazy arrays retain their deferred reads and
-external resource dependencies. Keep the step, view,
-mapper, and model classes in an importable module, as in
-`pipeline_example.py`. All other stored objects must also support pickle.
+Pickle the invocation context when another process needs its settings, status,
+and published results for diagnostics. Keep step, context, view, and mapper
+classes in importable modules, as in `pipeline_example.py`. Custom payloads must
+support pickle, and resources used by those payloads must be available to the
+receiving process.
 
 ```{testcode}
 import pickle
 
-snapshot = pickle.dumps(tree)
-recovered = pickle.loads(snapshot)
-assert recovered is not tree
-xr.testing.assert_identical(
-    recovered["raw"].to_dataset(), tree["raw"].to_dataset()
-)
-xr.testing.assert_identical(
-    ScaleView(recovered["scaled"]).signal, context.data.signal
-)
-recovered_context = Scale.get_context(recovered)
-assert recovered_context is recovered.attrs[PIPELINE_CONTEXT_KEY][Scale]
-assert recovered_context is not context
-assert recovered_context.completed
-assert recovered_context.data is not context.data
-assert recovered_context.data.signal.data is recovered["scaled/signal"].data
-assert recovered_context.data.signal.values.tolist() == [3.0, 6.0]
-assert recovered_context.make_step().config == context.config
-assert WriteSignal.get_context(recovered).data == publication.data
-
-recovered_aliases = pickle.loads(pickle.dumps(aliased_tree))
-alias_context = Scale.get_context(recovered_aliases, alias="second")
-assert alias_context.make_step().config == second.config
-assert alias_context.data.signal.values.tolist() == [3.0, 6.0]
-first_result = Scale.get_context(recovered_aliases).data
-assert first_result.signal.values.tolist() == [2.0, 4.0]
+message = pickle.dumps(context)
+received = pickle.loads(message)
+assert received is not context
+assert received.completed == context.completed
+assert received.config == context.config
+assert received.failures == context.failures
+assert received.data.signal.mean().item() == 4.5
 ```
 
-The restored tree can be passed to another step or inspected through the same
-views. Xarray reopens path-based sources on demand; their original handles need
-not stay open. Keep source files available while evaluating restored lazy arrays, or
-materialize all required data before pickling. A completed context can still
-contain deferred reads that fail if a source has disappeared.
+The receiving process can use `received.data` to compute diagnostics without
+running the producing step again. This transports a context; it does not resume
+a pipeline. Load pickle data only from trusted sources.
 
-For a self-contained snapshot of this example, load the input before running
-either invocation:
-
-```{testcode}
-with TemporaryDirectory() as directory:
-    path = Path(directory) / "source.nc"
-    xr.Dataset({"signal": ("sample", [1.0, 2.0])}).to_netcdf(path)
-    with xr.open_dataset(path, chunks={"sample": 1}) as raw:
-        raw.load()
-        portable_tree = xr.DataTree.from_dict({"raw": raw})
-        SequentialPipeline(steps=[Scale(), Scale(alias="second", factor=3)])(
-            portable_tree
-        )
-        portable_snapshot = pickle.dumps(portable_tree)
-    path.unlink()
-    portable = pickle.loads(portable_snapshot)
-    first = Scale.get_context(portable).data
-    second = Scale.get_context(portable, alias="second").data
-    assert first.signal.values.tolist() == [2.0, 4.0]
-    assert second.signal.values.tolist() == [3.0, 6.0]
-```
-
-Loading the current tree after both invocations is insufficient: an earlier
-context can retain a dataset that was replaced in the tree. Load those retained
-payloads as well if they still depend on external resources. A published file
-path is restored as a path; pickle does not include that file's contents.
-Load pickle files only from trusted sources.
-
-## Context lifetime and storage
+### Context lifetime and storage
 
 - For the default context store, supply a container with an `attrs` mapping, or a
   `meta` mapping if `attrs` is absent. It need not be an xarray object.
@@ -445,10 +407,11 @@ Load pickle files only from trusted sources.
 - Use `DictContextHandlerMixin` or `MetadataContextHandlerMixin` for typed context
   lookup alone; these mixins do not run steps or track completion.
 
-Choose the export according to what you need to recover:
+Read scientific results and producing settings through the
+[analysis view](analyses.md#read-results). For invocation records, choose the
+transport according to what the receiving process needs:
 
 | Retain | Save | Recover |
 | --- | --- | --- |
-| Analysis results and producing settings | Export the [analysis namespace](data-adapters.md#read-and-export-results), which already contains its configuration attr | Construct the analysis view on the reopened data |
 | Step configuration, status, and included context fields | Write the JSON returned by `Step.dump_context()` | Call the producer's `Step.load_context()` |
-| The working container with live contexts and views | Pickle the container and its attached objects | Unpickle with the defining classes available; retain external resources for any lazy arrays |
+| An invocation context and its diagnostic payload | Pickle the context | Unpickle in the diagnostic process with its classes and required resources available |

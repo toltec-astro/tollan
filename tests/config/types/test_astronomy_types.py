@@ -111,8 +111,13 @@ class TestTimeFields:
     @pytest.mark.parametrize(
         ("field_type", "raw", "serialized", "output_format"),
         [
-            (TimeField, "2020-01-01T00:00:00", "2020-01-01T00:00:00.000", "isot"),
-            (IsoTimeField, "2020-01-01 00:00:00", "2020-01-01T00:00:00.000", "isot"),
+            (TimeField, "2020-01-01T00:00:00", "2020-01-01T00:00:00.000000000", "isot"),
+            (
+                IsoTimeField,
+                "2020-01-01 00:00:00",
+                "2020-01-01T00:00:00.000000000",
+                "isot",
+            ),
             (UnixTimeField, 1577836800.0, 1577836800.0, "unix"),
         ],
     )
@@ -130,7 +135,7 @@ class TestTimeFields:
         loaded = adapter.validate_json(dumped)
 
         assert adapter.dump_python(value) == serialized
-        assert loaded.jd == pytest.approx(value.jd)
+        assert (loaded - value).to_value(u.s) == pytest.approx(0, abs=1e-9)
         assert adapter.json_schema(mode="serialization") == {
             "examples": [serialized],
             "format": "astropy-time",
@@ -176,7 +181,28 @@ class TestTimeFields:
         adapter = TypeAdapter(IsoTimeField)
         value = Time("2020-01-01T00:00:00", format="isot", scale="tai")
         loaded = adapter.validate_json(adapter.dump_json(value))
-        assert loaded.utc.jd == pytest.approx(value.utc.jd)
+        assert (loaded - value).to_value(u.s) == pytest.approx(0, abs=1e-9)
+
+    @pytest.mark.parametrize("field_type", [TimeField, IsoTimeField])
+    @pytest.mark.parametrize("scale", ["utc", "tai"])
+    @pytest.mark.parametrize("precision", [0, 3, 9])
+    def test_string_time_roundtrip_preserves_fractional_seconds(
+        self, field_type, scale, precision
+    ):
+        adapter = TypeAdapter(field_type)
+        value = Time(
+            "2020-01-01T00:00:00.123456789",
+            format="isot",
+            scale=scale,
+            precision=precision,
+            out_subfmt="date",
+        )
+        original_jd = (value.jd1, value.jd2)
+        restored = adapter.validate_json(adapter.dump_json(value))
+        assert (restored - value).to_value(u.s) == pytest.approx(0, abs=1e-9)
+        assert value.precision == precision
+        assert value.out_subfmt == "date"
+        assert (value.jd1, value.jd2) == original_jd
 
     def test_time_parsing_returns_independent_values(self):
         """Neither string nor floating-point inputs are value-cached."""
@@ -359,7 +385,8 @@ class TestSkyCoordField:
 
         model = TestModel.model_validate({"target": "10.6847083d 41.26875d"})
         assert isinstance(model.target, SkyCoord)
-        assert model.target.ra.deg == pytest.approx(10.68, abs=1.0)  # pyright: ignore[reportOptionalMemberAccess]
+        assert model.target.ra.deg == pytest.approx(10.6847083, rel=0, abs=1e-10)
+        assert model.target.dec.deg == pytest.approx(41.26875, rel=0, abs=1e-10)
 
     def test_skycoord_named_source_roundtrip(self, monkeypatch):
         """Source names resolve and remain names through JSON serialization."""
@@ -386,16 +413,24 @@ class TestSkyCoordField:
     def test_skycoord_context_resolver_is_offline_safe(self):
         """Applications and tests can inject a deterministic name resolver."""
         adapter = TypeAdapter(SkyCoordField)
+        catalog_coordinate = SkyCoord("284.7625d -18.3147d")
+        catalog_coordinate.info.meta = {"catalog": "local"}
 
         def resolve(name: str) -> SkyCoord:
             assert name == "LMT"
-            return SkyCoord("284.7625d -18.3147d")
+            return catalog_coordinate
 
         coord = adapter.validate_python(
             "LMT",
             context={"skycoord_name_resolver": resolve},
         )
+        assert coord.separation(catalog_coordinate).to_value(u.arcsec) == pytest.approx(
+            0, abs=1e-9
+        )
         assert adapter.dump_python(coord) == "LMT"
+        assert catalog_coordinate.info.meta == {"catalog": "local"}
+        assert catalog_coordinate.ra.deg == pytest.approx(284.7625)
+        assert catalog_coordinate.dec.deg == pytest.approx(-18.3147)
 
     def test_skycoord_with_config_backend(self):
         """Test SkyCoord fields work with RuntimeConfig."""
@@ -533,13 +568,13 @@ class TestComplexConfigWithTypes:
         model = Defaults()
         assert model.model_dump() == {
             "distance": "1.0 m",
-            "timestamp": "2020-01-01T00:00:00.000",
+            "timestamp": "2020-01-01T00:00:00.000000000",
             "target": "1d 2d",
         }
         schema = Defaults.model_json_schema(mode="serialization")
         assert schema["properties"]["distance"]["default"] == "1.0 m"
         assert schema["properties"]["timestamp"]["default"] == (
-            "2020-01-01T00:00:00.000"
+            "2020-01-01T00:00:00.000000000"
         )
         assert schema["properties"]["target"]["default"] == "1d 2d"
 

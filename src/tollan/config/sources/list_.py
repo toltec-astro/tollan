@@ -21,8 +21,8 @@ class ListConfigSource(ConfigSourceBase):
     """Configuration source from nested list of sources.
 
     This allows hierarchical composition of config sources.
-    The source can be a ConfigSourceList, or a list/dict that will
-    be validated into a ConfigSourceList.
+    The source can be a ConfigSourceList, a list of source declarations, or a
+    dictionary containing the collection fields ``data`` and optional ``name``.
 
     Examples
     --------
@@ -72,7 +72,7 @@ class ListConfigSource(ConfigSourceBase):
 
         if isinstance(v, ConfigSourceList):
             return v
-        # Use ConfigSourceList's validator to handle list/dict
+        # Validate collection inputs through the common resolver.
         return resolve_config_sources(
             v,
             env_namespace=(info.context or {}).get(

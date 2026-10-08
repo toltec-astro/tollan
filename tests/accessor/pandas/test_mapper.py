@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -15,13 +14,6 @@ from tollan.accessor.schema import NameMapping, Schema
 
 if TYPE_CHECKING:
     from tollan.accessor.schema import Mapping
-
-with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore",
-        message="numpy.ndarray size changed",
-        category=RuntimeWarning,
-    )
 
 
 class TestDataFrameMapper:
@@ -52,9 +44,10 @@ class TestDataFrameMapper:
         df.attrs["field"] = "metadata"
         mapper = TestMapper.from_data_source(df)
         np.testing.assert_array_equal(mapper.get_value(df, mapper.schema.field), [1, 2])
-        del df["field"]
+        incompatible = pd.DataFrame()
+        incompatible.attrs["field"] = "metadata"
         with pytest.raises(KeyError, match="field"):
-            mapper.get_value(df, mapper.schema.field)
+            mapper.get_value(incompatible, mapper.schema.field)
 
     def test_unsupported_dimension_location(self):
         @dataclass
@@ -98,8 +91,7 @@ class TestDataFrameMapper:
         value = mapper.get_value(df, mapper.schema.temp)
 
         assert isinstance(value, np.ndarray)
-        assert len(value) == 3
-        assert value[0] == 25.0
+        np.testing.assert_array_equal(value, [25.0, 26.0, 27.0])
 
     def test_read_attrs(self):
         """Read values from DataFrame.attrs."""

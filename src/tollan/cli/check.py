@@ -33,7 +33,7 @@ def check_config(
         tollan check -c config.yaml --debug=true --port=8080
         tollan --log_level DEBUG check --workers 4
     """
-    try:  # pragma: no cover
+    try:
         rc = RuntimeContext.from_cli_ctx(ctx, cli_args=ctx.args or None)
 
         # Display runtime info
@@ -49,7 +49,7 @@ def check_config(
         typer.echo("\nConfiguration:")
         typer.echo(pformat_yaml(rc.config.model_dump(exclude={"runtime_info"})))
 
-    except RuntimeError as e:  # pragma: no cover
+    except RuntimeError as e:
         logger.error(f"Failed to load config: {e}")
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(code=1) from e

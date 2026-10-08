@@ -1,4 +1,4 @@
-# Validate paths and scientific values
+# Scientific value types
 
 Use annotations from `tollan.config.types` on Pydantic model fields. Validation
 returns Python objects such as `Path`, Astropy `Quantity`, `Time`, and `SkyCoord`;
@@ -117,6 +117,8 @@ assert mjd.validate_python(51544.0).mjd == 51544.0
 - Supply a format for numeric timestamps.
 - With multiple formats, parsing tries each in order; serialization uses the first.
 - The default serialization format is `isot`; string formats are emitted in UTC.
+- ISO serialization retains nanosecond precision regardless of display precision
+  or abbreviated display formats. Serialization leaves the input object unchanged.
 - Existing `Time` objects preserve their represented instant.
 - Use formats that serialize to a scalar JSON string or number.
 

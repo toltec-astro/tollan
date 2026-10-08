@@ -113,7 +113,7 @@ class ConfigSourceList(BaseModel):
     {'base': True, 'override': True}
     """
 
-    model_config = {"frozen": True}
+    model_config = {"frozen": True, "extra": "forbid"}
 
     data: Annotated[
         list[ConfigSource],
@@ -137,54 +137,26 @@ class ConfigSourceList(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _validate_arg(cls, arg: Any, info: ValidationInfo) -> dict:
-        """Resolve various input formats into ConfigSourceList data dict.
-
-        Handles flexible initialization patterns:
-
-        - ConfigSourceList: Extract data dict
-        - None or dict: Single dict source with order=0
-        - Path to file: Single source with order=0; format auto-detected from
-          extension (``.env`` → envfile, everything else → yaml)
-        - Path to directory: Load all numbered files (e.g., ``00_base.yaml``,
-          ``10_site.env``) via :meth:`_resolve_from_dir`
-        - List: Multiple sources (order auto-assigned if not specified)
-        """
-        # Already validated ConfigSourceList instance (re-validation)
-        if isinstance(arg, ConfigSourceList):
-            return {"data": arg.data, "name": arg.name}
-
-        # None or dict -> single dict source
-        if arg is None or (isinstance(arg, dict) and "data" not in arg):
-            sources = [{"format": "dict", "source": arg or {}, "order": 0}]
-            return {"data": sources}
-
-        # Dict with "data" key -> validate it's a list and pass through
-        if isinstance(arg, dict) and "data" in arg:
-            if not isinstance(arg["data"], list):
-                msg = "data must be a sequence"
-                raise TypeError(msg)
-            return arg
-
-        # Path (string or PathLike)
+    def _validate_arg(cls, arg: Any) -> Any:
+        """Normalize source shorthand; dictionaries contain model fields."""
+        if arg is None:
+            return {"data": [{"format": "dict", "source": {}, "order": 0}]}
         if isinstance(arg, str | os.PathLike):
             path = Path(arg)
-
-            # Directory -> load numbered files of any supported format
             if path.is_dir():
                 return cls._resolve_from_dir(path)
-
-            # File -> detect format from extension
-            fmt = _detect_source_format(path) or "yaml"
-            sources = [{"format": fmt, "source": path, "order": 0}]
-            return {"data": sources}
-
-        # List -> multiple sources
+            return {
+                "data": [
+                    {
+                        "format": _detect_source_format(path) or "yaml",
+                        "source": path,
+                        "order": 0,
+                    }
+                ]
+            }
         if isinstance(arg, list):
             return {"data": arg}
-
-        msg = f"Cannot resolve config sources from type: {type(arg)}"
-        raise TypeError(msg)
+        return arg
 
     @model_validator(mode="after")
     def _validate_order_constraints(self, info: ValidationInfo) -> Self:
@@ -462,14 +434,14 @@ class ConfigSourceList(BaseModel):
 
         Returns
         -------
-            If unique=True:
-                ConfigSource if exactly one match found, None if no match.
-            If unique=False:
-                list[ConfigSource] with all matches (empty if no matches).
+        ConfigSource, list[ConfigSource], or None
+            With ``unique=True``, the matching source or None if no source matches.
+            With ``unique=False``, all matching sources in load order, possibly empty.
 
         Raises
         ------
-            ValueError: If unique=True and multiple sources match the predicate.
+        ValueError
+            Multiple sources match while ``unique=True``.
 
         Examples
         --------
@@ -582,15 +554,15 @@ def resolve_config_sources(
 ) -> ConfigSourceList:
     """Create a ConfigSourceList from various input formats.
 
-    This is a thin wrapper around ConfigSourceList.model_validate() that:
-    - Handles flexible input types (Path, dict, list, None)
-    - Passes order constraints via validation context
-    - Validates order_min/order_max constraints
+    This thin wrapper passes ordering and environment options as validation
+    context to ConfigSourceList.model_validate(). Dictionaries contain model
+    fields: ``data`` and optional ``name``. Put settings in a dictionary source.
 
     Input patterns supported:
 
     - ConfigSourceList: Return as-is (with order validation)
-    - None or dict: Single dict source with order=0
+    - None: Empty dict source with order=0
+    - dict: Source collection with required ``data`` and optional ``name``
     - Path to file: Single source; format auto-detected from extension
       (``.env`` → :class:`EnvFileConfigSource`, else → :class:`YamlConfigSource`)
     - Path to directory: Load numbered files in sort order — ``*.yaml``/``*.yml``
@@ -625,7 +597,7 @@ def resolve_config_sources(
         >>> csl = resolve_config_sources(Path("config.yaml"))
 
         >>> # From dict
-        >>> csl = resolve_config_sources({"key": "value"})
+        >>> csl = resolve_config_sources({"data": [{"source": {"key": "value"}}]})
 
         >>> # From list with order constraints
         >>> csl = resolve_config_sources(

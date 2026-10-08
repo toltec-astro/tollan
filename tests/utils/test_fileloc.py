@@ -358,6 +358,7 @@ class TestFileLocEdgeCases:
     def test_url_with_query_parameters(self):
         """Test URL with query parameters."""
         fl = FileLoc.model_validate("https://example.com/file.txt?key=value")
+        assert fl.url == "https://example.com/file.txt?key=value"
         assert fl.scheme == "https"
         assert fl.host == "example.com"
         assert "file.txt" in str(fl.path)
@@ -365,18 +366,21 @@ class TestFileLocEdgeCases:
     def test_url_with_fragment(self):
         """Test URL with fragment."""
         fl = FileLoc.model_validate("https://example.com/file.txt#section")
+        assert fl.url == "https://example.com/file.txt#section"
         assert fl.scheme == "https"
         assert fl.host == "example.com"
 
     def test_url_with_port(self):
         """Test URL with port."""
         fl = FileLoc.model_validate("http://example.com:8080/file.txt")
+        assert fl.url == "http://example.com:8080/file.txt"
         assert fl.scheme == "http"
         assert fl.host == "example.com"
 
     def test_url_with_username_password(self):
         """Test URL with username and password."""
         fl = FileLoc.model_validate("http://user:pass@example.com/file.txt")
+        assert fl.url == "http://user:pass@example.com/file.txt"
         assert fl.scheme == "http"
         assert fl.host == "example.com"
 
@@ -440,6 +444,7 @@ class TestFileLocUrlComponents:
         """Test all URL components for HTTP URL."""
         url = "http://user:pass@example.com:8080/path/file.txt?key=value#section"
         fl = FileLoc.model_validate(url)
+        assert fl.url == url
         assert fl.scheme == "http"
         assert fl.host == "example.com"
 

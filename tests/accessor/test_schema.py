@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError, dataclass
-from typing import Any
 
 import pytest
 
@@ -52,30 +51,6 @@ class TestNameMapping:
 class TestMapping:
     """Test the public mapping strategy contract."""
 
-    def test_subclass_can_override_resolve(self):
-        """Subclass can override resolve() for conditional mapping."""
-
-        class ConditionalMapping(Mapping):
-            def resolve(self, context: Any) -> NameMapping:
-                # Return different Mapping based on context
-                if hasattr(context, "use_fahrenheit") and context.use_fahrenheit:
-                    return NameMapping("temp_f")
-                return NameMapping("temp_c")
-
-        mapping = ConditionalMapping()
-
-        # Mock context
-        class Context:
-            use_fahrenheit = False
-
-        ctx = Context()
-        resolved = mapping.resolve(ctx)
-        assert resolved.names == ("temp_c",)
-
-        ctx.use_fahrenheit = True
-        resolved = mapping.resolve(ctx)
-        assert resolved.names == ("temp_f",)
-
     def test_unimplemented_resolve(self):
         """A strategy must implement resolve()."""
 
@@ -85,31 +60,6 @@ class TestMapping:
         m = IncompleteMapping()
         with pytest.raises(NotImplementedError):
             m.resolve(MappingContext(None, Schema(), {}))
-
-    def test_custom_mapping(self):
-        """Custom mapping implementation."""
-
-        class CustomMapping(Mapping):
-            def __init__(self, primary: str, fallback: str) -> None:
-                self.primary = primary
-                self.fallback = fallback
-
-            def resolve(self, context: Any) -> NameMapping:
-                if hasattr(context, "data_source"):
-                    if self.primary in context.data_source:
-                        return NameMapping(self.primary)
-                    return NameMapping(self.fallback)
-                return NameMapping(self.primary)
-
-        mapping = CustomMapping("preferred_name", "alternative_name")
-
-        # Mock context
-        class Context:
-            def __init__(self) -> None:
-                self.data_source = {"alternative_name": 123}
-
-        resolved = mapping.resolve(Context())
-        assert resolved.names == ("alternative_name",)
 
 
 class TestMappingContext:
@@ -238,11 +188,6 @@ class TestMappedFieldSource:
             assert str(member) == member.value
             assert MappedFieldSource(member.value) is member
 
-    def test_enum_distinct(self):
-        """Enum values are distinct."""
-        assert MappedFieldSource.data_source != MappedFieldSource.default
-        assert MappedFieldSource.default != MappedFieldSource.missing
-
 
 class TestMissingSentinel:
     """Test MISSING sentinel value."""
@@ -250,23 +195,6 @@ class TestMissingSentinel:
     def test_missing_repr(self):
         """MISSING has readable repr."""
         assert repr(MISSING) == "MISSING"
-
-    def test_missing_is_singleton(self):
-        """MISSING is identity-comparable."""
-        from tollan.accessor.schema import MISSING as MISSING2
-
-        assert MISSING is MISSING2
-
-    def test_missing_in_mapped_field(self):
-        """MISSING can be used in MappedField."""
-        fm = NameMapping("field")
-        mf = MappedField(
-            mapping=fm,
-            mapping_resolved=fm,
-            name="",
-            value=MISSING,
-        )
-        assert mf.value is MISSING
 
 
 @pytest.mark.parametrize(

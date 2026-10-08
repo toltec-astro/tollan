@@ -1,4 +1,4 @@
-# Reading data with mappers
+# Backend adapters
 
 Use a mapper to read fields by the names in your schema. Tollan provides
 `XarrayMapper` for labeled arrays, `NetCDF4Mapper` for open NetCDF files, and
@@ -204,180 +204,6 @@ assert array_mapper.get_arr(source, array_mapper.schema.temperature).identical(
 )
 ```
 
-## Store analysis results in a DataTree
-
-An analysis writes its output Datasets beneath a namespace and saves its
-configuration in that namespace's attributes. Each output Dataset can have its
-own coordinates. A view reads the outputs and their producing configuration.
-
-Define the namespace, configuration attribute, and output paths in a schema.
-Implement the computation in an `Analysis` subclass and expose the results
-through an `AnalysisView`:
-
-```{testcode}
-from dataclasses import dataclass
-
-import numpy as np
-import xarray as xr
-from tollan.accessor import Mapping, NameMapping, SubpathMapping
-from tollan.accessor.xarray import (
-    Analysis,
-    AnalysisMapper,
-    AnalysisSchemaMixin,
-    AnalysisView,
-    ensure_analysis_scope,
-)
-
-
-@dataclass
-class MeanSchema(AnalysisSchemaMixin):
-    _namespace: SubpathMapping = SubpathMapping.path("example.mean")
-    analysis: NameMapping = NameMapping.attr("example.mean.analysis")
-    mean_subpath: SubpathMapping = SubpathMapping.path("mean")
-
-
-class MeanMapper(AnalysisMapper[MeanSchema]):
-    pass
-
-
-class MeanAnalysis(Analysis[MeanMapper]):
-    axis: int | None = None
-
-    def _get_output_subpaths(self, *, mapper):
-        return (mapper.schema.mean_subpath,)
-
-    def __call__(self, obj, *, output=None):
-        scope = xr.DataTree() if output is None else output
-        mapper = self._mapper_cls.from_data_source(scope)
-        return self._call(
-            scope,
-            mapper=mapper,
-            compute=lambda: {
-                mapper.schema.mean_subpath: xr.Dataset({
-                    "mean": np.mean(obj, axis=self.axis)
-                })
-            },
-        )
-
-
-class MeanView(AnalysisView[MeanMapper, MeanAnalysis]):
-    @property
-    def mean_analysis(self):
-        return self._analysis_snapshot
-
-    @property
-    def mean(self):
-        return self.mapper.get_node(
-            self.data_source, self.mapper.schema.mean_subpath
-        ).to_dataset()
-
-
-analysis = MeanAnalysis()
-result = analysis([1.0, 2.0, 3.0])
-view = MeanView(result)
-assert view.mean["mean"].item() == 2.0
-assert view.mean_analysis == analysis
-assert view.data_source is result["example.mean"]
-```
-
-The result has this layout:
-
-```text
-/                         working scope
-└── example.mean          attrs: saved analysis configuration
-    └── mean              Dataset containing the mean variable
-```
-
-The concrete schema must define `_namespace` as a `SubpathMapping` relative to
-the working scope. Output subpaths are relative to the analysis namespace and
-must occupy separate subtrees. Use `SubpathMapping.path()` for these fields.
-`_get_output_subpaths()` declares the outputs before computation; the computation
-returns Datasets keyed by a subset or all of these fields.
-
-### Add results to an existing tree
-
-Select a working scope with `ensure_analysis_scope()`. A valid scope has no
-variables, coordinates, or dimensions, including inherited ones. It can contain
-attributes and child nodes:
-
-```{testcode}
-tree = xr.DataTree.from_dict({"measurement": xr.Dataset()})
-scope = ensure_analysis_scope(tree, parent_namespace="measurement")
-assert analysis([2.0, 4.0], output=scope) is scope
-assert MeanView(tree["measurement"]).mean["mean"].item() == 3.0
-```
-
-`_call()` checks the destination and output paths before computation. Successful
-computation replaces the complete analysis namespace while retaining unrelated
-branches. A failed computation leaves existing results unchanged.
-
-To reuse results, pass a `can_reuse` callback to `_call()`. It receives the
-existing namespace when its saved configuration equals the current configuration.
-Return `True` when the results are suitable for the supplied inputs. With no
-callback, or with `force=True`, the analysis recomputes. Configuration equality
-alone does not establish that input values are unchanged.
-
-### Retain and recover xarray input
-
-Use `prepare_analysis_input_view()` to retain a DataArray or Dataset under
-`_input` in a new scope. The view's `data_source` selects that input node, and
-`unwrap()` recovers the original container type:
-
-```{testcode}
-from tollan.accessor.xarray import prepare_analysis_input_view
-
-signal = xr.DataArray([1.0, 2.0, 3.0], dims="sample", name="signal")
-input_view = prepare_analysis_input_view(signal)
-assert input_view.data_source.path == "/_input"
-assert input_view.data_source["signal"].data is signal.data
-assert input_view.unwrap().identical(signal)
-```
-
-An unnamed DataArray is stored and recovered with the name `data`. Array storage
-is shared. For an existing tree, `parent_namespace` selects the scope, and
-`unwrap()` returns that scope with its children and results.
-
-Subclass `AnalysisInputSchema`, `AnalysisInputMapper`, and `AnalysisInputView` to
-select an input at another path. Set `input_subpath` to an ordered list of
-candidates, such as `SubpathMapping.path(("samples", "_input"))`, and pass the view
-class as `view_cls=`. The view retains its prepared scope in `_data_source` for
-analysis code to use as the output scope. The
-`tollan.accessor.xarray.analysis` module examples show this
-input-selection pattern.
-
-### Read and export results
-
-Construct a result view from the working scope, or use
-`MeanView.from_namespace(node)` for an explicitly selected analysis namespace.
-Its `data_source` is the selected namespace, and its configuration property
-returns the producing analysis. An existing view retains those results after
-recomputation; create a new view to read the replacement.
-
-Export the namespace to store its outputs and configuration together:
-
-```{testcode}
-from pathlib import Path
-from tempfile import TemporaryDirectory
-
-with TemporaryDirectory() as directory:
-    store = Path(directory) / "mean.zarr"
-    view.data_source.to_zarr(store)
-    with xr.open_datatree(store, engine="zarr") as reopened:
-        restored = MeanView.from_namespace(reopened)
-        xr.testing.assert_identical(restored.mean, view.mean)
-        assert restored.mean_analysis == analysis
-```
-
-The analysis call already stores its configuration as JSON in the namespace's
-mapped `analysis` attribute. Export that namespace and use the view's
-configuration property after reopening; a separate config dump is unnecessary.
-
-When running an analysis inside a pipeline step, use the analysis view for
-scientific results and producing settings. Use the step context for invocation
-status, failures, and published payloads. Follow the
-[context export example](pipelines.md#recreate-a-step-or-restore-exported-context)
-to include those invocation fields in a product as well.
-
 ## Work with xarray units
 
 Importing `tollan.accessor.xarray` enables the DataArray `u` accessor:
@@ -396,9 +222,11 @@ shallow copies by default; use `inplace=True` to change the original object's
 attributes. `.u.to()` converts values and preserves lazy computation, labels,
 and unrelated attributes. It clears the converted variable's storage encoding.
 
-`.u.quantity` returns an Astropy Quantity view for NumPy data. For Dask data,
-it returns a lazy array that computes to a Quantity. If no unit is set, it
-returns the DataArray itself.
+`.u.quantity` presents floating-point and complex NumPy data as an Astropy
+Quantity view sharing the source's storage. Treat it as read-only. Representation
+changes, such as promoting integers to floating point, may require a copy.
+For Dask data, it returns a lazy array that computes to a Quantity. If no unit is
+set, it returns the DataArray itself.
 
 ## Read a NetCDF file
 
@@ -463,8 +291,7 @@ assert table.meta["label"] == "Survey"
 
 Selection computes only the boolean mask; payload arrays remain lazy. It uses
 positions, preserving source row order without aligning mask coordinate labels.
-Contiguous selections share in-memory buffers. Projection materializes the
-selected columns, so keep the input open until it finishes. By default, table
+Projection materializes the selected columns, so keep the input open until it finishes. By default, table
 columns share buffers where possible; use `copy=True` for independently editable
 columns. Editing a table does not persist changes to its source file.
 

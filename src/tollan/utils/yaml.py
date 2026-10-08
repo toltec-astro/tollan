@@ -13,7 +13,7 @@ Examples
 >>> yaml_str = yaml_dump(data)
 >>> print(yaml_str)
 length: 5.0 m
-time: '2020-01-01T00:00:00.000'
+time: '2020-01-01T00:00:00.000000000'
 """
 
 from __future__ import annotations
@@ -56,7 +56,8 @@ class YamlDumper(SafeDumper):
 
     This dumper extends PyYAML's SafeDumper to handle:
 
-    - Astropy Time objects (serialized as ISO-8601 strings)
+    - Scalar Astropy times (UTC ISO-8601 strings with nanosecond precision,
+      independent of display settings)
     - Astropy Quantity objects (serialized as strings with units, only scalar supported)
     - Coordinate frames (serialized as frame names)
     - Path-like objects (serialized as strings)
@@ -204,10 +205,12 @@ def _scalar_astropy_time_representer(dumper: YamlDumper, t: Time) -> ScalarNode:
     ValueError
         If the time is not scalar.
     """
-    if not isinstance(t.isot, str):
+    if not t.isscalar:
         msg = f"Time is not scalar: {t}"
-        raise ValueError(msg)  # noqa: TRY004
-    return dumper.represent_str(t.isot)
+        raise ValueError(msg)
+    output_value = t.utc.replicate()
+    output_value.precision = 9
+    return dumper.represent_str(output_value.to_value("isot"))
 
 
 def _path_representer(dumper: YamlDumper, p: Path) -> ScalarNode:

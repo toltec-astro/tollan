@@ -1,4 +1,4 @@
-# Use the shared utilities
+# Supporting utilities
 
 Choose the utility for your task; each example below is independent of an
 application framework. See the [API reference](modules.rst) for full signatures.
@@ -163,8 +163,14 @@ assert figure.layout.yaxis.title.text == "Signal"
 Use `tollan.utils.log.logger` for logging, and `timeit` or `logit` to report
 operation timing or entry/exit. `reset_logger()` replaces all active handlers;
 configure it at the application boundary. Tollan's CLI already provides logging
-options, described in [command-line applications](cli.rst).
+options, described in [command-line applications](cli.md).
 
 Formatting helpers return strings for display. `pformat_mask()` expects a
 nonempty boolean mask; `pformat_bitmask()` summarizes the named flags in an
 integer mask. Neither changes the input data.
+
+```{toctree}
+:maxdepth: 1
+
+generic-runtime-bindings
+```

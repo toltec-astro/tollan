@@ -229,19 +229,13 @@ class TestRuntimeContextSetContext:
 
     def test_set_context_merges_with_existing(self):
         """Test set_context merges with existing context."""
-        rc = RuntimeContext()
-        # Set initial context via runtime_info validation_context
-        validation_context = rc._get_validation_context()
-        validation_context["existing"] = "value"
-
+        rc = RuntimeContext().with_config(validation_context={"existing": "value"})
         with rc.set_context({"new": "value"}):
-            validation_context = rc._get_validation_context()
-            assert validation_context["existing"] == "value"
-            assert validation_context["new"] == "value"
-
-        # After exit, only existing remains
-        validation_context = rc._get_validation_context()
-        assert validation_context == {"existing": "value"}
+            assert rc.runtime_info.validation_context == {
+                "existing": "value",
+                "new": "value",
+            }
+        assert rc.runtime_info.validation_context == {"existing": "value"}
 
 
 class TestRuntimeContextTierManipulation:
@@ -275,11 +269,13 @@ class TestRuntimeContextTierManipulation:
         )
 
         # Set override tier
-        rc.set_override_config({"override": "value1"})
+        rc.set_override_config({"override": "value1", "obsolete": True})
         assert rc.config_dict["override"] == "value1"
 
         # Replace override tier
         rc.set_override_config({"override": "value2", "new": "value"})
+        assert "obsolete" not in rc.config_dict
+        assert rc.config_dict["app"] == "test"
         assert rc.config_dict["override"] == "value2"
         assert rc.config_dict["new"] == "value"
 

@@ -66,17 +66,6 @@ class TestConfigSourceListBasics:
         assert sources[1].order == 1
         assert sources[2].order == 2
 
-    def test_accepts_list_shorthand(self):
-        """Test ConfigSourceList accepts list as shorthand."""
-        sources = ConfigSourceList.model_validate(
-            {
-                "data": [
-                    {"format": "dict", "source": {"key": "value"}, "order": 0},
-                ],
-            },
-        )
-        assert sources.load()["key"] == "value"
-
 
 class TestConfigSourceListConditionalLoading:
     """Test ConfigSourceList enable_if conditional loading."""
@@ -504,18 +493,20 @@ class TestResolveConfigSourcesEnvFiles:
         assert len(csl.data) == 1
         assert isinstance(csl.data[0], EnvFileConfigSource)
         assert csl.data[0].source == f
+        assert csl.load() == {"_env": {"A": "1"}}
 
     def test_directory_expands_env_files_in_order(self, tmp_path):
         """Directory with numbered *.env files resolves to sorted env sources."""
         d = tmp_path / "env.d"
         d.mkdir()
-        (d / "00_default.env").write_text("A=1\n")
+        (d / "00_default.env").write_text("A=1\nB=default\n")
         (d / "10_site.env").write_text("B=2\n")
         csl = resolve_config_sources(d)
         env_srcs = [s for s in csl.data if isinstance(s, EnvFileConfigSource)]
         assert len(env_srcs) == 2
         assert env_srcs[0].source == d / "00_default.env"
         assert env_srcs[1].source == d / "10_site.env"
+        assert csl.load() == {"_env": {"A": "1", "B": "2"}}
 
     def test_directory_mixed_yaml_and_env(self, tmp_path):
         """Directory with mixed yaml and env files resolves both formats."""
@@ -526,6 +517,7 @@ class TestResolveConfigSourcesEnvFiles:
         csl = resolve_config_sources(d)
         assert any(isinstance(s, YamlConfigSource) for s in csl.data)
         assert any(isinstance(s, EnvFileConfigSource) for s in csl.data)
+        assert csl.load() == {"key": "val", "_env": {"EXTRA": "1"}}
 
     def test_empty_directory(self, tmp_path):
         """Empty directory results in empty ConfigSourceList."""
@@ -658,7 +650,9 @@ class TestResolveConfigSourcesFunction:
 
     def test_resolve_config_sources_from_dict(self):
         """Test resolve_config_sources creates ConfigSourceList from dict."""
-        csl = resolve_config_sources({"key": "value"})
+        csl = resolve_config_sources(
+            {"data": [{"source": {"key": "value"}}], "name": "site"}
+        )
         assert isinstance(csl, ConfigSourceList)
         config = csl.load()
         assert config["key"] == "value"
@@ -702,17 +696,55 @@ class TestResolveConfigSourcesFunction:
         assert isinstance(csl, ConfigSourceList)
         assert csl.data[0].order == 5
 
-    def test_resolve_config_sources_dict_with_invalid_data_key(self):
-        """Test resolve_config_sources raises when dict has 'data' key
-        but data is not a list."""
-        with pytest.raises(TypeError, match="data must be a sequence"):
-            resolve_config_sources({"data": "not a list"})
+    @pytest.mark.parametrize(
+        "value",
+        [
+            123,
+            "settings",
+            {"directory": "/observations"},
+            [],
+            [{"source": "not-an-include.yaml"}],
+        ],
+    )
+    def test_dictionary_data_key_is_configuration(self, value):
+        settings = {"data": value, "name": "application"}
+        assert (
+            resolve_config_sources({"data": [{"source": settings}]}).load() == settings
+        )
 
-        with pytest.raises(TypeError, match="data must be a sequence"):
-            resolve_config_sources({"data": {"nested": "dict"}})
+    @pytest.mark.parametrize(
+        "validate", [ConfigSourceList.model_validate, resolve_config_sources]
+    )
+    @pytest.mark.parametrize(
+        "value", [{"a": 1}, {"name": "site"}, {"data": 42}, {"data": [], "a": 1}]
+    )
+    def test_collection_rejects_invalid_model_input(self, validate, value):
+        with pytest.raises((ValueError, TypeError)):
+            validate(value)
 
-        with pytest.raises(TypeError, match="data must be a sequence"):
-            resolve_config_sources({"data": 123})
+    @pytest.mark.parametrize("kind", ["file", "directory", "list", "none"])
+    def test_model_normalizes_shorthand(self, tmp_path, kind):
+        path = tmp_path / "00_base.yaml"
+        path.write_text("value: 7\n")
+        arg = {
+            "file": path,
+            "directory": tmp_path,
+            "list": [{"source": {"value": 7}}],
+            "none": None,
+        }[kind]
+        sources = ConfigSourceList.model_validate(
+            arg, context={"config_source_implicit_order": True}
+        )
+        assert sources.load() == ({} if kind == "none" else {"value": 7})
+
+    def test_explicit_named_source_list_retains_order_validation(self):
+        sources = ConfigSourceList(
+            name="site", data=[DictConfigSource(order=5, source={"data": 42})]
+        )
+        assert resolve_config_sources(sources).load() == {"data": 42}
+        assert resolve_config_sources(sources).name == "site"
+        with pytest.raises(ValueError, match="exceeds maximum allowed order"):
+            resolve_config_sources(sources, order_max=4)
 
 
 if __name__ == "__main__":

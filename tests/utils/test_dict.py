@@ -5,7 +5,6 @@ from __future__ import annotations
 from collections import UserDict
 from copy import copy
 from typing import TYPE_CHECKING, Any
-from unittest.mock import patch
 
 import pytest
 
@@ -199,10 +198,7 @@ def test_rupdate_append_then_patch_copies_only_the_inserted_dict():
     item = {"value": 1, "nested": []}
     updates = {"[]": [item], 0: {"value": 2}}
     target = []
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(target, updates)
-    assert copy_mock.call_count == 1
-    assert copy_mock.call_args.args[0] is item
+    rupdate(target, updates)
     assert target == [{"value": 2, "nested": []}]
     assert item == {"value": 1, "nested": []}
     assert target[0]["nested"] is item["nested"]
@@ -211,10 +207,7 @@ def test_rupdate_append_then_patch_copies_only_the_inserted_dict():
 def test_rupdate_repeated_insertions_get_independent_copies():
     item = {"value": 1}
     target = []
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(target, {"[]": [item, item], 0: {"value": 2}})
-    assert copy_mock.call_count == 2
-    assert all(call.args[0] is item for call in copy_mock.call_args_list)
+    rupdate(target, {"[]": [item, item], 0: {"value": 2}})
     assert target == [{"value": 2}, {"value": 1}]
     assert target[0] is not target[1]
     assert item == {"value": 1}
@@ -228,20 +221,15 @@ def test_rupdate_slice_then_nested_patches(copy_subcontainers, key, index):
     untouched = {"keep": []}
     item = {"values": [1], "untouched": untouched}
     target = [None]
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(
-            target,
-            {
-                key: [item],
-                index: {"values": {"[]": [2]}},
-                f"[{index}]": {"values": {0: 9}},
-            },
-            copy_subcontainers=copy_subcontainers,
-        )
-    assert copy_mock.call_count == (2 if copy_subcontainers else 0)
-    if copy_subcontainers:
-        assert copy_mock.call_args_list[0].args[0] is item
-        assert copy_mock.call_args_list[1].args[0] is item["values"]
+    rupdate(
+        target,
+        {
+            key: [item],
+            index: {"values": {"[]": [2]}},
+            f"[{index}]": {"values": {0: 9}},
+        },
+        copy_subcontainers=copy_subcontainers,
+    )
     inserted = target[index]
     assert inserted is not None
     assert inserted["values"] == [9, 2]
@@ -273,16 +261,11 @@ def test_rupdate_assignment_then_patch_reuses_owned_containers(
     child = {"value": 1}
     item = {0: child} if container == "dict" else [child]
     target = [None]
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(
-            target,
-            {0: item, "[0]": {0: {"value": 2}}},
-            copy_subcontainers=copy_subcontainers,
-        )
-    assert copy_mock.call_count == (2 if copy_subcontainers else 0)
-    if copy_subcontainers:
-        assert copy_mock.call_args_list[0].args[0] is item
-        assert copy_mock.call_args_list[1].args[0] is child
+    rupdate(
+        target,
+        {0: item, "[0]": {0: {"value": 2}}},
+        copy_subcontainers=copy_subcontainers,
+    )
     inserted = target[0]
     assert inserted is not None
     assert inserted[0] == {"value": 2}
@@ -292,9 +275,7 @@ def test_rupdate_assignment_then_patch_reuses_owned_containers(
 def test_rupdate_preserves_iterative_mapping_copy():
     source = UserDict({"a": UserDict({"b": 1})})
     target = {}
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(target, {"source": source})
-    copy_mock.assert_not_called()
+    rupdate(target, {"source": source})
     assert target == {"source": {"a": {"b": 1}}}
     assert target["source"] is not source
     assert target["source"]["a"] is not source["a"]
@@ -304,13 +285,11 @@ def test_rupdate_preserves_iterative_mapping_copy():
 def test_rupdate_missing_key_is_distinct_from_existing_none(copy_subcontainers):
     incoming = {"nested": {"value": 1}}
     target = {"present": None}
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(
-            target,
-            {"missing": incoming, "present": incoming},
-            copy_subcontainers=copy_subcontainers,
-        )
-    assert copy_mock.call_count == (1 if copy_subcontainers else 0)
+    rupdate(
+        target,
+        {"missing": incoming, "present": incoming},
+        copy_subcontainers=copy_subcontainers,
+    )
     assert target == {"missing": incoming, "present": incoming}
     present, missing = target["present"], target["missing"]
     assert present is not None
@@ -325,9 +304,7 @@ def test_rupdate_missing_key_is_distinct_from_existing_none(copy_subcontainers):
 @pytest.mark.parametrize("value", [{"value": 1}, [1]])
 def test_rupdate_empty_mapping_preserves_existing_container(copy_subcontainers, value):
     target = {"section": value}
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(target, {"section": {}}, copy_subcontainers=copy_subcontainers)
-    copy_mock.assert_not_called()
+    rupdate(target, {"section": {}}, copy_subcontainers=copy_subcontainers)
     assert target["section"] is value
 
 
@@ -349,10 +326,7 @@ def test_rupdate_nested_empty_patch_copies_only_the_ancestor():
     child = {"value": 1}
     section = {"child": child}
     target = {"section": section}
-    with patch("tollan.utils.dict.copy", wraps=copy) as copy_mock:
-        rupdate(target, {"section": {"child": {}}})
-    assert copy_mock.call_count == 1
-    assert copy_mock.call_args.args[0] is section
+    rupdate(target, {"section": {"child": {}}})
     assert target["section"] is not section
     assert target["section"]["child"] is child
 
@@ -514,16 +488,24 @@ def test_list_dsl_slice_syntax():
 
 
 @pytest.mark.parametrize(
-    "text", [":", "::", ":0", "1:3", "-3:-1", "::2", "::-1", "3:0:-2"]
+    ("text", "expected"),
+    [
+        (":", slice(None)),
+        ("::", slice(None)),
+        (":0", slice(None, 0)),
+        ("1:3", slice(1, 3)),
+        ("-3:-1", slice(-3, -1)),
+        ("::2", slice(None, None, 2)),
+        ("::-1", slice(None, None, -1)),
+        ("3:0:-2", slice(3, 0, -2)),
+    ],
 )
-def test_list_dsl_uses_slice_parser(text):
+def test_list_dsl_slice_bounds(text, expected):
     from tollan.utils.dict import ListDSL
-    from tollan.utils.slice import parse_slice
 
-    with patch("tollan.utils.dict.parse_slice", wraps=parse_slice) as parser:
-        dsl = ListDSL.parse(f"[{text}]")
-    parser.assert_called_once_with(text)
-    assert dsl == ListDSL(ListOperation.slice, slice_obj=parse_slice(text))
+    assert ListDSL.parse(f"[{text}]") == ListDSL(
+        ListOperation.slice, slice_obj=expected
+    )
 
 
 @pytest.mark.parametrize(
@@ -543,15 +525,6 @@ def test_list_dsl_preserves_unrecognized_syntax(key):
     from tollan.utils.dict import ListDSL
 
     assert ListDSL.parse(key) is None
-
-
-def test_list_dsl_empty_brackets_append_without_parsing_slice():
-    from tollan.utils.dict import ListDSL
-
-    with patch("tollan.utils.dict.parse_slice") as parser:
-        dsl = ListDSL.parse("[]")
-    parser.assert_not_called()
-    assert dsl == ListDSL(ListOperation.slice)
 
 
 def test_list_dsl_rejects_zero_step_before_assignment():

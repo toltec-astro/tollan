@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, ClassVar, cast
 
 import pytest
@@ -230,7 +229,7 @@ class TestMappedFields:
     """Test MappedField tracking."""
 
     def test_mapped_fields_property(self):
-        """mapped_fields exposes an immutable live view."""
+        """mapped_fields exposes read-only resolution records."""
         data = {"temp": 25.0}
 
         @dataclass
@@ -243,7 +242,6 @@ class TestMappedFields:
         mapper = TestMapper.from_data_source(data)
         mapped_fields = mapper.mapped_fields
 
-        assert isinstance(mapped_fields, MappingProxyType)
         assert len(mapped_fields) == 1
         assert mapper.schema.temp in mapped_fields
 
@@ -357,49 +355,6 @@ class TestFromDefaults:
         # get_name should return default name (first in mapping.names)
         assert mapper.get_name(mapper.schema.temp) == "temperature"
 
-    def test_from_defaults_schema_names_accessible(self):
-        """Schema default names are accessible via .names[0]."""
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = NameMapping(("temperature", "temp_c"))
-            pressure: Mapping = NameMapping("pressure")
-
-        class TestMapper(Mapper[TestSchema]):
-            pass
-
-        mapper = TestMapper.from_defaults()
-
-        # Can access default names from schema
-        assert mapper.schema.temp.names[0] == "temperature"
-        assert mapper.schema.pressure.names[0] == "pressure"
-
-    def test_from_defaults_simple_schema_use_case(self):
-        """from_defaults is useful for schemas without conditional logic."""
-
-        @dataclass
-        class SimpleCoordinateSchema(Schema):
-            """Simple schema for coordinate names - no conditional resolution."""
-
-            x_coord: Mapping = NameMapping("x")
-            y_coord: Mapping = NameMapping("y")
-            z_coord: Mapping = NameMapping("z")
-
-        class CoordMapper(Mapper[SimpleCoordinateSchema]):
-            pass
-
-        # Create mapper without data_source to access default names
-        mapper = CoordMapper.from_defaults()
-
-        # Use default names to create new coordinates
-        coord_names = {
-            "x": mapper.schema.x_coord.names[0],
-            "y": mapper.schema.y_coord.names[0],
-            "z": mapper.schema.z_coord.names[0],
-        }
-
-        assert coord_names == {"x": "x", "y": "y", "z": "z"}
-
 
 class TestContainsOperator:
     """Test __contains__ (in operator) for field membership checking."""
@@ -456,27 +411,6 @@ class TestContainsOperator:
 
         # Should return True because alternative name "temp_c" exists
         assert mapper.schema.temp in mapper
-
-    def test_contains_checks_mapped_fields(self):
-        """in operator checks mapped_fields source, not data_source."""
-        data = {"temp": 25.0}
-
-        @dataclass
-        class TestSchema(Schema):
-            temp: Mapping = NameMapping("temp")
-            computed: Mapping = NameMapping("computed_value")
-
-        class TestMapper(Mapper[TestSchema]):
-            def _has_var(self, data_source: dict[str, Any], name: str) -> bool:
-                return name in data_source
-
-        mapper = TestMapper.from_data_source(data)
-
-        # temp exists in data_source
-        assert mapper.schema.temp in mapper
-
-        # computed doesn't exist - should return False
-        assert mapper.schema.computed not in mapper
 
 
 class TestConditionalMapping:

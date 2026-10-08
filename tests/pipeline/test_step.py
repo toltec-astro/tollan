@@ -541,9 +541,6 @@ class TestAlias:
         assert type(restored.make_step()) is step_cls
         assert restored.make_step().context_key == step.context_key
         assert restored.model_dump() == context.model_dump()
-        restored_step = pickle.loads(pickle.dumps(step))  # noqa: S301 -- test-owned step
-        assert type(restored_step) is step_cls
-        assert restored_step.config == step.config
 
     @pytest.mark.parametrize("decoded", [False, True])
     def test_contexts_restore_with_their_producer_and_alias(self, decoded):

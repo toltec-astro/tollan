@@ -13,25 +13,6 @@ from tollan.config import ConfigHandler, RuntimeContext, SubConfigKeyTransformer
 class TestConfigHandlerAutoInference:
     """Test automatic config_model_cls inference."""
 
-    def test_basic_inference(self):
-        """Test config_model_cls is derived from its type-variable binding."""
-
-        class MyConfig(BaseModel):
-            x: int = 1
-            y: str = "test"
-
-        class MyHandler(ConfigHandler[MyConfig]):
-            @classmethod
-            def prepare_config_data(cls, runtime_config):
-                return {"x": 10, "y": "hello"}
-
-            @classmethod
-            def prepare_runtime_config_data(cls, config_data):
-                return config_data
-
-        # config_model_cls should be automatically set
-        assert MyHandler.config_model_cls == MyConfig
-
     def test_inference_with_usage(self):
         """Test inferred config_model_cls works in practice."""
 
@@ -49,6 +30,7 @@ class TestConfigHandlerAutoInference:
                 return config_data
 
         rc = RuntimeContext()
+        assert AppHandler.config_model_cls is AppConfig
         handler = AppHandler(rc)
         config = handler.config
 
@@ -274,23 +256,6 @@ class TestSubConfigKeyTransformerAutoInference:
 
 class TestCombinedAutoInference:
     """Test both automatic inferences working together."""
-
-    def test_zero_boilerplate_handler(self):
-        """Test handler with no manual definitions works completely."""
-
-        class ApiConfig(BaseModel):
-            endpoint: str
-            timeout: int = 30
-
-        class ApiHandler(
-            SubConfigKeyTransformer[Literal["api"]],
-            ConfigHandler[ApiConfig],
-        ):
-            pass  # No manual definitions at all!
-
-        # Both should be inferred
-        assert ApiHandler.config_model_cls == ApiConfig
-        assert ApiHandler.subconfig_key == "api"
 
     def test_full_workflow(self):
         """Test complete workflow with inferred types."""

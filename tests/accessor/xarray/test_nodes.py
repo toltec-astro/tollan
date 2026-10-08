@@ -60,8 +60,8 @@ def test_candidates_are_resolved_once_and_reads_use_supplied_source(tree):
     other = scope.copy(deep=False)
     assert mapper.get_node(other, schema.result) is other["spectrum"]
     assert mapper.get_node(other, schema.result) is not scope["spectrum"]
-    other["spectrum"].orphan()
-    other["analysis/spectrum"] = xr.DataTree()
+    # A different layout requires a separately resolved mapper.
+    other = xr.DataTree.from_dict({"analysis/spectrum": xr.Dataset()})
     assert not mapper.has_node(other, schema.result)
     with pytest.raises(KeyError):
         mapper.get_node(other, schema.result)

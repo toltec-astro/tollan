@@ -107,7 +107,7 @@ def test_inferred_location_stays_fixed_across_sources():
     assert mapped.value == 1
     assert not mapper.has_arr(source, mapping)
 
-    del source.attrs["version"]
+    source = xr.Dataset({"version": xr.DataArray(100)})
     assert not mapper.has_attr(source, mapping)
     with pytest.raises(KeyError, match="version"):
         mapper.get_value(source, mapping)

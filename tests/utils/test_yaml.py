@@ -43,15 +43,22 @@ class TestYamlDumper:
         loaded = yaml_loads(result)
         assert loaded == data
 
-    def test_astropy_time_scalar(self):
-        """Test serialization of scalar Time object."""
-        data = {"time": Time("2020-01-01T00:00:00")}
-        result = yaml_dump(data)
-        assert "2020-01-01T00:00:00" in result
-        # Parse back
-        loaded = yaml_loads(result)
+    @pytest.mark.parametrize("scale", ["utc", "tai"])
+    @pytest.mark.parametrize("precision", [0, 3, 9])
+    @pytest.mark.parametrize("subformat", ["date", "date_hms"])
+    def test_astropy_time_scalar(self, scale, precision, subformat):
+        """Preserve the instant independently of display settings and scale."""
+        value = Time("2020-01-01T00:00:00.123456789", scale=scale)
+        value.precision = precision
+        value.out_subfmt = subformat
+        original_jd = (value.jd1, value.jd2)
+        loaded = yaml_loads(yaml_dump({"time": value}))
         assert isinstance(loaded, dict)
-        assert loaded["time"] == "2020-01-01T00:00:00.000"
+        restored = Time(loaded["time"], format="isot", scale="utc")
+        assert (restored - value).to_value(u.s) == pytest.approx(0, abs=1e-9)
+        assert value.precision == precision
+        assert value.out_subfmt == subformat
+        assert (value.jd1, value.jd2) == original_jd
 
     def test_astropy_time_non_scalar_raises(self):
         """Test that non-scalar Time raises ValueError."""

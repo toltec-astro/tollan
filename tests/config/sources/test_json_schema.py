@@ -149,32 +149,6 @@ class TestJsonSchemaGeneration:
         assert "data" in validation_schema["properties"]
         assert "data" in serialization_schema["properties"]
 
-    def test_discriminated_union_in_schema(self):
-        """Discriminated union should be properly represented in schema."""
-        schema = ConfigSourceList.model_json_schema()
-
-        # Should have definitions for all source types
-        if "$defs" in schema:
-            defs = schema["$defs"]
-            # Check that source types are defined
-            assert any(
-                "YamlConfigSource" in key or "yaml" in key.lower() for key in defs
-            )
-
-    def test_schema_has_descriptions(self):
-        """Schemas should include field descriptions."""
-        schema = ConfigSourceList.model_json_schema()
-        props = schema["properties"]
-
-        # data field should have description
-        assert "data" in props
-        # Either from Field or WithJsonSchema
-        assert (
-            "description" in props["data"]
-            or "title" in props["data"]
-            or props["data"]["type"] == "array"
-        )
-
     @pytest.mark.parametrize(
         ("model_class", "format_value"),
         [
@@ -192,24 +166,6 @@ class TestJsonSchemaGeneration:
         assert "format" in props
         # Literal types are represented as const in JSON Schema
         assert props["format"]["const"] == format_value
-
-    def test_recursive_reference_handling(self):
-        """Recursive references should not cause schema generation to fail."""
-        # ListConfigSource has recursive reference: source -> ConfigSourceList
-        # ConfigSourceList has discriminated union containing ListConfigSource
-        # This creates a cycle that our WithJsonSchema handles
-
-        # Should not raise exception
-        list_schema = ListConfigSource.model_json_schema()
-        csl_schema = ConfigSourceList.model_json_schema()
-
-        # Both should have valid schemas
-        assert list_schema["type"] == "object"
-        assert csl_schema["type"] == "object"
-
-        # Our WithJsonSchema overrides prevent infinite recursion
-        assert "source" in list_schema["properties"]
-        assert "data" in csl_schema["properties"]
 
     def test_schema_with_actual_instances(self):
         """Schemas should work with actual model instances."""

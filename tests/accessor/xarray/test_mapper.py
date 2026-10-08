@@ -823,3 +823,23 @@ class TestXarraySourceContract:
         mapper = SourceMapper.from_data_source(source)
         with pytest.raises(ValueError, match="not a scalar"):
             mapper.get_scalar(source, mapper.schema.signal)
+
+
+@pytest.mark.parametrize("layout", ["same", "subset", "extension"])
+def test_batch_mapper_reads_compatible_sources(layout):
+    reference = xr.Dataset(
+        {"signal": ("sample", [1.0, 2.0]), "unused": 9}, attrs={"meta": "first"}
+    )
+    mapper = SourceMapper.from_data_source(reference)
+    other = xr.Dataset(
+        {"signal": ("sample", [3.0, 4.0]), "unused": 10}, attrs={"meta": "second"}
+    )
+    if layout == "subset":
+        other = other.drop_vars("unused")
+        other.attrs.clear()
+    elif layout == "extension":
+        other["extra"] = 11
+    field = mapper.schema.signal
+    xr.testing.assert_identical(mapper.get_arr(other, field), other["signal"])
+    assert mapper.get_arr(other, field).data is other["signal"].data
+    xr.testing.assert_identical(mapper.get_arr(reference, field), reference["signal"])

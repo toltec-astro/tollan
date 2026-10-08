@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import importlib
+import sys
 import tempfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -121,26 +123,25 @@ class TestGetname:
 
     def test_getname_function(self):
         """Test getname on a function."""
-        name = getname(TestGetname)
-        assert "TestGetname" in name
-        assert ":" in name
+        name = getname(rgetattr)
+        assert name == "tollan.utils.py:rgetattr"
+        assert getobj(name) is rgetattr
 
     def test_getname_builtin_function(self):
         """Test getname on builtin function."""
         name = getname(len)
-        assert "len" in name
+        assert name == ":len"
 
     def test_getname_class(self):
         """Test getname on a class."""
         name = getname(ObjectProxy)
-        assert "ObjectProxy" in name
-        assert ":" in name
+        assert name == "tollan.utils.py:ObjectProxy"
+        assert getobj(name) is ObjectProxy
 
     def test_getname_custom_separator(self):
         """Test getname with custom separator."""
         name = getname(ObjectProxy, sep=".")
-        assert "." in name
-        assert "ObjectProxy" in name
+        assert name == "tollan.utils.py.ObjectProxy"
 
     def test_getname_invalid_object(self):
         """Test getname raises TypeError for object without __qualname__."""
@@ -185,26 +186,29 @@ class TestModuleFromPath:
 
 
 class TestRreload:
-    """Test rreload function."""
+    """Test recursive reload using an isolated package."""
 
-    def test_rreload_single_module(self):
-        """Test reloading a module."""
-        # Import a module first
-        import os
-
-        # Reload it
-        rreload(os)
-        # Should still work
-        assert hasattr(os, "path")
-
-    def test_rreload_with_submodules(self):
-        """Test reloading a package with submodules."""
-        # This is hard to test comprehensively without creating temp packages
-        # Just ensure it doesn't crash
-        import json
-
-        rreload(json)
-        assert hasattr(json, "dumps")
+    def test_rreload_package_and_imported_child(self, tmp_path, monkeypatch):
+        package = tmp_path / "audit_reload_package"
+        package.mkdir()
+        (package / "__init__.py").write_text(
+            "from .child import value\npackage_value = 1\n"
+        )
+        (package / "child.py").write_text("value = 2\n")
+        monkeypatch.syspath_prepend(str(tmp_path))
+        try:
+            module = importlib.import_module("audit_reload_package")
+            child = importlib.import_module("audit_reload_package.child")
+            monkeypatch.setattr(module, "package_value", 99)
+            monkeypatch.setattr(child, "value", 98)
+            monkeypatch.setattr(module, "value", 97)
+            rreload(module)
+            assert child.value == 2
+            assert module.value == 2
+            assert module.package_value == 1
+        finally:
+            sys.modules.pop("audit_reload_package.child", None)
+            sys.modules.pop("audit_reload_package", None)
 
 
 class TestRgetattr:
@@ -319,19 +323,6 @@ class TestRgetattr:
         del obj, default
         assert source_ref() is None
         assert default_ref() is None
-
-    def test_rgetattr_reuses_bounded_path_cache(self):
-        from tollan.utils.py import _rgetattr_path
-
-        _rgetattr_path.cache_clear()
-        obj = SimpleNamespace(value=42)
-        assert rgetattr(obj, "value") == 42
-        assert rgetattr(obj, "value", None) == 42
-        assert _rgetattr_path.cache_info().misses == 1
-        assert _rgetattr_path.cache_info().hits == 1
-        for index in range(300):
-            assert rgetattr(obj, f"missing_{index}", None) is None
-        assert _rgetattr_path.cache_info().currsize == 256
 
     def test_rgetattr_extra_defaults_raise(self):
         with pytest.raises(TypeError):

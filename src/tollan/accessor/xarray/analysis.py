@@ -4,9 +4,9 @@ An analysis stores its output Datasets beneath a namespace. The namespace
 attributes hold the configuration that produced those outputs. A result view
 provides access to the outputs and the saved configuration.
 
-The parent node is the analysis *scope*. A scope can contain attributes and
-children, but must have no variables, coordinates, or dimensions, including
-inherited ones. Output Datasets occupy separate descendants of the analysis
+The parent node is the analysis *scope*. A scope can contain scalar data variables,
+attributes, and children, but must have no local or inherited coordinates or
+dimensions. Output Datasets occupy separate descendants of the analysis
 namespace, so each can use its own coordinates.
 
 Examples
@@ -176,10 +176,8 @@ _INPUT_SUBPATH = "_input"
 
 
 def _namespace_is_scope(namespace: xr.DataTree) -> bool:
-    """Return whether a node has no local payload or inherited constraints."""
-    return (
-        not namespace.sizes and not namespace.to_dataset(inherit="all_coords").variables
-    )
+    """Return whether a node has no local or inherited dimensions or coordinates."""
+    return not namespace.sizes and not namespace.to_dataset(inherit="all_coords").coords
 
 
 def _validate_namespace_in_scope(
@@ -203,7 +201,7 @@ def _validate_namespace_in_scope(
     Raises
     ------
     ValueError
-        The destination would have variables, coordinates, or dimensions.
+        The replacement would inherit coordinates or dimensions from an ancestor.
     TypeError
         The path identifies or traverses a variable.
     """
@@ -216,30 +214,31 @@ def _validate_namespace_in_scope(
         msg = "A namespace path must traverse DataTree nodes, not variables"
         raise TypeError(msg) from error
 
-    target = existing
-    if target is None:
-        candidate = xr.DataTree()
-        branch = candidate
-        source = scope
-        for part in namespace.split("/"):
-            if part not in source.children:
-                break
-            source = source.children[part]
-            branch[part] = xr.DataTree(dataset=source.to_dataset(inherit=False))
-            branch = branch[part]
-        candidate[namespace] = xr.DataTree()
-        target = candidate[namespace]
-
-    if not isinstance(target, xr.DataTree):
+    if existing is not None and not isinstance(existing, xr.DataTree):
         msg = "The analysis namespace must identify a DataTree node"
         raise TypeError(msg)
+
+    # Validate the replacement's ancestors, not the contents being replaced.
+    candidate = xr.DataTree()
+    branch = candidate
+    source = scope
+    for part in namespace.split("/")[:-1]:
+        if part not in source.children:
+            break
+        source = source.children[part]
+        branch[part] = xr.DataTree(dataset=source.to_dataset(inherit=False))
+        branch = branch[part]
+    candidate[namespace] = xr.DataTree()
+    target = candidate[namespace]
+    assert isinstance(target, xr.DataTree)
+
     if not _namespace_is_scope(target):
         msg = (
             f"Namespace {target.path!r} is not an analysis scope: "
-            "it has variables, coordinates, or dimensions"
+            "it has coordinates or dimensions"
         )
         raise ValueError(msg)
-    return target if existing is not None else None
+    return existing
 
 
 def ensure_analysis_scope(
@@ -273,7 +272,7 @@ def ensure_analysis_scope(
     KeyError
         The selected path does not exist.
     ValueError
-        The selected scope has variables, coordinates, or dimensions, including
+        The selected scope has coordinates or dimensions, including
         inherited coordinates and dimensions.
     """
     if isinstance(data, xr.DataTree):
@@ -284,7 +283,7 @@ def ensure_analysis_scope(
         if not _namespace_is_scope(scope):
             msg = (
                 f"Namespace {scope.path!r} is not an analysis scope: "
-                "it has variables, coordinates, or dimensions"
+                "it has coordinates or dimensions"
             )
             raise ValueError(msg)
         return scope
@@ -398,7 +397,7 @@ class AnalysisInputView[MapperT: AnalysisInputMapper = AnalysisInputMapper](
     TypeError
         The source is not a DataTree.
     ValueError
-        The scope has variables, coordinates, or dimensions, including inherited
+        The scope has coordinates or dimensions, including inherited
         coordinates and dimensions.
     KeyError
         The mapped input subtree does not exist.
@@ -496,7 +495,7 @@ def prepare_analysis_input_view(
         The input type is unsupported, a path is supplied for a DataArray or
         Dataset, or the path identifies a variable.
     ValueError
-        The selected scope has variables, coordinates, or dimensions, including
+        The selected scope has coordinates or dimensions, including
         inherited coordinates and dimensions.
     KeyError
         The selected scope or mapped input subtree does not exist.
@@ -780,8 +779,8 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
         Parameters
         ----------
         scope : xarray.DataTree
-            Output scope with no variables, coordinates, or dimensions, including
-            inherited ones. Attributes and children are allowed.
+            Output scope with no coordinates or dimensions, including
+            inherited ones. Scalar data variables, attributes, and children are allowed.
         mapper : AnalysisMapper
             Mapper identifying the namespace, output paths, and configuration attribute.
         compute : callable
@@ -868,9 +867,9 @@ class AnalysisView[MapperT: AnalysisMapper, AnalysisT: Analysis](
     analysis namespace; ``_data_source`` retains the supplied tree. A property
     such as ``mean_analysis`` can return the typed ``_analysis_snapshot``.
 
-    The view retains its namespace and configuration after a later analysis
-    replaces them. Construct a new view to read the new results. Subclasses that
-    override ``_validate`` must call ``super()._validate()`` first.
+    Treat the bound source as read-only for the view's lifetime. After replacing
+    results, construct a new view. Subclasses that override ``_validate`` must
+    call ``super()._validate()`` first.
     """
 
     _analysis_cls: ClassVar

@@ -90,3 +90,14 @@ def test_check_mixed_config_paths(tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     assert seen[0]["workers"] == 4
     assert seen[0]["_env"] == {"HOST": "example.com", "PORT": 9000}
+
+
+def test_check_reports_runtime_failure(monkeypatch):
+    def fail(*args, **kwargs):
+        msg = "Configuration source unavailable"
+        raise RuntimeError(msg)
+
+    monkeypatch.setattr(RuntimeContext, "from_cli_ctx", fail)
+    result = CliRunner().invoke(app, ["check"])
+    assert result.exit_code == 1
+    assert "Error: Configuration source unavailable" in result.output

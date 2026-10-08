@@ -38,7 +38,7 @@ _PATH_BASE_TYPES: dict[PathType | None, Any] = {
 }
 
 
-def _prepare_path(value: Any, info: ValidationInfo) -> Path | str:
+def _prepare_path(value: Any, info: ValidationInfo, *, resolve: bool) -> Path | str:
     """Apply an optional validation-context root before Path validation."""
     if not isinstance(value, str | Path):
         error = PydanticCustomError(
@@ -58,6 +58,8 @@ def _prepare_path(value: Any, info: ValidationInfo) -> Path | str:
                 "Validation context rootpath should be a string or Path object",
             )
             raise error from e
+    if resolve:
+        result = result.expanduser().resolve()
     return str(result) if info.mode == "json" else result
 
 
@@ -65,11 +67,8 @@ def _validate_path(
     path: Path,
     *,
     exists: bool,
-    resolve: bool,
 ) -> Path:
     """Apply the constraints not already supplied by Pydantic path types."""
-    if resolve:
-        path = path.expanduser().resolve()
     if exists and not path.exists():
         error = PydanticCustomError("path_not_found", "Path does not exist")
         raise error
@@ -83,12 +82,14 @@ def _path_metadata(
     resolve: bool,
 ) -> tuple[Any, ...]:
     return (
-        BeforeValidator(_prepare_path, json_schema_input_type=_PATH_JSON_INPUT),
+        BeforeValidator(
+            partial(_prepare_path, resolve=resolve),
+            json_schema_input_type=_PATH_JSON_INPUT,
+        ),
         AfterValidator(
             partial(
                 _validate_path,
                 exists=exists,
-                resolve=resolve,
             )
         ),
     )

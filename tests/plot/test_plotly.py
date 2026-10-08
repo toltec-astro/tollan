@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 import plotly.graph_objects as go
 import pytest
+from dash import dcc
 
 from tollan.plot.plotly import (
     ColorPalette,
@@ -434,19 +435,23 @@ class TestColorPalette:
         scaled = palette.get_scaled(0.5)
 
         assert len(scaled) == len(original)
-        # Colors should be lighter (closer to white)
-        assert all(c.startswith("#") for c in scaled)
+        assert scaled != original
+        for before, after in zip(original, scaled, strict=True):
+            for start in (1, 3, 5):
+                assert (
+                    int(before[start : start + 2], 16)
+                    <= int(after[start : start + 2], 16)
+                    <= 255
+                )
 
-    def test_get_scaled_caching(self):
-        """Test that get_scaled results are cached at function level."""
+    def test_get_scaled_is_repeatable_across_instances(self):
+        """Equivalent palette requests produce the same colors."""
         palette = ColorPalette()
 
         result1 = palette.get_scaled(0.5)
         result2 = palette.get_scaled(0.5)
 
-        # Results should be equal (cached function returns same values)
         assert result1 == result2
-        # Verify multiple palettes with same name share cache
         palette2 = ColorPalette()
         result3 = palette2.get_scaled(0.5)
         assert result1 == result3
@@ -545,8 +550,8 @@ class TestShowInDash:
         fig = go.Figure(data=[go.Scatter(x=[1, 2], y=[3, 4])])
         content = ShowInDash._make_content(fig)
 
-        # Should return dcc.Graph
-        assert hasattr(content, "figure")
+        assert isinstance(content, dcc.Graph)
+        assert content.to_plotly_json()["props"]["figure"] == fig
 
     def test_make_content_with_dict_figure(self):
         """Test _make_content with figure-like dict."""
@@ -558,8 +563,8 @@ class TestShowInDash:
         }
         content = ShowInDash._make_content(fig_dict)
 
-        # Should return dcc.Graph
-        assert hasattr(content, "figure")
+        assert isinstance(content, dcc.Graph)
+        assert content.to_plotly_json()["props"]["figure"] == fig_dict
 
     def test_make_content_with_other_data(self):
         """Test _make_content with non-figure data."""
@@ -568,8 +573,10 @@ class TestShowInDash:
         data = {"key": "value", "number": 42}
         content = ShowInDash._make_content(data)
 
-        # Should return html.Pre with formatted YAML
-        assert hasattr(content, "children")
+        from tollan.utils.yaml import yaml_loads
+
+        assert isinstance(content.children, str)
+        assert yaml_loads(content.children) == data
 
     def test_layout_with_multiple_tabs(self):
         """Test layout with multiple data items."""
@@ -635,6 +642,8 @@ class TestIntegration:
         )
 
         assert len(fig.data) == 2  # pyright: ignore[reportArgumentType]
+        assert fig.data[0].line.color == palette.colors[0]
+        assert fig.data[1].line.color == palette.colors[1]
 
     def test_empty_figure_in_subplot_grid(self):
         """Test using empty figures as placeholders in grid."""

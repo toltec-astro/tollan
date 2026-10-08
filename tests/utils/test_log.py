@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import time
 from io import StringIO
+from types import SimpleNamespace
 
 import pytest
 
@@ -89,7 +89,7 @@ class TestTimeit:
     def test_context_manager(self, caplog):
         """Test timeit as context manager."""
         with caplog.at_level("DEBUG"), timeit("test operation"):
-            time.sleep(0.01)
+            pass
 
         assert "test operation ..." in caplog.text
         assert "test operation done in" in caplog.text
@@ -102,7 +102,6 @@ class TestTimeit:
 
             @timeit
             def slow_function():
-                time.sleep(0.01)
                 return 42
 
             result = slow_function()
@@ -117,36 +116,42 @@ class TestTimeit:
 
             @timeit("Processing data")
             def process():
-                time.sleep(0.01)
+                pass
 
             process()
 
         assert "Processing data ..." in caplog.text
         assert "Processing data done in" in caplog.text
 
-    def test_time_formatting(self):
-        """Test time formatting function."""
-        # Access the private _format_time method from timeit class
-        format_func = timeit._format_time
+    @pytest.mark.parametrize(
+        ("elapsed", "expected"), [(0.01, "10ms"), (1.5, "1500ms"), (3700, "1h 1m")]
+    )
+    def test_elapsed_time_in_context_log(self, elapsed, expected, caplog, monkeypatch):
+        """Report the measured interval through the public context manager."""
+        from tollan.utils import log as log_utils
 
-        # Test milliseconds (short duration)
-        result = format_func(0.001)
-        assert "ms" in result or "1ms" in result
-
-        # Test milliseconds for longer duration
-        result = format_func(0.01)
-        assert "ms" in result or "10ms" in result
-
-        # Test transition to human_time (>15ms uses astropy.utils.human_time)
-        result = format_func(1.5)
-        assert "s" in result.lower() or "sec" in result.lower()
-
-        # Test hours (astropy.utils.human_time formats this)
-        result = format_func(3700)
-        # human_time will format this as hours
-        assert (
-            "hr" in result.lower() or "hour" in result.lower() or "h" in result.lower()
+        readings = iter([100.0, 100.0 + elapsed])
+        monkeypatch.setattr(
+            log_utils, "time", SimpleNamespace(time=lambda: next(readings))
         )
+        with caplog.at_level("DEBUG"), timeit("operation"):
+            pass
+        assert f"operation done in {expected}" in caplog.text
+
+    @pytest.mark.parametrize("wrapper", [logit, timeit])
+    def test_decorator_propagates_exceptions(self, wrapper, caplog):
+        """Logging must preserve failures from application work."""
+        error = ValueError("operation failed")
+        decorator = logit(logger.info, "operation") if wrapper is logit else timeit
+
+        @decorator
+        def operation():
+            raise error
+
+        with caplog.at_level("DEBUG"), pytest.raises(ValueError) as caught:
+            operation()
+        assert caught.value is error
+        assert "operation ..." in caplog.text
 
 
 class TestLogger:

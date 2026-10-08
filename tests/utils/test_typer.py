@@ -356,7 +356,9 @@ class TestCreateCli:
         """Test creating app with custom version."""
         app = create_cli(version="1.2.3")
 
-        assert isinstance(app, typer.Typer)
+        result = CliRunner().invoke(app, ["version"])
+        assert result.exit_code == 0, result.output
+        assert "1.2.3" in result.stdout
 
     def test_command_execution(self):
         """Test that commands execute correctly."""
@@ -459,9 +461,9 @@ class TestCreateCli:
 
         # Version command is automatically added
         assert "version" in result.stdout.lower()
-        # Custom commands should be listed (typer converts underscores to hyphens)
-        assert "cmd1" in result.stdout or "cmd-1" in result.stdout
-        assert "cmd2" in result.stdout or "cmd-2" in result.stdout
+        assert result.exit_code == 0, result.output
+        assert "cmd1" in result.stdout
+        assert "cmd2" in result.stdout
 
     def test_help_all_option(self):
         """Test --help_all option shows detailed help for all commands."""

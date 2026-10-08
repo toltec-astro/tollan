@@ -23,6 +23,7 @@ class FrozenBaseModel(BaseModel):
     """Base model class with immutability and YAML support.
 
     Provides common configuration for astronomy data models:
+
     - Frozen by default
     - Strict type validation
     - YAML loading/dumping support

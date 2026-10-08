@@ -170,7 +170,10 @@ class StepContext[StepT: "Step", ConfigT: "StepConfig"](BaseModel):
     before each run. Subclasses can publish typed results through ``data``;
     fields need defaults so the context can exist before results are available.
     A payload can contain views of products in the working container and other
-    objects needed by downstream steps.
+    objects needed by downstream steps. A context can be pickled for inspection
+    and further diagnostics in another process. Its classes must be importable
+    there, and its payload must support pickle with any required resources
+    available to the receiving process.
 
     Parameters
     ----------

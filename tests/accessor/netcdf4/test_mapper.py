@@ -52,11 +52,17 @@ class TestNetCDF4Mapper:
         class TestMapper(NetCDF4Mapper[TestSchema]):
             pass
 
-        with nc.Dataset(temp_netcdf, "r+") as ds:
+        with nc.Dataset(temp_netcdf) as ds:
             mapper = TestMapper.from_data_source(ds)
-            ds.delncattr("close")
-            with pytest.raises(AttributeError):
-                mapper.get_value(ds, mapper.schema.field)
+
+        incompatible_path = temp_netcdf.parent / "incompatible.nc"
+        with nc.Dataset(incompatible_path, "w") as ds:
+            ds.createVariable("close", "i4").assignValue(1)
+        with (
+            nc.Dataset(incompatible_path) as incompatible,
+            pytest.raises(AttributeError),
+        ):
+            mapper.get_value(incompatible, mapper.schema.field)
 
     @pytest.fixture
     def temp_netcdf(self, tmp_path):

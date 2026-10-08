@@ -66,6 +66,63 @@ sample = NameMapping.var("sample")  # Coordinate values
 n_samples = NameMapping.dim("sample")  # Dimension length
 ```
 
+## Reading data
+
+Read methods always receive the source explicitly:
+
+```{testcode}
+import xarray as xr
+from tollan.accessor.xarray import XarrayMapper
+
+
+class ObservationMapper(XarrayMapper[ObservationSchema]):
+    pass
+
+
+reference_source = xr.Dataset({
+    "Data.Signal": ("sample", [1.0, 2.0]),
+    "timestamp": ("sample", [0.0, 1.0]),
+})
+mapper = ObservationMapper.from_data_source(reference_source)
+source = reference_source.copy(deep=True)
+source["Data.Signal"] = source["Data.Signal"] * 2
+signal = mapper.get_var(source, mapper.schema.signal)
+timestamp = mapper.get_var(source, mapper.schema.timestamp)
+assert signal.values.tolist() == [2.0, 4.0]
+assert timestamp.values.tolist() == [0.0, 1.0]
+```
+
+Reuse a mapper with sources that have the same field names and locations.
+Reads use the recorded mapping without trying candidates again. If
+that field disappears from a later source, a same-named entity of another kind
+does not replace it. Resolve a new mapper to select different data locations.
+
+The main lookup and read contracts are:
+
+- `mapping in mapper` reports whether the field was present in the reference
+  source used to build the plan;
+- `get_name(mapping)` returns the resolved physical name, or `None` when the
+  mapping is not part of the plan;
+- `get_value(source, mapping)` reads the field at its recorded source location,
+  without substituting a fallback;
+- `get_value_or_default(source, mapping)` reads the source field when present,
+  otherwise returns `value_default`. It raises `KeyError` if neither is available
+  or the mapping is unrelated, and propagates source read errors;
+- `get_var()` returns the native variable without loading its values;
+- `get_scalar()` and `get_str()` read scalar and text fields according to the
+  source's supported representations. See the [read-method table](data-adapters.md#choose-a-read-method)
+  for return values and loading behavior.
+
+A value captured by `resolve_value=True` remains resolution metadata in the
+`MappedField`; it does not replace a later read from the explicitly supplied
+source.
+Defaults remain available even if the reference source has the field. See
+[optional-field fallbacks](data-adapters.md#supply-a-fallback-for-an-optional-field)
+for an example and handling of fields with no resolved location.
+
+
+## Mapping options
+
 ### Subtree paths
 
 Use path mappings to identify subtrees by a consistent schema field name.
@@ -199,6 +256,11 @@ when a name is shared by an attribute and variable, or a coordinate and dimensio
 
 ## Mapper resolution
 
+Files produced in a batch often share a layout. Resolve a mapper from one file
+and reuse it with other compatible sources. Compatibility concerns the fields
+used by an operation: extra fields or missing unused fields do not require a new
+mapper. Reads use the values of the source passed to that call.
+
 `Mapper.from_data_source(source)` resolves schema fields in declaration order.
 For each field, it calls the field's `Mapping.resolve(context)` method and uses
 the returned `NameMapping` to probe the source.
@@ -280,55 +342,23 @@ retains the concrete plan. Ordinary resolution does not retain the data source;
 explicitly capturing a node with `resolve_value=True` retains that native subtree
 and its parent relationship, without loading any arrays.
 
-## Reading data
+## Accessors and views
 
-Read methods always receive the source explicitly:
+An accessor combines a source and mapper into a domain API. Treat the bound
+source as read-only while using the view. Select data from that source or its
+descendants; pass a different source when another scope is needed. Cache
+subviews when repeated access should return the same view.
 
-```{testcode}
-class ObservationMapper(XarrayMapper[ObservationSchema]):
-    pass
+After changing a source, construct new views for the affected data. Views do not
+detect changes or refresh themselves. See the
+[accessor example](data-adapters.md#add-convenient-xarray-properties).
 
 
-reference_source = xr.Dataset({
-    "Data.Signal": ("sample", [1.0, 2.0]),
-    "timestamp": ("sample", [0.0, 1.0]),
-})
-mapper = ObservationMapper.from_data_source(reference_source)
-source = reference_source.copy(deep=True)
-source["Data.Signal"] = source["Data.Signal"] * 2
-signal = mapper.get_var(source, mapper.schema.signal)
-timestamp = mapper.get_var(source, mapper.schema.timestamp)
-assert signal.values.tolist() == [2.0, 4.0]
-assert timestamp.values.tolist() == [0.0, 1.0]
-```
+## Lazy data and resource ownership
 
-Reuse a mapper with sources that have the same field names and locations.
-Reads use the recorded mapping without trying candidates again. If
-that field disappears from a later source, a same-named entity of another kind
-does not replace it. Resolve a new mapper to select different data locations.
-
-The main lookup and read contracts are:
-
-- `mapping in mapper` reports whether the field was present in the reference
-  source used to build the plan;
-- `get_name(mapping)` returns the resolved physical name, or `None` when the
-  mapping is not part of the plan;
-- `get_value(source, mapping)` reads the field at its recorded source location,
-  without substituting a fallback;
-- `get_value_or_default(source, mapping)` reads the source field when present,
-  otherwise returns `value_default`. It raises `KeyError` if neither is available
-  or the mapping is unrelated, and propagates source read errors;
-- `get_var()` returns the native variable without loading its values;
-- `get_scalar()` and `get_str()` read scalar and text fields according to the
-  source's supported representations. See the [read-method table](data-adapters.md#choose-a-read-method)
-  for return values and loading behavior.
-
-A value captured by `resolve_value=True` remains resolution metadata in the
-`MappedField`; it does not replace a later read from the explicitly supplied
-source.
-Defaults remain available even if the reference source has the field. See
-[optional-field fallbacks](data-adapters.md#supply-a-fallback-for-an-optional-field)
-for an example and handling of fields with no resolved location.
+Select the needed fields before evaluating their values. Mapping and view
+construction should not load arrays that the operation does not need. Keep
+borrowed resources usable while their views are in use.
 
 ## Writing a mapper for another source type
 

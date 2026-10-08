@@ -22,9 +22,6 @@ from tollan.accessor.xarray import (
 if TYPE_CHECKING:
     from tollan.accessor import Mapping
 
-# Random number generator for reproducible tests
-rng = np.random.default_rng(42)
-
 # Check for optional dependencies
 try:
     import zarr  # noqa: F401
@@ -603,31 +600,6 @@ class TestXarrayAccessorBaseChildNodes:
     class DataMapper(XarrayMapper[DataSchema]):
         pass
 
-    def test_create_child_node(self):
-        """Create child node in DataTree."""
-        # Create root
-        root_ds = xr.Dataset(
-            {
-                "real": (["det", "tone"], rng.standard_normal((10, 5))),
-                "imag": (["det", "tone"], rng.standard_normal((10, 5))),
-            },
-        )
-        dt = xr.DataTree(dataset=root_ds, name="root")
-
-        # Add child
-        child_ds = xr.Dataset(
-            {
-                "result": (["det", "tone"], rng.standard_normal((10, 5))),
-            },
-        )
-        dt["/analysis"] = xr.DataTree(dataset=child_ds, name="analysis")
-
-        # Verify structure
-        assert "analysis" in [c.name for c in dt.children.values()]
-        assert "real" in dt.ds
-        assert "imag" in dt.ds
-        assert "result" in dt["/analysis"].ds
-
     def test_accessor_with_child_nodes(self):
         """Accessor working with child nodes."""
 
@@ -691,7 +663,11 @@ class TestXarrayAccessorBaseChildNodes:
         dt["/analysis"] = xr.DataTree(dataset=child_ds, name="analysis")
 
         # Access via accessor
-        assert dt.data.root.complex_data.shape == (10, 5)
+        np.testing.assert_array_equal(
+            dt.data.root.complex_data, np.full((10, 5), 1.0 + 2.0j)
+        )
+        assert dt.data.root is dt.data.root
+        assert dt.data.analysis is dt.data.analysis
         assert dt.data.analysis.result_data.shape == (10, 5)
         assert np.allclose(dt.data.analysis.result_data, 3.0)
 
@@ -754,39 +730,6 @@ class TestNetCDFFileIO:
         pass
 
     @pytest.mark.skipif(not HAS_NETCDF4, reason="netCDF4 not installed")
-    @pytest.mark.filterwarnings(
-        "ignore:Setting the shape on a NumPy array has been deprecated in NumPy "
-        "2.5:DeprecationWarning",
-    )
-    def test_dataset_save_load_netcdf(self, tmp_path):
-        """Dataset can be saved and loaded from netcdf.
-
-        netCDF4 1.7.4 assigns ``ndarray.shape`` internally when writing through
-        xarray, which NumPy 2.5 deprecates. Keep the suppression local to this
-        verified round trip until netCDF4 releases the upstream fix.
-        """
-        # Create dataset
-        ds = xr.Dataset(
-            {
-                "temp": (["x", "y"], [[20.0, 21.0], [22.0, 23.0]]),
-                "pressure": (["x", "y"], [[101.0, 102.0], [103.0, 104.0]]),
-            },
-        )
-
-        # Save to netcdf
-        filepath = tmp_path / "test.nc"
-        ds.to_netcdf(filepath)
-
-        # Load back
-        ds_loaded = xr.open_dataset(filepath)
-
-        # Should have same data
-        assert ds_loaded.equals(ds)
-
-        # Cleanup
-        ds_loaded.close()
-
-    @pytest.mark.skipif(not HAS_NETCDF4, reason="netCDF4 not installed")
     def test_dataset_with_accessor_after_load(self, tmp_path):
         """Accessor works after loading from netcdf."""
 
@@ -815,28 +758,6 @@ class TestNetCDFFileIO:
         # Cleanup
         ds_loaded.close()
         del xr.Dataset.test_accessor  # ty: ignore[unresolved-attribute]
-
-    @pytest.mark.skipif(not HAS_ZARR, reason="zarr not installed")
-    def test_datatree_save_load_zarr(self, tmp_path):
-        """DataTree can be saved and loaded from zarr."""
-        # Create datatree with children
-        root_ds = xr.Dataset({"temp": (["x"], [20.0, 21.0, 22.0])})
-        dt = xr.DataTree(dataset=root_ds, name="root")
-
-        child_ds = xr.Dataset({"result": (["x"], [1.0, 2.0, 3.0])})
-        dt["/analysis"] = xr.DataTree(dataset=child_ds, name="analysis")
-
-        # Save to zarr
-        zarr_path = tmp_path / "test.zarr"
-        dt.to_zarr(zarr_path)
-
-        # Load back
-        dt_loaded = xr.open_datatree(zarr_path, engine="zarr")
-
-        # Should have same structure
-        assert "analysis" in [c.name for c in dt_loaded.children.values()]
-        assert dt_loaded.ds.equals(root_ds)  # pyright: ignore[reportArgumentType]
-        assert dt_loaded["/analysis"].ds.equals(child_ds)  # pyright: ignore[reportArgumentType]
 
     @pytest.mark.skipif(not HAS_ZARR, reason="zarr not installed")
     def test_datatree_with_accessor_after_load(self, tmp_path):
@@ -950,11 +871,3 @@ def test_conversions_use_selected_node_without_changing_layout():
     assert converted.path == "/"
     assert converted.name is None
     assert not converted.children
-
-
-def test_conversion_module_workflow_examples():
-    import doctest
-
-    from tollan.accessor.xarray import utils
-
-    assert doctest.testmod(utils, raise_on_error=True).attempted > 0

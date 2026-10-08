@@ -156,6 +156,12 @@ _REFERENCE_URLS.update(
 
 
 class _ModelFieldDocumenter(PydanticFieldDocumenter):
+    def update_annotations(self, parent):
+        # Sphinx 9 copies inherited, source-only Pydantic annotations onto the
+        # live model. Later subclasses then fail to resolve names such as Dict.
+        # FieldInfo below already supplies the resolved field annotation.
+        pass
+
     # Pydantic has already resolved forward references and Annotated metadata.
     # The upstream documenter instead retries the raw module annotations, which
     # may include TYPE_CHECKING-only names. Keep its defaults/validators/schema.

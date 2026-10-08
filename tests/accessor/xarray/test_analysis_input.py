@@ -58,8 +58,13 @@ def test_existing_scope_selects_declared_input_without_restructuring(path):
     source = xr.Dataset({"signal": ("time", da.arange(12, chunks=4))})
     tree = xr.DataTree.from_dict(
         {
+            "measurement": xr.Dataset({"run_number": 42}),
             f"measurement/{path}": source,
             f"measurement/{path}/calibration": xr.Dataset({"gain": 2.0}),
+            "measurement/other_analysis": xr.Dataset(
+                {"power": ("frequency", [3.0, 4.0])},
+                coords={"frequency": [10.0, 20.0]},
+            ),
         }
     )
     before = tree.copy(deep=False)
@@ -71,6 +76,8 @@ def test_existing_scope_selects_declared_input_without_restructuring(path):
     assert view.data_source is tree[f"measurement/{path}"]
     assert view.data_source["calibration"] is tree[f"measurement/{path}/calibration"]
     assert view.unwrap() is tree["measurement"]
+    assert tree["measurement/run_number"].item() == 42
+    assert set(tree["measurement"].children) == {path, "other_analysis"}
     xr.testing.assert_identical(view.data_source.to_dataset(), source)
     xr.testing.assert_identical(tree, before)
 

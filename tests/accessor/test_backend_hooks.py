@@ -78,7 +78,7 @@ def test_dimension_read_uses_current_source_not_capture(source):
 
 def test_missing_dimension_does_not_use_other_locations(source):
     mapper = LocatedMapper.from_data_source(source)
-    del source["dims"]["value"]
+    source = {"attrs": {"value": 11}, "vars": {"value": 22}, "dims": {}}
     assert not mapper.has_dim(source, mapper.schema.dim)
     assert not mapper.has_attr(source, mapper.schema.dim)
     with pytest.raises(KeyError):

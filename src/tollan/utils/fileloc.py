@@ -578,16 +578,16 @@ def fileloc(
 
         * Non-URL format string.  In this case, `loc` is interpreted as a local path,
           or a remote path similar to sftp syntax: ``<hostname>:<abspath>``.
-          A remote relative path is not valid.
+          A remote relative path requires an absolute ``remote_parent_path``.
 
         * `~pathlib.Path`. It is a local path.
 
         * Tuple of ``(<hostname>, <path>)``. It is a remote path, unless
-          ``hostname`` is "localhost". A remote relative path is not
-          valid.
+          ``hostname`` is "localhost" or empty. A remote relative path requires
+          an absolute ``remote_parent_path``.
 
         * `FileLoc`. It is used as-is if `revalidate` is false, and re-validated with
-          the ``data`` attribute otherwise.
+          its original unresolved location otherwise.
 
     local_parent_path : str, `~pathlib.Path`, None
 
@@ -604,8 +604,14 @@ def fileloc(
         Ignored for an existing `FileLoc` unless ``revalidate=True``.
 
     revalidate : bool
-        If True and ``loc`` is `FileLoc` object, the data gets re-validated with new
-        context.
+        If True and ``loc`` is a `FileLoc`, resolve its original location using
+        the supplied parent paths.
+
+    Returns
+    -------
+    FileLoc
+        Validated location. An existing instance is returned unchanged unless
+        ``revalidate=True``.
     """
     if isinstance(loc, FileLoc):
         if not revalidate:

@@ -112,12 +112,15 @@ class TestStripUnit:
         data, unit = strip_unit(arr)
         np.testing.assert_array_equal(data.data, np.array([1, 2, 3]))
         assert unit == u.m
+        np.testing.assert_array_equal(data.mask, arr.mask)
 
     def test_strip_from_masked_array_no_unit(self):
         """Test with masked array without units."""
         arr = np.ma.masked_array([1, 2, 3], mask=[False, True, False])
         data, unit = strip_unit(arr)
         assert isinstance(data, np.ma.MaskedArray)
+        np.testing.assert_array_equal(data.data, arr.data)
+        np.testing.assert_array_equal(data.mask, arr.mask)
         assert unit is None
 
 
@@ -136,7 +139,7 @@ class TestAttachUnit:
         """Test that attaching None returns original array."""
         arr = np.array([1, 2, 3])
         result = attach_unit(arr, None)
-        np.testing.assert_array_equal(result, arr)
+        assert result is arr
 
     def test_attach_to_masked_array(self):
         """Test attaching unit to masked array."""
@@ -145,7 +148,8 @@ class TestAttachUnit:
         assert isinstance(result.data, u.Quantity)
         assert result.data.unit == u.m
         assert isinstance(result, np.ma.MaskedArray)
-        assert result.data.unit == u.m
+        np.testing.assert_array_equal(result.data.value, arr.data)
+        np.testing.assert_array_equal(result.mask, arr.mask)
 
 
 class TestPreserveUnit:

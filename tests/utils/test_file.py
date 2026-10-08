@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -78,7 +79,20 @@ class TestResolveSymlink:
             result = resolve_symlink(link2)
             assert result == target
 
-    def test_resolve_symlink_max_iterations(self):
+    def test_resolve_symlink_parent_after_directory_link(self, tmp_path):
+        """Parent traversal follows the directory link's physical location."""
+        actual = tmp_path / "actual"
+        (actual / "nested").mkdir(parents=True)
+        target = actual / "target.txt"
+        target.write_text("target")
+        (tmp_path / "directory").symlink_to(actual / "nested", target_is_directory=True)
+        link = tmp_path / "link.txt"
+        link.symlink_to("directory/../target.txt")
+
+        assert resolve_symlink(link) == target
+
+    @pytest.mark.parametrize("relative", [False, True])
+    def test_resolve_symlink_max_iterations(self, relative):
         """Test max iterations limit."""
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create a long chain
@@ -87,25 +101,27 @@ class TestResolveSymlink:
             prev = target
             for i in range(10):
                 link = Path(tmpdir) / f"link{i}.txt"
-                link.symlink_to(prev)
+                link.symlink_to(prev.name if relative else prev)
                 prev = link
 
             # Should raise with n_iter_max=3
             with pytest.raises(ValueError, match="maximum iteration exceeded"):
                 resolve_symlink(prev, n_iter_max=3)
 
-    def test_resolve_symlink_match_parent(self):
-        """Test stopping resolution when parent matches."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            subdir = Path(tmpdir) / "subdir"
-            subdir.mkdir()
-            target = subdir / "target.txt"
-            target.touch()
-            link = Path(tmpdir) / "link.txt"
-            link.symlink_to(target)
+    @pytest.mark.parametrize("relative", [False, True])
+    def test_resolve_symlink_match_parent(self, tmp_path, relative):
+        """Stop at an intermediate link in the selected directory."""
+        subdir = tmp_path / "subdir"
+        subdir.mkdir()
+        target = tmp_path / "target.txt"
+        target.touch()
+        intermediate = subdir / "intermediate.txt"
+        intermediate.symlink_to(Path("../target.txt") if relative else target)
+        link = tmp_path / "link.txt"
+        link.symlink_to(Path("subdir/intermediate.txt") if relative else intermediate)
 
-            result = resolve_symlink(link, match_parent=subdir)
-            assert result == target
+        assert resolve_symlink(link, match_parent=subdir) == intermediate
+        assert resolve_symlink(link) == target
 
 
 class TestEnsureReadableFileobj:
@@ -124,23 +140,16 @@ class TestEnsureReadableFileobj:
         finally:
             Path(temp_path).unlink()
 
-    def test_ensure_readable_fileobj_with_fileobj(self):
-        """Test with already-opened file object."""
-        with tempfile.NamedTemporaryFile(mode="w+", delete=False) as f:
-            f.write("test content")
-            f.seek(0)
-            temp_path = f.name
-
-        try:
-            with (
-                Path(temp_path).open() as f,
-                ensure_readable_fileobj(f) as f2,
-            ):
-                assert f2 is f
-                content = f2.read()
-                assert "test content" in content
-        finally:
-            Path(temp_path).unlink()
+    def test_ensure_readable_fileobj_with_fileobj(self, tmp_path):
+        """Borrow an open stream without rewinding or closing it."""
+        path = tmp_path / "input.txt"
+        path.write_text("first second")
+        with path.open() as stream:
+            assert stream.read(6) == "first "
+            with ensure_readable_fileobj(stream) as borrowed:
+                assert borrowed is stream
+                assert borrowed.read() == "second"
+            assert not stream.closed
 
     def test_ensure_readable_fileobj_with_directory_raises(self):
         """Test that directory raises ValueError."""
@@ -163,20 +172,15 @@ class TestTouchFile:
             touch_file(filepath)
             assert filepath.exists()
 
-    def test_touch_file_updates_existing(self):
-        """Test that touch_file updates modification time."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            filepath = Path(tmpdir) / "existing.txt"
-            filepath.touch()
-            old_mtime = filepath.stat().st_mtime
-
-            # Wait a bit and touch again
-            import time
-
-            time.sleep(0.01)
-            touch_file(filepath)
-            new_mtime = filepath.stat().st_mtime
-            assert new_mtime >= old_mtime
+    def test_touch_file_updates_existing(self, tmp_path):
+        """Touch updates an old timestamp without changing file contents."""
+        filepath = tmp_path / "existing.txt"
+        filepath.write_text("retained content")
+        os.utime(filepath, (1, 1))
+        old_mtime = filepath.stat().st_mtime_ns
+        touch_file(filepath)
+        assert filepath.stat().st_mtime_ns > old_mtime
+        assert filepath.read_text() == "retained content"
 
 
 class TestGetOrCreateDir:

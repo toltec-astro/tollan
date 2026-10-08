@@ -105,3 +105,23 @@ def test_path_file_directory_and_new_constraints(tmp_path: Path) -> None:
     with pytest.raises(ValidationError) as exc_info:
         adapter.validate_python(tmp_path / "missing" / "new.nc")
     assert exc_info.value.errors()[0]["type"] == "parent_does_not_exist"
+
+
+@pytest.mark.parametrize("path_type", ["file", "dir", "new"])
+@pytest.mark.parametrize("mode", ["python", "json"])
+def test_typed_path_expands_home_before_filesystem_checks(
+    tmp_path, monkeypatch, path_type, mode
+):
+    """Validate the expanded home path rather than a literal tilde directory."""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    target = tmp_path / "entry"
+    if path_type == "file":
+        target.touch()
+    elif path_type == "dir":
+        target.mkdir()
+    adapter = TypeAdapter(path_field(path_type=path_type))
+    if mode == "python":
+        result = adapter.validate_python("~/entry")
+    else:
+        result = adapter.validate_json('"~/entry"')
+    assert result == target

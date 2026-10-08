@@ -110,9 +110,8 @@ def select_table_rows(
     Returns
     -------
     xarray.Dataset
-        Selected node's dataset with payload arrays remaining lazy. Contiguous
-        selections use a slice and share in-memory column buffers. Scattered
-        selections use integer indexing and may copy buffers.
+        Selected node's dataset with payload arrays remaining lazy and rows in
+        source order.
 
     Raises
     ------

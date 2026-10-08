@@ -3,7 +3,7 @@ Models and configuration fields
 
 These references are generated from Pydantic models. Use :doc:`configuration`
 to load settings, :doc:`validation-types` to declare validated fields, and
-:doc:`data-adapters` to implement an analysis.
+:doc:`analyses` to implement an analysis.
 
 Runtime settings
 ----------------

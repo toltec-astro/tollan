@@ -425,7 +425,23 @@ def rupdate(
 
 
 def dict_product(**kwargs: Any) -> Any:
-    """Return the Cartesian product of dicts."""
+    """Yield dictionaries for the Cartesian product of named value sequences.
+
+    Parameters
+    ----------
+    **kwargs : iterable
+        Candidate values for each output key, in iteration order.
+
+    Yields
+    ------
+    dict
+        One value per supplied key for each combination.
+
+    Examples
+    --------
+    >>> list(dict_product(band=[1, 2], mode=["scan"]))
+    [{'band': 1, 'mode': 'scan'}, {'band': 2, 'mode': 'scan'}]
+    """
     return (
         dict(zip(kwargs.keys(), x, strict=False))
         for x in itertools.product(*kwargs.values())

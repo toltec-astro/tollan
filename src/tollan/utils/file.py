@@ -74,7 +74,10 @@ def resolve_symlink(
         p = _p.readlink()
         # relative symlink is relative to current _p.parent
         if not p.is_absolute():
-            p = (_p.parent / p).resolve()
+            # Resolve directory links before traversing .., but leave the final
+            # link for the next iteration so the stopping controls still apply.
+            p = _p.parent / p
+            p = p.parent.resolve() / p.name
         n_iter += 1
         if n_iter_max is not None and n_iter > n_iter_max:
             msg = f"maximum iteration exceeded when resolving symlink for {p0}"
