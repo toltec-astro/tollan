@@ -94,9 +94,11 @@ class RuntimeContext[RuntimeConfigT: RuntimeConfig = RuntimeConfig]:
     Parameters
     ----------
     config_sources : pathlib.Path, dict, list, or ConfigSourceList, optional
-        Source declarations, a configuration file/directory, or a resolved
-        source list. None creates a runtime with no user sources. Explicit
-        top-level source orders must be between 0 and 999, inclusive.
+        Settings, source declarations, a configuration file/directory, or a
+        resolved source list. A dictionary without ``data`` supplies settings;
+        one with ``data`` declares a source collection. None creates a runtime
+        with no user sources. Explicit top-level source orders must be between
+        0 and 999, inclusive.
 
     Notes
     -----

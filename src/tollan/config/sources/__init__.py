@@ -93,6 +93,11 @@ class ConfigSourceList(BaseModel):
     their enable_if conditions, and merges them in order. Nested lists are
     traversed in their local order and share one accumulated result.
 
+    A dictionary without a ``data`` key supplies settings as one dictionary
+    source with order 0. A dictionary with ``data`` supplies the source list
+    and may include ``name``. To load settings that contain a ``data`` key,
+    put them in an explicit dictionary source.
+
     Notes
     -----
     File sources cache their read-and-parse results by default. Dictionary
@@ -113,7 +118,7 @@ class ConfigSourceList(BaseModel):
     {'base': True, 'override': True}
     """
 
-    model_config = {"frozen": True, "extra": "forbid"}
+    model_config = {"frozen": True}
 
     data: Annotated[
         list[ConfigSource],
@@ -138,9 +143,14 @@ class ConfigSourceList(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def _validate_arg(cls, arg: Any) -> Any:
-        """Normalize source shorthand; dictionaries contain model fields."""
-        if arg is None:
-            return {"data": [{"format": "dict", "source": {}, "order": 0}]}
+        """Normalize settings dictionaries, paths, and source lists."""
+        if arg is None or (isinstance(arg, dict) and "data" not in arg):
+            return {"data": [{"format": "dict", "source": arg or {}, "order": 0}]}
+        if isinstance(arg, dict) and "data" in arg:
+            if not isinstance(arg["data"], list):
+                msg = "data must be a sequence"
+                raise TypeError(msg)
+            return arg
         if isinstance(arg, str | os.PathLike):
             path = Path(arg)
             if path.is_dir():
@@ -554,15 +564,16 @@ def resolve_config_sources(
 ) -> ConfigSourceList:
     """Create a ConfigSourceList from various input formats.
 
-    This thin wrapper passes ordering and environment options as validation
-    context to ConfigSourceList.model_validate(). Dictionaries contain model
-    fields: ``data`` and optional ``name``. Put settings in a dictionary source.
+    Dictionaries without a ``data`` key supply settings directly. Dictionaries
+    with ``data`` declare a source collection and optional ``name``. To supply
+    settings containing ``data``, put them in an explicit dictionary source.
 
     Input patterns supported:
 
     - ConfigSourceList: Return as-is (with order validation)
     - None: Empty dict source with order=0
-    - dict: Source collection with required ``data`` and optional ``name``
+    - dict without ``data``: Single dictionary source with order=0
+    - dict with ``data``: Source collection with optional ``name``
     - Path to file: Single source; format auto-detected from extension
       (``.env`` → :class:`EnvFileConfigSource`, else → :class:`YamlConfigSource`)
     - Path to directory: Load numbered files in sort order — ``*.yaml``/``*.yml``
@@ -589,7 +600,10 @@ def resolve_config_sources(
     Raises
     ------
     ValueError
-        If any source order violates order_min or order_max constraints
+        Source declarations are invalid or a source order violates the supplied
+        order constraints.
+    TypeError
+        A collection's ``data`` value is not a list.
 
     Examples
     --------
@@ -597,7 +611,9 @@ def resolve_config_sources(
         >>> csl = resolve_config_sources(Path("config.yaml"))
 
         >>> # From dict
-        >>> csl = resolve_config_sources({"data": [{"source": {"key": "value"}}]})
+        >>> csl = resolve_config_sources({"key": "value"})
+        >>> csl.load()
+        {'key': 'value'}
 
         >>> # From list with order constraints
         >>> csl = resolve_config_sources(

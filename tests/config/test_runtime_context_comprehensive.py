@@ -39,6 +39,13 @@ class TestRuntimeContextBasics:
         assert rc.config_dict["app"] == "test"
         assert rc.config_dict["version"] == "1.0"
 
+    @pytest.mark.parametrize("settings", [{}, {"app": "test", "name": "application"}])
+    def test_create_with_settings_dictionary(self, settings):
+        rc = RuntimeContext(settings)
+        for key, value in settings.items():
+            assert rc.config_dict[key] == value
+        assert isinstance(rc.config, RuntimeConfig)
+
     def test_create_with_multiple_sources(self):
         """Test creating RuntimeContext with multiple sources."""
         rc = RuntimeContext(

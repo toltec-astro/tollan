@@ -22,7 +22,8 @@ class ListConfigSource(ConfigSourceBase):
 
     This allows hierarchical composition of config sources.
     The source can be a ConfigSourceList, a list of source declarations, or a
-    dictionary containing the collection fields ``data`` and optional ``name``.
+    dictionary. A dictionary without ``data`` supplies settings; one with
+    ``data`` declares a source collection and optional ``name``.
 
     Examples
     --------

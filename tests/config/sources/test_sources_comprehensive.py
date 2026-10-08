@@ -8,6 +8,7 @@ from tollan.config.sources import (
     ConfigSourceList,
     DictConfigSource,
     EnvFileConfigSource,
+    ListConfigSource,
     YamlConfigSource,
     resolve_config_sources,
 )
@@ -596,6 +597,10 @@ database:
 class TestListConfigSource:
     """Test ListConfigSource for nested source lists."""
 
+    def test_list_source_accepts_settings_dictionary(self):
+        source = ListConfigSource(order=0, source={"nested": {"enabled": True}})
+        assert source.load() == {"nested": {"enabled": True}}
+
     def test_list_source_basic(self):
         """Test ListConfigSource loads nested list."""
         nested_sources = ConfigSourceList.model_validate(
@@ -647,6 +652,26 @@ class TestListConfigSource:
 
 class TestResolveConfigSourcesFunction:
     """Test resolve_config_sources() wrapper function."""
+
+    @pytest.mark.parametrize(
+        "validate", [ConfigSourceList.model_validate, resolve_config_sources]
+    )
+    @pytest.mark.parametrize(
+        "settings",
+        [
+            {},
+            {"search": {"pattern": "warning"}},
+            {"name": "application"},
+            {"format": "dict", "source": {"value": 7}, "order": 5},
+        ],
+    )
+    def test_settings_dictionary_becomes_one_source(self, validate, settings):
+        sources = validate(settings)
+        assert len(sources.data) == 1
+        assert isinstance(sources[0], DictConfigSource)
+        assert sources[0].order == 0
+        assert sources.load() == settings
+        assert sources.name is None
 
     def test_resolve_config_sources_from_dict(self):
         """Test resolve_config_sources creates ConfigSourceList from dict."""
@@ -716,11 +741,22 @@ class TestResolveConfigSourcesFunction:
         "validate", [ConfigSourceList.model_validate, resolve_config_sources]
     )
     @pytest.mark.parametrize(
-        "value", [{"a": 1}, {"name": "site"}, {"data": 42}, {"data": [], "a": 1}]
+        "value",
+        [
+            {"data": 42},
+            {"data": ()},
+            {"data": [{"format": "dict", "source": "invalid", "order": 0}]},
+            {"data": [], "name": {}},
+            {"data": [{"format": "dict", "source": {}, "order": "invalid"}]},
+        ],
     )
-    def test_collection_rejects_invalid_model_input(self, validate, value):
+    def test_invalid_collection_does_not_become_settings(self, validate, value):
         with pytest.raises((ValueError, TypeError)):
             validate(value)
+
+    def test_settings_source_retains_order_validation(self):
+        with pytest.raises(ValueError, match="below minimum allowed order"):
+            resolve_config_sources({"value": 7}, order_min=1)
 
     @pytest.mark.parametrize("kind", ["file", "directory", "list", "none"])
     def test_model_normalizes_shorthand(self, tmp_path, kind):

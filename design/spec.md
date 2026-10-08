@@ -130,9 +130,10 @@ component typed settings before it uses them.
 
 - Configuration sources compose modular settings from different locations and
   formats through a common loading interface.
-- Source-collection dictionaries contain collection fields, including the source
-  declarations. Unknown collection fields are rejected. In-memory settings belong
-  to an explicit dictionary source.
+- A dictionary without `data` supplies in-memory settings as one source. A
+  dictionary with `data` declares a source collection and must contain a valid
+  source list. Invalid collections do not fall back to settings. Settings that
+  contain `data` can be supplied through an explicit dictionary source.
 - Source composition defines the order in which settings override earlier values.
 - Evaluation context supplies values used to select or evaluate settings.
 - Callers can refresh settings from external sources separately from evaluating

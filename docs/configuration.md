@@ -60,13 +60,28 @@ paths, and command-line overrides override both.
 
 Runtime defaults apply before loaded sources. Runtime overrides apply after
 sources and CLI overrides. For in-memory configuration, set these tiers or
-pass a dictionary source to `RuntimeContext`.
+pass settings directly to `RuntimeContext`:
+
+```{doctest}
+>>> from tollan.config import RuntimeContext
+>>> rc = RuntimeContext({"search": {"pattern": "warning"}})
+>>> rc.config_dict["search"]
+{'pattern': 'warning'}
+```
 
 Pass a list of source declarations to combine sources, or use a collection
-dictionary with required `data` and optional `name`. `ConfigSourceList` and
-`resolve_config_sources` use the same input structure; the resolver supplies
-validation context through its keyword arguments. Put in-memory settings inside
-a dictionary source:
+dictionary with `data` and optional `name`. `ConfigSourceList.model_validate()`,
+`resolve_config_sources()`, and `RuntimeContext()` interpret dictionaries the
+same way:
+
+| Dictionary input | Meaning |
+| --- | --- |
+| No `data` key, including `{}` | Settings supplied by one dictionary source with order 0 |
+| Contains `data` | Source collection; `data` must be a list of valid source declarations |
+
+The `data` key is reserved for this distinction. An invalid collection raises
+instead of becoming settings. If your settings themselves contain `data`, put
+them inside an explicit dictionary source:
 
 ```{doctest}
 >>> from tollan.config.sources import resolve_config_sources
@@ -78,8 +93,9 @@ a dictionary source:
 {'data': [1, 2], 'name': 'observation'}
 ```
 
-A bare settings dictionary such as `{"a": 1}` is not a source collection.
-Collection dictionaries reject keys other than `data` and `name`.
+The field name remains `data` in Python construction and serialization:
+`ConfigSourceList(data=[...])`. A `name` key is ordinary settings unless `data`
+is also present.
 
 ### Load configuration from Python
 
