@@ -12,7 +12,14 @@ data structures using astropy, including:
 from __future__ import annotations
 
 from .fileloc import FileLocField
-from .path import AbsAnyPath, AbsDirectoryPath, AbsFilePath, AnyPath, path_field
+from .path import (
+    AbsAnyPath,
+    AbsDirectoryPath,
+    AbsFilePath,
+    AnyPath,
+    SubPath,
+    path_field,
+)
 from .pydantic import FieldDefaults
 from .quantity import (
     AngleQuantityField,
@@ -40,6 +47,7 @@ __all__ = [
     "LengthQuantityField",
     "QuantityField",
     "SkyCoordField",
+    "SubPath",
     "TimeField",
     "TimeQuantityField",
     "UnixTimeField",

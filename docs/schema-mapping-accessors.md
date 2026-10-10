@@ -229,8 +229,8 @@ input_subpath = SubpathMapping.path(("samples", "_input"))
 assert input_subpath.names == ("samples", "_input")
 ```
 
-Absolute paths, empty components, `.` and `..` are invalid for `SubpathMapping`.
-Use `NameMapping.path()` when those general tree selectors are needed.
+Candidate paths follow {py:data}`~tollan.config.types.path.SubPath`.
+Use `NameMapping.path()` for general tree selectors instead.
 
 To try different locations in order, supply name/location pairs:
 

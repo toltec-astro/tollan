@@ -27,6 +27,11 @@ orchestrators.
 3. Bind both to a `Step` and implement `run(data, context)`.
 4. Call the step or add it to a `SequentialPipeline`.
 
+Step settings are read-only and validated strictly, including declared defaults.
+Pass numeric and boolean values directly rather than as strings. `StepConfig`
+also provides `model_dump_yaml()` and `model_validate_yaml()` for saving and
+loading settings. Invocation contexts remain mutable while a step runs.
+
 ```{graphviz}
 digraph step {
     rankdir=LR;

@@ -12,7 +12,7 @@ from astropy.utils.data import get_readable_fileobj
 from .log import logger, logit
 
 __all__ = [
-    "ensure_abspath",
+    "ensure_abs_path",
     "ensure_path_parent_exists",
     "ensure_readable_fileobj",
     "get_or_create_dir",
@@ -21,7 +21,7 @@ __all__ = [
 ]
 
 
-def ensure_abspath(p: str | Path) -> Path:
+def ensure_abs_path(p: str | Path) -> Path:
     """Return the full expanded absolute path.
 
     Parameters
@@ -127,21 +127,21 @@ def touch_file(out_file: str | Path) -> None:
 
 
 def get_or_create_dir(
-    dirpath: Path | str,
+    dir_path: Path | str,
     on_exist: Any = None,
     on_create: Any = None,
     on_create_context: Any = None,
 ) -> Path:
-    """Ensure `dirpath` exist.
+    """Create a directory if it does not exist.
 
     Parameters
     ----------
-    dirpath : `pathlib.Path`, str
+    dir_path : `pathlib.Path`, str
         The path of the directory.
     on_exist : callable, optional
-        If set, called if `dirpath` exists already.
+        If set, called if `dir_path` exists already.
     on_create : callable, optional
-        If set, called if `dirpath` is created.
+        If set, called if `dir_path` is created.
     on_create_context : context, optional
         The context to enter on create.
 
@@ -150,16 +150,16 @@ def get_or_create_dir(
     Path
         The created or existing directory path
     """
-    dirpath = Path(dirpath)
-    if dirpath.exists():
+    dir_path = Path(dir_path)
+    if dir_path.exists():
         if on_exist is not None:
-            on_exist(dirpath)
-        return dirpath
+            on_exist(dir_path)
+        return dir_path
     with on_create_context or contextlib.nullcontext():
-        dirpath.mkdir(parents=True)
+        dir_path.mkdir(parents=True)
     if on_create is not None:
-        on_create(dirpath)
-    return dirpath
+        on_create(dir_path)
+    return dir_path
 
 
 def ensure_path_parent_exists(path: Path) -> Path:

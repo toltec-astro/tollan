@@ -14,6 +14,7 @@ from tollan.accessor.schema import (
     MappingContext,
     NameMapping,
     Schema,
+    SubpathMapping,
 )
 
 
@@ -37,10 +38,26 @@ class TestNameMapping:
         with pytest.raises(ValidationError):  # Validation error
             NameMapping([1, 2, 3])  # ty: ignore[invalid-argument-type]
 
-    def test_rejects_empty_names(self):
+    @pytest.mark.parametrize("mapping_cls", [NameMapping, SubpathMapping])
+    def test_rejects_empty_names(self, mapping_cls):
         """At least one physical name is required."""
-        with pytest.raises(ValueError, match="at least one"):
-            NameMapping(())
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError) as exc_info:
+            mapping_cls(candidates=())
+        error = exc_info.value.errors()[0]
+        assert error["loc"] == ("candidates",)
+        assert error["type"] == "too_short"
+
+    @pytest.mark.parametrize("mapping_cls", [NameMapping, SubpathMapping])
+    def test_schema_requires_candidates(self, mapping_cls):
+        """The schema exposes the nonempty candidates constraint."""
+        from pydantic import TypeAdapter
+
+        schema = TypeAdapter(mapping_cls).json_schema()
+        if "$ref" in schema:
+            schema = schema["$defs"][schema["$ref"].rsplit("/", 1)[1]]
+        assert schema["properties"]["candidates"]["minItems"] == 1
 
     def test_rejects_duplicate_names(self):
         """Repeated candidates cannot affect resolution and are rejected."""
@@ -197,17 +214,56 @@ class TestMissingSentinel:
         assert repr(MISSING) == "MISSING"
 
 
-@pytest.mark.parametrize(
-    "path", ["", "/", ".", "..", "/absolute", "a//b", "a/../b", "a/./b", "a/"]
-)
+@pytest.mark.parametrize("path", ["", "/", ".", "..", "/absolute", "a/../b"])
 def test_subpath_mapping_rejects_non_descendants(path):
-    from tollan.accessor import SubpathMapping
+    from pydantic import TypeAdapter
 
+    from tollan.accessor import SubpathMapping
+    from tollan.config.types import SubPath
+
+    with pytest.raises(ValueError, match="relative descendant"):
+        TypeAdapter(SubPath).validate_python(path)
     with pytest.raises(ValueError, match="relative descendant"):
         SubpathMapping.path(("valid", path))
 
 
+@pytest.mark.parametrize("path", ["a/b", "a//b", "a/./b", "./a/b/"])
+def test_subpath_mapping_and_field_share_normalization(path):
+    from pydantic import TypeAdapter
+
+    from tollan.accessor import SubpathMapping
+    from tollan.config.types import SubPath
+
+    subpath = TypeAdapter(SubPath).validate_python(path)
+    mapping = SubpathMapping.path((path, "fallback"))
+    assert mapping.names == (subpath.as_posix(), "fallback") == ("a/b", "fallback")
+
+
+def test_subpath_mapping_rejects_duplicate_normalized_candidates():
+    from tollan.accessor import SubpathMapping
+
+    with pytest.raises(ValueError, match="candidates must be unique"):
+        SubpathMapping.path(("a/b", "a/./b"))
+
+
+def test_subpath_mapping_nested_validation_and_json_roundtrip():
+    from pydantic import TypeAdapter, ValidationError
+
+    from tollan.accessor import SubpathMapping
+
+    adapter = TypeAdapter(SubpathMapping)
+    mapping = adapter.validate_python({"candidates": [("./a//b/", "path")]})
+    assert mapping.names == ("a/b",)
+    assert adapter.validate_json(adapter.dump_json(mapping)) == mapping
+
+    with pytest.raises(ValidationError) as exc_info:
+        adapter.validate_python({"candidates": [("../a", "path")]})
+    assert exc_info.value.errors()[0]["loc"] == ("candidates", 0, 0)
+
+
 def test_subpath_mapping_retains_general_path_semantics_separately():
+    from pydantic import ValidationError
+
     from tollan.accessor import SubpathMapping
 
     mapping = SubpathMapping.path(("sweep", "_input"))
@@ -218,5 +274,6 @@ def test_subpath_mapping_retains_general_path_semantics_separately():
         "../sibling",
         "/root",
     )
-    with pytest.raises(ValueError, match="relative descendant"):
+    with pytest.raises(ValidationError) as exc_info:
         SubpathMapping.var("data")
+    assert exc_info.value.errors()[0]["type"] == "literal_error"

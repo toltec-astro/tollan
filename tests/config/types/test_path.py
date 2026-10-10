@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 from pydantic import TypeAdapter, ValidationError
@@ -13,6 +13,7 @@ from tollan.config.types import (
     AbsDirectoryPath,
     AbsFilePath,
     AnyPath,
+    SubPath,
     path_field,
 )
 
@@ -23,7 +24,7 @@ def test_path_root_context_and_json_roundtrip(tmp_path: Path) -> None:
     data_file.touch()
     adapter = TypeAdapter(AbsFilePath)
 
-    value = adapter.validate_python("data.nc", context={"rootpath": tmp_path})
+    value = adapter.validate_python("data.nc", context={"root_path": tmp_path})
     loaded = adapter.validate_json(adapter.dump_json(value))
 
     assert value == data_file.resolve()
@@ -56,7 +57,7 @@ def test_path_context_propagates_to_nested_models() -> None:
 
     model = Container.model_validate(
         {"nested": [{}, {"path": "b"}]},
-        context={"rootpath": "~"},
+        context={"root_path": "~"},
     )
 
     assert model.nested[0].path == Path("~/a").expanduser().resolve()
@@ -125,3 +126,53 @@ def test_typed_path_expands_home_before_filesystem_checks(
     else:
         result = adapter.validate_json('"~/entry"')
     assert result == target
+
+
+def test_subpath_in_strict_model_and_json_roundtrip(tmp_path):
+    class StoreSettings(FrozenBaseModel):
+        subpath: SubPath
+
+    for value in ("toltec/tcs", PurePosixPath("toltec/tcs"), Path("toltec/tcs")):
+        model = StoreSettings.model_validate(
+            {"subpath": value}, context={"root_path": tmp_path}
+        )
+        assert isinstance(model.subpath, PurePosixPath)
+        assert model.subpath == PurePosixPath("toltec/tcs")
+        assert tmp_path / model.subpath == tmp_path / "toltec/tcs"
+        assert StoreSettings.model_validate_json(model.model_dump_json()) == model
+    assert TypeAdapter(SubPath).json_schema() == {"format": "path", "type": "string"}
+
+
+@pytest.mark.parametrize(
+    "value", ["", ".", "./", "..", "../raw", "a/../b", "a/..", "/raw", "//data/raw"]
+)
+@pytest.mark.parametrize("mode", ["python", "json"])
+def test_subpath_reports_validation_errors(value, mode):
+    import json
+
+    adapter = TypeAdapter(SubPath)
+    validate, data = (
+        (adapter.validate_python, value)
+        if mode == "python"
+        else (adapter.validate_json, json.dumps(value))
+    )
+    with pytest.raises(ValidationError, match="relative descendant path"):
+        validate(data)
+
+
+@pytest.mark.parametrize("value", [None, 1, b"data/raw", PureWindowsPath("data/raw")])
+def test_subpath_rejects_invalid_input_types(value):
+    with pytest.raises(ValidationError) as exc_info:
+        TypeAdapter(SubPath).validate_python(value)
+    assert exc_info.value.errors()[0]["type"] == "path_type"
+
+
+def test_subpath_normalizes_without_filesystem_access(monkeypatch):
+    def unexpected(*args, **kwargs):
+        pytest.fail("Relative subpath validation must not consult the filesystem")
+
+    for method in ("resolve", "expanduser", "exists", "stat"):
+        monkeypatch.setattr(Path, method, unexpected)
+    adapter = TypeAdapter(SubPath)
+    assert adapter.validate_python("./data//raw/") == PurePosixPath("data/raw")
+    assert adapter.validate_python("~/raw") == PurePosixPath("~/raw")

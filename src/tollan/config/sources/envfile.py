@@ -2,15 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from dotenv import dotenv_values
-from pydantic import field_validator, model_validator
+from pydantic import model_validator
 
-from .base import FileConfigSourceBase
+from .base import FileConfigSourceBase, _ConfigSourcePath
 
 if TYPE_CHECKING:
+    from pydantic import ValidationInfo
+
     from .base import DictConfigT
 
 __all__ = ["ENV_NAMESPACE_DEFAULT", "EnvFileConfigSource"]
@@ -38,6 +39,7 @@ class EnvFileConfigSource(FileConfigSourceBase):
 
     Examples
     --------
+    >>> from pathlib import Path
     >>> from tempfile import TemporaryDirectory
     >>> with TemporaryDirectory() as directory:
     ...     path = Path(directory) / ".env"
@@ -49,7 +51,7 @@ class EnvFileConfigSource(FileConfigSourceBase):
 
     format: Literal["envfile"] = "envfile"
     """Format identifier, always 'envfile'"""
-    source: Path
+    source: _ConfigSourcePath
     """Path to .env file"""
     encoding: str = "utf-8"
     """File encoding"""
@@ -58,24 +60,18 @@ class EnvFileConfigSource(FileConfigSourceBase):
     namespace: str | None = ENV_NAMESPACE_DEFAULT
     """Top-level key for parsed values; None loads them at the root."""
 
-    @field_validator("source", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _validate_source(cls, v: Any) -> Path:
-        """Convert string paths to Path objects.
-
-        Parameters
-        ----------
-        v : Any
-            Source path as string or Path
-
-        Returns
-        -------
-        Path
-            Path object
-        """
-        if isinstance(v, str):
-            return Path(v)
-        return v
+    def _fill_namespace_default(cls, data: Any, info: ValidationInfo) -> Any:
+        """Fill an omitted namespace from validation context."""
+        context = info.context or {}
+        if (
+            isinstance(data, dict)
+            and "namespace" not in data
+            and "env_namespace" in context
+        ):
+            return data | {"namespace": context["env_namespace"]}
+        return data
 
     @model_validator(mode="after")
     def _validate_name(self) -> EnvFileConfigSource:

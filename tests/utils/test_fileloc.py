@@ -341,9 +341,22 @@ class TestFileLocEdgeCases:
     """Test edge cases and error handling."""
 
     def test_invalid_type(self):
-        """Test that invalid type raises error."""
-        with pytest.raises((TypeError, ValidationError)):
+        """Unsupported input produces a validation error."""
+        with pytest.raises(ValidationError) as exc_info:
             FileLoc.model_validate(123)
+        assert exc_info.value.errors()[0]["type"] == "value_error"
+
+    def test_invalid_nested_fileloc(self):
+        """Nested errors identify the affected list item."""
+
+        class Config(BaseModel):
+            locations: list[FileLoc]
+
+        with pytest.raises(ValidationError) as exc_info:
+            Config.model_validate({"locations": ["/data/test.nc", 123]})
+        error = exc_info.value.errors()[0]
+        assert error["type"] == "value_error"
+        assert error["loc"] == ("locations", 1)
 
     def test_invalid_tuple_size(self):
         """Test that invalid tuple size raises error."""

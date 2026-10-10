@@ -1,9 +1,9 @@
-"""Context-aware Pydantic path annotations."""
+"""Pydantic annotations for filesystem paths and relative subpaths."""
 
 from __future__ import annotations
 
 from functools import cache, partial
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Annotated, Any, Literal
 
 from pydantic import (
@@ -25,6 +25,7 @@ __all__ = [
     "AbsDirectoryPath",
     "AbsFilePath",
     "AnyPath",
+    "SubPath",
     "path_field",
 ]
 
@@ -38,7 +39,13 @@ _PATH_BASE_TYPES: dict[PathType | None, Any] = {
 }
 
 
-def _prepare_path(value: Any, info: ValidationInfo, *, resolve: bool) -> Path | str:
+def _prepare_path(
+    value: Any,
+    info: ValidationInfo,
+    *,
+    resolve: bool,
+    root_path_key: str,
+) -> Path | str:
     """Apply an optional validation-context root before Path validation."""
     if not isinstance(value, str | Path):
         error = PydanticCustomError(
@@ -46,16 +53,17 @@ def _prepare_path(value: Any, info: ValidationInfo, *, resolve: bool) -> Path | 
             "Input should be a string or Path object",
         )
         raise error
-    rootpath = None if info.context is None else info.context.get("rootpath")
-    if rootpath is None:
+    root_path = None if info.context is None else info.context.get(root_path_key)
+    if root_path is None:
         result = Path(value)
     else:
         try:
-            result = Path(rootpath).joinpath(value)
+            result = Path(root_path).joinpath(value)
         except TypeError as e:
             error = PydanticCustomError(
                 "path_root_type",
-                "Validation context rootpath should be a string or Path object",
+                "Validation context {key} should be a string or Path object",
+                {"key": root_path_key},
             )
             raise error from e
     if resolve:
@@ -80,10 +88,11 @@ def _path_metadata(
     *,
     exists: bool,
     resolve: bool,
+    root_path_key: str = "root_path",
 ) -> tuple[Any, ...]:
     return (
         BeforeValidator(
-            partial(_prepare_path, resolve=resolve),
+            partial(_prepare_path, resolve=resolve, root_path_key=root_path_key),
             json_schema_input_type=_PATH_JSON_INPUT,
         ),
         AfterValidator(
@@ -112,6 +121,26 @@ type AbsAnyPath = Annotated[Path, *_ABS_ANY_PATH_METADATA]
 """Any path resolved to absolute form without an existence check."""
 
 
+def _validate_subpath(path: PurePosixPath) -> PurePosixPath:
+    """Require a relative descendant without parent traversal."""
+    if path.anchor or not path.parts or ".." in path.parts:
+        msg = f"Expected a relative descendant path, got {str(path)!r}"
+        raise ValueError(msg)
+    return path
+
+
+type SubPath = Annotated[
+    PurePosixPath, Field(strict=False), AfterValidator(_validate_subpath)
+]
+"""A relative POSIX descendant path without parent traversal.
+
+Accepts strings and PurePosixPath objects, including in strict models. Redundant
+separators and ``.`` components are removed. The containing directory itself
+is not a descendant. No validation-context root_path, user expansion, filesystem
+checks, or symlink resolution is applied.
+"""
+
+
 def path_field(
     *,
     path_type: PathType | None = None,
@@ -130,7 +159,7 @@ def path_field(
         Typed paths always apply their own checks regardless of this flag.
     resolve : bool, optional
         Expand the user directory and resolve to absolute form, by default True.
-        A validation-context ``rootpath`` is applied before these checks.
+        A validation-context ``root_path`` is applied before these checks.
 
     Returns
     -------

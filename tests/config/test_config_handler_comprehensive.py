@@ -209,20 +209,23 @@ class TestConfigHandlerVariants:
 
         runtime = RuntimeContext().with_config(
             overrides={"domain": {"path": "relative.txt"}},
-            validation_context={"rootpath": tmp_path / "first", "observation": 1},
+            validation_context={"root_path": tmp_path / "first", "observation": 1},
         )
         handler = Handler(runtime)
         with handler.temporary_config(
-            validation_context={"rootpath": tmp_path / "second"}
+            validation_context={"root_path": tmp_path / "second"}
         ) as other:
             assert other.config.path == tmp_path / "second" / "relative.txt"
             assert other.runtime_info.validation_context["observation"] == 1
             assert (
-                other.runtime_info.validation_context["rootpath"] == tmp_path / "second"
+                other.runtime_info.validation_context["root_path"]
+                == tmp_path / "second"
             )
         assert handler.config.path == tmp_path / "first" / "relative.txt"
-        assert handler.runtime_info.validation_context["rootpath"] == tmp_path / "first"
-        assert other.runtime_info.validation_context["rootpath"] == tmp_path / "second"
+        assert (
+            handler.runtime_info.validation_context["root_path"] == tmp_path / "first"
+        )
+        assert other.runtime_info.validation_context["root_path"] == tmp_path / "second"
         assert runtime.config_dict["domain"]["path"] == "relative.txt"
 
     def test_opaque_values_are_not_copied(self):

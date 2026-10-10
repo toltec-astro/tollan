@@ -63,8 +63,9 @@ from typing import (
     overload,
 )
 
-from pydantic import BaseModel, ConfigDict, Field, JsonValue
+from pydantic import BaseModel, Field, JsonValue
 
+from ..config import FrozenBaseModel
 from ..utils.log import logger, timeit
 from ..utils.py import getname
 from ..utils.typing import (
@@ -97,15 +98,14 @@ PIPELINE_CONTEXT_KEY: Literal["__pipeline_context__"] = "__pipeline_context__"
 # ---------------------------------------------------------------------------
 
 
-class StepConfig(BaseModel):
-    """Base pydantic model for pipeline step configuration.
+class StepConfig(FrozenBaseModel):
+    """Read-only settings for a pipeline step.
 
-    Subclasses add domain-specific config fields.  The ``enabled`` flag
+    Supplied values and defaults are validated strictly.
+    Subclasses add domain-specific config fields. The ``enabled`` flag
     is honoured by :class:`SequentialPipeline` to skip disabled steps. Set
     ``alias`` to keep separate invocation contexts for repeated steps.
     """
-
-    model_config = ConfigDict(frozen=True)
 
     enabled: bool = Field(
         default=True, description="Set False to skip this step in a SequentialPipeline."

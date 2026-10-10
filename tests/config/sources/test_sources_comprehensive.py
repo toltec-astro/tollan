@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from tollan.config.sources import (
     ConfigSourceList,
@@ -12,6 +13,52 @@ from tollan.config.sources import (
     YamlConfigSource,
     resolve_config_sources,
 )
+
+
+@pytest.mark.parametrize(
+    ("source_cls", "namespace_field"),
+    [(EnvFileConfigSource, "namespace"), (YamlConfigSource, "env_namespace")],
+)
+class TestSourceNamespaceDefaults:
+    """Namespace defaults belong to each concrete source model."""
+
+    @pytest.mark.parametrize(
+        ("context", "expected"),
+        [
+            (None, "_env"),
+            ({"env_namespace": "custom"}, "custom"),
+            ({"env_namespace": None}, None),
+        ],
+    )
+    def test_omitted_namespace(self, source_cls, namespace_field, context, expected):
+        data = {"order": 0, "source": "settings"}
+        source = source_cls.model_validate(data, context=context)
+        assert getattr(source, namespace_field) == expected
+        assert data == {"order": 0, "source": "settings"}
+
+    @pytest.mark.parametrize("namespace", ["_env", "explicit", None])
+    def test_explicit_namespace(self, source_cls, namespace_field, namespace):
+        source = source_cls.model_validate(
+            {"order": 0, "source": "settings", namespace_field: namespace},
+            context={"env_namespace": "custom"},
+        )
+        assert getattr(source, namespace_field) == namespace
+
+    def test_invalid_context_default(self, source_cls, namespace_field):
+        with pytest.raises(ValidationError) as exc_info:
+            source_cls.model_validate(
+                {"order": 0, "source": "settings"},
+                context={"env_namespace": 123},
+            )
+        assert exc_info.value.errors()[0]["loc"] == (namespace_field,)
+
+    def test_existing_source_retains_namespace(self, source_cls, namespace_field):
+        source = source_cls(order=0, source="settings")
+        validated = source_cls.model_validate(
+            source, context={"env_namespace": "custom"}
+        )
+        assert validated is source
+        assert getattr(validated, namespace_field) == "_env"
 
 
 class TestConfigSourceListBasics:
@@ -50,22 +97,70 @@ class TestConfigSourceListBasics:
         assert config["b"] == 3  # Higher order overrides
         assert config["c"] == 4
 
-    def test_sources_sorted_by_order(self):
-        """Test sources are automatically sorted by order."""
+    @pytest.mark.parametrize("orders", [(2, 0, 1), ("10", "2", "1"), (10, "2", 1)])
+    def test_sources_sorted_by_order(self, orders):
+        """Sort by validated integer orders, not raw input values."""
         sources = ConfigSourceList.model_validate(
             {
                 "data": [
-                    {"format": "dict", "source": {"last": True}, "order": 2},
-                    {"format": "dict", "source": {"first": True}, "order": 0},
-                    {"format": "dict", "source": {"middle": True}, "order": 1},
+                    {"format": "dict", "source": {"value": order}, "order": order}
+                    for order in orders
                 ],
             },
         )
 
-        # Verify order
-        assert sources[0].order == 0
-        assert sources[1].order == 1
-        assert sources[2].order == 2
+        assert [source.order for source in sources] == sorted(map(int, orders))
+        assert sources.load()["value"] == max(orders, key=int)
+
+    @pytest.mark.parametrize("orders", [(1, "01"), ("1", "01")])
+    def test_normalized_orders_must_be_unique(self, orders):
+        with pytest.raises(ValidationError, match="orders must be unique"):
+            ConfigSourceList.model_validate(
+                {
+                    "data": [
+                        {"format": "dict", "source": {}, "order": order}
+                        for order in orders
+                    ],
+                },
+            )
+
+    def test_implicit_order_preserves_explicit_values_and_sources(self):
+        existing = DictConfigSource(order=7, source={"last": True})
+        declarations = [
+            {"source": {"first": True}},
+            {"source": {"middle": True}, "order": "2"},
+            existing,
+        ]
+        sources = resolve_config_sources(declarations)
+
+        assert [source.order for source in sources] == [0, 2, 7]
+        assert declarations[0] == {"source": {"first": True}}
+        assert declarations[1] == {"source": {"middle": True}, "order": "2"}
+        assert sources[2] is existing
+
+    def test_implicit_order_conflict_with_explicit_order(self):
+        with pytest.raises(ValidationError, match="orders must be unique"):
+            resolve_config_sources(
+                [{"source": {}}, {"source": {}, "order": "0"}],
+            )
+
+    @pytest.mark.parametrize(
+        ("declaration", "location"),
+        [
+            (None, ("data", 0)),
+            (
+                {"format": "dict", "source": {}, "order": []},
+                ("data", 0, "dict", "order"),
+            ),
+            ({"format": "dict", "source": {}}, ("data", 0, "dict", "order")),
+        ],
+    )
+    def test_invalid_source_reports_nested_validation_error(
+        self, declaration, location
+    ):
+        with pytest.raises(ValidationError) as exc_info:
+            ConfigSourceList.model_validate({"data": [declaration]})
+        assert exc_info.value.errors()[0]["loc"] == location
 
 
 class TestConfigSourceListConditionalLoading:
@@ -720,6 +815,32 @@ class TestResolveConfigSourcesFunction:
         )
         assert isinstance(csl, ConfigSourceList)
         assert csl.data[0].order == 5
+
+    @pytest.mark.parametrize(
+        "form", ["declarations", "nested_list", "list_source", "collection"]
+    )
+    def test_order_bounds_apply_only_to_immediate_sources(self, form):
+        nested = [
+            {"order": 2000, "source": {"value": "child_last", "nested": True}},
+            {"order": -10, "source": {"value": "child_first"}},
+        ]
+        if form != "declarations":
+            nested = resolve_config_sources(nested)
+        group = {"format": "list", "order": 10, "source": nested}
+        if form in {"list_source", "collection"}:
+            group = ListConfigSource.model_validate(group)
+        declarations = [group, {"order": 20, "source": {"value": "outer_last"}}]
+        if form == "collection":
+            declarations = resolve_config_sources(declarations)
+
+        sources = resolve_config_sources(declarations, order_min=0, order_max=999)
+
+        assert sources.load() == {"value": "outer_last", "nested": True}
+        group = sources[0]
+        assert isinstance(group, ListConfigSource)
+        assert [source.order for source in group.source] == [-10, 2000]
+        with pytest.raises(ValueError, match="below minimum allowed order"):
+            resolve_config_sources(group.source, order_min=0)
 
     @pytest.mark.parametrize(
         "value",

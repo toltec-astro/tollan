@@ -1,12 +1,16 @@
 """Sphinx configuration; inherit the Astropy documentation defaults."""
 
 import warnings
+from dataclasses import MISSING
+from inspect import signature
 from pathlib import Path
 from typing import get_type_hints
 
 from docutils import nodes
+from pydantic.dataclasses import is_pydantic_dataclass
 from sphinx.ext import intersphinx
-from sphinx.ext.autodoc import SUPPRESS
+from sphinx.ext.autodoc import SUPPRESS, AttributeDocumenter
+from sphinx.util.inspect import stringify_signature
 from sphinx.util.typing import stringify_annotation
 from sphinx_astropy.conf.v2 import *  # pyright: ignore[reportWildcardImportFromLibrary]  # noqa: F403
 from sphinx_astropy.conf.v2 import (
@@ -185,6 +189,65 @@ class _ModelFieldDocumenter(PydanticFieldDocumenter):
         self.add_line(f"   :type: {annotation}", self.get_sourcename())
 
 
+class _DataclassFieldDocumenter(AttributeDocumenter):
+    # autodoc-pydantic handles BaseModel fields, not Pydantic dataclasses.
+    # Sphinx otherwise renders Annotated validation metadata as Python types.
+    def add_directive_header(self, sig):
+        if (
+            not is_pydantic_dataclass(self.parent)
+            or self.objpath[-1] not in self.parent.__pydantic_fields__
+        ):
+            super().add_directive_header(sig)
+            return
+        annotation_option = self.options.annotation
+        self.options.annotation = SUPPRESS
+        super().add_directive_header(sig)
+        self.options.annotation = annotation_option
+        if annotation_option is SUPPRESS:
+            return
+        if annotation_option:
+            self.add_line(f"   :annotation: {annotation_option}", self.get_sourcename())
+            return
+        if self.config.autodoc_typehints != "none":
+            mode = (
+                "smart"
+                if self.config.autodoc_typehints_format == "short"
+                else "fully-qualified"
+            )
+            annotation = stringify_annotation(
+                get_type_hints(self.parent)[self.objpath[-1]], mode=mode
+            )
+            self.add_line(f"   :type: {annotation}", self.get_sourcename())
+        if not self.options.no_value and self.object is not MISSING:
+            self.add_line(f"   :value: {self.object!r}", self.get_sourcename())
+
+
+# Sphinx defines the event callback's positional arguments.
+def _dataclass_signature(app, what, name, obj, options, sig, return_annotation):  # noqa: PLR0913, PLR0917
+    # Strip Annotated extras in constructor signatures too, without changing the
+    # live dataclass annotations used by validation or other documentation pages.
+    if what != "class" or not is_pydantic_dataclass(obj):
+        return None
+    hints = get_type_hints(obj)
+    sig = signature(obj)
+    sig = sig.replace(
+        parameters=[
+            parameter.replace(annotation=hints.get(name, parameter.annotation))
+            for name, parameter in sig.parameters.items()
+        ]
+    )
+    return (
+        stringify_signature(
+            sig,
+            show_annotation=app.config.autodoc_typehints in {"signature", "both"},
+            show_return_annotation=False,
+            unqualified_typehints=app.config.autodoc_typehints_format == "short",
+            short_literals=app.config.python_display_short_literal_types,
+        ),
+        return_annotation,
+    )
+
+
 def _resolve_reference_alias(app, env, node, contnode):
     target = node.get("reftarget")
     if target in _REFERENCE_URLS:
@@ -200,8 +263,15 @@ def _resolve_reference_alias(app, env, node, contnode):
     return None
 
 
-def setup(app):
+def _configure_documenters(app, config):
+    # Sphinx 9 registers its legacy documenters at config-inited, priority 500.
     app.add_autodocumenter(_ModelFieldDocumenter, override=True)
+    app.add_autodocumenter(_DataclassFieldDocumenter, override=True)
+
+
+def setup(app):
+    app.connect("config-inited", _configure_documenters, priority=600)
+    app.connect("autodoc-process-signature", _dataclass_signature)
     app.connect("missing-reference", _resolve_reference_alias)
 
 

@@ -32,7 +32,7 @@ observation = Observation.model_validate(
         "start": "2026-01-01T00:00:00",
         "target": "10.6847083d 41.26875d",
     },
-    context={"rootpath": Path("/data")},
+    context={"root_path": Path("/data")},
 )
 assert observation.path == Path("/data/observation.nc")
 assert observation.wavelength.to_value("mm") == 1.1
@@ -54,13 +54,14 @@ assert validation_schema["required"] == ["path", "wavelength", "start", "target"
 
 | Annotation | Result and checks |
 | --- | --- |
-| `AnyPath` | A `Path`; relative paths use `context["rootpath"]` when supplied. No existence check. |
+| `AnyPath` | A `Path`; relative paths use `context["root_path"]` when supplied. No existence check. |
 | `AbsAnyPath` | Expands `~` and resolves to an absolute path. No existence check. |
 | `AbsFilePath` | Requires an existing file and returns its absolute path. |
 | `AbsDirectoryPath` | Requires an existing directory and returns its absolute path. |
-| `FileLocField` | A `FileLoc` for local paths or remote URLs, using `rootpath` as the local parent unless an explicit parent is supplied. |
+| `SubPath` | A relative descendant `PurePosixPath`, with no root or `..` component. No filesystem checks or context-root application. |
+| `FileLocField` | A `FileLoc` for local paths or remote URLs, using `root_path` as the local parent unless an explicit parent is supplied. |
 
-Without `rootpath`, relative paths are relative to the process's working directory.
+Without `root_path`, relative paths use the working directory.
 For `FileLocField`, an explicit `local_parent_path`, including `None`, takes
 precedence. Existing `FileLoc` objects retain their parent settings. See
 [configuration loading](configuration.md#include-configuration-files) for the
@@ -70,6 +71,24 @@ Use `path_field(path_type=..., exists=..., resolve=...)` with `TypeAdapter` for
 custom checks. `path_type="file"` and `"dir"` always require an existing object
 of that kind; `"new"` requires a nonexistent path with an existing parent.
 `exists` controls only the unconstrained `path_type=None` case.
+
+Use `SubPath` for a location to be joined beneath a root later. It accepts nested
+paths, but rejects the root itself (`""` or `"."`), absolute paths, and parent
+traversal. Paths use `/` separators; redundant separators and `.` components are
+removed. It does not expand `~` or resolve symlinks.
+
+```{testcode}
+from pathlib import Path, PurePosixPath
+from tollan.config import FrozenBaseModel
+from tollan.config.types import SubPath
+
+class StoreSettings(FrozenBaseModel):
+    subpath: SubPath
+
+settings = StoreSettings(subpath="./toltec//tcs/")
+assert settings.subpath == PurePosixPath("toltec/tcs")
+assert Path("/data_lmt") / settings.subpath == Path("/data_lmt/toltec/tcs")
+```
 
 ## Quantities
 

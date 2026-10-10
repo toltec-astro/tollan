@@ -10,11 +10,13 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import StrEnum, auto
 from inspect import get_annotations
-from typing import TYPE_CHECKING, Any, ClassVar, NamedTuple, Self
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, NamedTuple, Self
 
-from pydantic import field_validator
+from pydantic import Field, ValidateAs, field_validator
 from pydantic.dataclasses import dataclass as pydantic_dataclass
 from pydantic_core import PydanticCustomError
+
+from ..config.types import SubPath
 
 if TYPE_CHECKING:
     from collections.abc import Mapping as MappingABC
@@ -105,11 +107,24 @@ class Mapping:
         raise NotImplementedError(msg)
 
 
-class _Candidate(NamedTuple):
+class _Candidate[
+    NameT: str = str,
+    LocationT: FieldLocation | None = FieldLocation | None,
+](NamedTuple):
     """A data name or subtree path and its optional location."""
 
-    name: str
-    location: FieldLocation | None
+    name: NameT
+    location: LocationT
+
+
+type _SubpathCandidate = _Candidate[
+    Annotated[
+        str,
+        # ValidateAs supports aliases; its annotation still requires type.
+        ValidateAs(SubPath, str),  # ty: ignore[invalid-argument-type]
+    ],
+    Literal[FieldLocation.path],
+]
 
 
 @pydantic_dataclass(frozen=True)
@@ -120,7 +135,8 @@ class NameMapping(Mapping):
     ----------
     candidates : str or sequence
         One name, a sequence of names, or a sequence of (name, location) pairs.
-        Candidates in preference order. A name without a location may match at
+        Supply at least one candidate, in preference order; name/location pairs
+        must be unique. A name without a location may match at
         most one supported entity kind; ambiguous matches raise ValueError.
     resolve_value : bool, default False
         Whether mapper resolution captures the value in ``MappedField.value``.
@@ -153,7 +169,7 @@ class NameMapping(Mapping):
     ('signal',)
     """
 
-    candidates: tuple[_Candidate, ...]
+    candidates: Annotated[tuple[_Candidate, ...], Field(min_length=1)]
     resolve_value: bool = False
     parent: NameMapping | None = None
 
@@ -183,9 +199,6 @@ class NameMapping(Mapping):
                 "(name, location) pairs",
             )
             raise error
-        if not v:
-            msg = "candidates must contain at least one physical field name"
-            raise ValueError(msg)
         if any(isinstance(item, FieldLocation) for item in v):
             msg = "Use a sequence of (name, location) pairs or a NameMapping factory"
             raise ValueError(msg)
@@ -428,10 +441,10 @@ class SubpathMapping(NameMapping):
 
     Parameters
     ----------
-    candidates : sequence of (str, FieldLocation)
-        Relative paths paired with ``FieldLocation.path``. Use the ``path``
-        factory to construct these pairs from strings. The sequence defines
-        their preference order.
+    candidates : sequence of (SubPath, FieldLocation.path)
+        Candidate subpaths in preference order. Use the ``path`` factory to
+        supply the paths without their location tags. See
+        :data:`~tollan.config.types.path.SubPath` for accepted path values.
     resolve_value : bool, default False
         Capture the selected subtree during mapper resolution.
     parent : NameMapping, optional
@@ -441,8 +454,8 @@ class SubpathMapping(NameMapping):
     Raises
     ------
     ValueError
-        A candidate uses another storage location, is absolute, or contains an
-        empty component, ``.`` or ``..``.
+        A candidate is not a valid subpath, uses another storage location, or
+        duplicates a normalized path.
 
     Examples
     --------
@@ -452,36 +465,7 @@ class SubpathMapping(NameMapping):
     ('diagnostics/spectrum',)
     """
 
-    @field_validator("candidates")
-    @classmethod
-    def validate_subpaths(
-        cls, candidates: tuple[_Candidate, ...]
-    ) -> tuple[_Candidate, ...]:
-        """Validate relative descendant path candidates.
-
-        Parameters
-        ----------
-        candidates : tuple of _Candidate
-            Normalized path and storage-location pairs.
-
-        Returns
-        -------
-        tuple of _Candidate
-            The supplied candidates when every path identifies a descendant.
-
-        Raises
-        ------
-        ValueError
-            A candidate uses a location other than ``path``, is absolute, or
-            contains an empty component, ``.`` or ``..``.
-        """
-        for candidate in candidates:
-            if candidate.location != FieldLocation.path or any(
-                part in {"", ".", ".."} for part in candidate.name.split("/")
-            ):
-                msg = f"Expected a relative descendant path, got {candidate!r}"
-                raise ValueError(msg)
-        return candidates
+    candidates: Annotated[tuple[_SubpathCandidate, ...], Field(min_length=1)]
 
 
 @dataclass(frozen=True, slots=True)

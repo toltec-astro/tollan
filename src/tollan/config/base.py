@@ -22,10 +22,11 @@ __all__ = ["FrozenBaseModel"]
 class FrozenBaseModel(BaseModel):
     """Base model class with immutability and YAML support.
 
-    Provides common configuration for astronomy data models:
+    Provides common behavior for configuration models:
 
     - Frozen by default
     - Strict type validation
+    - Validation of declared defaults and default-factory results
     - YAML loading/dumping support
     - JSON Schema generation through Pydantic
 

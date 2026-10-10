@@ -2,6 +2,7 @@
 
 import pytest
 import yaml
+from pydantic import ValidationError
 
 from tollan.config import RuntimeContext
 from tollan.config.sources import YamlConfigSource
@@ -20,9 +21,9 @@ def test_yaml_list_conditions_remerge_without_mutating_cached_sources(tmp_path):
     assert source.load({"workers": 8}) == {"items": [{"values": [1, 2]}]}
 
 
-def test_nested_lists_have_local_explicit_and_implicit_orders(tmp_path):
-    path = tmp_path / "config.yaml"
-    path.write_text("""
+@pytest.mark.parametrize("from_file", [False, True])
+def test_nested_lists_have_local_explicit_and_implicit_orders(tmp_path, from_file):
+    document = """
 - source:
     - order: 2000
       source: {value: last}
@@ -31,8 +32,13 @@ def test_nested_lists_have_local_explicit_and_implicit_orders(tmp_path):
 - source:
     - source: {extra: first}
     - source: {extra: last}
-""")
-    rc = RuntimeContext(config_sources=path)
+"""
+    if from_file:
+        config_sources = tmp_path / "config.yaml"
+        config_sources.write_text(document)
+    else:
+        config_sources = yaml.safe_load(document)
+    rc = RuntimeContext(config_sources=config_sources)
     assert rc.config_dict["value"] == "last"
     assert rc.config_dict["extra"] == "last"
 
@@ -140,7 +146,7 @@ def test_empty_yaml_configurations(tmp_path, document):
     assert YamlConfigSource(order=0, source=path).load() == {}
 
 
-@pytest.mark.parametrize("document", ["42", "false", "text", "[1, 2]", "- source: [1]"])
+@pytest.mark.parametrize("document", ["42", "false", "text"])
 def test_invalid_document_does_not_silently_disappear(tmp_path, document):
     path = tmp_path / "config.yaml"
     path.write_text(document)
@@ -148,11 +154,22 @@ def test_invalid_document_does_not_silently_disappear(tmp_path, document):
         YamlConfigSource(order=0, source=path).load()
 
 
-def test_invalid_source_declaration_reports_validation_error(tmp_path):
+@pytest.mark.parametrize(
+    ("document", "location"),
+    [
+        ("- format: dict\n", ("data", 0, "dict", "source")),
+        ("[1, 2]", ("data", 0)),
+        ("- source: [1]", ("data", 0, "list", "source", "data", 0)),
+    ],
+)
+def test_invalid_source_declaration_reports_validation_error(
+    tmp_path, document, location
+):
     path = tmp_path / "config.yaml"
-    path.write_text("- format: dict\n")
-    with pytest.raises(ValueError, match="source"):
+    path.write_text(document)
+    with pytest.raises(ValidationError) as exc_info:
         YamlConfigSource(order=0, source=path).load()
+    assert exc_info.value.errors()[0]["loc"] == location
 
 
 def test_duplicate_local_orders_are_rejected(tmp_path):

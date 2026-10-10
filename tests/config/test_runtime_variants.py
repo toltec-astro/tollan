@@ -172,7 +172,7 @@ def test_with_config_retains_runtime_subclass_and_validation_context(tmp_path):
         pass
 
     rc = Runtime().with_config(
-        overrides={"path": "file.dat"}, validation_context={"rootpath": tmp_path}
+        overrides={"path": "file.dat"}, validation_context={"root_path": tmp_path}
     )
     assert type(rc) is Runtime
     assert isinstance(rc.config, Config)

@@ -22,7 +22,7 @@ from pydantic.dataclasses import dataclass
 from pydantic.networks import AnyUrl, UrlConstraints
 from pydantic_core import ArgsKwargs
 
-from .file import ensure_abspath
+from .file import ensure_abs_path
 
 if TYPE_CHECKING:
     from pydantic import (
@@ -263,7 +263,7 @@ class FileLocData:
                 _set_kwarg(k, getattr(arg, k))
         else:
             msg = "unknown file loc data type."
-            raise TypeError(msg)
+            raise ValueError(msg)
         # Omitted fields skip validation; URL-only input still needs its hostname.
         if kwargs.get("url") is not None:
             kwargs.setdefault("netloc", None)
@@ -295,8 +295,8 @@ class FileLocData:
             return p
         # relative path
         if local_parent_path is not None:
-            return ensure_abspath(Path(local_parent_path).joinpath(p))
-        return ensure_abspath(p)
+            return ensure_abs_path(Path(local_parent_path).joinpath(p))
+        return ensure_abs_path(p)
 
     @classmethod
     def _resolve_remote_path(

@@ -7,8 +7,9 @@ import pickle
 
 import pytest
 import xarray as xr
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
+from tollan.config import FrozenBaseModel
 from tollan.pipeline import (
     PIPELINE_CONTEXT_KEY,
     SequentialPipeline,
@@ -306,6 +307,30 @@ class TestContextKey:
 
 
 class TestStepConstruction:
+    @pytest.mark.parametrize("kwargs", [{"value": "3.0"}, {"enabled": "false"}])
+    def test_config_rejects_coercion(self, kwargs):
+        with pytest.raises(ValidationError):
+            AddStep(**kwargs)
+
+    @pytest.mark.parametrize("use_factory", [False, True])
+    def test_config_validates_declared_defaults(self, use_factory):
+        class InvalidConfig(StepConfig):
+            count: int = (
+                Field(default_factory=lambda: -1, ge=0)
+                if use_factory
+                else Field(default=-1, ge=0)
+            )
+
+        with pytest.raises(ValidationError, match="greater than or equal to 0"):
+            InvalidConfig()
+
+    def test_config_uses_frozen_yaml_model(self):
+        config = AddStep(value=3.0).config
+        assert isinstance(config, FrozenBaseModel)
+        assert AddConfig.model_validate_yaml(config.model_dump_yaml()) == config
+        with pytest.raises(ValidationError, match="frozen"):
+            config.value = 4.0  # ty: ignore[invalid-assignment]
+
     def test_default_config_from_kwargs(self):
         step = AddStep(value=3.0)
         assert step.config.value == 3.0

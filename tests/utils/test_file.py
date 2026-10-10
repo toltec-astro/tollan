@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from tollan.utils.file import (
-    ensure_abspath,
+    ensure_abs_path,
     ensure_path_parent_exists,
     ensure_readable_fileobj,
     get_or_create_dir,
@@ -19,28 +19,28 @@ from tollan.utils.file import (
 
 
 class TestEnsureAbspath:
-    """Test ensure_abspath function."""
+    """Test ensure_abs_path function."""
 
-    def test_ensure_abspath_with_relative_path(self):
+    def test_ensure_abs_path_with_relative_path(self):
         """Test converting relative path to absolute."""
-        result = ensure_abspath(".")
+        result = ensure_abs_path(".")
         assert result.is_absolute()
         assert isinstance(result, Path)
 
-    def test_ensure_abspath_with_tilde(self):
+    def test_ensure_abs_path_with_tilde(self):
         """Test expanding tilde in path."""
-        result = ensure_abspath("~/test")
+        result = ensure_abs_path("~/test")
         assert result.is_absolute()
         assert "~" not in str(result)
 
-    def test_ensure_abspath_with_absolute_path(self, tmp_path):
+    def test_ensure_abs_path_with_absolute_path(self, tmp_path):
         """Test that absolute path remains absolute."""
-        result = ensure_abspath(str(tmp_path))
+        result = ensure_abs_path(str(tmp_path))
         assert result == tmp_path
 
-    def test_ensure_abspath_with_path_object(self):
+    def test_ensure_abs_path_with_path_object(self):
         """Test with Path object input."""
-        result = ensure_abspath(Path())
+        result = ensure_abs_path(Path())
         assert result.is_absolute()
 
 
@@ -191,7 +191,7 @@ class TestGetOrCreateDir:
         with tempfile.TemporaryDirectory() as tmpdir:
             newdir = Path(tmpdir) / "new_directory"
             assert not newdir.exists()
-            result = get_or_create_dir(newdir)
+            result = get_or_create_dir(dir_path=newdir)
             assert newdir.exists()
             assert newdir.is_dir()
             assert result == newdir

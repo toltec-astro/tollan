@@ -50,35 +50,15 @@ class ListConfigSource(ConfigSourceBase):
     @field_validator("source", mode="before")
     @classmethod
     def _validate_source(cls, v: Any, info: ValidationInfo) -> ConfigSourceList:
-        """Convert list/dict to ConfigSourceList if needed.
-
-        Parameters
-        ----------
-        v : Any
-            Source as ConfigSourceList, list, or dict
-        info : ValidationInfo
-            Validation context with defaults for included sources.
-
-        Returns
-        -------
-        ConfigSourceList
-            Validated source list
-        """
+        """Validate nested shorthand with the source-list context."""
         # Import here to avoid circular import
-        from . import (  # noqa: PLC0415
-            ENV_NAMESPACE_DEFAULT,
-            ConfigSourceList,
-            resolve_config_sources,
-        )
+        from . import ConfigSourceList  # noqa: PLC0415
 
         if isinstance(v, ConfigSourceList):
             return v
-        # Validate collection inputs through the common resolver.
-        return resolve_config_sources(
+        return ConfigSourceList.model_validate(
             v,
-            env_namespace=(info.context or {}).get(
-                "env_namespace", ENV_NAMESPACE_DEFAULT
-            ),
+            context={**(info.context or {}), "config_source_implicit_order": True},
         )
 
     @model_validator(mode="after")

@@ -14,12 +14,14 @@ from tollan.utils.typer import MultiOption, create_cli
 
 app = create_cli(version="1.0")
 
+
 @app.command()
 def show_files(
     file_names: Annotated[list[str], MultiOption(help="Files to display.")],
 ):
     for name in file_names:
         typer.echo(name)
+
 
 if __name__ == "__main__":
     app()
@@ -103,6 +105,7 @@ from tollan.config import RuntimeContext
 from tollan.utils.typer import TollanTyper
 
 app = TollanTyper()
+
 
 @app.command()
 @RuntimeContext.add_cli_options()

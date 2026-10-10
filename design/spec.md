@@ -123,6 +123,10 @@ component typed settings before it uses them.
 - A runtime context maintains the application's configuration sources, overrides,
   and evaluation context.
 - A configured component captures validated settings from the runtime.
+- User-configuration models use strict type validation, are frozen by default,
+  and validate declared defaults and default-factory results. Different validation
+  or mutation protocols require explicit exceptions.
+- Validated settings support YAML persistence.
 - Subsequent runtime changes do not alter an existing component's settings.
   Recreating the component captures settings from the updated runtime.
 
@@ -135,6 +139,15 @@ component typed settings before it uses them.
   source list. Invalid collections do not fall back to settings. Settings that
   contain `data` can be supplied through an explicit dictionary source.
 - Source composition defines the order in which settings override earlier values.
+- Each source list has independent ordering. Resolver order bounds constrain
+  immediate entries only; a nested list contributes at its enclosing source's
+  position. Reusing validated sources must not change this rule.
+- Relative source-file references resolve against a supplied base directory or
+  the working directory. References in a YAML source list resolve against that
+  file's directory, including references inside inline nested lists. Validation
+  must not open referenced files or rewrite paths inside settings dictionaries.
+  The source-file root and the application-value root are independent validation
+  settings; neither substitutes for the other.
 - Evaluation context supplies values used to select or evaluate settings.
 - Callers can refresh settings from external sources separately from evaluating
   settings for a particular input.
@@ -145,6 +158,13 @@ component typed settings before it uses them.
   validated configuration and metadata models.
 - A field serializer produces the representation used to restore the validated
   value. The representation need not preserve the original input syntax.
+- Relative descendant paths can be validated before a containing root exists.
+  They use POSIX syntax and normalize redundant separators and current-directory
+  components. They exclude rooted paths, the root itself, and parent traversal.
+  Path fields and subtree mappings declare the shared Pydantic subpath type;
+  Pydantic applies its normalization and validation.
+  This check performs no filesystem access and does not establish symlink
+  containment.
 - Time serialization preserves precision independently of display settings.
 - Callers can inspect declared defaults without instantiating a configured
   component or executing code that generates a default value.
@@ -244,6 +264,9 @@ by a directed acyclic graph (DAG).
 #### Steps and configuration
 
 - A step invokes an operation on caller-supplied working data using its settings.
+- Step settings follow the
+  [configuration-model contract](#runtime-context-and-component-settings).
+  Invocation state remains mutable and belongs to the step context.
 - The operation may modify the working data.
 - Step composition preserves the identity of the caller's working data.
 

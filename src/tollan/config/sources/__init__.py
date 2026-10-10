@@ -2,16 +2,17 @@
 
 from __future__ import annotations
 
-import collections.abc
 import os
 import re
+from operator import attrgetter
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, overload
+from typing import TYPE_CHECKING, Annotated, Any, Literal, overload
 
 from loguru import logger
 from pydantic import (
     BaseModel,
     Field,
+    TypeAdapter,
     WithJsonSchema,
     field_validator,
     model_validator,
@@ -25,6 +26,7 @@ from .base import (
     ConfigSourceFormat,
     DictConfigT,  # downstream models use this
     FileConfigSourceBase,
+    _ConfigSourcePath,
 )
 from .dict_ import DictConfigSource
 from .envfile import ENV_NAMESPACE_DEFAULT, EnvFileConfigSource
@@ -63,6 +65,7 @@ type ConfigSource = Annotated[
 
 # Matches any numbered config file: 00_base.yaml, 10_site.env, 99_anything.yml
 _DIR_FILE_PATTERN = re.compile(r"^(?P<order>\d+)(_.*)?(?:\.ya?ml|\.env)$")
+_SOURCE_PATH_ADAPTER = TypeAdapter(_ConfigSourcePath)
 
 
 def _detect_source_format(path: Path) -> ConfigSourceFormat | None:
@@ -142,7 +145,7 @@ class ConfigSourceList(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _validate_arg(cls, arg: Any) -> Any:
+    def _validate_arg(cls, arg: Any, info: ValidationInfo) -> Any:
         """Normalize settings dictionaries, paths, and source lists."""
         if arg is None or (isinstance(arg, dict) and "data" not in arg):
             return {"data": [{"format": "dict", "source": arg or {}, "order": 0}]}
@@ -153,6 +156,12 @@ class ConfigSourceList(BaseModel):
             return arg
         if isinstance(arg, str | os.PathLike):
             path = Path(arg)
+            if (info.context or {}).get("config_source_root_path") is not None:
+                # Resolve before directory discovery; absolute entries prevent
+                # applying a relative root again during file-source validation.
+                path = _SOURCE_PATH_ADAPTER.validate_python(
+                    path, context=info.context
+                ).absolute()
             if path.is_dir():
                 return cls._resolve_from_dir(path)
             return {
@@ -168,98 +177,48 @@ class ConfigSourceList(BaseModel):
             return {"data": arg}
         return arg
 
-    @model_validator(mode="after")
-    def _validate_order_constraints(self, info: ValidationInfo) -> Self:
-        """Validate order constraints from validation context.
-
-        Checks order_min and order_max from validation context if provided.
-        This is used by the config_sources() wrapper to enforce constraints.
-        """
-        if info.context is None:
-            return self
-
-        order_max = info.context.get("order_max")
-        order_min = info.context.get("order_min")
-
-        if order_max is None and order_min is None:
-            return self
-
-        # Validate all sources meet the constraints
-        for source in self.data:
-            if order_max is not None and source.order > order_max:
-                msg = (
-                    f"Config source order {source.order} exceeds maximum "
-                    f"allowed order {order_max}"
-                )
-                raise ValueError(msg)
-            if order_min is not None and source.order < order_min:
-                msg = (
-                    f"Config source order {source.order} below minimum "
-                    f"allowed order {order_min}"
-                )
-                raise ValueError(msg)
-
-        return self
-
     @field_validator("data", mode="before")
     @classmethod
-    def _check_data_order_and_sort(  # noqa: C901
+    def _fill_source_defaults(
         cls,
         data: Any,
         info: ValidationInfo,
-    ) -> list:
-        """Validate and sort sources by order."""
-        if not isinstance(data, collections.abc.Sequence):
-            msg = "data must be a sequence"
-            raise TypeError(msg)
+    ) -> Any:
+        """Fill omitted source orders and formats before union validation."""
+        context = info.context or {}
+        if not context.get("config_source_implicit_order", False) or not isinstance(
+            data, list
+        ):
+            return data
 
-        # Check if we should auto-assign order based on position
-        implicit_order = (info.context or {}).get("config_source_implicit_order", False)
-        if implicit_order:
-            # Only declaration keys below are changed. Preserve validated sources,
-            # nested source caches, and opaque values inside source payloads.
-            data = [
-                source.copy() if isinstance(source, dict) else source for source in data
-            ]
-            for i, source in enumerate(data):
-                if isinstance(source, dict):
-                    source.setdefault("order", i)
-                    # Auto-infer format if not set
-                    if "format" not in source:
-                        src = source.get("source")
-                        if isinstance(src, (str, Path)):
-                            source["format"] = (
-                                _detect_source_format(Path(src)) or "yaml"
-                            )
-                        elif isinstance(src, dict):
-                            source["format"] = "dict"
-                        elif isinstance(src, (list, ConfigSourceList)):
-                            source["format"] = "list"
+        # Preserve validated sources, nested caches, and opaque payload values.
+        data = [
+            source.copy() if isinstance(source, dict) else source for source in data
+        ]
+        for i, source in enumerate(data):
+            if not isinstance(source, dict):
+                continue
+            source.setdefault("order", i)
+            if "format" not in source:
+                src = source.get("source")
+                if isinstance(src, (str, Path)):
+                    source["format"] = _detect_source_format(Path(src)) or "yaml"
+                elif isinstance(src, dict):
+                    source["format"] = "dict"
+                elif isinstance(src, (list, ConfigSourceList)):
+                    source["format"] = "list"
 
-                    # Keep the default with YAML sources so it also applies to
-                    # includes parsed later. Explicit source choices win.
-                    namespace = (info.context or {}).get(
-                        "env_namespace", ENV_NAMESPACE_DEFAULT
-                    )
-                    if source.get("format") == ConfigSourceFormat.envfile:
-                        source.setdefault("namespace", namespace)
-                    elif source.get("format") == ConfigSourceFormat.yaml:
-                        source.setdefault("env_namespace", namespace)
+        return data
 
-        # Validate orders are unique
-        orders = [s.get("order") if isinstance(s, dict) else s.order for s in data]
+    @field_validator("data")
+    @classmethod
+    def _check_data_order_and_sort(cls, data: list[ConfigSource]) -> list[ConfigSource]:
+        """Require unique validated orders and arrange sources for loading."""
+        orders = [source.order for source in data]
         if len(set(orders)) != len(orders):
             msg = f"Config source orders must be unique: {orders}"
             raise ValueError(msg)
-
-        # Sort by order
-        def get_order(s: Any) -> int:
-            if isinstance(s, dict):
-                order = s.get("order")
-                return order if order is not None else 0
-            return s.order
-
-        return sorted(data, key=get_order)
+        return sorted(data, key=attrgetter("order"))
 
     def load(self, context: dict[str, Any] | None = None) -> DictConfigT:
         """Load and merge all enabled configuration sources.
@@ -556,11 +515,12 @@ ConfigSourceList.model_rebuild()
 
 
 def resolve_config_sources(
-    arg: ConfigSourceList | Path | dict | list | None,
+    arg: ConfigSourceList | str | Path | dict | list | None,
     order_max: int | None = None,
     order_min: int | None = None,
     *,
     env_namespace: str | None = ENV_NAMESPACE_DEFAULT,
+    config_source_root_path: str | Path | None = None,
 ) -> ConfigSourceList:
     """Create a ConfigSourceList from various input formats.
 
@@ -582,15 +542,22 @@ def resolve_config_sources(
 
     Parameters
     ----------
-    arg : ConfigSourceList | Path | dict | list | None
+    arg : ConfigSourceList | str | Path | dict | list | None
         Configuration source specification
     order_max : int | None, optional
-        Maximum allowed order value for sources, by default None
+        Maximum allowed order for immediate sources, by default None.
+        Orders within nested lists are independent.
     order_min : int | None, optional
-        Minimum allowed order value for sources, by default None
+        Minimum allowed order for immediate sources, by default None.
+        Orders within nested lists are independent.
     env_namespace : str | None, optional
         Default namespace for dotenv values, including YAML includes. Explicit
-        namespaces on source declarations take precedence. None loads at root.
+        namespaces on source declarations take precedence. Defaults to ``"_env"``;
+        None loads at root.
+    config_source_root_path : str | pathlib.Path | None, optional
+        Base directory for relative source paths, by default None (the working
+        directory). Included source lists use their containing file's directory.
+        Existing source objects and paths inside settings are unchanged.
 
     Returns
     -------
@@ -622,15 +589,39 @@ def resolve_config_sources(
         ... )
 
         >>> # From directory (loads numbered YAML files)
-        >>> csl = resolve_config_sources(Path("config_dir"))
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as directory:
+        ...     path = Path(directory)
+        ...     _ = (path / "00_base.yaml").write_text("workers: 2")
+        ...     csl = resolve_config_sources(path)
+        ...     csl.load()
+        {'workers': 2}
+
+        >>> # Relative source paths with an explicit base directory
+        >>> csl = resolve_config_sources(
+        ...     [{"source": "settings.yaml"}], config_source_root_path=Path.cwd()
+        ... )
+        >>> csl[0].source == Path.cwd() / "settings.yaml"
+        True
     """
     # Build validation context
     context: dict[str, Any] = {
         "config_source_implicit_order": True,
         "env_namespace": env_namespace,
+        "config_source_root_path": config_source_root_path,
     }
-    if order_max is not None:
-        context["order_max"] = order_max
-    if order_min is not None:
-        context["order_min"] = order_min
-    return ConfigSourceList.model_validate(arg, context=context)
+    sources = ConfigSourceList.model_validate(arg, context=context)
+    for source in sources:
+        if order_max is not None and source.order > order_max:
+            msg = (
+                f"Config source order {source.order} exceeds maximum "
+                f"allowed order {order_max}"
+            )
+            raise ValueError(msg)
+        if order_min is not None and source.order < order_min:
+            msg = (
+                f"Config source order {source.order} below minimum "
+                f"allowed order {order_min}"
+            )
+            raise ValueError(msg)
+    return sources

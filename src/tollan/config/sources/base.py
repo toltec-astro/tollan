@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from enum import StrEnum, auto
 from functools import cached_property
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import TYPE_CHECKING, Annotated, Any
 
 import pandas as pd
 from pydantic import BaseModel, PrivateAttr
 
 from ...utils.log import logger
+from ..types.path import _path_metadata
 
 if TYPE_CHECKING:
     from . import ConfigSourceList
@@ -20,6 +22,13 @@ __all__ = [
     "DictConfigT",
     "FileConfigSourceBase",
 ]
+
+
+_SOURCE_PATH_METADATA = _path_metadata(
+    exists=False, resolve=False, root_path_key="config_source_root_path"
+)
+_ConfigSourcePath = Annotated[Path, *_SOURCE_PATH_METADATA]
+"""A source-file path relative to the config_source_root_path context value."""
 
 
 #: Configuration values keyed by names or integer list-update positions.

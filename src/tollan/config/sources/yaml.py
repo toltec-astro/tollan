@@ -6,12 +6,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 import yaml
-from pydantic import field_validator, model_validator
+from pydantic import model_validator
 
-from .base import FileConfigSourceBase
+from .base import FileConfigSourceBase, _ConfigSourcePath
 from .envfile import ENV_NAMESPACE_DEFAULT
 
 if TYPE_CHECKING:
+    from pydantic import ValidationInfo
+
     from . import ConfigSourceList
     from .base import DictConfigT
 
@@ -23,7 +25,8 @@ class YamlConfigSource(FileConfigSourceBase):
 
     Accepts a configuration mapping or a list of source declarations. Parsed
     mappings and source lists are cached; list conditions are evaluated on each
-    load. Relative source paths are resolved against this file's directory.
+    load. Relative filenames in a source list use the containing YAML file's
+    directory.
     Paths inside configuration values are left unchanged for typed validation.
     Their validation root is not inferred from this file's location.
 
@@ -46,29 +49,23 @@ class YamlConfigSource(FileConfigSourceBase):
 
     format: Literal["yaml"] = "yaml"
     """Format identifier, always 'yaml'"""
-    source: Path
+    source: _ConfigSourcePath
     """Path to YAML file"""
     env_namespace: str | None = ENV_NAMESPACE_DEFAULT
     """Default namespace for dotenv sources included by this file."""
 
-    @field_validator("source", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _validate_source(cls, v: Any) -> Path:
-        """Convert string paths to Path objects.
-
-        Parameters
-        ----------
-        v : Any
-            Source path as string or Path
-
-        Returns
-        -------
-        Path
-            Path object
-        """
-        if isinstance(v, str):
-            return Path(v)
-        return v
+    def _fill_env_namespace_default(cls, data: Any, info: ValidationInfo) -> Any:
+        """Fill an omitted namespace from validation context."""
+        context = info.context or {}
+        if (
+            isinstance(data, dict)
+            and "env_namespace" not in data
+            and "env_namespace" in context
+        ):
+            return data | {"env_namespace": context["env_namespace"]}
+        return data
 
     @model_validator(mode="after")
     def _validate_name(self) -> YamlConfigSource:
@@ -94,25 +91,10 @@ class YamlConfigSource(FileConfigSourceBase):
         if isinstance(data, list):
             from . import resolve_config_sources  # noqa: PLC0415
 
-            _resolve_source_paths(data, self.source.resolve().parent)
-            return resolve_config_sources(data, env_namespace=self.env_namespace)
+            return resolve_config_sources(
+                data,
+                env_namespace=self.env_namespace,
+                config_source_root_path=self.source.resolve().parent,
+            )
         msg = f"Expected a configuration mapping or source list in {self.source}"
         raise ValueError(msg)
-
-
-def _resolve_source_paths(declarations: list, base_path: Path) -> None:
-    """Resolve file references in freshly parsed YAML source declarations."""
-    for declaration in declarations:
-        if not isinstance(declaration, dict):
-            msg = f"Source declarations in {base_path} must be mappings"
-            # Invalid file contents, not an invalid argument to this API.
-            raise ValueError(msg)  # noqa: TRY004
-        source = declaration.get("source")
-        if isinstance(source, str):
-            declaration["source"] = base_path / source
-        elif isinstance(source, list):
-            _resolve_source_paths(source, base_path)
-        elif declaration.get("format") == "list" and isinstance(source, dict):
-            data = source.get("data")
-            if isinstance(data, list):
-                _resolve_source_paths(data, base_path)

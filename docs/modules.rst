@@ -42,6 +42,12 @@ See :doc:`models` for configuration fields, defaults, validators, and JSON schem
 
 The annotation aliases are described in :doc:`validation-types`.
 
+.. autodata:: tollan.config.types.path.AnyPath
+   :no-value:
+
+.. autodata:: tollan.config.types.path.SubPath
+   :no-value:
+
 .. autodata:: tollan.config.types.path.PathType
    :no-value:
 

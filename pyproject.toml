@@ -203,6 +203,7 @@ runtime-evaluated-base-classes = [
   "pydantic.BaseModel",
   "sqlalchemy.orm.DeclarativeBase",
   "tollan.config.sources.base.ConfigSourceBase",
+  "tollan.config.sources.base.FileConfigSourceBase",
   "tollan.config.FrozenBaseModel",
   "tollan.config.RuntimeConfig",
 ]

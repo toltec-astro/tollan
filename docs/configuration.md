@@ -13,7 +13,7 @@ resources it creates, even if the runtime is updated later.
 
 ## Configure a component
 
-Define a Pydantic model and a handler. `SubConfigKeyTransformer` selects the
+Define a `FrozenBaseModel` subclass and a handler. `SubConfigKeyTransformer` selects the
 component's section of the runtime configuration:
 
 ```python
@@ -21,11 +21,15 @@ import re
 from functools import cached_property
 from typing import Literal
 
-from pydantic import BaseModel
-from tollan.config import ConfigHandler, RuntimeContext, SubConfigKeyTransformer
+from tollan.config import (
+    ConfigHandler,
+    FrozenBaseModel,
+    RuntimeContext,
+    SubConfigKeyTransformer,
+)
 
 
-class SearchConfig(BaseModel):
+class SearchConfig(FrozenBaseModel):
     pattern: str
 
 
@@ -146,17 +150,26 @@ Load either form with `RuntimeContext(config_sources=Path("settings.yaml"))`.
 List entries load in order; optional explicit `order` values must be unique
 within their list. A disabled source contributes no settings.
 
+Each nested list has its own ordering and loads at its enclosing source's
+position. `resolve_config_sources(declarations, order_min=..., order_max=...)`
+constrains only the immediate entries; it does not restrict orders inside nested
+lists.
+
 Included filenames are relative to the containing YAML file. File formats are
 inferred from their suffix unless a declaration specifies `format`.
+For declarations supplied from Python, use
+`resolve_config_sources(declarations, config_source_root_path=directory)` to
+resolve relative source paths against a chosen directory. Already validated
+sources are reused without changing their paths or cached reads.
 
 Paths *inside settings* are different: they remain unchanged until model
 validation. Tollan's path types resolve them against
-`validation_context["rootpath"]`, not the directory of each included file.
+`validation_context["root_path"]`, not the directory of each included file.
 Set that validation root explicitly when your configuration contains relative
 paths.
 
 Use `tollan.config.types.FileLocField` for file locations that should also use
-`rootpath`. It accepts the same local paths, URLs and dictionaries as `FileLoc`.
+`root_path`. It accepts the same local paths, URLs and dictionaries as `FileLoc`.
 An explicit `local_parent_path` (including `None`) takes precedence, and existing
 FileLoc objects retain their parent settings. Other fields using plain `FileLoc`
 are unaffected; the annotation does not modify the validation context.
@@ -298,7 +311,7 @@ the full configuration. Both accept `defaults`, `overrides`, and
 `validation_context`; patches merge recursively.
 
 The new handler validates settings with the supplied context. For example,
-changing `rootpath` lets path fields resolve under a different directory.
+changing `root_path` lets path fields resolve under a different directory.
 For a runtime without a handler, use
 `rc.with_config(defaults=..., overrides=..., validation_context=...)`.
 
