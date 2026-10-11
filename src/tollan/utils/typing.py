@@ -1,4 +1,4 @@
-"""Runtime inspection of literal types and generic class bindings."""
+"""Runtime inspection of annotations, literals, and generic class bindings."""
 
 from __future__ import annotations
 
@@ -18,11 +18,54 @@ if TYPE_CHECKING:
 __all__ = [
     "GenericBindingRequirement",
     "GenericBindings",
+    "get_annotation_types",
     "get_literal_value",
     "get_literal_values",
     "resolve_concrete_generic_bindings",
     "resolve_generic_bindings",
 ]
+
+
+def get_annotation_types(annotation: Any) -> set[Any]:
+    """Collect the value types allowed by an annotation.
+
+    Parameters
+    ----------
+    annotation : object
+        Type annotation to inspect. Named aliases and Annotated wrappers are
+        expanded; unions contribute each member and Literals contribute the
+        types of their values.
+
+    Returns
+    -------
+    set
+        Distinct value types. Parameterized containers remain intact. A
+        recursive alias contributes Any where it refers back to itself.
+
+    Examples
+    --------
+    >>> get_annotation_types(typing.Literal["csv", "json"] | None) == {str, type(None)}
+    True
+    >>> get_annotation_types(list[int]) == {list[int]}
+    True
+    """
+
+    def collect(value, aliases):
+        if isinstance(value, typing.TypeAliasType):
+            if value in aliases:
+                return {Any}
+            return collect(value.__value__, aliases | {value})
+        origin = get_origin(value)
+        args = get_args(value)
+        if origin is typing.Annotated:
+            return collect(args[0], aliases)
+        if origin in (typing.Union, types.UnionType):
+            return set().union(*(collect(arg, aliases) for arg in args))
+        if origin is typing.Literal:
+            return {type(item) for item in get_literal_values(value)}
+        return {value}
+
+    return collect(annotation, frozenset())
 
 
 def get_literal_values(annotation: Any) -> list[Any]:

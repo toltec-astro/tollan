@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import tempfile
 from dataclasses import dataclass
 from enum import Enum
@@ -83,6 +84,12 @@ class TestYamlDumper:
         data = {"path": Path("/some/path")}
         result = yaml_dump(data)
         assert "/some/path" in result
+
+    def test_compiled_regex(self):
+        pattern = re.compile(r"(?i)camera|spectrometer")
+        assert yaml_loads(yaml_dump({"pattern": pattern})) == {
+            "pattern": pattern.pattern
+        }
 
     def test_enum(self):
         """Test serialization of Enum."""

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
 from dataclasses import asdict, is_dataclass
 from enum import Enum
 from pathlib import Path
@@ -61,6 +62,7 @@ class YamlDumper(SafeDumper):
     - Astropy Quantity objects (serialized as strings with units, only scalar supported)
     - Coordinate frames (serialized as frame names)
     - Path-like objects (serialized as strings)
+    - Compiled regular expressions (serialized as pattern text)
     - Enums (serialized as strings)
     - NumPy numeric types (as native Python types)
     - Dataclasses (serialized as dicts)
@@ -221,10 +223,15 @@ def _enum_representer(dumper: YamlDumper, p: Enum) -> ScalarNode:
     return dumper.represent_str(str(p))
 
 
+def _regex_representer(dumper: YamlDumper, pattern: re.Pattern) -> Node:
+    return dumper.represent_data(pattern.pattern)
+
+
 YamlDumper.add_multi_representer(u.Quantity, _scalar_quantity_representer)
 YamlDumper.add_multi_representer(Time, _scalar_astropy_time_representer)
 YamlDumper.add_multi_representer(Path, _path_representer)
 YamlDumper.add_multi_representer(Enum, _enum_representer)
+YamlDumper.add_representer(re.Pattern, _regex_representer)
 
 
 # from astropy: https://github.com/astropy/astropy/blob/main/astropy/io/misc/yaml.py

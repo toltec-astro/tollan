@@ -32,12 +32,14 @@ from .quantity import (
 )
 from .skycoord import SkyCoordField
 from .time import IsoTimeField, TimeField, UnixTimeField, time_field
+from .unit import AngleUnitField, PhysicalTypeField, UnitField, unit_field
 
 __all__ = [
     "AbsAnyPath",
     "AbsDirectoryPath",
     "AbsFilePath",
     "AngleQuantityField",
+    "AngleUnitField",
     "AnyPath",
     "DimensionlessQuantityField",
     "FieldDefaults",
@@ -45,13 +47,16 @@ __all__ = [
     "FrequencyQuantityField",
     "IsoTimeField",
     "LengthQuantityField",
+    "PhysicalTypeField",
     "QuantityField",
     "SkyCoordField",
     "SubPath",
     "TimeField",
     "TimeQuantityField",
+    "UnitField",
     "UnixTimeField",
     "path_field",
     "quantity_field",
     "time_field",
+    "unit_field",
 ]

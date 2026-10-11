@@ -113,6 +113,7 @@ _REFERENCE_ALIASES = {
     "xr.Dataset": "xarray.Dataset",
     "xr.DataTree": "xarray.DataTree",
     "Unit": "astropy.units.Unit",
+    "UnitBase": "astropy.units.UnitBase",
     "Quantity": "astropy.units.Quantity",
     "u.Quantity": "astropy.units.Quantity",
     "Time": "astropy.time.Time",

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, ClassVar, Literal
+from typing import Annotated, Any, ClassVar, Literal, Union
 
 import astropy.units as u
 import pytest
@@ -10,9 +10,35 @@ from pydantic import BaseModel
 
 from tollan.utils.typing import (
     GenericBindingRequirement,
+    get_annotation_types,
     resolve_concrete_generic_bindings,
     resolve_generic_bindings,
 )
+
+
+@pytest.mark.parametrize(
+    ("annotation", "expected"),
+    [
+        (int, {int}),
+        (int | None, {int, type(None)}),
+        (Union[int, str], {int, str}),  # noqa: UP007 -- legacy union inspection
+        (Annotated[int | None, "unitless"], {int, type(None)}),
+        (Literal["csv", "json", 1, True], {str, int, bool}),
+        (list[int], {list[int]}),
+        (Any, {Any}),
+    ],
+)
+def test_annotation_value_types(annotation, expected):
+    assert get_annotation_types(annotation) == expected
+
+
+def test_annotation_aliases_and_recursive_branch():
+    type Choice = Literal["csv", "json"]
+    type OptionalChoice = Annotated[Choice | None, "format"]
+    type Recursive = int | Recursive  # ty: ignore[cyclic-type-alias-definition] -- exercise recursion protection.
+
+    assert get_annotation_types(OptionalChoice) == {str, type(None)}
+    assert get_annotation_types(Recursive) == {int, Any}
 
 
 class TestResolveGenericBindings:

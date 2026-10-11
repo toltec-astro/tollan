@@ -8,6 +8,7 @@ JSON serialization produces strings or numbers suitable for configuration files.
 | --- | --- | --- |
 | Local paths and remote locations | `AnyPath`, `FileLocField` | `Path`, `FileLoc` |
 | Values with units | `QuantityField`, physical-type aliases | Astropy `Quantity` |
+| Unit and physical-type declarations | `UnitField`, `PhysicalTypeField` | Astropy unit, `PhysicalType` |
 | Dates and timestamps | `IsoTimeField`, `UnixTimeField` | Astropy `Time` |
 | Coordinates and object names | `SkyCoordField` | Astropy `SkyCoord` |
 
@@ -114,6 +115,29 @@ assert speed.to_value("m/s") == 12000
 
 `quantity_field()` accepts one physical type, a sequence of allowed physical
 types, or `None` for no restriction. Names follow Astropy's physical-type registry.
+
+### Unit declarations
+
+Use `UnitField` and `PhysicalTypeField` when specifying how to represent a
+quantity, without supplying a quantity value. They accept Astropy objects or
+text such as `"Hz"` and `"frequency"`. Python dumps retain the objects; JSON
+dumps contain unit text and a physical-type name. Compatibility between two
+fields is a separate constraint on the containing model.
+
+Use `AngleUnitField` to require angular units, or `unit_field("speed")` for
+another physical type. These annotations reject incompatible units without
+converting compatible ones to a particular unit.
+
+```{testcode}
+from tollan.config.types import PhysicalTypeField, UnitField
+
+class Representation(BaseModel):
+    unit: UnitField
+    physical_type: PhysicalTypeField
+
+representation = Representation(unit="km/s", physical_type="speed")
+assert Representation.model_validate_json(representation.model_dump_json()) == representation
+```
 
 ## Times
 
