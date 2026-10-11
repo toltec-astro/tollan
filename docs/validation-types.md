@@ -60,6 +60,7 @@ assert validation_schema["required"] == ["path", "wavelength", "start", "target"
 | `AbsFilePath` | Requires an existing file and returns its absolute path. |
 | `AbsDirectoryPath` | Requires an existing directory and returns its absolute path. |
 | `SubPath` | A relative descendant `PurePosixPath`, with no root or `..` component. No filesystem checks or context-root application. |
+| `SubPathOrRoot` | Like `SubPath`, but also accepts `.` for the containing directory. Empty paths normalize to `.`. |
 | `FileLocField` | A `FileLoc` for local paths or remote URLs, using `root_path` as the local parent unless an explicit parent is supplied. |
 
 Without `root_path`, relative paths use the working directory.
@@ -77,11 +78,13 @@ Use `SubPath` for a location to be joined beneath a root later. It accepts neste
 paths, but rejects the root itself (`""` or `"."`), absolute paths, and parent
 traversal. Paths use `/` separators; redundant separators and `.` components are
 removed. It does not expand `~` or resolve symlinks.
+Use `SubPathOrRoot` when the containing directory itself is also an allowed
+location; `""`, `"."`, and `"./"` all normalize to `PurePosixPath(".")`.
 
 ```{testcode}
 from pathlib import Path, PurePosixPath
 from tollan.config import FrozenBaseModel
-from tollan.config.types import SubPath
+from tollan.config.types import SubPath, SubPathOrRoot
 
 class StoreSettings(FrozenBaseModel):
     subpath: SubPath
@@ -89,6 +92,12 @@ class StoreSettings(FrozenBaseModel):
 settings = StoreSettings(subpath="./toltec//tcs/")
 assert settings.subpath == PurePosixPath("toltec/tcs")
 assert Path("/data_lmt") / settings.subpath == Path("/data_lmt/toltec/tcs")
+
+class SearchSettings(FrozenBaseModel):
+    subpaths: tuple[SubPathOrRoot, ...]
+
+search = SearchSettings(subpaths=(".", "tel"))
+assert search.subpaths == (PurePosixPath("."), PurePosixPath("tel"))
 ```
 
 ## Quantities

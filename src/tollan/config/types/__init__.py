@@ -18,6 +18,7 @@ from .path import (
     AbsFilePath,
     AnyPath,
     SubPath,
+    SubPathOrRoot,
     path_field,
 )
 from .pydantic import FieldDefaults
@@ -51,6 +52,7 @@ __all__ = [
     "QuantityField",
     "SkyCoordField",
     "SubPath",
+    "SubPathOrRoot",
     "TimeField",
     "TimeQuantityField",
     "UnitField",

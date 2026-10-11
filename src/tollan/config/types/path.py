@@ -26,6 +26,7 @@ __all__ = [
     "AbsFilePath",
     "AnyPath",
     "SubPath",
+    "SubPathOrRoot",
     "path_field",
 ]
 
@@ -121,10 +122,13 @@ type AbsAnyPath = Annotated[Path, *_ABS_ANY_PATH_METADATA]
 """Any path resolved to absolute form without an existence check."""
 
 
-def _validate_subpath(path: PurePosixPath) -> PurePosixPath:
-    """Require a relative descendant without parent traversal."""
-    if path.anchor or not path.parts or ".." in path.parts:
-        msg = f"Expected a relative descendant path, got {str(path)!r}"
+def _validate_subpath(
+    path: PurePosixPath, *, allow_root: bool = False
+) -> PurePosixPath:
+    """Require a relative path without parent traversal."""
+    if path.anchor or ".." in path.parts or (not path.parts and not allow_root):
+        expected = "relative subpath" if allow_root else "relative descendant path"
+        msg = f"Expected a {expected}, got {str(path)!r}"
         raise ValueError(msg)
     return path
 
@@ -138,6 +142,19 @@ Accepts strings and PurePosixPath objects, including in strict models. Redundant
 separators and ``.`` components are removed. The containing directory itself
 is not a descendant. No validation-context root_path, user expansion, filesystem
 checks, or symlink resolution is applied.
+"""
+
+
+type SubPathOrRoot = Annotated[
+    PurePosixPath,
+    Field(strict=False),
+    AfterValidator(partial(_validate_subpath, allow_root=True)),
+]
+"""A relative POSIX subpath, including the containing directory itself.
+
+Accepts the same inputs as SubPath, plus ``.`` and empty paths, which normalize
+to ``.``. Parent traversal and rooted paths remain invalid. Validation performs
+no filesystem access or validation-context root_path application.
 """
 
 

@@ -179,6 +179,8 @@ component typed settings before it uses them.
 - Relative descendant paths can be validated before a containing root exists.
   They use POSIX syntax and normalize redundant separators and current-directory
   components. They exclude rooted paths, the root itself, and parent traversal.
+  A root-inclusive variant supports collections that can search the containing
+  directory as well as descendants, without permitting parent traversal.
   Path fields and subtree mappings declare the shared Pydantic subpath type;
   Pydantic applies its normalization and validation.
   This check performs no filesystem access and does not establish symlink
