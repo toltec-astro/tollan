@@ -18,6 +18,15 @@ qa:
     uv run --locked coverage run -m pytest
     just doc-test
 
+# Save a local baseline before changing a hot path.
+# Keep Python, dependencies, and machine comparable; saved results are ignored.
+benchmark-save name="baseline":
+    uv run --locked pytest tests/accessor/pandas/test_model_table_performance.py --benchmark-enable --benchmark-save={{name}}
+
+# Compare with a saved local run; fail only for a slowdown greater than 3x.
+benchmark-check baseline:
+    uv run --locked pytest tests/accessor/pandas/test_model_table_performance.py --benchmark-enable --benchmark-compare={{baseline}} --benchmark-compare-fail=median:200%
+
 # Run tests with coverage
 coverage:
     uv run --locked coverage run -m pytest

@@ -119,6 +119,9 @@ norecursedirs = [".*", "docs[\\/]_build", "docs[\\/]generated", "examples"]
 doctest_plus = "enabled"
 remote_data_strict = true
 addopts = [
+  # Normal QA executes benchmark correctness checks once, without timing gates.
+  # Opt into local baseline comparisons with just benchmark-save/benchmark-check.
+  "--benchmark-disable",
   "-ra",
   "--color=yes",
   "--doctest-modules",
