@@ -16,10 +16,12 @@ from typing import (
     ClassVar,
     Literal,
     NamedTuple,
+    cast,
     overload,
 )
 
 import astropy.units as u
+import numpy as np
 import pandas as pd
 from astropy.coordinates import SkyCoord
 from astropy.time import Time
@@ -39,7 +41,7 @@ from ...utils.py import rgetattr
 from ...utils.typing import get_annotation_types
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Hashable, Iterable
 
 __all__ = [
     "ColumnTypeRule",
@@ -47,10 +49,177 @@ __all__ = [
     "ModelColumnMapper",
     "ModelTableAccessor",
     "QuantityColumnRule",
+    "RecordRuleMapper",
     "ScalarColumnRule",
     "SkyCoordColumnRule",
     "TimeColumnRule",
 ]
+
+
+class RecordRuleMapper[ValueT]:
+    """Map records to the values of their first matching rules.
+
+    Parameters
+    ----------
+    rules : iterable of (mapping, object)
+        Ordered pairs of scalar equality constraints and result values. All
+        constraints in a mapping must match. Omitted keys and ellipsis impose
+        no constraint. None matches null values, including NaN and pandas.NA,
+        but not empty strings. Missing keys cannot satisfy a constraint.
+        An empty mapping matches every record. Rules and constraint mappings
+        are copied at construction; result objects are retained unchanged.
+    default : object
+        Result for records that match no rule, unless overridden for a call.
+
+    Examples
+    --------
+    >>> mapper = RecordRuleMapper(
+    ...     [({"status": "ready"}, 1), ({"status": None}, 0)], default=-1
+    ... )
+    >>> mapper({"status": "ready", "channel": 2})
+    1
+    >>> mapper({})
+    -1
+    >>> mapper.map_table(pd.DataFrame({"status": ["ready", None, "other"]}))
+    [1, 0, -1]
+    """
+
+    def __init__(
+        self,
+        rules: Iterable[tuple[Mapping[str, Hashable], ValueT]],
+        *,
+        default: ValueT,
+    ) -> None:
+        self._rules = tuple((dict(constraints), value) for constraints, value in rules)
+        self._default = default
+
+    @overload
+    def __call__(self, record: Mapping[str, Any]) -> ValueT: ...
+
+    @overload
+    def __call__[DefaultT](
+        self, record: Mapping[str, Any], *, default: DefaultT
+    ) -> ValueT | DefaultT: ...
+
+    def __call__(self, record: Mapping[str, Any], *, default: Any = MISSING) -> Any:
+        """Return the value of the first rule matching a record.
+
+        Parameters
+        ----------
+        record : mapping of str to scalar
+            Named scalar values. Extra keys are ignored. The record is not
+            modified; null values match only a None constraint.
+        default : object, optional
+            Result for an unmatched record in this call. If omitted, use the
+            configured default. Explicit None is an override. The mapper's
+            configured default is not changed.
+
+        Returns
+        -------
+        object
+            Matching rule value, or the effective default. Result objects,
+            including callables and enum members, are returned unchanged.
+        """
+        for constraints, value in self._rules:
+            for name, expected in constraints.items():
+                if expected is ...:
+                    continue
+                if name not in record:
+                    break
+                actual = record[name]
+                if expected is None:
+                    matches = pd.isna(actual)
+                else:
+                    matches = False if pd.isna(actual) else actual == expected
+                if matches is pd.NA or not matches:
+                    break
+            else:
+                return value
+        return self._default if default is MISSING else default
+
+    @overload
+    def map_table(
+        self,
+        table: pd.DataFrame,
+        *,
+        column_names: Mapping[str, str] | None = None,
+    ) -> list[ValueT]: ...
+
+    @overload
+    def map_table[DefaultT](
+        self,
+        table: pd.DataFrame,
+        *,
+        column_names: Mapping[str, str] | None = None,
+        default: DefaultT,
+    ) -> list[ValueT | DefaultT]: ...
+
+    def map_table(
+        self,
+        table: pd.DataFrame,
+        *,
+        column_names: Mapping[str, str] | None = None,
+        default: Any = MISSING,
+    ) -> list[Any]:
+        """Return one rule value per table row using column-wise matching.
+
+        Parameters
+        ----------
+        table : pandas.DataFrame
+            Scalar input columns. The table is not modified. Missing columns
+            cannot satisfy a constraint; nulls match only a None constraint.
+        column_names : mapping of str to str, optional
+            Rule field names mapped to input column names. Unmapped names are
+            used unchanged. If omitted, rule names are table column names.
+        default : object, optional
+            Result for unmatched rows in this call. If omitted, use the
+            configured default. Explicit None is an override. The mapper's
+            configured default is not changed.
+
+        Returns
+        -------
+        list
+            First matching rule values, or the effective default, in row
+            order regardless of index labels. Result objects are unchanged.
+            Assign this list to a column to update the table in place.
+
+        Notes
+        -----
+        This is an optimized batch equivalent of evaluating each record.
+        Constraints are evaluated column-wise and repeated comparisons are
+        reused, avoiding a Python-level loop over records. For a fixed rule
+        set, runtime remains linear in the number of rows.
+        """
+        values = np.empty(len(self._rules) + 1, dtype=object)
+        values[-1] = self._default if default is MISSING else default
+        selected = np.full(len(table), -1, dtype=np.intp)
+        unmatched = np.ones(len(table), dtype=bool)
+        names = {} if column_names is None else column_names
+        comparisons = {}
+        for i, (constraints, value) in enumerate(self._rules):
+            if not unmatched.any():
+                break
+            values[i] = value
+            matches = unmatched.copy()
+            for attr, expected in constraints.items():
+                if expected is ...:
+                    continue
+                name = names.get(attr, attr)
+                if name not in table:
+                    matches[:] = False
+                    break
+                key = (name, expected)
+                if key not in comparisons:
+                    column = table[name]
+                    comparisons[key] = (
+                        column.isna()
+                        if expected is None
+                        else column.eq(cast("Any", expected))
+                    ).to_numpy(dtype=bool, na_value=False)
+                matches &= comparisons[key]
+            selected[matches] = i
+            unmatched &= ~matches
+        return values[selected].tolist()
 
 
 class ModelColumn(NamedTuple):

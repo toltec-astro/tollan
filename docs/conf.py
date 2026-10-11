@@ -75,6 +75,8 @@ nitpick_ignore += [
         "MapperT",
         "ContextT",
         "VariableT",
+        "ValueT",
+        "DefaultT",
         "ViewT",
         "RuntimeContextT",
         "KeyT",

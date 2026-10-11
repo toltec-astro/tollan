@@ -90,6 +90,14 @@ an intended mode of operation, not an exception.
   back to the objects used for projection.
 - Copying and in-place enrichment are explicit choices. In-place assignment is
   not transactional; an assignment failure can leave earlier columns updated.
+- Reusable ordered rules map scalar record fields to one result per record.
+  The first matching partial mapping wins; unmatched records receive the
+  configured default, with per-call overrides that do not mutate the mapper.
+  Callers own composition and ambiguity handling across independent mappers.
+  Missing fields cannot satisfy constraints; nulls match
+  an explicit null constraint. Scalar and column-wise evaluation agree and
+  preserve result objects without modifying inputs. Applications own the rules
+  and the storage representation of derived columns.
 - Model tables are independent of schema-bound read-only accessors. Applications
   own source discovery, metadata authority, and derived-column calculations.
 

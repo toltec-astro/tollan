@@ -117,6 +117,113 @@ value's scale. `SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg")` produces
 angular columns plus a frame-name column; values must provide those attributes.
 Nested objects and arrays require explicit declarations.
 
+Columns follow field order, then alias order, then type-rule output order.
+Unmatched fields are skipped; generated aliases are not matched again.
+Rule settings are validated at construction. Colliding final column names raise
+an error. Use `|` to add or override explicit declarations in a generated mapping.
+
+Custom type rules receive `(name, annotation, column_name)` and return a mapping
+of final names to `ModelColumn` declarations, or None for no match. An empty
+mapping stops selection without creating columns. Exceptions propagate.
+Repeated callables and identically configured rule models raise a validation
+error. Different configurations may overlap; the first matching rule wins.
+
+Time formats, coordinate attributes, and units must be supplied when constructing
+the corresponding rules. Coordinate attributes are read without transforming
+frames; unavailable attributes raise an error. The `*_frame` column contains the
+Astropy frame name, such as `"icrs"`, `"fk5"`, `"altaz"`, or `"galactic"`. Include
+it in positional queries when rows may use different frames. List registered
+frame names with:
+
+```{testcode}
+from astropy.coordinates import frame_transform_graph
+
+frame_names = sorted(frame_transform_graph.get_names())
+assert "icrs" in frame_names
+```
+
+## Derive values from ordered record rules
+
+Use `RecordRuleMapper` to associate partial record patterns with values. The
+first matching rule supplies the result; unmatched records receive `default`.
+Each named field must equal its expected scalar value. Extra fields are ignored.
+
+```{testcode}
+from enum import Enum
+from tollan.accessor.pandas.model_table import RecordRuleMapper
+
+class Status(Enum):
+    ready = "ready"
+    incomplete = "incomplete"
+    unknown = "unknown"
+
+status_mapper = RecordRuleMapper[Status](
+    [
+        ({"channel": 1}, Status.ready),
+        ({"amplitude": None}, Status.incomplete),
+    ],
+    default=Status.unknown,
+)
+assert status_mapper({"channel": 1, "amplitude": 2.5}) is Status.ready
+assert status_mapper({"channel": 2, "amplitude": None}) is Status.incomplete
+assert status_mapper({}) is Status.unknown
+
+# Batch evaluation returns one value per row, regardless of index labels.
+values = status_mapper.map_table(table)
+assert values == [Status.ready, Status.incomplete]
+table["status"] = values
+assert table.status.iloc[0] is Status.ready
+```
+
+Rules are copied at construction and can be reused for multiple records and
+tables. Result objects, including enum members and callables, are returned
+unchanged. The mapper does not modify its input; assign the returned list to
+install a column, choosing its pandas dtype as needed.
+
+None constraints match null values, including NaN and `pandas.NA`, but not
+missing fields or empty strings. Ellipsis imposes no constraint, and an empty
+pattern matches every record. For tables with renamed fields, pass
+`column_names={"channel": "file_channel"}` to `map_table`; rule names omitted
+from that mapping are used unchanged.
+
+Override `default` for one evaluation without changing the mapper:
+
+```{testcode}
+assert status_mapper({}, default=None) is None
+assert status_mapper({}) is Status.unknown
+```
+
+To compare independent interpretations, callers can use a shared unmatched
+marker and collect one column per mapper. Choose a marker that no matching rule
+returns. In this example, all rule results are enum members, so None marks
+unmatched rows:
+
+```{testcode}
+import pandas as pd
+
+ready_mapper = RecordRuleMapper[Status](
+    [({"channel": 1}, Status.ready)], default=Status.unknown,
+)
+incomplete_mapper = RecordRuleMapper[Status](
+    [({"amplitude": None}, Status.incomplete)], default=Status.unknown,
+)
+candidates = pd.DataFrame({"channel": [1, 2, 1], "amplitude": [None, 2.0, 3.0]})
+interpretations = pd.DataFrame({
+    "ready": ready_mapper.map_table(candidates, default=None),
+    "incomplete": incomplete_mapper.map_table(candidates, default=None),
+}, index=candidates.index)
+match_count = interpretations.notna().sum(axis=1)
+assert match_count.tolist() == [2, 0, 1]
+ambiguous = candidates.loc[match_count > 1]
+assert ambiguous.index.tolist() == [0]
+```
+
+The caller decides how to handle multiple interpretations or no interpretation.
+Within each mapper, the first matching rule still wins. `map_table` evaluates
+constraints column-wise and reuses repeated comparisons instead of invoking the
+scalar mapper for every row. For a fixed rule set, runtime remains linear in
+the number of rows.
+
 ## Query the collected values
 
 `query()` uses pandas expressions on the current columns, with the Python engine.
