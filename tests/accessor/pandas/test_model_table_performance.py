@@ -65,3 +65,16 @@ def test_model_table_projection(benchmark, size):
     assert table.shape == (size, 4)
     assert table["count"].tolist() == list(range(size))
     assert table["value"].eq(1.5).all()
+
+
+def test_bitmask_query(benchmark):
+    """Track combined vectorized bit tests, including nullable integer values."""
+    table = pd.DataFrame(
+        {"flags": pd.array([None, 0, 1, 3, 7] * 20_000, dtype="Int64")}
+    )
+    accessor = ModelTableAccessor(table)
+    result = benchmark(
+        accessor.query, "bits_any_set(flags, 4) | bits_all_set(flags, 3)"
+    )
+    expected = [i for i in range(len(table)) if i % 5 in (3, 4)]
+    pd.testing.assert_frame_equal(result, table.iloc[expected])
