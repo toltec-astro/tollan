@@ -94,3 +94,37 @@ File locations
 .. autopydantic_model:: tollan.utils.fileloc.FileLoc
    :class-doc-from: class
    :inherited-members: BaseModel
+
+.. _model-table-declarations:
+
+Model-table column declarations
+-------------------------------
+
+Use :doc:`model-tables` to project objects, update table rows, and query them.
+
+.. ModelColumnMapper accepts live callable rules, which have no JSON schema.
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.ModelColumnMapper
+   :class-doc-from: class
+   :special-members: __call__
+   :model-show-json: False
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.ColumnTypeRule
+   :class-doc-from: class
+   :special-members: __call__
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.ScalarColumnRule
+   :class-doc-from: class
+   :special-members: __call__
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.TimeColumnRule
+   :class-doc-from: class
+   :special-members: __call__
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.QuantityColumnRule
+   :class-doc-from: class
+   :special-members: __call__
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.SkyCoordColumnRule
+   :class-doc-from: class
+   :special-members: __call__

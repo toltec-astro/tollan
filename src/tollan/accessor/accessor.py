@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, cast
 
-from tollan.utils.typing import (
+from ..utils.typing import (
     GenericBindingRequirement,
     resolve_concrete_generic_bindings,
 )
-
 from .mapper import Mapper
 
 __all__ = ["AccessorBase"]

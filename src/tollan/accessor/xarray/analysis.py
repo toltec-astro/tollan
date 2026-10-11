@@ -135,12 +135,11 @@ from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
 import xarray as xr
 
-from tollan.config import FrozenBaseModel
-from tollan.utils.typing import (
+from ...config import FrozenBaseModel
+from ...utils.typing import (
     GenericBindingRequirement,
     resolve_concrete_generic_bindings,
 )
-
 from ..accessor import AccessorBase
 from ..schema import (
     MISSING,

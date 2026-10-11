@@ -62,6 +62,7 @@ nitpick_ignore = [
     ("py:obj", "tollan.config.sources.yaml.YamlConfigSource.all fields"),
     ("py:obj", "tollan.config.sources.envfile.EnvFileConfigSource.all fields"),
     ("py:obj", "tollan.config.sources.list_.ListConfigSource.all fields"),
+    ("py:obj", "tollan.accessor.pandas.model_table.QuantityColumnRule.all fields"),
 ]
 
 # Sphinx's legacy renderer links type parameters as if they were classes.

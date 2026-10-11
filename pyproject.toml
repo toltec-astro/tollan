@@ -49,6 +49,7 @@ dependencies = [
 
 [dependency-groups]
 test = [
+  "pyarrow",
   "pytest",
   "pytest-doctestplus",
   "pytest-remotedata",

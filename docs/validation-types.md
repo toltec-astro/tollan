@@ -116,6 +116,7 @@ assert speed.to_value("m/s") == 12000
 `quantity_field()` accepts one physical type, a sequence of allowed physical
 types, or `None` for no restriction. Names follow Astropy's physical-type registry.
 
+(unit-declarations)=
 ### Unit declarations
 
 Use `UnitField` and `PhysicalTypeField` when specifying how to represent a

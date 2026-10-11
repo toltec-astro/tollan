@@ -11,7 +11,7 @@ from __future__ import annotations
 import numpy as np
 import xarray as xr
 
-from tollan.accessor.xarray import ensure_dataset
+from ..accessor.xarray import ensure_dataset
 
 __all__ = ["reduce_median_mad"]
 

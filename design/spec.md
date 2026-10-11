@@ -51,7 +51,7 @@ an intended mode of operation, not an exception.
 
 #### Accessors and views
 
-- An accessor combines a source and mapper into a domain API.
+- A schema-bound accessor combines a source and mapper into a domain API.
 - An accessor or view treats its bound source as read-only. It does not own
   modifications to that source.
 - A view accesses the bound source and content below it. It does not search
@@ -74,6 +74,24 @@ an intended mode of operation, not an exception.
 - Container conversion preserves the selected data's meaning. Its contract states
   whether the result is independently editable and whether conversion requires
   evaluating deferred data.
+
+#### Model tables
+
+- Model tables collect selected object attributes into a mutable, flat workspace
+  for filtering and incremental enrichment. They do not require a shared model
+  class or reconstruct the input objects.
+- Applications declare attribute paths, output representations, and query
+  vocabulary. Projection reads only the declared attributes and preserves input
+  row order. It does not serialize the input objects.
+- Annotation-based declarations prepare column mappings without reading object
+  values. Actual projection remains duck-typed.
+- Enrichment updates explicitly addressed rows, preserves unrelated information,
+  and lets new null values replace earlier values. It does not synchronize changes
+  back to the objects used for projection.
+- Copying and in-place enrichment are explicit choices. In-place assignment is
+  not transactional; an assignment failure can leave earlier columns updated.
+- Model tables are independent of schema-bound read-only accessors. Applications
+  own source discovery, metadata authority, and derived-column calculations.
 
 #### Units and table conversion
 

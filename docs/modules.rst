@@ -17,6 +17,11 @@ Data Accessors
 
 .. automodapi:: tollan.accessor.pandas
 
+.. automodapi:: tollan.accessor.pandas.model_table
+   :skip: ModelTableAccessor, ModelColumnMapper, ColumnTypeRule, ScalarColumnRule, TimeColumnRule, QuantityColumnRule, SkyCoordColumnRule
+
+See :ref:`model-table-declarations` for column-mapping fields and rules.
+
 .. automodapi:: tollan.accessor.xarray
    :skip: Analysis
 
@@ -41,6 +46,18 @@ See :doc:`models` for configuration fields, defaults, validators, and JSON schem
    :skip: quantity_field
 
 The annotation aliases are described in :doc:`validation-types`.
+
+.. py:type:: tollan.config.types.unit.UnitField
+
+   A unit declaration; see :ref:`unit-declarations`.
+
+.. py:type:: tollan.config.types.unit.AngleUnitField
+
+   An angular unit declaration; see :ref:`unit-declarations`.
+
+.. py:type:: tollan.config.types.unit.PhysicalTypeField
+
+   A physical-type declaration; see :ref:`unit-declarations`.
 
 .. autodata:: tollan.config.types.path.AnyPath
    :no-value:

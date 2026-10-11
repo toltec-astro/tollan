@@ -18,6 +18,7 @@ readme
 | Domain | What you can do | Guide |
 | --- | --- | --- |
 | Data access | Map names, expose typed views, and store analysis results. | {doc}`schema-mapping-accessors`, {doc}`analyses` |
+| Model tables | Project object attributes, enrich rows, and query a pandas table. | {doc}`model-tables` |
 | Configuration | Load settings, validate values, and configure components. | {doc}`configuration`, {doc}`validation-types` |
 | CLI | Add commands, help, logging, and configuration options. | {doc}`cli` |
 | Pipelines | Run configured steps and inspect execution results. | {doc}`pipelines` |
@@ -30,6 +31,7 @@ readme
 
 schema-mapping-accessors
 data-adapters
+model-tables
 ```
 
 ```{toctree}
