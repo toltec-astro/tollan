@@ -1,12 +1,12 @@
-"""Custom pydantic types for astronomy data validation.
+"""Pydantic field types for configuration and scientific values.
 
-This module provides custom Pydantic types for validating astronomy-specific
-data structures using astropy, including:
+These types validate configuration values and Astropy objects, including:
 
 - Time fields with format constraints
 - Quantity fields with physical type constraints
 - SkyCoord fields for celestial coordinates
 - Enhanced Path types with resolution and existence validation
+- String selection by exact values or regular expressions
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ from .quantity import (
     TimeQuantityField,
     quantity_field,
 )
+from .selector import StringSelector
 from .skycoord import SkyCoordField
 from .time import IsoTimeField, TimeField, UnixTimeField, time_field
 from .unit import AngleUnitField, PhysicalTypeField, UnitField, unit_field
@@ -51,6 +52,7 @@ __all__ = [
     "PhysicalTypeField",
     "QuantityField",
     "SkyCoordField",
+    "StringSelector",
     "SubPath",
     "SubPathOrRoot",
     "TimeField",

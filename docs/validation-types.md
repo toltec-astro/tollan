@@ -1,8 +1,9 @@
-# Scientific value types
+# Configuration field types
 
 Use annotations from `tollan.config.types` on Pydantic model fields. Validation
 returns Python objects such as `Path`, Astropy `Quantity`, `Time`, and `SkyCoord`;
-JSON serialization produces strings or numbers suitable for configuration files.
+JSON serialization produces values suitable for configuration files.
+`StringSelector` selects names using exact values or a regular expression.
 
 | Validate | Start with | Python result |
 | --- | --- | --- |
@@ -11,6 +12,7 @@ JSON serialization produces strings or numbers suitable for configuration files.
 | Unit and physical-type declarations | `UnitField`, `PhysicalTypeField` | Astropy unit, `PhysicalType` |
 | Dates and timestamps | `IsoTimeField`, `UnixTimeField` | Astropy `Time` |
 | Coordinates and object names | `SkyCoordField` | Astropy `SkyCoord` |
+| Exact names or a name pattern | `StringSelector` | Selector with `matches()` and `select()` |
 
 ```{testcode}
 from pathlib import Path
@@ -99,6 +101,60 @@ class SearchSettings(FrozenBaseModel):
 search = SearchSettings(subpaths=(".", "tel"))
 assert search.subpaths == (PurePosixPath("."), PurePosixPath("tel"))
 ```
+
+## String selectors
+
+Use `StringSelector` to select from a collection of names. Lists contain literal,
+case-sensitive values. Strings are patterns and use Python regex full matching.
+
+| Input | Selection |
+| --- | --- |
+| `["raw", "reduced"]` | These exact names; shorthand for `includes`. |
+| `{includes: ["raw", "reduced"]}` | These exact names. |
+| `{excludes: ["experimental"]}` | All names except these exact values. |
+| `"raw(/.*)?"` | Regex shorthand for `pattern`. |
+| `{pattern: "raw(/.*)?"}` | Names matching the entire regular expression. |
+
+A mapping must contain exactly one of these keys. Unknown keys, mixed modes,
+and pattern mappings inside inclusion/exclusion lists are rejected.
+`[]` and `{includes: []}` select nothing; `{excludes: []}` selects everything.
+For example, `["."]` selects the literal `.`; `{pattern: "."}` matches any
+single character other than a newline. Strings are not normalized as paths,
+and selection does not access the filesystem.
+
+```{testcode}
+from tollan.config import FrozenBaseModel
+from tollan.config.types import StringSelector
+
+class SelectionSettings(FrozenBaseModel):
+    names: StringSelector
+
+selection = SelectionSettings(names=["raw", "reduced"])
+assert selection.names.matches("raw")
+assert not selection.names.matches("raw/scan")
+assert selection.names.select(iter(["reduced", "other", "raw", "raw"])) == [
+    "reduced", "raw", "raw"
+]
+assert selection.model_dump(mode="json") == {
+    "names": {"includes": ["raw", "reduced"]}
+}
+
+selection = SelectionSettings.model_validate_yaml('names: "raw(/.*)?"')
+assert selection.names.select(["raw", "raw/scan", "draw"]) == ["raw", "raw/scan"]
+assert SelectionSettings.model_validate_json(selection.model_dump_json()) == selection
+assert selection.model_dump(mode="json") == {"names": {"pattern": "raw(/.*)?"}}
+
+pattern = SelectionSettings(names={"excludes": ["raw"]}).names.as_regex()
+assert pattern.fullmatch("raw") is None
+assert pattern.fullmatch("raw/scan") is not None
+```
+
+`select()` consumes the supplied iterable once and preserves its order and
+duplicates. Each call uses the candidates supplied at that time, so exclusions
+also apply to collections extended after the settings were loaded. Serialization
+uses an explicit mapping, even when the input used string or list shorthand.
+For APIs that take a compiled regex, use `as_regex()` and evaluate it with
+`fullmatch()`. It escapes exact values and preserves existing regex flags.
 
 ## Quantities
 

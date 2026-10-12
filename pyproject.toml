@@ -209,6 +209,7 @@ runtime-evaluated-base-classes = [
   "tollan.config.sources.base.ConfigSourceBase",
   "tollan.config.sources.base.FileConfigSourceBase",
   "tollan.config.FrozenBaseModel",
+  "tollan.config.base.FrozenBaseModel",
   "tollan.config.RuntimeConfig",
 ]
 runtime-evaluated-decorators = [

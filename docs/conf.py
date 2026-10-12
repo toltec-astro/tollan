@@ -129,6 +129,7 @@ _REFERENCE_ALIASES = {
     "ModuleType": "types.ModuleType",
     "ArgsKwargs": "pydantic_core.ArgsKwargs",
     "ValidationInfo": "pydantic.ValidationInfo",
+    "ConfigDict": "pydantic.ConfigDict",
     # The field renderer requests a class; Pydantic documents this alias as data.
     "pydantic.types.JsonValue": "pydantic.types.JsonValue",
 }
