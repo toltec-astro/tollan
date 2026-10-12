@@ -229,9 +229,32 @@ the number of rows.
 `query()` uses pandas expressions on the current columns, with the Python engine.
 Use only trusted expressions. Subclasses can extend `_query_namespace` with
 constants or query functions; existing column names take precedence.
+For a plain DataFrame, {func}`tollan.utils.pandas.query` provides the same
+helpers and accepts additional names through `namespace`.
+
+Use `contains(column, value)` for exact element membership in list, tuple, set
+or frozenset cells. Empty and missing collections return false; other cell types
+raise `TypeError`. Strings are not treated as collections of characters, and
+membership does not perform substring or regex matching. Pandas `in` and `isin`
+compare whole cells rather than searching within each collection.
+
+```{testcode}
+memberships = pd.DataFrame({
+    "tags": [["science", "reviewed"], ["engineering"], [], None],
+    "exposure": [60, 30, 10, 0],
+})
+selected = ModelTableAccessor(memberships).query(
+    'contains(tags, "science") and exposure > 30'
+)
+assert selected.index.tolist() == [0]
+assert ModelTableAccessor(memberships).query(
+    '~contains(tags, "science")'
+).index.tolist() == [1, 2, 3]
+```
 
 The built-in `bits_any_set(column, mask)` and `bits_all_set(column, mask)` select
 integer bitmasks or enum-valued object columns. Object columns require a mask of
 the matching flag enum type; equal bit values from another enum never match.
 Nulls remain unknown. See
-{meth}`~tollan.accessor.pandas.ModelTableAccessor.query` for zero-mask behavior.
+{func}`~tollan.utils.pandas.bits_any_set` and
+{func}`~tollan.utils.pandas.bits_all_set` for zero-mask behavior.

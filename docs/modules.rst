@@ -115,6 +115,8 @@ Utilities
 
 .. automodapi:: tollan.utils.np
 
+.. automodapi:: tollan.utils.pandas
+
 .. automodapi:: tollan.utils.py
 
 .. automodapi:: tollan.utils.slice

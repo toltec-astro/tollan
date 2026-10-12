@@ -11,6 +11,7 @@ application framework. See the [API reference](modules.rst) for full signatures.
 | Parse dotted command-line overrides | `tollan.utils.cli.dict_from_cli_args` |
 | Read or write YAML | `tollan.utils.yaml` |
 | Convert units or select table rows | `tollan.utils.np`, `tollan.utils.table` |
+| Query pandas tables with membership and bitmask predicates | `tollan.utils.pandas` |
 | Summarize labeled arrays with median and scatter | `tollan.utils.xarray.reduce_median_mad` |
 | Arrange plots | `tollan.plot.plotly`, `tollan.plot.mpl` |
 | Log operations or format display values | `tollan.utils.log`, `tollan.utils.fmt` |
@@ -92,6 +93,32 @@ conversion explicit. For labeled xarray data, use the
 `tollan.utils.table.TableValidator` checks table requirements and evaluates row
 queries. Use [xarray table projection](data-adapters.md#project-columnar-xarray-data-into-a-qtable)
 when your source is a columnar Dataset and you need an Astropy QTable.
+
+## Query pandas tables
+
+Use {func}`~tollan.utils.pandas.query` on any DataFrame, without creating a model
+table accessor. It accepts the same expressions as
+[model-table queries](model-tables.md#query-the-collected-values), including
+`contains`, `bits_any_set`, and `bits_all_set`. Only use trusted expressions.
+Supply additional constants or functions through `namespace`; column names
+take precedence.
+
+```{testcode}
+import pandas as pd
+from tollan.utils.pandas import contains, query
+
+table = pd.DataFrame({
+    "tags": [["science", "reviewed"], ["engineering"], [], None],
+    "exposure": [60, 30, 10, 0],
+})
+selected = query(table, 'contains(tags, "science") and exposure > limit',
+                 namespace={"limit": 30})
+assert selected.index.tolist() == [0]
+
+# The predicates also return masks for ordinary pandas selection.
+mask = contains(table["tags"], "science")
+assert table.loc[mask].index.tolist() == [0]
+```
 
 ## Reduce labeled arrays to median and scatter
 

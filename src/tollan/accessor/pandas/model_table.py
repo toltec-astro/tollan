@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
 from dataclasses import MISSING
 from datetime import datetime
-from enum import Enum, Flag
+from enum import Enum
 from functools import partial
 from typing import (
     TYPE_CHECKING,
@@ -37,6 +37,7 @@ from pydantic import (
 
 from ...config.types import AngleUnitField, PhysicalTypeField, UnitField
 from ...config.types.quantity import get_physical_type_from_quantity_type
+from ...utils.pandas import query
 from ...utils.py import rgetattr
 from ...utils.typing import get_annotation_types
 
@@ -676,40 +677,6 @@ class ModelColumnMapper(BaseModel):
         return columns
 
 
-def _bits_any_set(values: pd.Series, mask: int | Flag) -> pd.Series:
-    """Test whether any bits in the mask are set in each value."""
-    if values.dtype == object:
-        return _flag_bits(values, mask, all_bits=False)
-    mask = mask.value if isinstance(mask, Flag) else mask
-    return (values & mask) != 0
-
-
-def _bits_all_set(values: pd.Series, mask: int | Flag) -> pd.Series:
-    """Test whether all bits in the mask are set in each value."""
-    if values.dtype == object:
-        return _flag_bits(values, mask, all_bits=True)
-    mask = mask.value if isinstance(mask, Flag) else mask
-    return (values & mask) == mask
-
-
-def _flag_bits(values: pd.Series, mask: int | Flag, *, all_bits: bool) -> pd.Series:
-    """Keep flag namespaces distinct in a mixed object column."""
-    if not isinstance(mask, Flag):
-        msg = "Enum-valued columns require an enum flag mask"
-        raise TypeError(msg)
-    comparable = values.where(values.map(type).isin([type(mask)]))
-    matches = {
-        value: ((value & mask) == mask if all_bits else bool(value & mask))
-        for value in comparable.dropna().unique()
-    }
-    return (
-        comparable.map(matches)
-        .astype("boolean")
-        .fillna(value=False)
-        .mask(values.isna())
-    )
-
-
 class ModelTableAccessor:
     """Project objects into flat tables for selection and enrichment.
 
@@ -735,10 +702,7 @@ class ModelTableAccessor:
     np.int64(1)
     """
 
-    _query_namespace: ClassVar[dict[str, object]] = {
-        "bits_any_set": _bits_any_set,
-        "bits_all_set": _bits_all_set,
-    }
+    _query_namespace: ClassVar[dict[str, object]] = {}
 
     def __init__(self, data: pd.DataFrame) -> None:
         self._obj = data
@@ -907,24 +871,11 @@ class ModelTableAccessor:
         pandas.DataFrame
             Selected rows, preserving their index labels.
 
-        Notes
-        -----
-        Comparisons, membership and nulls follow pandas query semantics.
-        ``bits_any_set(column, mask)`` tests for any matching bit;
-        ``bits_all_set(column, mask)`` requires every bit in the mask. Masks
-        accept integers or enum flags for integer columns. For enum-valued
-        object columns, use a flag of the matching enum type; values from other
-        enums never match. Nulls remain unknown in either case. With a zero
-        mask, any is false and all is true for non-null values of the same type.
-
+        See Also
+        --------
+        tollan.utils.pandas.query : Standalone query with the same helpers.
         """
-        # Pandas mutates resolvers; protect the declaration and let columns win.
-        namespace = {
-            name: value
-            for name, value in self._get_query_namespace().items()
-            if name not in self._obj
-        }
-        return self._obj.query(expression, engine="python", resolvers=[namespace])
+        return query(self._obj, expression, namespace=self._get_query_namespace())
 
     def _get_query_namespace(self) -> dict[str, object]:
         """Names available to query expressions alongside table columns."""

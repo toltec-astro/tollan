@@ -78,3 +78,12 @@ def test_bitmask_query(benchmark):
     )
     expected = [i for i in range(len(table)) if i % 5 in (3, 4)]
     pd.testing.assert_frame_equal(result, table.iloc[expected])
+
+
+def test_collection_membership_query(benchmark):
+    """Track exact membership across list-valued cells and missing values."""
+    table = pd.DataFrame(
+        {"tags": [["science", "reviewed"], ["engineering"], [], None] * 25_000}
+    )
+    result = benchmark(ModelTableAccessor(table).query, 'contains(tags, "science")')
+    pd.testing.assert_frame_equal(result, table.iloc[::4])
