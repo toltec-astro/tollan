@@ -5,6 +5,8 @@ from __future__ import annotations
 from enum import Flag
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 if TYPE_CHECKING:
     import collections.abc
 
@@ -19,7 +21,8 @@ def contains(values: pd.Series, value: object) -> pd.Series:
     Parameters
     ----------
     values : pandas.Series
-        List, tuple, set or frozenset cells. Empty and missing cells do not match.
+        List, tuple, set, frozenset or NumPy array cells. Empty and missing cells
+        do not match.
     value : object
         Element to find. Strings are compared exactly, not as substrings or regexes.
 
@@ -40,10 +43,11 @@ def contains(values: pd.Series, value: object) -> pd.Series:
     >>> contains(tags, "science").tolist()
     [True, False, False, False]
     """
+    collection_types = (list, tuple, set, frozenset, np.ndarray)
 
     def matches(items):
-        if not isinstance(items, (list, tuple, set, frozenset)):
-            msg = "contains() requires list, tuple, set or frozenset cells"
+        if not isinstance(items, collection_types):
+            msg = "contains() requires list, tuple, set, frozenset or ndarray cells"
             raise TypeError(msg)
         return value in items
 

@@ -232,11 +232,12 @@ constants or query functions; existing column names take precedence.
 For a plain DataFrame, {func}`tollan.utils.pandas.query` provides the same
 helpers and accepts additional names through `namespace`.
 
-Use `contains(column, value)` for exact element membership in list, tuple, set
-or frozenset cells. Empty and missing collections return false; other cell types
-raise `TypeError`. Strings are not treated as collections of characters, and
-membership does not perform substring or regex matching. Pandas `in` and `isin`
-compare whole cells rather than searching within each collection.
+Use `contains(column, value)` for exact element membership in list, tuple, set,
+frozenset or NumPy array cells. Empty and missing collections return false;
+other cell types raise `TypeError`. Strings are not treated as collections of
+characters, and membership does not perform substring or regex matching.
+Pandas `in` and `isin` compare whole cells rather than searching within each
+collection.
 
 ```{testcode}
 memberships = pd.DataFrame({

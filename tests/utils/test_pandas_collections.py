@@ -19,7 +19,7 @@ def query_table(request):
     return query_with_accessor
 
 
-@pytest.mark.parametrize("collection", [list, tuple, set, frozenset])
+@pytest.mark.parametrize("collection", [list, tuple, set, frozenset, np.asarray])
 def test_contains_compares_elements_not_substrings_or_patterns(collection, query_table):
     table = pd.DataFrame(
         {
@@ -28,7 +28,7 @@ def test_contains_compares_elements_not_substrings_or_patterns(collection, query
                 collection(["alphabet"]),
                 collection(["a.*"]),
                 collection(["ALPHA"]),
-                collection(),
+                collection([]),
             ]
         },
         index=pd.Index([7, 7, 2, 1, 1], name="row"),
@@ -43,6 +43,7 @@ def test_contains_compares_elements_not_substrings_or_patterns(collection, query
     pd.testing.assert_frame_equal(table, before)
 
 
+@pytest.mark.parametrize("collection", [list, np.asarray])
 @pytest.mark.parametrize(
     ("expression", "positions"),
     [
@@ -55,15 +56,15 @@ def test_contains_compares_elements_not_substrings_or_patterns(collection, query
     ],
 )
 def test_contains_combines_with_queries_and_missing_cells(
-    expression, positions, query_table
+    expression, positions, collection, query_table
 ):
     table = pd.DataFrame(
         {
             "tags": [
-                ["science"],
-                ["science", "reviewed"],
-                ["engineering"],
-                [],
+                collection(["science"]),
+                collection(["science", "reviewed"]),
+                collection(["engineering"]),
+                collection([]),
                 None,
                 pd.NA,
                 np.nan,
@@ -88,7 +89,9 @@ def test_contains_empty_and_all_missing_columns(values, query_table):
 @pytest.mark.parametrize("invalid", ["science", b"science", 1, {"science": True}])
 def test_contains_rejects_noncollection_cells(invalid, query_table):
     table = pd.DataFrame({"tags": [["science"], invalid]})
-    with pytest.raises(TypeError, match="requires list, tuple, set or frozenset cells"):
+    with pytest.raises(
+        TypeError, match="requires list, tuple, set, frozenset or ndarray cells"
+    ):
         query_table(table, 'contains(tags, "science")')
 
 
