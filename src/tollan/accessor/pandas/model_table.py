@@ -232,9 +232,10 @@ class ModelColumn(NamedTuple):
         Attribute path to read, with dots separating nested attributes.
     default : object, optional
         Value used when the attribute is missing. If omitted, a missing
-        attribute raises AttributeError.
+        attribute raises AttributeError. This does not fill untouched table rows.
     dtype : pandas dtype, optional
-        Output column dtype. Default is object dtype.
+        Projected column dtype. Default is object dtype. When updating an
+        existing column, its dtype is retained rather than replaced by this one.
     converter : callable, optional
         Function applied to non-None values, including a non-None default.
         None is preserved. If omitted, values are used unchanged.
@@ -531,6 +532,13 @@ class ModelColumnMapper(BaseModel):
         Fallback for missing attributes in the generated columns. If omitted,
         missing attributes raise AttributeError when reading values.
 
+    Notes
+    -----
+    Generate declarations once per desired projection and reuse the returned
+    mapping across batches. Each call generates declarations again without
+    reading object values. The mapping can read objects of different classes
+    that provide the declared attributes.
+
     Examples
     --------
     >>> class Reading(BaseModel):
@@ -630,7 +638,8 @@ class ModelColumnMapper(BaseModel):
         -------
         dict of str to ModelColumn
             Column declarations. Explicit entries can be added or overridden
-            with the dict ``|`` operator.
+            with the dict ``|`` operator. Overriding replaces a declaration;
+            it does not retain alternative readers for the same column.
 
         Raises
         ------
@@ -723,7 +732,8 @@ class ModelTableAccessor:
             only the declared attribute paths are read.
         columns : mapping of str to ModelColumn
             Output column names and their attribute paths, defaults, converters
-            and dtypes.
+            and dtypes. The same projection is applied to every input object;
+            mappings are not selected by object type.
 
         Returns
         -------
@@ -792,8 +802,12 @@ class ModelTableAccessor:
             are not supported.
         columns : mapping of str to ModelColumn
             Columns to update and their projections. Null values overwrite
-            existing values. Existing column dtypes are retained; new columns
-            use the declared dtypes, which must support missing values.
+            existing values, including null defaults for missing attributes.
+            Omitted columns remain unchanged. Values are projected using the
+            declared dtypes before assignment. Existing column dtypes are
+            retained; incompatible assignments raise. New columns use the
+            declared dtypes, which must support missing values for untouched
+            rows. Those rows are not filled from ModelColumn.default.
         inplace : bool, optional
             Whether to update this table. Default is False.
 
@@ -815,6 +829,10 @@ class ModelTableAccessor:
 
         Notes
         -----
+        Separate calls may populate the same column from different attribute
+        paths and converters. Reuse each projection for batches of compatible
+        objects; its readers need not match those used in earlier calls.
+
         Duplicate index labels are supported because updates use row positions.
         In-place updates are not transactional: an assignment error may leave
         earlier columns updated.

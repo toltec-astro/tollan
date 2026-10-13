@@ -84,10 +84,20 @@ an intended mode of operation, not an exception.
   vocabulary. Projection reads only the declared attributes and preserves input
   row order. It does not serialize the input objects.
 - Annotation-based declarations prepare column mappings without reading object
-  values. Actual projection remains duck-typed.
+  values. The resulting projections are reusable across batches; actual reads
+  remain duck-typed rather than dispatched by model class.
+- Different projections may populate the same destination column from different
+  attributes and conversions. Sharing a destination does not require merging
+  the input projections or making their readers identical.
 - Enrichment updates explicitly addressed rows, preserves unrelated information,
   and lets new null values replace earlier values. It does not synchronize changes
   back to the objects used for projection.
+- Missing-attribute fallbacks belong to the input projection. They do not fill
+  untouched rows. Omitting a destination preserves its existing values; projecting
+  a null replaces them.
+- Existing destination columns retain their storage types. Incompatible writes
+  raise rather than silently widening storage to arbitrary objects. Newly added
+  columns use their declared types and represent untouched rows as missing.
 - Copying and in-place enrichment are explicit choices. In-place assignment is
   not transactional; an assignment failure can leave earlier columns updated.
 - Reusable ordered rules map scalar record fields to one result per record.

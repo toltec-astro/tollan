@@ -34,7 +34,8 @@ assert next(selected.itertuples(index=False)).channel == 1
 Only declared attributes are read; projection does not call `model_dump()`.
 Missing required attributes raise `AttributeError`. Defaults follow
 {func}`~tollan.utils.py.rgetattr`; a present `None` is not replaced by a default
-or passed to a converter. Empty input retains the declared columns and dtypes.
+or passed to a converter. A non-None default is passed to the converter.
+Empty input retains the declared columns and dtypes.
 
 ## Add or replace information
 
@@ -69,6 +70,83 @@ for a three-row table, `-1` and `2` cannot both be supplied. Slices and broadcas
 are not supported. In-place updates are not transactional: an assignment error
 may leave earlier columns updated.
 
+### Populate one column from different inputs
+
+Each call supplies its own projection. Different attribute paths and converters
+can populate the same column; they do not need to be combined into one mapping.
+For example, collect counts from objects with a direct integer attribute and
+from records with a nested string value:
+
+```{testcode}
+counts = ModelTableAccessor.from_models(
+    [SimpleNamespace(label=name) for name in ("a", "b", "c")],
+    columns={"label": ModelColumn("label", dtype="string")},
+)
+direct_columns = {"count": ModelColumn("count", dtype="Int64")}
+stored_columns = {
+    "count": ModelColumn("summary.total", converter=int, dtype="Int64"),
+}
+accessor = ModelTableAccessor(counts)
+accessor.update_from_models(
+    {0: SimpleNamespace(count=10), 2: SimpleNamespace(count=30)},
+    columns=direct_columns,
+    inplace=True,
+)
+assert counts["count"].isna().tolist() == [False, True, False]
+accessor.update_from_models(
+    {1: SimpleNamespace(summary=SimpleNamespace(total="20"))},
+    columns=stored_columns,
+    inplace=True,
+)
+assert counts["count"].tolist() == [10, 20, 30]
+assert str(counts["count"].dtype) == "Int64"
+```
+
+A mapping declares one reader per output column for that call. If objects share
+the declared attributes, they can use one projection even when their classes
+differ. Otherwise, group the objects by the projection you want to apply and
+update their row positions in batches. The accessor does not choose a projection
+from each object's type. A later write to the same cell replaces its earlier
+value; apply authoritative information after estimates.
+
+The column's dtype constrains the values it can hold, not where they came from.
+Each projection applies its declared dtype before assignment. When updating an
+existing column, its dtype is retained even if the projection declares a
+different dtype. Incompatible assignments raise; columns are not automatically
+widened to `object`.
+
+### Distinguish missing attributes, null values, and untouched cells
+
+| Situation | Result |
+| --- | --- |
+| A declared attribute is missing | Read using `ModelColumn.default`, or raise if no default was supplied. |
+| A projection produces None | Write a null, replacing any earlier value. |
+| An existing column is omitted from the projection | Leave that column unchanged. |
+| A row is absent from the positional update | Leave its existing values unchanged. |
+| A new column has rows outside the update | Fill those rows with the dtype's missing value, not `ModelColumn.default`. |
+
+For example, `default=0` supplies a value for a missing attribute in a selected
+object. It does not fill unselected rows with zero:
+
+```{testcode}
+accessor.update_from_models(
+    {1: SimpleNamespace()},
+    columns={"attempts": ModelColumn("attempts", default=0, dtype="Int64")},
+    inplace=True,
+)
+assert counts.attempts.iloc[1] == 0
+assert counts.attempts.isna().tolist() == [True, False, True]
+
+accessor.update_from_models(
+    {1: SimpleNamespace(count=None)}, columns=direct_columns, inplace=True,
+)
+assert counts["count"].isna().tolist() == [False, True, False]
+assert counts.label.tolist() == ["a", "b", "c"]
+```
+
+Using `default=None` also writes a null when the declared attribute is absent.
+To preserve an existing value, omit that column or row from the update instead.
+
 ## Generate declarations from model annotations
 
 `ModelColumnMapper` prepares column declarations from a Pydantic model class.
@@ -97,8 +175,9 @@ mapper = ModelColumnMapper(
         ScalarColumnRule(),
     ],
 )
+reading_columns = mapper(Reading)
 reading = Reading(channel=1, timestamp=Time(60000, format="mjd"), duration="2 s")
-readings = ModelTableAccessor.from_models([reading], columns=mapper(Reading))
+readings = ModelTableAccessor.from_models([reading], columns=reading_columns)
 assert list(readings) == ["channel", "timestamp_mjd", "duration_s"]
 assert readings.timestamp_mjd.tolist() == [60000]
 assert readings.duration_s.tolist() == [2]
@@ -107,8 +186,10 @@ assert readings.duration_s.tolist() == [2]
 Name rules full-match original field names; `exclude` rejects matching
 names. `model_path` supplies a dotted parent attribute path without changing the
 output names. `include_computed=True` includes computed-field annotations.
-Declaration generation does not read instances. Reuse the resulting mapping
-across batches of compatible objects, including objects of different classes.
+Declaration generation does not read instances. Reuse the resulting mapping,
+such as `reading_columns`, across batches of compatible objects, including
+objects of different classes. Each call to `mapper(Reading)` generates
+declarations again; keeping the mapper instance alone does not reuse that result.
 
 Scalar rules include primitive scalar fields and enum values. Quantity rules
 include fields with the specified physical type and append the chosen unit to
@@ -120,7 +201,10 @@ Nested objects and arrays require explicit declarations.
 Columns follow field order, then alias order, then type-rule output order.
 Unmatched fields are skipped; generated aliases are not matched again.
 Rule settings are validated at construction. Colliding final column names raise
-an error. Use `|` to add or override explicit declarations in a generated mapping.
+an error. Use `|` to add or intentionally override explicit declarations within
+one projection. It replaces declarations with the same key; it does not preserve
+alternative readers for a column. For inputs needing different readers, use
+[separate projections](#populate-one-column-from-different-inputs).
 
 Custom type rules receive `(name, annotation, column_name)` and return a mapping
 of final names to `ModelColumn` declarations, or None for no match. An empty
@@ -141,6 +225,18 @@ from astropy.coordinates import frame_transform_graph
 frame_names = sorted(frame_transform_graph.get_names())
 assert "icrs" in frame_names
 ```
+
+### Reuse projections across batches
+
+Prepare column mappings outside row-processing loops, and pass batches to
+`from_models()` or `update_from_models()`. Keep a separate mapping for each input
+representation you need. This avoids repeating declaration generation and table
+updates for individual objects.
+
+Projection still reads and converts each selected value; it does not vectorize
+arbitrary attribute access or converter functions. Expensive properties and
+converters therefore affect every batch. For calculations on values already in
+the table, use pandas column operations or `RecordRuleMapper.map_table()`.
 
 ## Derive values from ordered record rules
 
