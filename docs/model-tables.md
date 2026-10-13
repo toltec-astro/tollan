@@ -198,6 +198,40 @@ value's scale. `SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg")` produces
 angular columns plus a frame-name column; values must provide those attributes.
 Nested objects and arrays require explicit declarations.
 
+Use `ExplicitColumnRule` to give selected fields their own declarations while
+keeping the mapper's name rules. Its keys are exact original field names, not
+output aliases; unlisted fields fall through to later rules. Put it before
+annotation-based rules when it should override them:
+
+```{testcode}
+from tollan.accessor.pandas.model_table import ExplicitColumnRule
+
+class TaggedEntry(BaseModel):
+    tags: list[str]
+    count: int
+
+tagged_columns = ModelColumnMapper(
+    name_rules=[(r".+", r"item_\g<0>"), (r"tags", r"\g<0>")],
+    type_rules=[
+        ExplicitColumnRule(columns={
+            "tags": ModelColumn("tags", dtype=object, converter=list),
+        }),
+        ScalarColumnRule(),
+    ],
+    default=None,
+)(TaggedEntry)
+entry = TaggedEntry(tags=["ready"], count=2)
+tagged = ModelTableAccessor.from_models([entry], columns=tagged_columns)
+assert list(tagged) == ["item_tags", "tags", "item_count"]
+assert tagged.tags.iloc[0] == ["ready"]
+assert tagged.tags.iloc[0] is not entry.tags
+```
+
+The rule uses each selected alias as the output name. The declaration's `attr`
+may differ from the matched field name. As with other rules, `model_path` prefixes
+that read path and the mapper's `default` supplies missing-attribute behavior.
+Only fields selected by the name rules and not excluded are considered.
+
 Columns follow field order, then alias order, then type-rule output order.
 Unmatched fields are skipped; generated aliases are not matched again.
 Rule settings are validated at construction. Colliding final column names raise

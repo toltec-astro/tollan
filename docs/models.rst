@@ -113,6 +113,13 @@ Use :doc:`model-tables` to project objects, update table rows, and query them.
    :class-doc-from: class
    :special-members: __call__
 
+.. Column declarations may contain live converters, which have no JSON schema.
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.ExplicitColumnRule
+   :class-doc-from: class
+   :special-members: __call__
+   :model-show-json: False
+
 .. autopydantic_model:: tollan.accessor.pandas.model_table.ScalarColumnRule
    :class-doc-from: class
    :special-members: __call__

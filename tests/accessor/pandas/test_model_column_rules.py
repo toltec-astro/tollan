@@ -10,6 +10,7 @@ from astropy.time import Time
 from pydantic import BaseModel, ValidationError, field_validator
 
 from tollan.accessor.pandas.model_table import (
+    ExplicitColumnRule,
     ModelColumn,
     ModelColumnMapper,
     ModelTableAccessor,
@@ -24,6 +25,80 @@ from tollan.config.types import SkyCoordField, TimeQuantityField, UnixTimeField
 class Reading(BaseModel):
     value: int
     label: str
+
+
+def test_explicit_columns_follow_aliases_and_copy_containers_without_reading_early():
+    class Entry(BaseModel):
+        tags: list[str] | None
+        count: int
+        payload: dict[str, int]
+
+    converted = []
+
+    def copy_tags(value):
+        converted.append(value)
+        return list(value)
+
+    columns = ModelColumnMapper(
+        name_rules=[(r".+", r"item_\g<0>"), (r"tags", r"\g<0>")],
+        type_rules=[
+            ExplicitColumnRule(
+                columns={"tags": ModelColumn("tags", dtype=object, converter=copy_tags)}
+            ),
+            ScalarColumnRule(),
+        ],
+        default=None,
+    )(Entry)
+    assert converted == []
+    assert list(columns) == ["item_tags", "tags", "item_count"]
+    entry = Entry(tags=["ready"], count=2, payload={})
+    for name in ("item_tags", "tags"):
+        assert columns[name].dtype is object
+        assert columns[name].default is None
+    for _ in range(2):
+        table = ModelTableAccessor.from_models(
+            [entry, SimpleNamespace(tags=None, count=3), SimpleNamespace(count=4)],
+            columns=columns,
+        )
+        assert table.item_count.tolist() == [2, 3, 4]
+        assert table.tags.tolist() == [["ready"], None, None]
+        assert table.item_tags.tolist() == table.tags.tolist()
+        assert table.tags.dtype == table.item_tags.dtype == object
+        assert table.tags.iloc[0] is not entry.tags
+        assert table.item_tags.iloc[0] is not table.tags.iloc[0]
+    assert len(converted) == 4
+
+
+def test_explicit_columns_override_annotations_but_respect_name_selection_and_order():
+    rule = ExplicitColumnRule(columns={"value": ModelColumn("label", dtype="string")})
+    mapper = ModelColumnMapper(
+        name_rules=[(r"value", "renamed")],
+        type_rules=[rule, ScalarColumnRule()],
+        model_path="metadata",
+        default="missing",
+    )
+    columns = mapper(Reading)
+    assert columns == {
+        "renamed": ModelColumn("metadata.label", dtype="string", default="missing")
+    }
+    assert (
+        columns["renamed"].read(SimpleNamespace(metadata=Reading(value=1, label="x")))
+        == "x"
+    )
+    assert columns["renamed"].read(SimpleNamespace()) == "missing"
+    assert mapper(Reading, exclude="value") == {}
+    scalar_first = mapper(Reading, type_rules=[ScalarColumnRule(), rule])
+    assert scalar_first["renamed"].attr == "metadata.value"
+    assert scalar_first["renamed"].dtype == "Int64"
+
+
+@pytest.mark.parametrize(
+    "columns",
+    [None, {1: ModelColumn("value")}, {"value": 1}, {"value": {"attr": 1}}],
+)
+def test_explicit_column_declarations_are_validated_at_construction(columns):
+    with pytest.raises(ValidationError):
+        ExplicitColumnRule(columns=columns)
 
 
 def test_column_mapper_accepts_rule_lists_without_coercing_controls():
@@ -292,6 +367,7 @@ def test_rule_settings_are_validated_when_constructed(rule_cls, options, message
     ("rule_cls", "options"),
     [
         (TimeColumnRule, {}),
+        (ExplicitColumnRule, {}),
         (SkyCoordColumnRule, {"attrs": ["ra", "dec"]}),
         (SkyCoordColumnRule, {"unit": "deg"}),
     ],
@@ -305,6 +381,10 @@ def test_rule_representation_settings_are_required(rule_cls, options):
     "rules",
     [
         [ScalarColumnRule(), ScalarColumnRule()],
+        [
+            ExplicitColumnRule(columns={"value": ModelColumn("value", converter=str)}),
+            ExplicitColumnRule(columns={"value": ModelColumn("value", converter=str)}),
+        ],
         [TimeColumnRule(format="mjd"), TimeColumnRule(format="mjd")],
         [
             SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),

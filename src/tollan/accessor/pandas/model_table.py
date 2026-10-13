@@ -46,6 +46,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ColumnTypeRule",
+    "ExplicitColumnRule",
     "ModelColumn",
     "ModelColumnMapper",
     "ModelTableAccessor",
@@ -297,7 +298,7 @@ def _coordinate_value(value, *, attr, unit):
 
 
 class ColumnTypeRule(BaseModel, ABC):
-    """Base class for rules that declare columns from field annotations."""
+    """Base class for rules that declare columns from model fields."""
 
     model_config = ConfigDict(
         arbitrary_types_allowed=True,
@@ -311,7 +312,7 @@ class ColumnTypeRule(BaseModel, ABC):
     def __call__(
         self, name: str, annotation: Any, column_name: str
     ) -> dict[str, ModelColumn] | None:
-        """Declare columns for a matching annotation.
+        """Declare columns for a matching field.
 
         Parameters
         ----------
@@ -325,10 +326,55 @@ class ColumnTypeRule(BaseModel, ABC):
         Returns
         -------
         dict of str to ModelColumn or None
-            Column declarations, or None if the annotation does not match.
+            Column declarations, or None if the field does not match.
             An empty dict matches without producing columns. No model values
             are read.
         """
+
+
+class ExplicitColumnRule(ColumnTypeRule):
+    r"""Project named fields with explicit column declarations.
+
+    Parameters
+    ----------
+    columns : dict of str to ModelColumn
+        Original model field names mapped to column declarations. Matching is
+        exact and independent of the field annotation. Each declaration uses
+        the output alias supplied by the mapper's name rules. Fields absent
+        from this mapping are left to later rules.
+
+    Notes
+    -----
+    Place this rule before annotation-based rules to override their handling
+    of the listed fields. The mapper applies its model_path and default to
+    these declarations, as it does for other rules.
+
+    Examples
+    --------
+    >>> class Entry(BaseModel):
+    ...     tags: list[str]
+    >>> columns = ModelColumnMapper(
+    ...     name_rules=[(r".+", r"item_\g<0>")],
+    ...     type_rules=[ExplicitColumnRule(columns={
+    ...         "tags": ModelColumn("tags", dtype=object, converter=list),
+    ...     })],
+    ... )(Entry)
+    >>> columns["item_tags"].read(Entry(tags=["ready"]))
+    ['ready']
+    """
+
+    columns: dict[str, ModelColumn]
+
+    def __call__(self, name, annotation, column_name):
+        """Declare a column for a listed field.
+
+        See Also
+        --------
+        ColumnTypeRule.__call__ : Rule arguments and return convention.
+        """
+        if name not in self.columns:
+            return None
+        return {column_name: self.columns[name]}
 
 
 class TimeColumnRule(ColumnTypeRule):
