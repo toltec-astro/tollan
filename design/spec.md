@@ -86,6 +86,11 @@ an intended mode of operation, not an exception.
 - Annotation-based declarations prepare column mappings without reading object
   values. The resulting projections are reusable across batches; actual reads
   remain duck-typed rather than dispatched by model class.
+- Column projection rejects boolean, integer, floating-point and complex storage
+  that changes converted values or replaces nulls with values. Converters own
+  intentional value changes; storage must not add truncation, overflow or
+  precision loss. Known incompatible annotations can fail declaration before any
+  objects are read; annotations do not replace checks on the projected values.
 - Different projections may populate the same destination column from different
   attributes and conversions. Sharing a destination does not require merging
   the input projections or making their readers identical.

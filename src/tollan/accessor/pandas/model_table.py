@@ -8,7 +8,10 @@ from collections.abc import Callable, Mapping
 from dataclasses import MISSING
 from datetime import datetime
 from enum import Enum
-from functools import partial
+from fractions import Fraction
+from functools import cache, partial
+from inspect import Signature, signature
+from numbers import Number
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -17,6 +20,7 @@ from typing import (
     Literal,
     NamedTuple,
     cast,
+    get_origin,
     overload,
 )
 
@@ -235,10 +239,13 @@ class ModelColumn(NamedTuple):
         Value used when the attribute is missing. If omitted, a missing
         attribute raises AttributeError. This does not fill untouched table rows.
     dtype : pandas dtype, optional
-        Projected column dtype. Default is object dtype. When updating an
-        existing column, its dtype is retained rather than replaced by this one.
+        Output column dtype. Default is object dtype. Boolean, integer,
+        floating-point and complex dtypes reject values that would be
+        truncated, overflow or lose precision, and preserve nulls.
+        When updating an existing column, its dtype is retained.
     converter : callable, optional
         Function applied to non-None values, including a non-None default.
+        Use it to round values or parse numeric text before applying the dtype.
         None is preserved. If omitted, values are used unchanged.
     """
 
@@ -258,7 +265,8 @@ class ModelColumn(NamedTuple):
         Returns
         -------
         object
-            Converted attribute value, or the configured fallback.
+            Attribute value or default after applying the converter. This
+            method does not cast the result to the declared dtype.
 
         Raises
         ------
@@ -273,6 +281,93 @@ class ModelColumn(NamedTuple):
         if value is None or self.converter is None:
             return value
         return self.converter(value)
+
+    def _as_series(self, values):
+        dtype = _column_dtype(self.dtype)
+        if dtype == np.dtype(object):
+            return values
+        # NumPy can warn and return a changed value instead of raising. The
+        # comparison below rejects it, including finite values becoming inf.
+        with np.errstate(over="ignore", invalid="ignore"):
+            result = values.astype(dtype)
+        if dtype.kind in "biufc":
+            present = values.notna().to_numpy()
+            original = values.to_numpy()[present]
+            # NumPy scalar equality can first coerce a large integer to float.
+            # Python scalar equality instead compares the represented values.
+            normalize = (
+                partial(_comparison_number, complex_values=True)
+                if dtype.kind == "c"
+                else _comparison_number
+            )
+            original = np.fromiter(
+                map(normalize, original),
+                dtype=object,
+                count=len(original),
+            )
+            stored = result.astype(object).to_numpy()[present]
+            if dtype.kind == "c" or dtype.type is np.longdouble:
+                stored = np.fromiter(
+                    map(normalize, stored),
+                    dtype=object,
+                    count=len(stored),
+                )
+            if (
+                not np.array_equal(present, result.notna().to_numpy())
+                or not np.equal(original, stored).all()
+            ):
+                msg = (
+                    f"Column {values.name!r} cannot represent values from "
+                    f"{self.attr!r} exactly as {dtype}; use a converter for "
+                    "intentional value changes"
+                )
+                raise TypeError(msg)
+        return result
+
+    def _check_annotation(self, annotation):
+        dtype = _column_dtype(self.dtype)
+        if dtype.kind not in "biufc":
+            return
+        if self.converter is not None:
+            try:
+                annotation = signature(self.converter, eval_str=True).return_annotation
+            except (NameError, TypeError, ValueError):
+                # An absent or unresolved return annotation cannot establish
+                # compatibility; actual converted values are checked in batch.
+                annotation = Any
+        for value_annotation in get_annotation_types(annotation) - {
+            Any,
+            type(None),
+            Signature.empty,
+        }:
+            value_type = get_origin(value_annotation) or value_annotation
+            if isinstance(value_type, type) and not issubclass(
+                value_type, (Number, np.bool_)
+            ):
+                msg = (
+                    f"Attribute {self.attr!r} produces {value_type}, incompatible "
+                    f"with numeric dtype {dtype}; provide a numeric converter"
+                )
+                raise TypeError(msg)
+
+
+@cache
+def _column_dtype(dtype):
+    return pd.api.types.pandas_dtype(object if dtype is None else dtype)
+
+
+def _comparison_number(value, *, complex_values=False):
+    if complex_values and isinstance(value, (Number, np.bool_)):
+        return _comparison_number(value.real), _comparison_number(value.imag)
+    if not isinstance(value, np.generic):
+        return value
+    if isinstance(value, np.longdouble):
+        # .item() keeps a NumPy scalar for extended precision, whose comparison
+        # can coerce the other operand and hide loss just as float64 does.
+        return (
+            Fraction(*value.as_integer_ratio()) if np.isfinite(value) else float(value)
+        )
+    return value.item()
 
 
 def _enum_value(value):
@@ -691,6 +786,10 @@ class ModelColumnMapper(BaseModel):
         ------
         ValueError
             If multiple projections produce the same final column name.
+        TypeError
+            If an attribute is annotated as nonnumeric for a numeric column,
+            or its converter has a nonnumeric return annotation. A converter's
+            return annotation takes precedence over the attribute annotation.
         """
         if updates:
             # model_copy(update=...) does not validate replacement settings.
@@ -723,6 +822,7 @@ class ModelColumnMapper(BaseModel):
                             "multiple projections"
                         )
                         raise ValueError(msg)
+                    column._check_annotation(annotations.get(column.attr, Any))
                     columns[column_name] = column._replace(
                         attr=column.attr
                         if self.model_path is None
@@ -791,17 +891,17 @@ class ModelTableAccessor:
         ------
         AttributeError
             If a required attribute is missing and no fallback is declared.
+        TypeError, ValueError, OverflowError
+            If conversion to the declared dtype fails. Boolean and numeric
+            columns also reject conversions that change values or nulls.
         """
         readers = tuple(column.read for column in columns.values())
         rows = ([read(model) for read in readers] for model in models)
         # Preserve native values and large nullable integers before dtype conversion.
         table = pd.DataFrame(rows, columns=list(columns), dtype=object)
-        dtypes = {
-            name: column.dtype
-            for name, column in columns.items()
-            if column.dtype is not None
-        }
-        return table.astype(dtypes) if dtypes else table
+        for name, column in columns.items():
+            table[name] = column._as_series(table[name])
+        return table
 
     @overload
     def update_from_models(

@@ -37,6 +37,29 @@ Missing required attributes raise `AttributeError`. Defaults follow
 or passed to a converter. A non-None default is passed to the converter.
 Empty input retains the declared columns and dtypes.
 
+### Choose a dtype and converter
+
+Choose a dtype that can represent your values without loss. Boolean, integer,
+floating-point and complex columns reject truncation, overflow and precision
+loss. For example, writing `1.5` to an integer column raises instead of silently
+discarding the fraction. To round values, supply a converter explicitly:
+
+```{testcode}
+rounded = ModelTableAccessor.from_models(
+    [SimpleNamespace(value=1.5)],
+    columns={"value": ModelColumn("value", dtype="int64", converter=round)},
+)
+assert rounded.value.tolist() == [2]
+```
+
+The dtype must represent the converter's result exactly, including when the
+input comes from a default. Use `converter=int` or `converter=float` to parse
+numeric text; declaring a numeric dtype alone does not parse it.
+
+Use a nullable dtype such as `Int64` or `boolean` when nulls are possible; nulls
+are not converted to numbers or boolean values. Leave `dtype` unspecified to
+retain Python objects. Other dtype conversions follow pandas behavior.
+
 ## Add or replace information
 
 An update accepts either one object per table row or a mapping from integer row
