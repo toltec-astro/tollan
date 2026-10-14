@@ -119,6 +119,8 @@ Utilities
 
 .. automodapi:: tollan.utils.py
 
+.. automodapi:: tollan.utils.registry
+
 .. automodapi:: tollan.utils.slice
 
 .. automodapi:: tollan.utils.sys

@@ -369,6 +369,23 @@ Applications repeatedly need common operations that belong to no particular
 domain. Supporting utilities provide these operations in one reusable place,
 so application components do not maintain separate implementations.
 
+#### Keyed registries
+
+Components publish named capabilities for later lookup without replacing
+definitions supplied by another component. A keyed registry owns insertion and
+duplicate detection; the registering component owns entry validation.
+
+- Registration rejects every existing key, including an identical repeat, and
+  leaves the previous contents unchanged.
+- Lookup exposes subsequent registrations in insertion order. Public mapping
+  operations must not allow assignment or removal of entries.
+- The registry retains supplied values without copying or validating them.
+  Applications validate their definitions before registration; constructing or
+  validating a definition does not itself register it.
+- Automatic registration must use the same insertion operation as explicit
+  registration. Domain-specific matching, inheritance, and schema rebuilding
+  remain outside the keyed registry.
+
 #### Runtime generic bindings
 
 - Runtime generic bindings let frameworks derive concrete types from generic

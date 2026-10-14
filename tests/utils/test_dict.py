@@ -4,22 +4,18 @@ from __future__ import annotations
 
 from collections import UserDict
 from copy import copy
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import pytest
 
 from tollan.utils.dict import (
     ListOperation,
-    add_to_dict,
     dict_from_flat_dict,
     dict_from_regex_match,
     dict_product,
     dict_to_flat_dict,
     rupdate,
 )
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 def test_list_operation_string_values():
@@ -667,51 +663,3 @@ def test_dict_product_empty():
     """Test dict_product with empty inputs."""
     result = list(dict_product())
     assert result == [{}]
-
-
-def test_add_to_dict():
-    """Test add_to_dict decorator."""
-    registry = {}
-
-    @add_to_dict(registry, "my_func")
-    def my_function():
-        return "hello"
-
-    assert "my_func" in registry
-    assert registry["my_func"]() == "hello"
-
-
-def test_add_to_dict_callable_key():
-    """Test add_to_dict with callable key."""
-    registry = {}
-
-    @add_to_dict(registry, lambda f: f.__name__.upper())
-    def my_function():
-        return "hello"
-
-    assert "MY_FUNCTION" in registry
-    assert registry["MY_FUNCTION"]() == "hello"
-
-
-def test_add_to_dict_exist_ok_false():
-    """Test add_to_dict with exist_ok=False raises on duplicate."""
-    registry = {"existing": "value"}
-
-    with pytest.raises(ValueError, match="key=existing exist"):
-
-        @add_to_dict(registry, "existing", exist_ok=False)
-        def my_function():
-            return "hello"
-
-
-def test_add_to_dict_exist_ok_true():
-    """Test add_to_dict with exist_ok=True allows overwrite."""
-
-    registry: dict[str, Callable[[], str]] = {}
-    registry["existing"] = lambda: "old_value"
-
-    @add_to_dict(registry, "existing", exist_ok=True)
-    def my_function():
-        return "new_value"
-
-    assert registry["existing"]() == "new_value"

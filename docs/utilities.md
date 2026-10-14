@@ -8,6 +8,7 @@ application framework. See the [API reference](modules.rst) for full signatures.
 | Describe a local or remote location | `tollan.utils.fileloc.fileloc` |
 | Open input or create output directories | `tollan.utils.file` |
 | Merge nested settings | `tollan.utils.dict.rupdate` |
+| Register unique keys for later lookup | `tollan.utils.registry.Registry` |
 | Parse dotted command-line overrides | `tollan.utils.cli.dict_from_cli_args` |
 | Read or write YAML | `tollan.utils.yaml` |
 | Convert units or select table rows | `tollan.utils.np`, `tollan.utils.table` |
@@ -58,6 +59,34 @@ assert overrides == {"reader": {"header": False}}
 CLI override values use YAML parsing. For application configuration, prefer
 `RuntimeContext` and its documented precedence rules instead of composing a
 second loading workflow from these lower-level helpers.
+
+## Register entries for lookup
+
+Use {class}`~tollan.utils.registry.Registry` when each key must identify one
+registered value. It starts empty and supports normal mapping lookups and
+iteration in registration order.
+
+```{testcode}
+from tollan.utils.registry import Registry
+
+readers = Registry[str, type]()
+readers.register("text", str)
+assert readers["text"] is str
+assert list(readers) == ["text"]
+
+try:
+    readers.register("text", str)
+except ValueError:
+    pass
+else:
+    raise AssertionError("An existing key must not be registered again")
+assert readers["text"] is str
+```
+
+Registering an existing key raises `ValueError`, even for the same value, and
+leaves the existing entry unchanged. Item assignment, deletion, and `update()`
+are not supported. Validate entries before registering them; values are stored
+as supplied. Use `dict(readers)` when you need an independent mapping snapshot.
 
 ## Read and write YAML
 

@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Mapping, MutableMapping, MutableSequence
 
 __all__ = [
-    "add_to_dict",
     "dict_from_flat_dict",
     "dict_from_regex_match",
     "dict_product",
@@ -561,37 +560,6 @@ def dict_to_flat_dict(  # noqa: C901
         _k = key_prefix + k.lstrip(".")
         result[_k] = v
     return result
-
-
-def add_to_dict(d: MutableMapping, key: Any, *, exist_ok: bool = True) -> Any:
-    """Return a decorator to add decorated item to dict.
-
-    Parameters
-    ----------
-    d : mutable mapping
-        Registry to update when the returned decorator is applied.
-    key : object or callable
-        Registry key, or a callable receiving the decorated object and returning
-        its key.
-    exist_ok : bool, optional
-        Allow an existing entry to be replaced, by default True.
-
-    Returns
-    -------
-    callable
-        Decorator that registers and returns the same object. It raises
-        ValueError on duplicate keys when ``exist_ok=False``.
-    """
-
-    def decorator(thing: Any) -> Any:
-        _key = key(thing) if callable(key) else key
-        if not exist_ok and _key in d:
-            msg = f"key={_key} exist."
-            raise ValueError(msg)
-        d[_key] = thing
-        return thing
-
-    return decorator
 
 
 def dict_from_regex_match(
