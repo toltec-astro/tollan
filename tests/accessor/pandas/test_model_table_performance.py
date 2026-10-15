@@ -35,7 +35,7 @@ def test_record_rules_table(benchmark, size):
         {"format": ["nc"] * size, "kind": [i % 20 for i in range(size)]}
     )
     mapper = RecordRuleMapper(
-        [({"format": "nc", "kind": i}, i) for i in range(16)], default=-1
+        rules=[({"format": "nc", "kind": i}, i) for i in range(16)], default=-1
     )
     result = benchmark(mapper.map_table, table)
     assert result == [i % 20 if i % 20 < 16 else -1 for i in range(size)]

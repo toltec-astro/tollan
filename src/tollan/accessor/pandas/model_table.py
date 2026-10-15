@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Hashable, Mapping
 from dataclasses import MISSING
 from datetime import datetime
 from enum import Enum
@@ -46,7 +46,7 @@ from ...utils.py import rgetattr
 from ...utils.typing import get_annotation_types
 
 if TYPE_CHECKING:
-    from collections.abc import Hashable, Iterable
+    from collections.abc import Iterable
 
 __all__ = [
     "ColumnTypeRule",
@@ -62,7 +62,7 @@ __all__ = [
 ]
 
 
-class RecordRuleMapper[ValueT]:
+class RecordRuleMapper[ValueT](BaseModel):
     """Map records to the values of their first matching rules.
 
     Parameters
@@ -73,14 +73,16 @@ class RecordRuleMapper[ValueT]:
         no constraint. None matches null values, including NaN and pandas.NA,
         but not empty strings. Missing keys cannot satisfy a constraint.
         An empty mapping matches every record. Rules and constraint mappings
-        are copied at construction; result objects are retained unchanged.
+        are validated at construction. Specialize the result type with
+        ``RecordRuleMapper[ResultT]`` or a subclass. Matching returns the
+        validated result objects unchanged.
     default : object
         Result for records that match no rule, unless overridden for a call.
 
     Examples
     --------
     >>> mapper = RecordRuleMapper(
-    ...     [({"status": "ready"}, 1), ({"status": None}, 0)], default=-1
+    ...     rules=[({"status": "ready"}, 1), ({"status": None}, 0)], default=-1
     ... )
     >>> mapper({"status": "ready", "channel": 2})
     1
@@ -90,31 +92,28 @@ class RecordRuleMapper[ValueT]:
     [1, 0, -1]
     """
 
-    def __init__(
-        self,
-        rules: Iterable[tuple[Mapping[str, Hashable], ValueT]],
-        *,
-        default: ValueT,
-    ) -> None:
-        self._rules = tuple((dict(constraints), value) for constraints, value in rules)
-        self._default = default
+    model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
+
+    rules: tuple[tuple[dict[str, Hashable], ValueT], ...]
+    default: ValueT | None
 
     @overload
-    def __call__(self, record: Mapping[str, Any]) -> ValueT: ...
+    def __call__(self, record: object) -> ValueT | None: ...
 
     @overload
     def __call__[DefaultT](
-        self, record: Mapping[str, Any], *, default: DefaultT
+        self, record: object, *, default: DefaultT
     ) -> ValueT | DefaultT: ...
 
-    def __call__(self, record: Mapping[str, Any], *, default: Any = MISSING) -> Any:
+    def __call__(self, record: object, *, default: Any = MISSING) -> Any:
         """Return the value of the first rule matching a record.
 
         Parameters
         ----------
-        record : mapping of str to scalar
-            Named scalar values. Extra keys are ignored. The record is not
-            modified; null values match only a None constraint.
+        record : mapping or object
+            Named scalar values, read from mapping keys or object attributes.
+            Extra fields are ignored. The record is not modified; null values
+            match only a None constraint. Missing fields do not match.
         default : object, optional
             Result for an unmatched record in this call. If omitted, use the
             configured default. Explicit None is an override. The mapper's
@@ -126,13 +125,16 @@ class RecordRuleMapper[ValueT]:
             Matching rule value, or the effective default. Result objects,
             including callables and enum members, are returned unchanged.
         """
-        for constraints, value in self._rules:
+        get_value = (
+            record.get if isinstance(record, Mapping) else partial(getattr, record)
+        )
+        for constraints, value in self.rules:
             for name, expected in constraints.items():
                 if expected is ...:
                     continue
-                if name not in record:
+                actual = get_value(name, MISSING)
+                if actual is MISSING:
                     break
-                actual = record[name]
                 if expected is None:
                     matches = pd.isna(actual)
                 else:
@@ -141,7 +143,7 @@ class RecordRuleMapper[ValueT]:
                     break
             else:
                 return value
-        return self._default if default is MISSING else default
+        return self.default if default is MISSING else default
 
     @overload
     def map_table(
@@ -149,7 +151,7 @@ class RecordRuleMapper[ValueT]:
         table: pd.DataFrame,
         *,
         column_names: Mapping[str, str] | None = None,
-    ) -> list[ValueT]: ...
+    ) -> list[ValueT | None]: ...
 
     @overload
     def map_table[DefaultT](
@@ -196,13 +198,13 @@ class RecordRuleMapper[ValueT]:
         reused, avoiding a Python-level loop over records. For a fixed rule
         set, runtime remains linear in the number of rows.
         """
-        values = np.empty(len(self._rules) + 1, dtype=object)
-        values[-1] = self._default if default is MISSING else default
+        values = np.empty(len(self.rules) + 1, dtype=object)
+        values[-1] = self.default if default is MISSING else default
         selected = np.full(len(table), -1, dtype=np.intp)
         unmatched = np.ones(len(table), dtype=bool)
         names = {} if column_names is None else column_names
         comparisons = {}
-        for i, (constraints, value) in enumerate(self._rules):
+        for i, (constraints, value) in enumerate(self.rules):
             if not unmatched.any():
                 break
             values[i] = value

@@ -135,6 +135,10 @@ an intended mode of operation, not an exception.
 ##### Ordered record rules
 
 - Reusable ordered rules map scalar record fields to one result per record.
+- Generic result types constrain rule values at declaration. The unmatched
+  default may be null independently of the rule-value type.
+- Record values come from mapping keys or object attributes. Batch evaluation
+  reads table columns with the same matching semantics.
 - The first matching partial mapping wins. Unmatched records receive the
   configured default; per-call overrides do not mutate the mapper.
 - Missing fields cannot satisfy constraints. Nulls match an explicit null

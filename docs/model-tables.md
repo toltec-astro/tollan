@@ -300,6 +300,8 @@ the table, use pandas column operations or `RecordRuleMapper.map_table()`.
 Use `RecordRuleMapper` to associate partial record patterns with values. The
 first matching rule supplies the result; unmatched records receive `default`.
 Each named field must equal its expected scalar value. Extra fields are ignored.
+Records may be mappings or objects: mappings use keys; other objects use
+attributes, including models and rows from `DataFrame.itertuples()`.
 
 ```{testcode}
 from enum import Enum
@@ -311,7 +313,7 @@ class Status(Enum):
     unknown = "unknown"
 
 status_mapper = RecordRuleMapper[Status](
-    [
+    rules=[
         ({"channel": 1}, Status.ready),
         ({"amplitude": None}, Status.incomplete),
     ],
@@ -320,6 +322,8 @@ status_mapper = RecordRuleMapper[Status](
 assert status_mapper({"channel": 1, "amplitude": 2.5}) is Status.ready
 assert status_mapper({"channel": 2, "amplitude": None}) is Status.incomplete
 assert status_mapper({}) is Status.unknown
+from types import SimpleNamespace
+assert status_mapper(SimpleNamespace(channel=1)) is Status.ready
 
 # Batch evaluation returns one value per row, regardless of index labels.
 values = status_mapper.map_table(table)
@@ -328,10 +332,11 @@ table["status"] = values
 assert table.status.iloc[0] is Status.ready
 ```
 
-Rules are copied at construction and can be reused for multiple records and
-tables. Result objects, including enum members and callables, are returned
-unchanged. The mapper does not modify its input; assign the returned list to
-install a column, choosing its pandas dtype as needed.
+Rule declarations are validated and copied at construction and can be reused
+for multiple records and tables. Validated result objects, including enum
+members and callables, are returned unchanged. The mapper does not modify its
+input; assign the returned list to install a column, choosing its pandas dtype
+as needed.
 
 None constraints match null values, including NaN and `pandas.NA`, but not
 missing fields or empty strings. Ellipsis imposes no constraint, and an empty
@@ -355,10 +360,10 @@ unmatched rows:
 import pandas as pd
 
 ready_mapper = RecordRuleMapper[Status](
-    [({"channel": 1}, Status.ready)], default=Status.unknown,
+    rules=[({"channel": 1}, Status.ready)], default=Status.unknown,
 )
 incomplete_mapper = RecordRuleMapper[Status](
-    [({"amplitude": None}, Status.incomplete)], default=Status.unknown,
+    rules=[({"amplitude": None}, Status.incomplete)], default=Status.unknown,
 )
 candidates = pd.DataFrame({"channel": [1, 2, 1], "amplitude": [None, 2.0, 3.0]})
 interpretations = pd.DataFrame({
@@ -376,6 +381,27 @@ Within each mapper, the first matching rule still wins. `map_table` evaluates
 constraints column-wise and reuses repeated comparisons instead of invoking the
 scalar mapper for every row. For a fixed rule set, runtime remains linear in
 the number of rows.
+
+## Specialize rule results
+
+Use a generic parameter to validate result values when constructing a mapper.
+A subclass can fix that type and supply a default:
+
+```{testcode}
+class StatusMapper(RecordRuleMapper[Status]):
+    default: Status | None = None
+
+typed_mapper = StatusMapper.model_validate({
+    "rules": [({"channel": 1}, "ready")],
+})
+assert typed_mapper({"channel": 1}) is Status.ready
+assert typed_mapper({}) is None
+```
+
+The fallback may be None even when rule values cannot be None. To compose
+mappers of the same result type, place overrides before another mapper's
+`rules`. Rules and defaults are validated at construction; evaluating a record
+does not validate it as a model.
 
 ## Query the collected values
 

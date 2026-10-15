@@ -166,3 +166,15 @@ Use :doc:`model-tables` to project objects, update table rows, and query them.
 .. autopydantic_model:: tollan.accessor.pandas.model_table.SkyCoordColumnRule
    :class-doc-from: class
    :special-members: __call__
+
+Record-rule declarations
+------------------------
+
+See :doc:`model-tables` for matching records and tables.
+
+.. Rule values may be arbitrary objects or live callables without a JSON schema.
+
+.. autopydantic_model:: tollan.accessor.pandas.model_table.RecordRuleMapper
+   :class-doc-from: class
+   :model-show-json: False
+   :special-members: __call__

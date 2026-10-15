@@ -18,7 +18,7 @@ Data Accessors
 .. automodapi:: tollan.accessor.pandas
 
 .. automodapi:: tollan.accessor.pandas.model_table
-   :skip: ModelTableAccessor, ModelColumnMapper, ColumnTypeRule, ExplicitColumnRule, ScalarColumnRule, TimeColumnRule, QuantityColumnRule, SkyCoordColumnRule
+   :skip: ModelTableAccessor, ModelColumnMapper, ColumnTypeRule, ExplicitColumnRule, ScalarColumnRule, TimeColumnRule, QuantityColumnRule, SkyCoordColumnRule, RecordRuleMapper
 
 See :ref:`model-table-declarations` for column-mapping fields and rules.
 
