@@ -18,6 +18,22 @@ interfaces that separate those decisions from reusable operations.
 - Configuration, execution state, and scientific results are distinct objects
   with distinct lifetimes.
 
+Analyses and steps separate complete workflows from reusable computations:
+
+| API level | Responsibility |
+| --- | --- |
+| High | Prepare and execute a complete configured operation, including its result or invocation lifecycle. |
+| Middle | Adapt domain inputs, apply settings, combine computations, and assemble results through the domain's data interchange contract. |
+| Low | Compute from numerical inputs and explicit parameters, independently of configuration models, views, mappers, output namespaces, and invocation contexts. |
+
+- Method binding follows the data interchange protocol. A middle-level method
+  may use instance-owned settings or receive settings and context explicitly as
+  a classmethod. Both serve the same API level.
+- Low-level computations preserve inputs and do not consult mutable class state.
+- Concrete components define their input and result contracts. They may delegate
+  computation to existing analyses or utilities; the levels do not require
+  duplicate APIs or an otherwise unnecessary method.
+
 ## Domains
 
 ### Data access and representation
@@ -80,17 +96,19 @@ an intended mode of operation, not an exception.
 - Model tables collect selected object attributes into a mutable, flat workspace
   for filtering and incremental enrichment. They do not require a shared model
   class or reconstruct the input objects.
+
+##### Attribute projection
+
 - Applications declare attribute paths, output representations, and query
   vocabulary. Projection reads only the declared attributes and preserves input
   row order. It does not serialize the input objects.
-- Annotation-based declarations prepare column mappings without reading object
-  values. The resulting projections are reusable across batches; actual reads
-  remain duck-typed rather than dispatched by model class.
 - Column projection rejects boolean, integer, floating-point and complex storage
   that changes converted values or replaces nulls with values. Converters own
   intentional value changes; storage must not add truncation, overflow or
-  precision loss. Known incompatible annotations can fail declaration before any
-  objects are read; annotations do not replace checks on the projected values.
+  precision loss.
+
+##### Incremental enrichment
+
 - Different projections may populate the same destination column from different
   attributes and conversions. Sharing a destination does not require merging
   the input projections or making their readers identical.
@@ -105,16 +123,24 @@ an intended mode of operation, not an exception.
   columns use their declared types and represent untouched rows as missing.
 - Copying and in-place enrichment are explicit choices. In-place assignment is
   not transactional; an assignment failure can leave earlier columns updated.
+
+##### Reusable projection declarations
+
+- Annotation-based declarations prepare column mappings without reading object
+  values. The resulting projections are reusable across batches; actual reads
+  remain duck-typed rather than dispatched by model class.
+- Known incompatible annotations can fail declaration before any objects are
+  read. Annotations do not replace checks on the projected values.
+
+##### Ordered record rules
+
 - Reusable ordered rules map scalar record fields to one result per record.
-  The first matching partial mapping wins; unmatched records receive the
-  configured default, with per-call overrides that do not mutate the mapper.
-  Callers own composition and ambiguity handling across independent mappers.
-  Missing fields cannot satisfy constraints; nulls match
-  an explicit null constraint. Scalar and column-wise evaluation agree and
-  preserve result objects without modifying inputs. Applications own the rules
-  and the storage representation of derived columns.
-- Model tables are independent of schema-bound read-only accessors. Applications
-  own source discovery, metadata authority, and derived-column calculations.
+- The first matching partial mapping wins. Unmatched records receive the
+  configured default; per-call overrides do not mutate the mapper.
+- Missing fields cannot satisfy constraints. Nulls match an explicit null
+  constraint.
+- Scalar and column-wise evaluation agree and preserve result objects without
+  modifying inputs.
 
 #### Units and table conversion
 
@@ -199,15 +225,13 @@ component typed settings before it uses them.
   validated configuration and metadata models.
 - A field serializer produces the representation used to restore the validated
   value. The representation need not preserve the original input syntax.
-- Relative descendant paths can be validated before a containing root exists.
-  They use POSIX syntax and normalize redundant separators and current-directory
-  components. They exclude rooted paths, the root itself, and parent traversal.
-  A root-inclusive variant supports collections that can search the containing
-  directory as well as descendants, without permitting parent traversal.
-  Path fields and subtree mappings declare the shared Pydantic subpath type;
-  Pydantic applies its normalization and validation.
-  This check performs no filesystem access and does not establish symlink
-  containment.
+- Relative descendant paths follow one lexical contract in configuration fields
+  and subtree mappings. Validation does not require a containing root to exist,
+  performs no filesystem access, and does not establish symlink containment.
+- Descendant paths use POSIX syntax and normalize redundant separators and
+  current-directory components. They exclude rooted paths and parent traversal.
+  The root itself is excluded unless the declaration permits searching the
+  containing directory as well as its descendants.
 - Time serialization preserves precision independently of display settings.
 - Callers can inspect declared defaults without instantiating a configured
   component or executing code that generates a default value.
@@ -217,6 +241,10 @@ component typed settings before it uses them.
 Applications need consistent command-line entry points without repeating common
 CLI setup. Tollan provides a specialized Typer class for this purpose, so each
 application can concentrate on its commands and their behavior.
+
+- Shared setup provides version reporting, group help, and logging conventions.
+- Generated command and option names preserve underscores. Multi-value options
+  accept values after one flag and accumulate values across repeated flags.
 
 #### Configuration integration
 
@@ -246,11 +274,23 @@ application that scheduled the calculation.
 
 - Producing configuration associates a scientific result with the settings used
   to calculate it.
-- Analysis configuration supplies the parameters used by the computation.
+- An analysis owns its validated configuration and computation, and manages
+  its output scope.
 - Installed results retain the configuration used to produce them. Later changes
   to application settings do not change that recorded configuration.
 - Deferred execution follows
   [lazy data and resource ownership](#lazy-data-and-resource-ownership).
+
+#### Reusable analysis computations
+
+- Reusable computations let callers calculate with the same analysis settings
+  without preparing an output namespace or running the complete workflow.
+- The [three API levels](#concepts-and-responsibilities) apply to analyses:
+  the high level prepares inputs and an output scope; the middle level adapts
+  domain inputs and configuration to computations and assembles their results.
+- Result integration is also a middle-level responsibility. The shared analysis
+  base validates, reuses, and installs results with their producing configuration.
+  A focused computation can instead return a standalone result.
 
 #### Result views
 
@@ -313,6 +353,21 @@ by a directed acyclic graph (DAG).
 - The operation may modify the working data.
 - Step composition preserves the identity of the caller's working data.
 
+#### Reusable step computations
+
+- A step operation can run with caller-supplied working data and invocation
+  context, independently of the complete invocation lifecycle.
+- The [three API levels](#concepts-and-responsibilities) apply to steps:
+  the high level owns context creation and outcome recording; the middle level
+  selects inputs, combines computations, installs results, and publishes payloads.
+- The middle-level operation receives configuration through its invocation
+  context. Direct calls need no configured step instance; the caller owns context
+  attachment, completion, and exception recording. The operation can record
+  failures explicitly.
+- Steps that select or publish existing results need no numerical API of their
+  own. Steps that calculate can reuse
+  [analysis computations](#reusable-analysis-computations) or numerical utilities.
+
 #### Invocation contexts
 
 - Invocation contexts let callers inspect an operation's outcome and retrieve
@@ -367,6 +422,114 @@ by a directed acyclic graph (DAG).
 - The application selects an execution driver. When it uses a sequential
   pipeline, execution follows
   [sequential execution and failure handling](#sequential-execution-and-failure-handling).
+
+### Artifacts and visualization
+
+An operation's data context can contain more data than a consumer needs to
+persist or exchange. Artifacts collect a selected portion or all of that context
+into useful bundles. Visualization is one category of data consumption.
+
+#### Artifact data and specifications
+
+- Artifact specifications define the data selected or assembled for persistence
+  or exchange and its representation. Producing data does not automatically
+  retain it as an artifact.
+- An artifact entry pairs data with its effective specification. The data can
+  exist independently of a visualization or exported file.
+- Specifications own settings and data-preparation operations. Live data belongs
+  to artifact entries, not to the reusable specifications.
+
+#### Visualization construction
+
+- A visualization consumes data in the representation required by its input
+  contract and constructs a native presentation object using its settings.
+  It can consume an existing result view without a live processing context or
+  scientific recomputation.
+- The presentation object is itself data and can be retained as an artifact.
+- Construction is independent of display, export, and result installation.
+  Each concrete visualization defines its input contract and when it loads data.
+
+#### Export and display
+
+- Export and display use an already produced object. They do not repeat its
+  construction or the scientific calculation that supplied its inputs.
+- The artifact specification owns materialization; the caller supplies the
+  destination. Standalone export and product publication use the same operation.
+- Writers report successfully written destinations and representations. Failures
+  propagate; earlier writes may remain. A product publisher owns its publication
+  root, inventory, and commit.
+
+#### Artifact retention and composition
+
+- Artifact retention keeps selected data and its effective specification available
+  for later use or export, without recovering the complete operation context.
+- A composite specification produces a set of artifacts. Each entry retains its
+  effective settings after shared overrides have been applied.
+- Artifact contexts provide storage and retrieval by specification type and
+  optional alias. Retention shares references; it does not copy or materialize
+  objects. Adding an existing type and alias replaces that entry.
+
+#### Use artifacts in a step
+
+- **Handoff:** operation data context and artifact settings → selected data with
+  effective specifications → persistence or exchange for subsequent consumption.
+- A step retains selected data in its invocation's artifact context. Its typed
+  payload remains separately available for downstream computations.
+- Each invocation receives a fresh artifact context. Configuration records retain
+  artifact settings and omit live objects. Transport of live artifacts follows
+  [context identity and serialization](#context-identity-and-serialization).
+
+### Database resources
+
+Applications need SQL connections and ORM transactions in scripts, Web requests
+and workers. Tollan provides reusable resource management and schema conventions;
+applications own their domain schema, queries, and connection policy.
+
+#### Connections and transactions
+
+- A database resource manages connection and transaction lifetimes and provides
+  access to table metadata across repeated operations.
+- A resource created from a URL owns its engine. A resource wrapping an existing
+  engine borrows it; closing the wrapper must not dispose the borrowed engine.
+- Each session context creates a fresh session, commits pending work on successful
+  exit, rolls it back on error, and closes it in either case. Explicit commits are
+  not rolled back by a later failure.
+- Operations that share pending work use one explicitly supplied session.
+  Nesting session contexts does not combine their transactions.
+- Connections and sessions finish before their resource closes. Resource
+  construction performs no connection or schema operation; reflection and schema
+  creation are explicit operations.
+
+#### Schema conventions
+
+- Shared column declarations give application schemas consistent identities,
+  descriptive fields, and time conventions.
+- Portable UUID values are generated when omitted and preserved when supplied.
+  Application schemas own uniqueness and relationship constraints.
+- Timestamps use UTC. Application-supplied event times remain distinct from
+  automatic creation and modification times. A local timezone records separate
+  context; it does not change the timestamp convention.
+- Import workflows preserve historical timestamps and normalize them to UTC.
+  Applications own timestamp policies beyond the shared declarations.
+
+#### Actors and attribution
+
+- Actor declarations let applications associate records with portable actor
+  identities and stable environment facts. Invocation details belong to runs.
+- The application defines its actor model and chooses attribution during writes.
+  Shared declarations supply actor references and optional timestamps without
+  selecting an actor or opening a transaction.
+
+#### Batch writes and query helpers
+
+- Shared database operations support prepared row batches and commonly needed
+  expressions without taking over application validation or transactions.
+- SQLite batch upsert uses an explicitly supplied transaction. Applications
+  prepare relationship handling and actor attribution before writing.
+- SQLite resources provide integer bitwise aggregates without application setup.
+  NULL inputs require explicit handling; aggregates must not silently discard them.
+- Shared SQL expressions support database-generated timestamps and date/time
+  queries. Timestamp ownership follows [schema conventions](#schema-conventions).
 
 ### Supporting utilities
 

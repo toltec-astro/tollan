@@ -45,6 +45,9 @@ dependencies = [
   "xarray",
   "zarr",
   "dask",
+  "sqlalchemy>=2.0",
+  "sqlalchemy-utils>=0.42",
+  "tzlocal>=5",
 ]
 
 [dependency-groups]

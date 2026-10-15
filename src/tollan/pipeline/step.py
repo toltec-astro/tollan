@@ -10,10 +10,20 @@ Provides typed steps over containers with an ``.attrs`` or ``.meta`` mapping:
 - :class:`SequentialPipeline` executes a list of steps in order, skipping
   disabled ones.
 
+Call a step instance for a complete invocation, or call ``run(data, context)``
+with an existing context whose lifecycle you manage. A step can delegate reusable
+calculations to an analysis or numerical utility. See :class:`Step` for the
+high-, middle-, and low-level responsibilities.
+
 Store scientific products in the working container and publish what downstream
 steps need through a typed ``context.data`` field. This can be a view of those
-products or a bundle of views, arrays, tables, figures, and file locations.
+products or a bundle of views, arrays, tables, and file locations.
 Leave it as None when the step does not need to publish a payload.
+
+Collect selected data for persistence or exchange in ``context.artifacts`` with
+its effective specifications. A step declares its concrete artifact specification
+type on ``StepConfig.artifacts``. Live artifacts are excluded from JSON records;
+their pickle support depends on the retained objects and required resources.
 
 Use ``Step.dump_context()`` to obtain JSON for export. The product writer selects
 which contexts to save and where to store the returned strings. Read saved values
@@ -27,6 +37,7 @@ step leaves ``context.data`` as None; the pipeline guide demonstrates publishing
 a typed result view for downstream steps.
 
 >>> import xarray as xr
+>>> import numpy as np
 >>> class ScaleConfig(StepConfig):
 ...     factor: float = 2.0
 >>> class ScaleContext(StepContext["Scale", ScaleConfig]):
@@ -34,7 +45,12 @@ a typed result view for downstream steps.
 >>> class Scale(Step[ScaleConfig, ScaleContext]):
 ...     @classmethod
 ...     def run(cls, data, context):
-...         data["scaled"] = data["signal"] * context.config.factor
+...         signal = data["signal"]
+...         values = cls.compute_scaled(signal.data, factor=context.config.factor)
+...         data["scaled"] = signal.copy(data=values)
+...     @classmethod
+...     def compute_scaled(cls, values, *, factor):
+...         return values * factor
 >>> source = xr.Dataset({"signal": ("sample", [1.0, 2.0])})
 >>> Scale(factor=3.0)(source) is source
 True
@@ -45,6 +61,22 @@ True
 True
 >>> context.completed, context.data, context.config.factor
 (True, None, 3.0)
+
+Run the operation with an explicit context. Completion remains the caller's
+responsibility:
+
+>>> other = xr.Dataset({"signal": ("sample", [1.0, 2.0])})
+>>> supplied = ScaleContext(step_cls=Scale, config=ScaleConfig(factor=3.0))
+>>> Scale.run(other, supplied)
+>>> other["scaled"].values.tolist(), supplied.completed
+([3.0, 6.0], False)
+>>> PIPELINE_CONTEXT_KEY in other.attrs
+False
+
+Compute independently of a working tree or invocation context:
+
+>>> Scale.compute_scaled(np.array([1.0, 2.0]), factor=3.0).tolist()
+[3.0, 6.0]
 """
 
 from __future__ import annotations
@@ -63,7 +95,7 @@ from typing import (
     overload,
 )
 
-from pydantic import BaseModel, Field, JsonValue
+from pydantic import BaseModel, ConfigDict, Field, JsonValue
 
 from ..config import FrozenBaseModel
 from ..utils.log import logger, timeit
@@ -72,6 +104,7 @@ from ..utils.typing import (
     GenericBindingRequirement,
     resolve_concrete_generic_bindings,
 )
+from .artifact import ArtifactContext, ArtifactSpec
 
 __all__ = [
     "PIPELINE_CONTEXT_KEY",
@@ -115,6 +148,13 @@ class StepConfig(FrozenBaseModel):
         description=(
             "Invocation label for a separate context; "
             "None selects the primary operation."
+        ),
+    )
+    artifacts: ArtifactSpec[ArtifactContext] | None = Field(
+        default=None,
+        description=(
+            "Artifact definitions; subclasses declare a concrete specification "
+            "type and default when the step produces artifacts."
         ),
     )
 
@@ -185,6 +225,10 @@ class StepContext[StepT: "Step", ConfigT: "StepConfig"](BaseModel):
     data : None, optional
         Published results or views. Subclasses specify the payload type and its
         initial value. Defaults to None when no payload is needed.
+    artifacts : ArtifactContext, optional
+        Produced artifacts with their effective specifications. Each invocation
+        starts with an empty context. Excluded from JSON exports; pickle retains
+        it when its contents support pickle.
     completed : bool, optional
         Initially False. The step sets True after a normal return with no failures.
         Lazy results may still require computation.
@@ -200,12 +244,17 @@ class StepContext[StepT: "Step", ConfigT: "StepConfig"](BaseModel):
     results. Evaluating them outside a step does not update invocation contexts.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     step_cls: type[Any] = Field(
         exclude=True, repr=False, description="Concrete step class for this invocation."
     )
 
     config: ConfigT
     data: None = None
+    artifacts: ArtifactContext = Field(
+        default_factory=ArtifactContext, exclude=True, repr=False
+    )
     completed: bool = False
     failures: list[StepFailure] = Field(
         default_factory=list, description="Failures encountered during this invocation."
@@ -386,6 +435,23 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         of the bound configuration model.
     pydantic.ValidationError
         Configuration fields fail validation.
+
+    Notes
+    -----
+    - High: the instance call creates a context, invokes the operation, and records
+      completion or exceptions.
+    - Middle: ``run(data, context)`` selects inputs, combines computations,
+      installs results, and publishes payloads. It is a classmethod because the
+      supplied context carries settings and invocation state. Direct callers
+      manage that context's lifecycle.
+    - Low: numerical routines take arrays and explicit parameters without
+      configuration models or invocation contexts. They preserve inputs and do
+      not consult mutable class state.
+
+    The levels describe responsibilities, not method binding. An Analysis recipe
+    can use instance-owned settings for the same middle-level role. Reuse its
+    computations or an existing utility when appropriate. Selection and
+    publication steps need no numerical methods of their own.
     """
 
     config_cls: ClassVar[type[StepConfig]]
@@ -540,8 +606,9 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         data : Any
             The data container (``xr.DataTree`` or similar).
         context : ContextT
-            This invocation's context for recording step-specific state. Append
-            StepFailure instances to ``context.failures`` as failures occur.
+            This invocation's typed settings and state. Read settings through
+            ``context.config`` and append StepFailure instances to
+            ``context.failures`` as failures occur.
 
         Returns
         -------
@@ -554,6 +621,13 @@ class Step[ConfigT: "StepConfig", ContextT: "StepContext"]:
         ------
         NotImplementedError
             The subclass has not implemented this method.
+
+        Notes
+        -----
+        Invoke the step instance for context creation, completion tracking, and
+        exception recording. Calling ``run`` directly uses the supplied context
+        without that lifecycle handling. For context-free computations, call the
+        concrete step's numerical methods or its numerical utilities.
         """
         raise NotImplementedError
 

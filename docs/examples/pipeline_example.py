@@ -13,6 +13,8 @@ from tollan.accessor.xarray import XarrayAccessorBase, XarrayMapper
 from tollan.pipeline import Step, StepConfig, StepContext, StepFailure, StepFailureKind
 
 if TYPE_CHECKING:
+    import dask.array as da
+    import numpy.typing as npt
     import xarray as xr
 
 
@@ -88,9 +90,31 @@ class Scale(Step[ScaleConfig, ScaleContext]):
         mapper = ScaleMapper.from_data_source(data)
         schema = mapper.schema
         signal = mapper.get_arr(data, schema.raw_signal)
-        scaled = (signal * context.config.factor).to_dataset()
+        values = cls.compute_scaled(signal.data, factor=context.config.factor)
+        scaled = signal.copy(data=values).to_dataset()
         data[cast("str", mapper.get_name(schema.scaled_path))] = scaled
         context.data = ScaleView(mapper.get_node(data, schema.scaled_path))
+
+    @classmethod
+    def compute_scaled(
+        cls, values: npt.NDArray | da.Array, *, factor: float
+    ) -> npt.NDArray | da.Array:
+        """Multiply numerical samples by an explicit factor.
+
+        Parameters
+        ----------
+        values : numpy.ndarray or dask.array.Array
+            Numerical input samples. Lazy arrays remain unevaluated.
+        factor : float
+            Multiplicative scale.
+
+        Returns
+        -------
+        numpy.ndarray or dask.array.Array
+            Scaled samples with the input shape and array backend. The input
+            array is unchanged.
+        """
+        return values * factor
 
 
 class WriteSignalConfig(StepConfig):

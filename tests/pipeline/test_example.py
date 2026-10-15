@@ -7,11 +7,17 @@ import sys
 
 import dask
 import dask.array as da
+import numpy as np
 import pytest
 import xarray as xr
 
-from docs.examples.pipeline_example import Scale, WriteSignal
-from tollan.pipeline import SequentialPipeline, StepFailure, StepFailureKind
+from docs.examples.pipeline_example import Scale, ScaleConfig, ScaleContext, WriteSignal
+from tollan.pipeline import (
+    PIPELINE_CONTEXT_KEY,
+    SequentialPipeline,
+    StepFailure,
+    StepFailureKind,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -24,6 +30,43 @@ def netcdf_backend():
 @pytest.fixture
 def source():
     return xr.Dataset({"signal": ("sample", [1.0, 2.0])})
+
+
+@pytest.mark.parametrize("lazy", [False, True])
+def test_numerical_computation_preserves_inputs_and_backend(lazy):
+    values = np.array([1.0, 2.0])
+    values.flags.writeable = False
+    calls = []
+
+    @dask.delayed
+    def read_samples():
+        calls.append("read")
+        return values
+
+    data = da.from_delayed(read_samples(), shape=(2,), dtype=float) if lazy else values
+    numerical = Scale.compute_scaled(data, factor=3.0)
+
+    assert calls == []
+    assert isinstance(numerical, da.Array) is lazy
+    with dask.config.set(scheduler="synchronous"):
+        np.testing.assert_array_equal(
+            numerical.compute() if isinstance(numerical, da.Array) else numerical,
+            [3.0, 6.0],
+        )
+    np.testing.assert_array_equal(values, [1.0, 2.0])
+
+
+def test_direct_run_leaves_lifecycle_to_caller(source):
+    context = ScaleContext(step_cls=Scale, config=ScaleConfig(factor=3.0))
+    tree = xr.DataTree.from_dict({"raw": source})
+
+    Scale.run(tree, context)
+
+    assert PIPELINE_CONTEXT_KEY not in tree.attrs
+    assert not context.completed
+    assert context.data is not None
+    assert context.data.signal.values.tolist() == [3.0, 6.0]
+    assert context.failures == []
 
 
 @pytest.mark.parametrize("has_context", [False, True])

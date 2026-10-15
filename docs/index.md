@@ -17,11 +17,14 @@ readme
 
 | Domain | What you can do | Guide |
 | --- | --- | --- |
-| Data access | Map names, expose typed views, and store analysis results. | {doc}`schema-mapping-accessors`, {doc}`analyses` |
+| Data access | Map names and expose typed views over supported containers. | {doc}`schema-mapping-accessors`, {doc}`data-adapters` |
 | Model tables | Project object attributes, enrich rows, and query a pandas table. | {doc}`model-tables` |
 | Configuration | Load settings, validate values, and configure components. | {doc}`configuration`, {doc}`validation-types` |
 | CLI | Add commands, help, logging, and configuration options. | {doc}`cli` |
+| Analyses and results | Apply configured calculations and inspect their results and producing settings. | {doc}`analyses` |
 | Pipelines | Run configured steps and inspect execution results. | {doc}`pipelines` |
+| Artifacts and visualization | Select data for persistence or exchange; construct and display figures. | {doc}`artifacts` |
+| Databases | Manage connections and transactions; define shared column and actor conventions. | {doc}`databases` |
 | Utilities and plotting | Work with files, YAML, units, logging, and figures. | {doc}`utilities` |
 | Generic classes | Bind schemas, mappers, and models to subclasses. | {doc}`generic-runtime-bindings` |
 
@@ -49,6 +52,14 @@ cli
 
 analyses
 pipelines
+artifacts
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Database resources
+
+databases
 ```
 
 ```{toctree}

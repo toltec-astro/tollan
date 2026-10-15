@@ -11,9 +11,11 @@ orchestrators.
 | Validate a step's settings | A `StepConfig` subclass |
 | Record settings, completion, and failures | A `StepContext` subclass |
 | Publish a view or a bundle of results for downstream steps | A typed `context.data` field on that subclass |
+| Retain configured figures or other artifacts for export | [`context.artifacts` and artifact specs](artifacts.md) |
 | Read scientific results from the working container | A result view using a schema and mapper |
 | Record failures during an operation | Append `StepFailure` instances to `context.failures` |
-| Run one computation | A `Step` subclass implementing `run()` |
+| Run an operation and record its invocation | A `Step` subclass implementing `run()` |
+| Reuse a calculation independently of step execution | [Step operations and numerical methods](#reuse-step-operations-and-computations) |
 | Run enabled steps in order | `SequentialPipeline` |
 | Export selected context fields | `Step.dump_context()` and a product writer |
 | Export result datasets with their producing configuration | [xarray analyses](analyses.md#computation-and-producing-configuration) |
@@ -131,10 +133,64 @@ and context must bind the same configuration type.
 Context lookup, including `has_context()`, attaches an empty context store when
 the container has none.
 
+### Reuse step operations and computations
+
+Choose between the complete invocation, an operation with an explicit context,
+and numerical computation:
+
+| Level | Call | Result |
+| --- | --- | --- |
+| High: complete invocation | `Scale(factor=3.0)(tree)` | Updated working tree, attached context, and completion or failure record |
+| Middle: domain integration | `Scale.run(tree, context)` | Updated tree and payload using the supplied context; no automatic lifecycle handling |
+| Low: numerical computation | `Scale.compute_scaled(values, factor=3.0)` | Numerical array using explicit parameters |
+
+Use `run()` when you already have the working data and context. It needs no
+configured step instance. The caller owns context attachment, completion, and
+exception recording. The method is a classmethod because the step protocol
+supplies settings and invocation state through `context`:
+
+```{testcode}
+from pipeline_example import ScaleConfig
+
+working = xr.DataTree.from_dict({
+    "raw": xr.Dataset({"signal": ("sample", [1.0, 2.0])})
+})
+operation_context = ScaleContext(step_cls=Scale, config=ScaleConfig(factor=3.0))
+Scale.run(working, operation_context)
+assert operation_context.data.signal.values.tolist() == [3.0, 6.0]
+assert not operation_context.completed
+assert PIPELINE_CONTEXT_KEY not in working.attrs
+```
+
+`run()` combines computations, selects inputs, installs results, and publishes
+invocation data. It can pass parameters from `context.config` to numerical
+routines or call a configured analysis. Both `run()` and an analysis's configured
+recipes serve the middle level; their method binding follows how each receives
+settings and exchanges data.
+
+Use the numerical method alone when you need neither a working tree nor a context:
+
+```{testcode}
+import numpy as np
+
+values = np.array([1.0, 2.0])
+scaled = Scale.compute_scaled(values, factor=3.0)
+np.testing.assert_array_equal(scaled, [3.0, 6.0])
+np.testing.assert_array_equal(values, [1.0, 2.0])
+```
+
+Numerical methods take arrays and explicit parameters. They must not
+read configuration models or execution contexts, modify inputs, or consult
+mutable class state. For computation owned by an analysis, use that analysis's
+[configured or numerical methods](analyses.md#reusable-analysis-computations).
+Selection and publication steps need no numerical API of their own.
+
 ## Compose steps and publish results
 
 `context.data` can be one view or a typed bundle of views, arrays, tables,
-figures, and file locations. Publish what later steps need from the invocation.
+and file locations. Publish what later steps need from the invocation. Collect
+selected data for persistence or exchange in `context.artifacts`; see
+[artifacts and visualization](artifacts.md).
 A view gives access to the same products stored in the tree.
 
 The writer below obtains the prior result through `Scale.get_context(data).data`,

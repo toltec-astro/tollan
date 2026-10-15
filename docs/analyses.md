@@ -6,6 +6,7 @@ settings through an `AnalysisView`.
 | Task | Example |
 | --- | --- |
 | Define a calculation and its result view | [Compute a mean](#computation-and-producing-configuration) |
+| Reuse a configured or numerical calculation | [Reusable analysis computations](#reusable-analysis-computations) |
 | Keep an input available alongside results | [Retain and recover xarray input](#retain-and-recover-xarray-input) |
 | Read saved results and their settings | [Read results](#read-results) |
 | Add or replace results in a shared tree | [Add results to an existing tree](#add-results-to-an-existing-tree) |
@@ -61,10 +62,17 @@ class MeanAnalysis(Analysis[MeanMapper]):
             mapper=mapper,
             compute=lambda: {
                 mapper.schema.mean_subpath: xr.Dataset({
-                    "mean": np.mean(obj, axis=self.axis)
+                    "mean": self.make_mean(obj)
                 })
             },
         )
+
+    def make_mean(self, obj):
+        return self.compute_mean(np.asarray(obj), axis=self.axis)
+
+    @classmethod
+    def compute_mean(cls, values, *, axis):
+        return np.mean(values, axis=axis)
 
 
 class MeanView(AnalysisView[MeanMapper, MeanAnalysis]):
@@ -87,6 +95,8 @@ assert view.mean_analysis == analysis
 assert view.data_source is result["example.mean"]
 ```
 
+### Declare the result layout
+
 The result has this layout:
 
 ```text
@@ -100,6 +110,42 @@ the working scope. Output subpaths are relative to the analysis namespace and
 must occupy separate subtrees. Use `SubpathMapping.path()` for these fields.
 `_get_output_subpaths()` declares the outputs before computation; the computation
 returns Datasets keyed by a subset or all of these fields.
+
+## Reusable analysis computations
+
+Expose the calculation separately so callers can use it without creating a result
+tree. The mean example provides three entry points:
+
+| Level | Call | Result |
+| --- | --- | --- |
+| High: complete workflow | `analysis(values)` | DataTree with saved results and producing settings |
+| Middle: domain integration | `analysis.make_mean(values)` | Standalone mean using `analysis.axis` |
+| Low: numerical computation | `MeanAnalysis.compute_mean(array, axis=0)` | Standalone mean with explicit numerical settings |
+
+```{testcode}
+values = np.array([1.0, 2.0, 3.0])
+assert analysis.make_mean(values) == 2.0
+assert MeanAnalysis.compute_mean(values, axis=0) == 2.0
+```
+
+When implementing `__call__`, use the shared `_call(scope, mapper=..., compute=...)`
+helper to validate, reuse, and install results with their producing settings.
+This is also middle-level integration: it accepts a prepared scope, mapper, and
+computation. `make_mean` returns a standalone result when installation is unnecessary.
+
+The levels describe responsibilities, not method binding. Here, `make_mean` and
+`_call` use instance methods because the analysis owns the settings. A middle-level
+method can instead be a classmethod when its data interchange protocol supplies
+settings and context explicitly. For example, a
+[step operation](pipelines.md#reuse-step-operations-and-computations) receives
+`context.config` through `run(data, context)`.
+
+Use the middle level to adapt domain views, units, and containers, apply settings,
+and assemble results. Keep low-level routines usable with numerical inputs and
+explicit parameters: they neither read configuration models or workflow contexts
+nor modify inputs or consult mutable class state. `compute_mean` is a classmethod
+in this example; that binding alone does not make a routine low-level. Reuse an
+existing numerical utility when it already provides the required calculation.
 
 (read-results)=
 ## Result views

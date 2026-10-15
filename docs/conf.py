@@ -9,7 +9,7 @@ from typing import get_type_hints
 from docutils import nodes
 from pydantic.dataclasses import is_pydantic_dataclass
 from sphinx.ext import intersphinx
-from sphinx.ext.autodoc import SUPPRESS, AttributeDocumenter
+from sphinx.ext.autodoc import SUPPRESS, AttributeDocumenter, DataDocumenter
 from sphinx.util.inspect import stringify_signature
 from sphinx.util.typing import stringify_annotation
 from sphinx_astropy.conf.v2 import *  # pyright: ignore[reportWildcardImportFromLibrary]  # noqa: F403
@@ -72,6 +72,7 @@ nitpick_ignore += [
         "RuntimeInfoT",
         "ConfigT",
         "DataSourceT",
+        "DataT",
         "MapperT",
         "ContextT",
         "VariableT",
@@ -99,16 +100,23 @@ intersphinx_mapping = {
     "pydantic": ("https://docs.pydantic.dev/latest/", None),
     "plotly": ("https://plotly.com/python-api-reference/", None),
     "dask": ("https://docs.dask.org/en/stable/", None),
+    "sqlalchemy": ("https://docs.sqlalchemy.org/en/20/", None),
 }
 
 # Base-class annotations can retain import aliases. Resolve them to their public
 # names; dependencies without inventories use their official API documentation.
 _REFERENCE_ALIASES = {
+    "Engine": "sqlalchemy.engine.Engine",
+    "Connection": "sqlalchemy.engine.Connection",
+    "MetaData": "sqlalchemy.schema.MetaData",
+    "URL": "sqlalchemy.engine.URL",
+    "Session": "sqlalchemy.orm.Session",
     "pd.DataFrame": "pandas.DataFrame",
     "pd.Series": "pandas.Series",
     "QDataArray": "xarray.DataArray",
     "MappingABC": "collections.abc.Mapping",
     "Path": "pathlib.Path",
+    "go.Figure": "plotly.graph_objects.Figure",
     "npt.NDArray": "numpy.typing.NDArray",
     "npt.ArrayLike": "numpy.typing.ArrayLike",
     "Flag": "enum.Flag",
@@ -268,10 +276,28 @@ def _resolve_reference_alias(app, env, node, contnode):
     return None
 
 
+class _MappedTypeDocumenter(DataDocumenter):
+    """Document a column annotation without SQLAlchemy object representations."""
+
+    objtype = "mappedtype"
+    directivetype = "data"
+
+    @classmethod
+    def can_document_member(cls, member, membername, isattr, parent):
+        # Use only for explicit automappedtype directives, not other data aliases.
+        return False
+
+    def update_content(self, more_content):
+        # Sphinx appends an Annotated repr containing MappedColumn memory
+        # addresses even with :no-value:. The source comment describes the type.
+        pass
+
+
 def _configure_documenters(app, config):
     # Sphinx 9 registers its legacy documenters at config-inited, priority 500.
     app.add_autodocumenter(_ModelFieldDocumenter, override=True)
     app.add_autodocumenter(_DataclassFieldDocumenter, override=True)
+    app.add_autodocumenter(_MappedTypeDocumenter)
 
 
 def setup(app):

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
+from tzlocal import get_localzone_name
 
 from ..utils.sys import get_hostname, get_username
 
@@ -30,6 +31,10 @@ class RuntimeInfo(BaseModel):
     hostname: str = Field(
         default_factory=get_hostname,
         description="System hostname",
+    )
+    timezone: str = Field(
+        default_factory=get_localzone_name,
+        description="Local IANA timezone",
     )
     platform: str = Field(
         default_factory=lambda: sys.platform,

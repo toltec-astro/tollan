@@ -1,3 +1,5 @@
 """Utilities for plotting."""
 
-__all__ = []
+from .viz import VizBase
+
+__all__ = ["VizBase"]

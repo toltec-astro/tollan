@@ -5,6 +5,8 @@ Key features:
 - adjust_subplot_colorbars: Fix colorbar positioning in subplots
 - ColorPalette: Color scaling and cycling for consistent plot styling
 - show_in_dash: Quick interactive data visualization in Dash with tabs
+- PlotlyViz: Configurable figures with separate export and display operations
+- PlotlyFigExport / PlotlyFigShowInDash: Export or display existing figures
 """
 
 from __future__ import annotations
@@ -18,9 +20,10 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Any, TypedDict, cast
+from typing import Any, Literal, TypedDict, cast, get_args
 from wsgiref.simple_server import make_server
 
 import click
@@ -31,13 +34,23 @@ import plotly.graph_objects as go
 from dash import Dash, dcc, html
 from flask import Flask
 from plotly.subplots import make_subplots as _make_subplots
+from pydantic import Field
 
+from ..config import FrozenBaseModel
+from ..pipeline.artifact import ArtifactFile
 from ..utils.dict import rupdate
 from ..utils.fmt import pformat_yaml
 from ..utils.log import logger
+from .viz import VizBase
 
 __all__ = [
     "ColorPalette",
+    "PlotlyFigExport",
+    "PlotlyFigExportFormat",
+    "PlotlyFigExportHtml",
+    "PlotlyFigExportImage",
+    "PlotlyFigShowInDash",
+    "PlotlyViz",
     "ShowInDash",
     "SubplotGrid",
     "adjust_subplot_colorbars",
@@ -48,6 +61,216 @@ __all__ = [
     "show_in_dash",
     "update_subplot_layout",
 ]
+
+
+type PlotlyFigExportFormat = Literal[
+    "html", "json", "png", "jpg", "jpeg", "webp", "pdf", "svg"
+]
+
+
+class PlotlyFigExportHtml(FrozenBaseModel):
+    """Options for interactive HTML export.
+
+    The defaults produce a self-contained document without opening a browser or
+    playing animations. Use ``full_html=False`` for an embeddable fragment.
+    """
+
+    auto_open: bool = Field(
+        default=False, description="Open the saved HTML in a browser."
+    )
+    auto_play: bool = Field(default=False, description="Start animations on page load.")
+    include_plotlyjs: bool | Literal["cdn"] = Field(
+        default=True,
+        description="Embed Plotly.js, use its CDN, or omit it for a host page.",
+    )
+    full_html: bool = Field(default=True, description="Write a complete HTML document.")
+
+
+class PlotlyFigExportImage(FrozenBaseModel):
+    """Options for static image export through Plotly and Kaleido.
+
+    Width and height are logical pixels. None uses the figure's corresponding
+    dimension or Plotly's default. Scale multiplies the exported resolution.
+    """
+
+    width: int | None = Field(default=1600, gt=0, description="Logical image width.")
+    height: int | None = Field(default=None, gt=0, description="Logical image height.")
+    scale: float = Field(
+        default=1.0, gt=0, description="Image resolution scale factor."
+    )
+
+
+class PlotlyFigExport(FrozenBaseModel):
+    """Configured writer for existing Plotly figures.
+
+    Call with an exact filename. Its suffix selects HTML, Plotly JSON, or a static
+    image format. Parent directories are created and existing files overwritten.
+    Image export requires Kaleido and a compatible Chrome installation.
+    """
+
+    html: PlotlyFigExportHtml = Field(default_factory=PlotlyFigExportHtml)
+    image: PlotlyFigExportImage = Field(default_factory=PlotlyFigExportImage)
+
+    def __call__(self, path: Path, figure: go.Figure) -> ArtifactFile:
+        """Write a figure and return its file receipt.
+
+        Parameters
+        ----------
+        path : pathlib.Path
+            Exact output filename, including a supported suffix.
+        figure : plotly.graph_objects.Figure
+            Existing figure to serialize or render.
+
+        Returns
+        -------
+        ArtifactFile
+            Written path and format, returned after writing succeeds.
+
+        Raises
+        ------
+        ValueError
+            The filename has an unsupported suffix.
+
+        Notes
+        -----
+        Writer and renderer errors propagate to the caller. This operation does
+        not publish a product or update an index. JSON stores the Plotly figure
+        specification; it does not bundle a viewer or application callbacks.
+        """
+        fmt = path.suffix.removeprefix(".").lower()
+        if fmt not in get_args(PlotlyFigExportFormat.__value__):
+            msg = f"Unsupported Plotly export format: {path.suffix!r}"
+            raise ValueError(msg)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if fmt == "html":
+            figure.write_html(path, **self.html.model_dump())
+        elif fmt == "json":
+            figure.write_json(path)
+        else:
+            figure.write_image(
+                path, format=fmt, **self.image.model_dump(exclude_none=True)
+            )
+        return ArtifactFile(path=path, format=fmt)
+
+
+class PlotlyFigShowInDash(FrozenBaseModel):
+    """Configured local Dash display for existing figures.
+
+    Call with named figures to open the interactive server. Use ``make_layout``
+    to embed the same tabbed content in an application with its own server.
+    """
+
+    host: str = Field(default="127.0.0.1", description="Local server bind address.")
+    port: int = Field(
+        default=8050, ge=0, le=65535, description="Server port; 0 selects a free port."
+    )
+
+    def make_layout(
+        self, figures: dict[str, go.Figure], *, title: str | None = None
+    ) -> dmc.Container:
+        """Build a tabbed layout without starting a server.
+
+        Parameters
+        ----------
+        figures : dict of str to plotly.graph_objects.Figure
+            Figures keyed by their tab labels, in display order.
+        title : str or None, optional
+            Heading above the tabs.
+
+        Returns
+        -------
+        dash_mantine_components.Container
+            Layout for an application under a MantineProvider.
+        """
+        return ShowInDash(
+            data_items=self._data_items(figures), title_text=title
+        ).layout()
+
+    def __call__(
+        self, figures: dict[str, go.Figure], *, title: str | None = None
+    ) -> None:
+        """Display named figures until the user stops the local server.
+
+        Parameters
+        ----------
+        figures : dict of str to plotly.graph_objects.Figure
+            Figures keyed by their tab labels, in display order.
+        title : str or None, optional
+            Heading above the tabs.
+
+        Returns
+        -------
+        None
+            Returns after interactive confirmation to stop, or raises on interruption.
+        """
+        show_in_dash(
+            self._data_items(figures), title_text=title, host=self.host, port=self.port
+        )
+
+    @staticmethod
+    def _data_items(figures: dict[str, go.Figure]) -> list[dict[str, Any]]:
+        return [
+            {"title_text": name, "data": figure} for name, figure in figures.items()
+        ]
+
+
+class PlotlyViz(VizBase[go.Figure]):
+    """Configured Plotly visualization with export and local display support.
+
+    Implement ``__call__`` with typed inputs and return a Plotly Figure. Use that
+    figure directly in notebooks or Dash, or pass it to ``write`` and ``show``.
+    Figure creation does not perform either operation automatically.
+    """
+
+    save: bool = Field(default=True, description="Enable writing this visualization.")
+    save_formats: list[PlotlyFigExportFormat] = Field(
+        default=["html"], description="Representations to write."
+    )
+    save_plotly: PlotlyFigExport = Field(default_factory=PlotlyFigExport)
+    show_plotly: PlotlyFigShowInDash = Field(default_factory=PlotlyFigShowInDash)
+
+    def write(self, data: go.Figure, *, path: Path) -> list[ArtifactFile]:
+        """Write the configured representations of an existing figure.
+
+        Parameters
+        ----------
+        data : plotly.graph_objects.Figure
+            Already constructed figure.
+        path : pathlib.Path
+            Output filename stem. Each format is appended, including when the
+            stem contains dots; ``signal.v1`` becomes ``signal.v1.html``.
+
+        Returns
+        -------
+        list of ArtifactFile
+            Receipts for written files, or an empty list when saving is disabled.
+
+        Notes
+        -----
+        An error stops writing and propagates. Earlier files may already exist;
+        callers needing atomic publication should supply a staging directory.
+        """
+        if not self.save:
+            return []
+        return [
+            self.save_plotly(path.with_name(f"{path.name}.{fmt}"), data)
+            for fmt in self.save_formats
+        ]
+
+    def show(self, data: go.Figure) -> None:
+        """Display an existing figure through the configured local Dash server.
+
+        Parameters
+        ----------
+        data : plotly.graph_objects.Figure
+            Already constructed figure.
+
+        Returns
+        -------
+        None
+            Returns when the server stops.
+        """
+        self.show_plotly({self.alias or type(self).__name__: data})
 
 
 class _SubplotSpec(TypedDict, total=False):
@@ -779,6 +1002,7 @@ class ShowInDash:
                 *tab_panel_list,
             ],
             value="tab-0" if tab_list else None,
+            keepMounted=False,
         )
 
         # Wrap everything in a container
@@ -849,7 +1073,7 @@ def show_in_dash(
     host : str, optional
         Server host address. Defaults to 'localhost'.
     port : int, optional
-        Server port number. Defaults to 8050.
+        Server port number. Defaults to 8050; 0 selects a free port.
     **kwargs : dict
         Additional arguments passed to Dash constructor.
 
@@ -862,36 +1086,23 @@ def show_in_dash(
     ...     title_text='Dashboard'
     ... )
     """
-    keep_alive = True
-
     server_app = Flask(__name__)
     host = host or "localhost"
-    port = port or 8050
-    server = make_server(host, port, server_app)
-    logger.debug(f"created server {host=} {port=}")
-    server_thread = threading.Thread(target=server.serve_forever)
-    server_thread.start()
+    port = 8050 if port is None else port
 
     # Dash accepts a Flask instance at runtime; its current stub omits that case.
     app = Dash(server=cast("Any", server_app), **kwargs)
-    app.enable_dev_tools(debug=True)
-    show_in_dash = ShowInDash(data_items=data_items, title_text=title_text)
-    app.layout = show_in_dash.layout()
-
-    def stop_execution() -> None:
-        nonlocal keep_alive
-        keep_alive = False
+    viewer = ShowInDash(data_items=data_items, title_text=title_text)
+    app.layout = dmc.MantineProvider(viewer.layout())
+    server = make_server(host, port, server_app)
+    logger.info(f"Dash viewer: http://{host}:{server.server_port}")
+    server_thread = threading.Thread(target=server.serve_forever)
+    server_thread.start()
+    try:
+        while not click.confirm("Stop dash server and continue?"):
+            pass
+    finally:
         server.shutdown()
         server_thread.join()
-        logger.debug("flask server shutdown.")
-
-    # start the Dash app in a separate thread
-    # def start_dash_app():
-    #     app.run_server(debug=False, use_reloader=False, **kwargs)
-    # dash_thread = threading.Thread(target=start_dash_app)
-    # dash_thread.start()
-    while True:
-        if click.confirm("Stop dash server and continue?"):
-            stop_execution()
-            break
+        server.server_close()
     logger.info("server has stopped.")

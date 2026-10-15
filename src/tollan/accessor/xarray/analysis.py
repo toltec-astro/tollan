@@ -4,6 +4,11 @@ An analysis stores its output Datasets beneath a namespace. The namespace
 attributes hold the configuration that produced those outputs. A result view
 provides access to the outputs and the saved configuration.
 
+Expose configured computations and numerical routines for callers who need a
+calculation without result installation. The mean example below provides a
+complete call, a configured ``make_mean`` recipe, and a numerical ``compute_mean``
+routine. See :class:`Analysis` for the responsibilities of these three API levels.
+
 The parent node is the analysis *scope*. A scope can contain scalar data variables,
 attributes, and children, but must have no local or inherited coordinates or
 dimensions. Output Datasets occupy separate descendants of the analysis
@@ -44,8 +49,20 @@ returns Datasets keyed by those fields:
 ...             scope, mapper=mapper,
 ...             compute=lambda: {
 ...                 mapper.schema.mean_subpath: xr.Dataset({
-...                     "mean": np.mean(obj, axis=self.axis)})},
+...                     "mean": self.make_mean(obj)})},
 ...         )
+...     def make_mean(self, obj):
+...         return self.compute_mean(np.asarray(obj), axis=self.axis)
+...     @classmethod
+...     def compute_mean(cls, values, *, axis):
+...         return np.mean(values, axis=axis)
+
+Use the configured computation on its own, or supply numerical arguments directly:
+
+>>> MeanAnalysis(axis=0).make_mean([1., 2., 3.])
+np.float64(2.0)
+>>> MeanAnalysis.compute_mean(np.array([1., 2., 3.]), axis=0)
+np.float64(2.0)
 
 Define view properties for the output and producing configuration:
 
@@ -669,8 +686,22 @@ class Analysis[MapperT: AnalysisMapper](FrozenBaseModel):
     Notes
     -----
     Subclass ``Analysis[ConcreteMapper]`` and declare configuration fields as
-    model fields. Implement ``_get_output_subpaths`` to return the schema fields
-    for the output Datasets.
+    model fields. Separate the complete workflow from reusable computations:
+
+    - High: ``__call__`` prepares inputs, scope, and mapper, then delegates to
+      ``_call``. Implement ``_get_output_subpaths`` for the output Dataset fields.
+    - Middle: adapt domain inputs and settings, combine computations, and assemble
+      results. Focused recipes return standalone results; ``_call`` supplies
+      validation, reuse, configuration recording, and installation when needed.
+    - Low: compute from numerical inputs and explicit parameters, without
+      configuration models, views, mappers, or execution contexts. Preserve
+      inputs and do not consult mutable class state.
+
+    Method binding follows the data interchange protocol. Here, ``_call`` uses
+    the analysis instance's settings. A middle-level recipe may instead be a
+    classmethod when its caller supplies the settings and context it needs.
+    Concrete analyses define their own signatures and may reuse existing
+    numerical utilities rather than add methods for every level.
 
     The subclass's ``__call__`` validates its inputs and obtains a valid scope.
     It resolves a mapper with ``self._mapper_cls.from_data_source(scope)`` and

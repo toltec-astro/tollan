@@ -81,7 +81,7 @@ Pipeline
 --------
 
 .. automodapi:: tollan.pipeline
-   :skip: StepConfig, StepContext, StepFailure
+   :skip: StepConfig, StepContext, StepFailure, ArtifactSpec
 
 Plotting
 --------
@@ -89,6 +89,69 @@ Plotting
 .. automodapi:: tollan.plot.mpl
 
 .. automodapi:: tollan.plot.plotly
+   :skip: PlotlyViz, PlotlyFigExport, PlotlyFigExportHtml, PlotlyFigExportImage, PlotlyFigShowInDash
+
+See :ref:`artifact-visualization-models` for visualization and export settings.
+
+.. py:type:: PlotlyFigExportFormat
+
+   Supported figure formats: HTML, JSON, PNG, JPG/JPEG, WebP, PDF, and SVG.
+
+.. _database-resources:
+
+Database resources
+------------------
+
+.. automodapi:: tollan.db
+
+.. The SQL expressions' inherited constructors and compiler attributes describe
+   SQLAlchemy internals. Document the supported timestamp expressions here.
+
+.. autoclass:: tollan.db.func.create_datetime
+   :class-doc-from: class
+
+.. autoclass:: tollan.db.func.utcnow()
+   :class-doc-from: class
+
+.. automodule:: tollan.db.mapped_types
+
+.. The annotations contain SQLAlchemy objects whose repr includes memory
+   addresses. Show the documented column conventions without those values.
+
+.. automappedtype:: tollan.db.mapped_types.Pk
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Uuid
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Label
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Name
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Desc
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Timestamp
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Created_at
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Updated_at
+   :no-value:
+
+.. automappedtype:: tollan.db.mapped_types.Timezone
+   :no-value:
+
+.. autoclass:: tollan.db.mapped_types.TimestampMixin
+
+.. autofunction:: tollan.db.mapped_types.fk
+
+.. automodule:: tollan.db.orm
+   :members:
+
 
 Utilities
 ---------

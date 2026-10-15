@@ -88,6 +88,37 @@ To describe a concrete context's exported fields, use
 validation schema cannot represent the live producer class in ``step_cls``.
 See :doc:`pipelines` for restoring exported contexts and inspecting failures.
 
+.. _artifact-visualization-models:
+
+Artifact and visualization configuration
+----------------------------------------
+
+Use :doc:`artifacts` to select data for persistence or exchange, retain its
+specifications, and construct or display visualizations.
+
+.. autopydantic_model:: tollan.pipeline.ArtifactSpec
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.plot.VizBase
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.plot.plotly.PlotlyViz
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.plot.plotly.PlotlyFigExport
+   :class-doc-from: class
+   :special-members: __call__
+
+.. autopydantic_model:: tollan.plot.plotly.PlotlyFigExportHtml
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.plot.plotly.PlotlyFigExportImage
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.plot.plotly.PlotlyFigShowInDash
+   :class-doc-from: class
+   :special-members: __call__
+
 File locations
 --------------
 
