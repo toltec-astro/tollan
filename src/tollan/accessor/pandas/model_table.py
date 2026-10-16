@@ -41,7 +41,7 @@ from pydantic import (
 
 from ...config.types import AngleUnitField, PhysicalTypeField, UnitField
 from ...config.types.quantity import get_physical_type_from_quantity_type
-from ...utils.pandas import query
+from ...utils.pandas import _contains, contains, query
 from ...utils.py import rgetattr
 from ...utils.typing import get_annotation_types
 
@@ -50,6 +50,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "ColumnTypeRule",
+    "Contains",
     "ExplicitColumnRule",
     "ModelColumn",
     "ModelColumnMapper",
@@ -62,13 +63,42 @@ __all__ = [
 ]
 
 
+class Contains(BaseModel):
+    """An exact element-membership constraint for a record field.
+
+    Parameters
+    ----------
+    value : hashable
+        Element required in a list, tuple, set, frozenset or NumPy array.
+        Missing, null and empty collections do not match. Non-null values of
+        other types, including strings, raise TypeError during matching.
+        String elements are compared exactly, not as substrings or regexes.
+
+    Examples
+    --------
+    >>> mapper = RecordRuleMapper(
+    ...     rules=[({"tags": Contains(value="science")}, "analyze")],
+    ...     default="skip",
+    ... )
+    >>> mapper({"tags": ["science", "reviewed"]})
+    'analyze'
+    >>> mapper({"tags": []})
+    'skip'
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    value: Hashable
+
+
 class RecordRuleMapper[ValueT](BaseModel):
     """Map records to the values of their first matching rules.
 
     Parameters
     ----------
     rules : iterable of (mapping, object)
-        Ordered pairs of scalar equality constraints and result values. All
+        Ordered pairs of field constraints and result values. Plain values
+        test scalar equality; `Contains` tests collection membership. All
         constraints in a mapping must match. Omitted keys and ellipsis impose
         no constraint. None matches null values, including NaN and pandas.NA,
         but not empty strings. Missing keys cannot satisfy a constraint.
@@ -94,7 +124,7 @@ class RecordRuleMapper[ValueT](BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid", arbitrary_types_allowed=True)
 
-    rules: tuple[tuple[dict[str, Hashable], ValueT], ...]
+    rules: tuple[tuple[dict[str, Contains | Hashable], ValueT], ...]
     default: ValueT | None
 
     @overload
@@ -111,7 +141,7 @@ class RecordRuleMapper[ValueT](BaseModel):
         Parameters
         ----------
         record : mapping or object
-            Named scalar values, read from mapping keys or object attributes.
+            Named values, read from mapping keys or object attributes.
             Extra fields are ignored. The record is not modified; null values
             match only a None constraint. Missing fields do not match.
         default : object, optional
@@ -124,6 +154,11 @@ class RecordRuleMapper[ValueT](BaseModel):
         object
             Matching rule value, or the effective default. Result objects,
             including callables and enum members, are returned unchanged.
+
+        Raises
+        ------
+        TypeError
+            A `Contains` constraint encounters a non-null, noncollection value.
         """
         get_value = (
             record.get if isinstance(record, Mapping) else partial(getattr, record)
@@ -135,8 +170,10 @@ class RecordRuleMapper[ValueT](BaseModel):
                 actual = get_value(name, MISSING)
                 if actual is MISSING:
                     break
-                if expected is None:
-                    matches = pd.isna(actual)
+                if isinstance(expected, Contains):
+                    matches = _contains(expected.value, actual)
+                elif expected is None:
+                    matches = pd.api.types.is_scalar(actual) and pd.isna(actual)
                 else:
                     matches = False if pd.isna(actual) else actual == expected
                 if matches is pd.NA or not matches:
@@ -174,7 +211,7 @@ class RecordRuleMapper[ValueT](BaseModel):
         Parameters
         ----------
         table : pandas.DataFrame
-            Scalar input columns. The table is not modified. Missing columns
+            Input columns. The table is not modified. Missing columns
             cannot satisfy a constraint; nulls match only a None constraint.
         column_names : mapping of str to str, optional
             Rule field names mapped to input column names. Unmapped names are
@@ -191,12 +228,17 @@ class RecordRuleMapper[ValueT](BaseModel):
             order regardless of index labels. Result objects are unchanged.
             Assign this list to a column to update the table in place.
 
+        Raises
+        ------
+        TypeError
+            A `Contains` constraint encounters a non-null, noncollection cell.
+
         Notes
         -----
         This is an optimized batch equivalent of evaluating each record.
         Constraints are evaluated column-wise and repeated comparisons are
-        reused, avoiding a Python-level loop over records. For a fixed rule
-        set, runtime remains linear in the number of rows.
+        reused. Membership tests inspect each collection. For a fixed rule set,
+        runtime remains linear in the number of rows.
         """
         values = np.empty(len(self.rules) + 1, dtype=object)
         values[-1] = self.default if default is MISSING else default
@@ -219,11 +261,13 @@ class RecordRuleMapper[ValueT](BaseModel):
                 key = (name, expected)
                 if key not in comparisons:
                     column = table[name]
-                    comparisons[key] = (
-                        column.isna()
-                        if expected is None
-                        else column.eq(cast("Any", expected))
-                    ).to_numpy(dtype=bool, na_value=False)
+                    if isinstance(expected, Contains):
+                        comparison = contains(column, expected.value)
+                    elif expected is None:
+                        comparison = column.isna()
+                    else:
+                        comparison = column.eq(cast("Any", expected))
+                    comparisons[key] = comparison.to_numpy(dtype=bool, na_value=False)
                 matches &= comparisons[key]
             selected[matches] = i
             unmatched &= ~matches

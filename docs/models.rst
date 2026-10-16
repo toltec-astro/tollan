@@ -172,6 +172,10 @@ Record-rule declarations
 
 See :doc:`model-tables` for matching records and tables.
 
+.. autopydantic_model:: tollan.accessor.pandas.model_table.Contains
+   :class-doc-from: class
+   :model-show-json: False
+
 .. Rule values may be arbitrary objects or live callables without a JSON schema.
 
 .. autopydantic_model:: tollan.accessor.pandas.model_table.RecordRuleMapper

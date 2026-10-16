@@ -5,6 +5,7 @@ import pytest
 from pydantic import BaseModel
 
 from tollan.accessor.pandas.model_table import (
+    Contains,
     ModelColumnMapper,
     ModelTableAccessor,
     RecordRuleMapper,
@@ -39,6 +40,23 @@ def test_record_rules_table(benchmark, size):
     )
     result = benchmark(mapper.map_table, table)
     assert result == [i % 20 if i % 20 < 16 else -1 for i in range(size)]
+
+
+@pytest.mark.parametrize("size", [1_000, 100_000])
+def test_record_rules_contains(benchmark, size):
+    """Track membership reused across rules alongside scalar constraints."""
+    table = pd.DataFrame(
+        {
+            "tags": [["science", "reviewed"], ["engineering"], [], None] * (size // 4),
+            "kind": [i % 20 for i in range(size)],
+        }
+    )
+    mapper = RecordRuleMapper(
+        rules=[({"tags": Contains(value="science"), "kind": i}, i) for i in range(16)],
+        default=-1,
+    )
+    result = benchmark(mapper.map_table, table)
+    assert result == [i % 20 if i % 4 == 0 and i % 20 < 16 else -1 for i in range(size)]
 
 
 def test_column_mapper_preparation(benchmark):

@@ -3,11 +3,13 @@
 from enum import Enum
 from types import SimpleNamespace
 
+import numpy as np
 import pandas as pd
 import pytest
 from pydantic import ValidationError
 
-from tollan.accessor.pandas.model_table import RecordRuleMapper
+from tollan.accessor.pandas import model_table
+from tollan.accessor.pandas.model_table import Contains, RecordRuleMapper
 
 
 def test_generic_subclass_validates_rule_results_and_optional_default():
@@ -192,3 +194,121 @@ def test_default_override_with_no_rules():
     assert mapper({}, default=None) is None
     assert mapper.map_table(pd.DataFrame(index=[3, 3]), default=None) == [None, None]
     assert mapper({}) == "unknown"
+
+
+def test_contains_declaration_is_validated_and_frozen():
+    constraint = Contains(value="science")
+    assert constraint == Contains.model_validate({"value": "science"})
+    assert hash(constraint) == hash(Contains(value="science"))
+    with pytest.raises(ValidationError, match="frozen_instance"):
+        constraint.value = "engineering"
+    with pytest.raises(ValidationError, match="value"):
+        Contains(value=[])
+    with pytest.raises(ValidationError, match="extra_forbidden"):
+        Contains(value="science", extra=True)
+    mapper = RecordRuleMapper[int].model_validate(
+        {"rules": [({"tags": {"value": "science"}}, 1)], "default": 0}
+    )
+    assert mapper.rules == (({"tags": constraint}, 1),)
+
+
+@pytest.mark.parametrize("collection", [list, tuple, set, frozenset, np.asarray])
+def test_contains_scalar_and_batch_matching_agree(collection):
+    class Reader:
+        pass
+
+    mapper = RecordRuleMapper[type[Reader]](
+        rules=[({"format": "nc", "tags": Contains(value="science")}, Reader)],
+        default=None,
+    )
+    tags = [
+        collection(["science", "reviewed"]),
+        collection(["science_extra"]),
+        collection(["science.*"]),
+        collection(["SCIENCE"]),
+        collection([]),
+        None,
+        np.nan,
+        pd.NA,
+        pd.NaT,
+    ]
+    records = [{"format": "nc", "tags": value} for value in tags]
+    records.append({"format": "ecsv", "tags": collection(["science"])})
+    expected = [Reader] + [None] * (len(records) - 1)
+    table = pd.DataFrame(records, index=[7] * len(records))
+    before = table.copy(deep=True)
+    assert [mapper(record) for record in records] == expected
+    assert [mapper(SimpleNamespace(**record)) for record in records] == expected
+    assert [mapper(row) for row in table.itertuples(index=False)] == expected
+    assert mapper.map_table(table) == expected
+    assert (
+        mapper.map_table(
+            table.rename(columns={"tags": "memberships"}),
+            column_names={"tags": "memberships"},
+        )
+        == expected
+    )
+    pd.testing.assert_frame_equal(table, before, check_exact=True)
+    assert mapper({"format": "nc"}, default="missing") == "missing"
+    assert mapper.map_table(table.drop(columns="tags"), default="missing") == [
+        "missing"
+    ] * len(table)
+    assert mapper.map_table(table.iloc[:0]) == []
+
+
+def test_contains_combines_with_null_rules_and_preserves_first_match():
+    mapper = RecordRuleMapper(
+        rules=[
+            ({"tags": None}, "null"),
+            ({"tags": Contains(value=None)}, "null element"),
+            ({"tags": Contains(value="science")}, "science"),
+            ({"tags": Contains(value="reviewed")}, "reviewed"),
+        ],
+        default="unknown",
+    )
+    table = pd.DataFrame(
+        {"tags": [None, [None], ["science", "reviewed"], ["reviewed"], []]}
+    )
+    expected = ["null", "null element", "science", "reviewed", "unknown"]
+    assert [mapper(row) for row in table.itertuples(index=False)] == expected
+    assert mapper.map_table(table) == expected
+
+
+@pytest.mark.parametrize("invalid", ["science", b"science", 1, {"science": True}])
+def test_contains_rejects_noncollection_values(invalid):
+    mapper = RecordRuleMapper(
+        rules=[({"tags": Contains(value="science")}, True)], default=False
+    )
+    record = {"tags": invalid}
+    with pytest.raises(
+        TypeError, match="requires list, tuple, set, frozenset or ndarray"
+    ):
+        mapper(record)
+    with pytest.raises(
+        TypeError, match="requires list, tuple, set, frozenset or ndarray"
+    ):
+        mapper.map_table(pd.DataFrame([record]))
+
+
+def test_contains_comparisons_are_shared_within_each_call(monkeypatch):
+    original = model_table.contains
+    calls = []
+
+    def compare(series, value):
+        calls.append((series.name, value))
+        return original(series, value)
+
+    monkeypatch.setattr(model_table, "contains", compare)
+    mapper = RecordRuleMapper(
+        rules=[
+            ({"tags": Contains(value="science"), "channel": 1}, "one"),
+            ({"tags": Contains(value="science"), "channel": 2}, "two"),
+        ],
+        default=None,
+    )
+    table = pd.DataFrame({"tags": [["science"], []], "channel": [1, 2]})
+    assert mapper.map_table(table) == ["one", None]
+    assert calls == [("tags", "science")]
+    table.tags.iloc[1].append("science")
+    assert mapper.map_table(table) == ["one", "two"]
+    assert calls == [("tags", "science")] * 2

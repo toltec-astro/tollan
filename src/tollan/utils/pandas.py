@@ -3,16 +3,28 @@
 from __future__ import annotations
 
 from enum import Flag
+from functools import partial
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pandas as pd
 
 if TYPE_CHECKING:
     import collections.abc
-
-    import pandas as pd
+    from typing import Any
 
 __all__ = ["bits_all_set", "bits_any_set", "contains", "query"]
+
+_COLLECTION_TYPES = (list, tuple, set, frozenset, np.ndarray)
+
+
+def _contains(value: object, items: Any) -> bool:
+    if isinstance(items, _COLLECTION_TYPES):
+        return value in items
+    if pd.api.types.is_scalar(items) and pd.isna(items):
+        return False
+    msg = "contains() requires list, tuple, set, frozenset or ndarray cells"
+    raise TypeError(msg)
 
 
 def contains(values: pd.Series, value: object) -> pd.Series:
@@ -43,15 +55,11 @@ def contains(values: pd.Series, value: object) -> pd.Series:
     >>> contains(tags, "science").tolist()
     [True, False, False, False]
     """
-    collection_types = (list, tuple, set, frozenset, np.ndarray)
-
-    def matches(items):
-        if not isinstance(items, collection_types):
-            msg = "contains() requires list, tuple, set, frozenset or ndarray cells"
-            raise TypeError(msg)
-        return value in items
-
-    return values.map(matches, na_action="ignore").fillna(value=False).astype(bool)
+    return (
+        values.map(partial(_contains, value), na_action="ignore")
+        .fillna(value=False)
+        .astype(bool)
+    )
 
 
 def bits_any_set(values: pd.Series, mask: int | Flag) -> pd.Series:

@@ -299,7 +299,8 @@ the table, use pandas column operations or `RecordRuleMapper.map_table()`.
 
 Use `RecordRuleMapper` to associate partial record patterns with values. The
 first matching rule supplies the result; unmatched records receive `default`.
-Each named field must equal its expected scalar value. Extra fields are ignored.
+Plain constraint values test scalar equality; `Contains` tests membership in
+collection-valued fields. All constraints in a rule must match. Extra fields are ignored.
 Records may be mappings or objects: mappings use keys; other objects use
 attributes, including models and rows from `DataFrame.itertuples()`.
 
@@ -343,6 +344,34 @@ missing fields or empty strings. Ellipsis imposes no constraint, and an empty
 pattern matches every record. For tables with renamed fields, pass
 `column_names={"channel": "file_channel"}` to `map_table`; rule names omitted
 from that mapping are used unchanged.
+
+Use `Contains(value=...)` when a record field holds a collection:
+
+```{testcode}
+import pandas as pd
+from tollan.accessor.pandas.model_table import Contains
+
+action_mapper = RecordRuleMapper[str](
+    rules=[
+        ({"format": "nc", "tags": Contains(value="science")}, "analyze"),
+        ({"tags": Contains(value="reviewed")}, "archive"),
+    ],
+    default="skip",
+)
+assert action_mapper({"format": "nc", "tags": ["science", "reviewed"]}) == "analyze"
+assert action_mapper({"tags": []}) == "skip"
+actions = action_mapper.map_table(pd.DataFrame({
+    "format": ["nc", "ecsv", "nc"],
+    "tags": [["science", "reviewed"], ["reviewed"], None],
+}))
+assert actions == ["analyze", "archive", "skip"]
+```
+
+Membership uses the same exact-element semantics as
+{func}`tollan.utils.pandas.contains`. Lists, tuples, sets, frozensets and NumPy
+arrays are supported. Missing, null and empty collections do not match;
+non-null values of other types raise `TypeError`. In particular, a string is not
+a collection cell, and string elements are not searched by substring or regex.
 
 Override `default` for one evaluation without changing the mapper:
 

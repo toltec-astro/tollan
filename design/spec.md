@@ -134,7 +134,8 @@ an intended mode of operation, not an exception.
 
 ##### Ordered record rules
 
-- Reusable ordered rules map scalar record fields to one result per record.
+- Reusable ordered rules classify records from scalar and collection-valued
+  fields, producing one result per record.
 - Generic result types constrain rule values at declaration. The unmatched
   default may be null independently of the rule-value type.
 - Record values come from mapping keys or object attributes. Batch evaluation
@@ -143,6 +144,10 @@ an intended mode of operation, not an exception.
   configured default; per-call overrides do not mutate the mapper.
 - Missing fields cannot satisfy constraints. Nulls match an explicit null
   constraint.
+- Plain constraints test scalar equality. Explicit collection-membership
+  constraints test exact elements; they do not interpret substrings or patterns.
+  Missing, null and empty collections do not match. Non-null noncollection
+  values raise rather than being treated as unmatched collections.
 - Scalar and column-wise evaluation agree and preserve result objects without
   modifying inputs.
 
