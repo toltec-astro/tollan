@@ -88,6 +88,19 @@ leaves the existing entry unchanged. Item assignment, deletion, and `update()`
 are not supported. Validate entries before registering them; values are stored
 as supplied. Use `dict(readers)` when you need an independent mapping snapshot.
 
+Use `readers.view` to expose live lookup without a `register()` method:
+
+```{testcode}
+lookup = readers.view
+readers.register("binary", bytes)
+assert lookup["binary"] is bytes
+assert list(lookup) == ["text", "binary"]
+assert not hasattr(lookup, "register")
+```
+
+The {class}`~tollan.utils.registry.RegistryView` is read-only, but does not freeze
+the registered values. Subclass it to add typed properties for known entries.
+
 ## Read and write YAML
 
 | Input / output | Call |
