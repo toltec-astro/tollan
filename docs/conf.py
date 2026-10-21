@@ -69,6 +69,7 @@ nitpick_ignore = [
 nitpick_ignore += [
     ("py:class", name)
     for name in (
+        "T",  # ObjectProxy type parameter, also emitted by newer wrapt versions.
         "RuntimeInfoT",
         "ConfigT",
         "DataSourceT",
