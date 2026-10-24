@@ -102,6 +102,12 @@ an intended mode of operation, not an exception.
 - Applications declare attribute paths, output representations, and query
   vocabulary. Projection reads only the declared attributes and preserves input
   row order. It does not serialize the input objects.
+- Projection selects one attribute mapping per object. An exact-type entry
+  takes precedence over a fallback mapping without merging the two. An explicit
+  empty entry projects nothing. A shared mapping is the fallback-only case.
+  All choices must agree on each shared destination's normalized dtype,
+  including unused fallbacks; conflicts fail before values are projected.
+  Readers, converters and missing-attribute defaults remain projection-specific.
 - Column projection rejects boolean, integer, floating-point and complex storage
   that changes converted values or replaces nulls with values. Converters own
   intentional value changes; storage must not add truncation, overflow or
@@ -117,7 +123,8 @@ an intended mode of operation, not an exception.
   back to the objects used for projection.
 - Missing-attribute fallbacks belong to the input projection. They do not fill
   untouched rows. Omitting a destination preserves its existing values; projecting
-  a null replaces them.
+  a null replaces them. This also applies to destinations omitted by a selected
+  type-specific projection.
 - Existing destination columns retain their storage types. Incompatible writes
   raise rather than silently widening storage to arbitrary objects. Newly added
   columns use their declared types and represent untouched rows as missing.
@@ -128,7 +135,7 @@ an intended mode of operation, not an exception.
 
 - Annotation-based declarations prepare column mappings without reading object
   values. The resulting projections are reusable across batches; actual reads
-  remain duck-typed rather than dispatched by model class.
+  remain duck-typed after the applicable projection is selected.
 - Known incompatible annotations can fail declaration before any objects are
   read. Annotations do not replace checks on the projected values.
 

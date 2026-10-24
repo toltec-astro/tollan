@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from tollan.accessor.pandas.model_table import (
     Contains,
+    ModelColumn,
     ModelColumnMapper,
     ModelTableAccessor,
     RecordRuleMapper,
@@ -20,6 +21,15 @@ class Sample(BaseModel):
     count: int
     value: float
     valid: bool
+
+
+class StoredSample(BaseModel):
+    """A second representation of the same projected values."""
+
+    name: str
+    counter: str
+    reading: float
+    good: bool
 
 
 def make_column_mapper():
@@ -73,13 +83,46 @@ def test_column_mapper_reuse(benchmark):
 
 
 @pytest.mark.parametrize("size", [100, 10_000])
-def test_model_table_projection(benchmark, size):
+@pytest.mark.parametrize("fallback", [False, True])
+def test_model_table_projection(benchmark, size, fallback):
     """Track projection without charging model validation to table creation."""
     models = [
         Sample(label="sample", count=i, value=1.5, valid=True) for i in range(size)
     ]
     columns = make_column_mapper()(Sample)
+    if fallback:
+        columns = {None: columns}
     table = benchmark(ModelTableAccessor.from_models, models, columns=columns)
+    assert table.shape == (size, 4)
+    assert table["count"].tolist() == list(range(size))
+    assert table["value"].eq(1.5).all()
+
+
+@pytest.mark.parametrize("size", [100, 10_000])
+@pytest.mark.parametrize("update", [False, True])
+def test_model_table_type_dispatch(benchmark, size, update):
+    """Track mixed projection and updates with shared destination columns."""
+    models = [
+        Sample(label="sample", count=i, value=1.5, valid=True)
+        if i % 2 == 0
+        else StoredSample(name="sample", counter=str(i), reading=1.5, good=True)
+        for i in range(size)
+    ]
+    columns = {
+        Sample: make_column_mapper()(Sample),
+        StoredSample: {
+            "label": ModelColumn("name", dtype="string"),
+            "count": ModelColumn("counter", converter=int, dtype="Int64"),
+            "value": ModelColumn("reading", dtype="Float64"),
+            "valid": ModelColumn("good", dtype="boolean"),
+        },
+    }
+    project = (
+        ModelTableAccessor(pd.DataFrame(index=range(size))).update_from_models
+        if update
+        else ModelTableAccessor.from_models
+    )
+    table = benchmark(project, models, columns=columns)
     assert table.shape == (size, 4)
     assert table["count"].tolist() == list(range(size))
     assert table["value"].eq(1.5).all()

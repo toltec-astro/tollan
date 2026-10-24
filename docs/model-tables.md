@@ -86,7 +86,8 @@ assert table.checked.tolist() == [True, False]
 Updates return a copy unless `inplace=True`. Null projections overwrite existing
 values. Untouched rows, unrelated columns, the index, and table attributes remain
 unchanged. Existing column dtypes remain unchanged; incompatible assignments
-raise. New columns use the declared dtype, which must support missing values.
+raise. New columns use the declared dtype, which must support missing values
+when some rows remain unmapped.
 
 A sequence must match the table length. Mapping keys must address distinct rows:
 for a three-row table, `-1` and `2` cannot both be supplied. Slices and broadcasting
@@ -127,16 +128,93 @@ assert str(counts["count"].dtype) == "Int64"
 
 A mapping declares one reader per output column for that call. If objects share
 the declared attributes, they can use one projection even when their classes
-differ. Otherwise, group the objects by the projection you want to apply and
-update their row positions in batches. The accessor does not choose a projection
-from each object's type. A later write to the same cell replaces its earlier
-value; apply authoritative information after estimates.
+differ. For different readers, use separate calls as above, or supply type-keyed
+mappings in one call as below. A later write to the same cell replaces its
+earlier value; apply authoritative information after estimates.
 
 The column's dtype constrains the values it can hold, not where they came from.
 Each projection applies its declared dtype before assignment. When updating an
 existing column, its dtype is retained even if the projection declares a
 different dtype. Incompatible assignments raise; columns are not automatically
 widened to `object`.
+
+### Project mixed model types in one call
+
+Pass a mapping from model classes to column mappings when different types need
+different attribute paths, defaults, or converters:
+
+```{testcode}
+from dataclasses import dataclass
+
+@dataclass
+class DirectCount:
+    count: int | None
+
+@dataclass
+class StoredCount:
+    total: str | None
+
+columns_by_type = {
+    DirectCount: {
+        "count": ModelColumn("count", dtype="Int64"),
+        "note": ModelColumn("note", default="direct", dtype="string"),
+    },
+    StoredCount: {
+        "count": ModelColumn("total", converter=int, dtype="Int64"),
+    },
+}
+mixed = ModelTableAccessor.from_models(
+    [DirectCount(10), StoredCount("20")], columns=columns_by_type,
+)
+assert mixed["count"].tolist() == [10, 20]
+assert mixed.note.isna().tolist() == [False, True]
+
+ModelTableAccessor(mixed).update_from_models(
+    {0: StoredCount(None), 1: DirectCount(30)},
+    columns=columns_by_type,
+    inplace=True,
+)
+assert mixed["count"].isna().tolist() == [True, False]
+assert mixed["count"].iloc[1] == 30
+assert mixed.note.tolist() == ["direct", "direct"]
+```
+
+Selection uses the exact runtime type, without subclass lookup. Add a `None`
+entry to provide a fallback for objects whose type has no entry. A plain
+name-keyed mapping is equivalent to `{None: mapping}`. Without an exact entry
+or fallback, projection raises `TypeError`.
+
+An exact entry replaces the fallback rather than merging with it. In particular,
+an empty exact mapping projects nothing for that type:
+
+```{testcode}
+choices = {
+    None: {"count": ModelColumn("count", dtype="Int64")},
+    StoredCount: columns_by_type[StoredCount],
+    DirectCount: {},
+}
+selected_columns = ModelTableAccessor.from_models(
+    [SimpleNamespace(count=5), StoredCount("6"), DirectCount(7)],
+    columns=choices,
+)
+assert selected_columns["count"].iloc[:2].tolist() == [5, 6]
+assert selected_columns["count"].isna().tolist() == [False, False, True]
+```
+
+Columns follow their first declaration across the supplied mappings, including
+mappings for types absent from the input and unused fallbacks. Empty input
+retains this union schema.
+
+Declarations for the same destination must have equal normalized dtypes. For
+example, `"Int64"` and `pd.Int64Dtype()` agree, but `"Int64"` and `"Float64"` do
+not. Conflicts raise before reading object attributes; no automatic promotion
+or fallback to `object` occurs. An omitted dtype means `object`.
+
+During creation, unmapped cells are missing. During updates, a destination
+omitted by that object's mapping stays unchanged; a mapped null overwrites it.
+New columns are missing wherever no value was mapped. Choose nullable storage
+for those columns. Existing destination dtypes still follow the update rules
+above. An empty positional update is a no-op.
 
 ### Distinguish missing attributes, null values, and untouched cells
 
@@ -261,7 +339,8 @@ Rule settings are validated at construction. Colliding final column names raise
 an error. Use `|` to add or intentionally override explicit declarations within
 one projection. It replaces declarations with the same key; it does not preserve
 alternative readers for a column. For inputs needing different readers, use
-[separate projections](#populate-one-column-from-different-inputs).
+[separate calls](#populate-one-column-from-different-inputs) or
+[type-keyed mappings](#project-mixed-model-types-in-one-call).
 
 Custom type rules receive `(name, annotation, column_name)` and return a mapping
 of final names to `ModelColumn` declarations, or None for no match. An empty

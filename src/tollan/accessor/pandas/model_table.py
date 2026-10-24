@@ -35,6 +35,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    TypeAdapter,
     field_validator,
     model_validator,
 )
@@ -363,8 +364,8 @@ class ModelColumn(NamedTuple):
                 or not np.equal(original, stored).all()
             ):
                 msg = (
-                    f"Column {values.name!r} cannot represent values from "
-                    f"{self.attr!r} exactly as {dtype}; use a converter for "
+                    f"Column {values.name!r} cannot represent mapped values "
+                    f"exactly as {dtype}; use a converter for "
                     "intentional value changes"
                 )
                 raise TypeError(msg)
@@ -400,6 +401,98 @@ class ModelColumn(NamedTuple):
 @cache
 def _column_dtype(dtype):
     return pd.api.types.pandas_dtype(object if dtype is None else dtype)
+
+
+_projection_maps_adapter = TypeAdapter(
+    Mapping[type | None, Mapping[str, ModelColumn]], config=ConfigDict(strict=True)
+)
+
+
+def _prepare_projections(columns):
+    """Normalize projection choices and check their shared destination schema."""
+    if not columns or isinstance(next(iter(columns)), str):
+        columns = {None: columns}
+    columns = _projection_maps_adapter.validate_python(columns)
+    schema = {}
+    owners = {}
+    for key, mapping in columns.items():
+        for name, column in mapping.items():
+            dtype = _column_dtype(column.dtype)
+            if name in schema:
+                previous = schema[name]
+                if dtype != _column_dtype(previous.dtype):
+                    msg = (
+                        f"Conflicting dtypes for column {name!r}: "
+                        f"{owners[name]!r} declares "
+                        f"{_column_dtype(previous.dtype)}, "
+                        f"{key!r} declares {dtype}"
+                    )
+                    raise TypeError(msg)
+            else:
+                schema[name] = column
+                owners[name] = key
+    return columns, schema
+
+
+def _project_models(models, columns, *, fill_missing):
+    """Select and collect projections before casting destination columns."""
+    columns, schema = _prepare_projections(columns)
+    values = {name: [] for name in schema}
+    common = set.intersection(*(set(mapping) for mapping in columns.values()))
+    # Dense columns share one implicit row range; only sparse columns collect
+    # positions, so a missing mapping remains distinct from a mapped null.
+    positions = {name: [] for name in schema if name not in common}
+    readers = {
+        key: (
+            tuple((values[name], column.read) for name, column in mapping.items()),
+            tuple(positions[name] for name in mapping if name in positions),
+        )
+        for key, mapping in columns.items()
+    }
+    fallback = readers.get(None)
+    count = 0
+    for count, model in enumerate(models, start=1):
+        selected = readers.get(type(model), fallback)
+        if selected is None:
+            msg = f"No column mapping for exact model type {type(model).__qualname__}"
+            raise TypeError(msg)
+        selected_readers, selected_positions = selected
+        for column_values, read in selected_readers:
+            column_values.append(read(model))
+        for column_positions in selected_positions:
+            column_positions.append(count - 1)
+
+    projected = {}
+    row_range = pd.RangeIndex(count)
+    for name, column in schema.items():
+        index = pd.Index(positions[name], dtype=int) if name in positions else row_range
+        series = pd.Series(
+            values[name], index=index, name=name, dtype=object, copy=False
+        )
+        if fill_missing and len(series) != count:
+            series = series.reindex(row_range)
+        projected[name] = column._as_series(series)
+    return projected, count
+
+
+def _assign_projected_columns(table, updates):
+    updates = list(updates)
+    column_positions = table.columns.get_indexer([name for name, _, _ in updates])
+    full_order = None
+    for (name, values, rows), position in zip(updates, column_positions, strict=True):
+        if position >= 0:
+            if len(rows):
+                table.iloc[rows, position] = values.array
+        elif len(rows) == len(table):
+            if full_order is None:
+                full_order = (
+                    slice(None) if np.all(np.diff(rows) > 0) else np.argsort(rows)
+                )
+            table[name] = values.array[full_order]
+        else:
+            column = pd.Series(None, index=table.index, dtype=values.dtype)
+            column.iloc[rows] = values.array
+            table[name] = column.array
 
 
 def _comparison_number(value, *, complex_values=False):
@@ -909,11 +1002,11 @@ class ModelTableAccessor:
         self._obj = data
 
     @classmethod
-    def from_models(
+    def from_models[KeyT: type | None](
         cls,
         models: Iterable[object],
         *,
-        columns: Mapping[str, ModelColumn],
+        columns: Mapping[str, ModelColumn] | Mapping[KeyT, Mapping[str, ModelColumn]],
     ) -> pd.DataFrame:
         """Build a flat table from declared attribute paths.
 
@@ -922,16 +1015,23 @@ class ModelTableAccessor:
         models : iterable of object
             Objects to project, one per output row. They need not share a type;
             only the declared attribute paths are read.
-        columns : mapping of str to ModelColumn
+        columns : mapping of str to ModelColumn or mapping of type or None to mappings
             Output column names and their attribute paths, defaults, converters
-            and dtypes. The same projection is applied to every input object;
-            mappings are not selected by object type.
+            and dtypes. A name-keyed mapping applies to every object, equivalent
+            to wrapping it as ``{None: mapping}``. Otherwise, select the exact
+            object's type entry, then the None fallback if no entry exists.
+            No subclass lookup or merging with the fallback is performed;
+            an empty exact entry projects nothing. Shared destination names must
+            declare equal normalized dtypes, even for types absent from the
+            input. Attributes, defaults and converters may differ by type.
+            Unmapped cells are missing, so their dtypes must support nulls.
 
         Returns
         -------
         pandas.DataFrame
-            Projected values in input order. Empty input retains the declared
-            columns and dtypes.
+            Projected values in input order. Columns follow declaration order
+            (first occurrence across type mappings). Empty input retains all
+            declared columns and dtypes.
 
         Raises
         ------
@@ -940,47 +1040,46 @@ class ModelTableAccessor:
         TypeError, ValueError, OverflowError
             If conversion to the declared dtype fails. Boolean and numeric
             columns also reject conversions that change values or nulls.
+        TypeError
+            If type-specific mappings disagree on a destination dtype, or an
+            object has neither an exact-type mapping nor a fallback. Dtype
+            conflicts are checked before consuming the input iterable.
         """
-        readers = tuple(column.read for column in columns.values())
-        rows = ([read(model) for read in readers] for model in models)
-        # Preserve native values and large nullable integers before dtype conversion.
-        table = pd.DataFrame(rows, columns=list(columns), dtype=object)
-        for name, column in columns.items():
-            table[name] = column._as_series(table[name])
-        return table
+        projected, count = _project_models(models, columns, fill_missing=True)
+        return pd.DataFrame(projected, index=pd.RangeIndex(count), copy=False)
 
     @overload
-    def update_from_models(
+    def update_from_models[KeyT: type | None](
         self,
         models: Iterable[object] | Mapping[int, object],
         *,
-        columns: Mapping[str, ModelColumn],
+        columns: Mapping[str, ModelColumn] | Mapping[KeyT, Mapping[str, ModelColumn]],
         inplace: Literal[False] = False,
     ) -> pd.DataFrame: ...
 
     @overload
-    def update_from_models(
+    def update_from_models[KeyT: type | None](
         self,
         models: Iterable[object] | Mapping[int, object],
         *,
-        columns: Mapping[str, ModelColumn],
+        columns: Mapping[str, ModelColumn] | Mapping[KeyT, Mapping[str, ModelColumn]],
         inplace: Literal[True],
     ) -> None: ...
 
     @overload
-    def update_from_models(
+    def update_from_models[KeyT: type | None](
         self,
         models: Iterable[object] | Mapping[int, object],
         *,
-        columns: Mapping[str, ModelColumn],
+        columns: Mapping[str, ModelColumn] | Mapping[KeyT, Mapping[str, ModelColumn]],
         inplace: bool,
     ) -> pd.DataFrame | None: ...
 
-    def update_from_models(
+    def update_from_models[KeyT: type | None](
         self,
         models: Iterable[object] | Mapping[int, object],
         *,
-        columns: Mapping[str, ModelColumn],
+        columns: Mapping[str, ModelColumn] | Mapping[KeyT, Mapping[str, ModelColumn]],
         inplace: bool = False,
     ) -> pd.DataFrame | None:
         """Project objects into existing table rows.
@@ -992,7 +1091,7 @@ class ModelTableAccessor:
             from integer row positions to objects. Positions follow ``iloc``
             conventions, including negative positions. Slices and broadcasting
             are not supported.
-        columns : mapping of str to ModelColumn
+        columns : mapping of str to ModelColumn or mapping of type or None to mappings
             Columns to update and their projections. Null values overwrite
             existing values, including null defaults for missing attributes.
             Omitted columns remain unchanged. Values are projected using the
@@ -1000,6 +1099,10 @@ class ModelTableAccessor:
             retained; incompatible assignments raise. New columns use the
             declared dtypes, which must support missing values for untouched
             rows. Those rows are not filled from ModelColumn.default.
+            Projection choices follow `from_models` selection and dtype rules.
+            A column omitted from an object's selected mapping leaves that cell
+            unchanged. All declared destinations are included; new columns with
+            no mapped values are missing throughout.
         inplace : bool, optional
             Whether to update this table. Default is False.
 
@@ -1015,15 +1118,16 @@ class ModelTableAccessor:
             If an iterable has the wrong length, or mapping keys identify the
             same row after resolving negative positions.
         TypeError
-            If a mapping key is not an integer row position.
+            If a row key is not an integer position, type-specific mappings
+            disagree on a destination dtype, or no projection matches an object.
         IndexError
             If a row position is out of bounds.
 
         Notes
         -----
-        Separate calls may populate the same column from different attribute
-        paths and converters. Reuse each projection for batches of compatible
-        objects; its readers need not match those used in earlier calls.
+        Separate calls or type-specific mappings may populate the same column
+        from different attribute paths and converters. All projections finish
+        before assignment starts. An empty positional mapping is a no-op.
 
         Duplicate index labels are supported because updates use row positions.
         In-place updates are not transactional: an assignment error may leave
@@ -1052,18 +1156,20 @@ class ModelTableAccessor:
                 )
                 raise ValueError(msg)
             rows = list(row_range)
-        projected = self.from_models(models, columns=columns)
+        projected, count = _project_models(models, columns, fill_missing=False)
+        row_array = np.asarray(rows, dtype=np.intp)
+        updates = (
+            (
+                name,
+                values,
+                row_array
+                if len(values) == count
+                else row_array[values.index.to_numpy()],
+            )
+            for name, values in projected.items()
+        )
         result = self._obj if inplace else self._obj.copy()
-        column_positions = result.columns.get_indexer(projected.columns).tolist()
-        for (name, values), position in zip(
-            projected.items(), column_positions, strict=True
-        ):
-            if position >= 0:
-                result.iloc[rows, position] = values.array
-            else:
-                column = pd.Series(None, index=result.index, dtype=values.dtype)
-                column.iloc[rows] = values.array
-                result[name] = column.array
+        _assign_projected_columns(result, updates)
         return None if inplace else result
 
     def query(self, expression: str) -> pd.DataFrame:
