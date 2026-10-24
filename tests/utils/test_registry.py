@@ -9,6 +9,19 @@ import pytest
 from tollan.utils.registry import Registry, RegistryView
 
 
+def test_initial_entries_are_copied_and_protected_from_reregistration():
+    value = object()
+    entries = {"builtin": value}
+    registry = Registry(entries)
+    entries["later"] = object()
+    assert list(registry) == ["builtin"]
+    assert registry["builtin"] is value
+    with pytest.raises(ValueError, match="already registered: 'builtin'"):
+        registry.register("builtin", value)
+    registry.register("extension", object())
+    assert list(registry.view) == ["builtin", "extension"]
+
+
 def test_mapping_lookup_and_registration_order():
     registry = Registry[str, int]()
     assert isinstance(registry, Mapping)

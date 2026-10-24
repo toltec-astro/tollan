@@ -46,6 +46,12 @@ class Registry[KeyT: Hashable, ValueT](MappingABC[KeyT, ValueT]):
     registrations, in insertion order. Item assignment and deletion are not
     supported. Values are retained as supplied, without copying or validation.
 
+    Parameters
+    ----------
+    entries : mapping, optional
+        Initial entries, copied in iteration order. Later changes to the supplied
+        mapping do not change this registry. Defaults to an empty registry.
+
     Examples
     --------
     >>> registry = Registry[str, int]()
@@ -58,8 +64,8 @@ class Registry[KeyT: Hashable, ValueT](MappingABC[KeyT, ValueT]):
     ValueError: Key already registered: 'first'
     """
 
-    def __init__(self) -> None:
-        self._entries: dict[KeyT, ValueT] = {}
+    def __init__(self, entries: MappingABC[KeyT, ValueT] | None = None) -> None:
+        self._entries: dict[KeyT, ValueT] = dict(entries) if entries is not None else {}
 
     def __getitem__(self, key: KeyT) -> ValueT:
         return self._entries[key]
