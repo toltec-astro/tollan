@@ -439,6 +439,130 @@ by a directed acyclic graph (DAG).
   pipeline, execution follows
   [sequential execution and failure handling](#sequential-execution-and-failure-handling).
 
+### External execution
+
+Applications run long computations outside the process that decides to run
+them: on compute nodes through a batch scheduler, or as a local process during
+development. The deciding process may be a long-running orchestration service or
+a script, and it may stop and restart while the computation continues. External
+execution separates where a computation may run, how a submitted job is tracked,
+and how a process waits for its outcome. The application owns workloads,
+external-process commands, scientific settings and result validation. The
+deployment owns site values. Tollan owns placement validation and the job
+lifecycle. An orchestration framework can supervise jobs through an optional
+integration; the job lifecycle does not depend on one.
+
+An execution driver schedules steps within one process (see
+[steps and pipelines](#steps-and-pipelines)); an external process may run such a
+pipeline.
+
+#### Placement policy
+
+- A placement policy lets a deployment decide where workloads run and which
+  resources they use, independently of the code that requests them.
+- An execution profile states, for the workloads it selects, one place to run
+  jobs and the policy there. A local profile runs jobs on the orchestration
+  host. A batch-scheduler profile fixes the submission host, partition, account
+  and quality of service, the selection of eligible nodes, default resources,
+  and the maximum resources of one job. Each profile names the location of its
+  job records and the environment of its external processes.
+- An execution request states what an application needs for one job: the
+  workload name, requested resources and a node selection. Applications include
+  it in their own configuration, beside the settings of the computation.
+- Resolution maps the request's workload to the first profile, in declared
+  order, whose workload selection matches it, and combines that profile with
+  the request into a job spec. Requested resources replace the profile's
+  defaults within its maximum; a local profile accepts only a thread limit.
+  Resolution rejects workloads no profile selects and requests the profile does
+  not accept. It does not contact a scheduler.
+- A requested node selection is combined with the profile's, so it never widens
+  placement. The scheduler applies the combined selection at submission; an
+  empty selection fails there.
+- A thread limit for numerical libraries is optional. When set, it does not
+  exceed the job's CPUs and the external process receives it; when unset, the
+  external process chooses its own threading.
+- A job spec is the request together with the profile that runs it, as
+  configured at resolution. A job runs one task on one node; its resources,
+  thread limit and node selection follow from the job spec. Only resolution
+  creates job specs. A job keeps the job spec it was submitted with;
+  reattachment and recovery reuse it rather than resolving current policy.
+- Policy settings follow the
+  [configuration-model contract](#runtime-context-and-component-settings) and
+  compose through [configuration sources](#configuration-sources-and-precedence).
+
+#### Job records and schedulers
+
+- A job record keeps the durable state of one job, so that any process with
+  access to it can submit, observe, reattach to or cancel that job.
+- A caller-supplied key identifies a job record within its storage location. The
+  record holds the job spec, the external-process command and environment, the
+  submission receipt with the scheduler's native job ID, and the observed state
+  history.
+- Records of batch-scheduler jobs reside on storage visible at the same path to
+  the orchestration host, the submission host and the compute nodes.
+- Submission is once-only for a record. A repeated submission returns the
+  existing receipt. A record whose submission began without producing a receipt
+  is unresolved: further submission fails and requires reconciliation; it does
+  not create another job.
+- Reconciliation asks the scheduler for jobs carrying the record key. It records
+  the receipt of the job found, or confirms that none was submitted and allows
+  submission again.
+- A scheduler submits job records, reports job states and cancels jobs. Job
+  states are queued, running, completed, failed, canceled and unknown. A
+  terminal state carries the exit status when the scheduler reports one.
+- Unknown means the scheduler has no information about the job. It is distinct
+  from failure and from completion.
+- A transport carries scheduler commands to the submission host, locally or over
+  SSH. A transport failure is reported as such, never as a job state.
+- The local scheduler records the external process's exit status in the job
+  record, so a new process can reattach to a local job as to a batch job.
+- Reattachment continues an existing job. Recomputation creates a new job record.
+
+#### Supervision
+
+- Supervision lets a process wait for a job's outcome and act on it, whether that
+  process submitted the job or reattached to it.
+- A supervisor observes job states at a bounded interval. A job succeeds only
+  when the scheduler reports completion with a zero exit status and the
+  application's result check accepts the job record.
+- An unknown state may persist for a bounded grace period. Beyond it,
+  supervision reports the job unresolved and retains its record; it does not
+  resubmit.
+- Explicit cancellation requests termination from the scheduler and confirms a
+  terminal state within a bound. Supervision reports a requested cancellation
+  separately from a confirmed one. Loss or termination of the supervising process
+  does not cancel the job.
+- A new job for the same work starts only after the earlier job is terminal or
+  canceled. One owner decides each retry: the supervisor, the orchestration
+  framework or the scheduler.
+
+#### Orchestration integration
+
+- The orchestration integration lets Dagster assets run external processes as
+  supervised jobs, with Dagster's reporting and admission.
+- The integration follows the Dagster Pipes protocol: the orchestration process
+  passes context to the external process and reads its messages and logs. Both
+  persist in the job record, so a later orchestration process can reattach and
+  still read every message.
+- The orchestration process reports a materialization only after reading the
+  external process's complete messages.
+- Forward termination applies only to explicit run cancellation. Interruption of
+  the orchestration process for any other reason leaves the job running for
+  reattachment.
+- Admission limits use Dagster concurrency pools. The scheduler enforces shared
+  cluster capacity across all submitters.
+- The integration is optional. Without it, placement policy, job records,
+  schedulers and supervision are fully usable.
+
+#### Run a computation on an external scheduler
+
+- **Handoff:** deployment policy and execution request → job spec → job record →
+  submission → supervised outcome → application result check.
+- The application supplies the execution request, external-process command and
+  result check. The deployment supplies the execution profiles.
+- Selecting a workload with a local profile or a batch-scheduler profile runs
+  the same workload without changing application code.
+
 ### Artifacts and visualization
 
 An operation's data context can contain more data than a consumer needs to

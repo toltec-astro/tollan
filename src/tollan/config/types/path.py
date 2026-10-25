@@ -25,6 +25,7 @@ __all__ = [
     "AbsDirectoryPath",
     "AbsFilePath",
     "AnyPath",
+    "HostPath",
     "SubPath",
     "SubPathOrRoot",
     "path_field",
@@ -155,6 +156,25 @@ type SubPathOrRoot = Annotated[
 Accepts the same inputs as SubPath, plus ``.`` and empty paths, which normalize
 to ``.``. Parent traversal and rooted paths remain invalid. Validation performs
 no filesystem access or validation-context root_path application.
+"""
+
+
+def _validate_host_path(path: PurePosixPath) -> PurePosixPath:
+    """Require an absolute path without parent traversal."""
+    if not path.is_absolute() or ".." in path.parts:
+        msg = f"Expected an absolute path without '..', got {str(path)!r}"
+        raise ValueError(msg)
+    return path
+
+
+type HostPath = Annotated[
+    PurePosixPath, Field(strict=False), AfterValidator(_validate_host_path)
+]
+"""An absolute POSIX path that keeps its meaning on other hosts.
+
+Accepts strings and PurePosixPath objects, including in strict models.
+Validation is lexical: no validation-context root_path, user expansion,
+filesystem checks, or symlink resolution is applied.
 """
 
 

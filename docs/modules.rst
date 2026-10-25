@@ -62,16 +62,32 @@ The annotation aliases are described in :doc:`validation-types`.
 .. autodata:: tollan.config.types.path.AnyPath
    :no-value:
 
+.. autodata:: tollan.config.types.path.AbsAnyPath
+   :no-value:
+
 .. autodata:: tollan.config.types.path.SubPath
    :no-value:
 
 .. autodata:: tollan.config.types.path.SubPathOrRoot
    :no-value:
 
+.. autodata:: tollan.config.types.path.HostPath
+   :no-value:
+
+.. autodata:: tollan.config.types.name.SafeName
+   :no-value:
+
+.. autodata:: tollan.config.types.name.SafeNamePath
+   :no-value:
+
 .. autodata:: tollan.config.types.path.PathType
    :no-value:
 
    Accepted path checks: ``"file"``, ``"dir"``, or ``"new"``.
+
+.. py:type:: tollan.config.types.quantity.TimeQuantityField
+
+   A time quantity; see :doc:`validation-types`.
 
 .. autofunction:: tollan.config.types.quantity.quantity_field
 
@@ -96,6 +112,25 @@ See :ref:`artifact-visualization-models` for visualization and export settings.
 .. py:type:: PlotlyFigExportFormat
 
    Supported figure formats: HTML, JSON, PNG, JPG/JPEG, WebP, PDF, and SVG.
+
+.. _external-execution:
+
+External execution
+------------------
+
+.. automodapi:: tollan.execution
+   :skip: ExecutionPolicyConfig, ExecutionProfile, ExecutionProfileBase, ExecutionRequest, JobSpec, LocalProfile, ResourceLimits, ResourceRequest, Resources, SlurmProfile
+
+See :doc:`models` for the profile, resource and job-spec fields.
+
+.. autodata:: tollan.execution.policy.ExecutionProfile
+   :no-value:
+
+.. autodata:: tollan.execution.policy.MemoryQuantity
+   :no-value:
+
+.. autodata:: tollan.execution.policy.TimeLimitQuantity
+   :no-value:
 
 .. _database-resources:
 

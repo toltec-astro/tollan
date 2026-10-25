@@ -13,6 +13,7 @@ from tollan.config.types import (
     AbsDirectoryPath,
     AbsFilePath,
     AnyPath,
+    HostPath,
     SubPath,
     SubPathOrRoot,
     path_field,
@@ -198,3 +199,27 @@ def test_subpath_normalizes_without_filesystem_access(monkeypatch, annotation):
     adapter = TypeAdapter(annotation)
     assert adapter.validate_python("./data//raw/") == PurePosixPath("data/raw")
     assert adapter.validate_python("~/raw") == PurePosixPath("~/raw")
+
+
+def test_host_path_in_strict_model_and_json_roundtrip(tmp_path):
+    class JobSettings(FrozenBaseModel):
+        path: HostPath
+
+    model = JobSettings.model_validate(
+        {"path": "/shared//jobs/"}, context={"root_path": tmp_path}
+    )
+    assert model.path == PurePosixPath("/shared/jobs")
+    assert model.model_dump(mode="json") == {"path": "/shared/jobs"}
+    assert JobSettings.model_validate_json(model.model_dump_json()) == model
+
+
+@pytest.mark.parametrize("value", ["relative/jobs", "/shared/../jobs", ""])
+def test_host_path_is_absolute_without_parent_traversal(value):
+    with pytest.raises(ValidationError, match="Expected an absolute path"):
+        TypeAdapter(HostPath).validate_python(value)
+
+
+def test_host_path_is_not_resolved_on_the_validating_host(tmp_path):
+    link = tmp_path / "link"
+    link.symlink_to(tmp_path)
+    assert TypeAdapter(HostPath).validate_python(str(link)) == PurePosixPath(str(link))

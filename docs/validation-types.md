@@ -63,6 +63,7 @@ assert validation_schema["required"] == ["path", "wavelength", "start", "target"
 | `AbsDirectoryPath` | Requires an existing directory and returns its absolute path. |
 | `SubPath` | A relative descendant `PurePosixPath`, with no root or `..` component. No filesystem checks or context-root application. |
 | `SubPathOrRoot` | Like `SubPath`, but also accepts `.` for the containing directory. Empty paths normalize to `.`. |
+| `HostPath` | An absolute `PurePosixPath` without `..`, kept as written for use on other hosts. No filesystem checks, context-root application or symlink resolution. |
 | `FileLocField` | A `FileLoc` for local paths or remote URLs, using `root_path` as the local parent unless an explicit parent is supplied. |
 
 Without `root_path`, relative paths use the working directory.
@@ -155,6 +156,32 @@ also apply to collections extended after the settings were loaded. Serialization
 uses an explicit mapping, even when the input used string or list shorthand.
 For APIs that take a compiled regex, use `as_regex()` and evaluate it with
 `fullmatch()`. It escapes exact values and preserves existing regex flags.
+
+## Names
+
+Use `SafeName` for names that become keys, filenames, command arguments, job
+names or host names. It accepts ASCII letters, digits, `_`, `.` and `-`, and must
+start with a letter or digit, so it never names a hidden file, a dot reference
+or a command-line option. Use `SafeNamePath` for hierarchical names such as
+namespaces: `SafeName` components separated by `/`, with an optional
+`qualifier:` prefix.
+
+| Annotation | Accepts | Rejects |
+| --- | --- | --- |
+| `SafeName` | `cpu1`, `reduce_obs`, `login.example.org` | `.hidden`, `-p`, `a/b`, `a b`, `taco:ql` |
+| `SafeNamePath` | `ql`, `taco/ql`, `taco:ql`, `unity:taco/ql` | `/ql`, `ql/`, `taco//ql`, `taco/../ql`, `a:b:c` |
+
+```{testcode}
+from tollan.config import FrozenBaseModel
+from tollan.config.types import SafeName, SafeNamePath
+
+class Placement(FrozenBaseModel):
+    name: SafeName
+    namespace: SafeNamePath
+
+placement = Placement(name="ql-main", namespace="unity:taco/ql")
+assert placement.namespace == "unity:taco/ql"
+```
 
 ## Quantities
 

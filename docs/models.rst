@@ -119,6 +119,41 @@ specifications, and construct or display visualizations.
    :class-doc-from: class
    :special-members: __call__
 
+External execution
+------------------
+
+Use :doc:`execution` to declare execution profiles and to resolve job specs.
+
+.. autopydantic_model:: tollan.execution.ExecutionPolicyConfig
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.ExecutionProfileBase
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.LocalProfile
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+.. autopydantic_model:: tollan.execution.SlurmProfile
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+.. autopydantic_model:: tollan.execution.ResourceLimits
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.Resources
+   :class-doc-from: class
+   :inherited-members: BaseModel
+
+.. autopydantic_model:: tollan.execution.ResourceRequest
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.ExecutionRequest
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.JobSpec
+   :class-doc-from: class
+
 File locations
 --------------
 
