@@ -451,7 +451,11 @@ def _project_models(models, columns, *, fill_missing):
     }
     fallback = readers.get(None)
     count = 0
+    missing_rows = []
     for count, model in enumerate(models, start=1):
+        if model is None:
+            missing_rows.append(count - 1)
+            continue
         selected = readers.get(type(model), fallback)
         if selected is None:
             msg = f"No column mapping for exact model type {type(model).__qualname__}"
@@ -464,8 +468,11 @@ def _project_models(models, columns, *, fill_missing):
 
     projected = {}
     row_range = pd.RangeIndex(count)
+    mapped_rows = row_range.delete(missing_rows) if missing_rows else row_range
     for name, column in schema.items():
-        index = pd.Index(positions[name], dtype=int) if name in positions else row_range
+        index = (
+            pd.Index(positions[name], dtype=int) if name in positions else mapped_rows
+        )
         series = pd.Series(
             values[name], index=index, name=name, dtype=object, copy=False
         )
@@ -1014,14 +1021,16 @@ class ModelTableAccessor:
         ----------
         models : iterable of object
             Objects to project, one per output row. They need not share a type;
-            only the declared attribute paths are read.
+            only the declared attribute paths are read. None entries retain
+            their row with missing values and are not projected.
         columns : mapping of str to ModelColumn or mapping of type or None to mappings
             Output column names and their attribute paths, defaults, converters
             and dtypes. A name-keyed mapping applies to every object, equivalent
             to wrapping it as ``{None: mapping}``. Otherwise, select the exact
             object's type entry, then the None fallback if no entry exists.
             No subclass lookup or merging with the fallback is performed;
-            an empty exact entry projects nothing. Shared destination names must
+            an empty exact entry projects nothing. None input objects are skipped
+            before mapping selection. Shared destination names must
             declare equal normalized dtypes, even for types absent from the
             input. Attributes, defaults and converters may differ by type.
             Unmapped cells are missing, so their dtypes must support nulls.
@@ -1090,7 +1099,8 @@ class ModelTableAccessor:
             An iterable with exactly one object per table row, or a mapping
             from integer row positions to objects. Positions follow ``iloc``
             conventions, including negative positions. Slices and broadcasting
-            are not supported.
+            are not supported. None objects are ignored, leaving their rows
+            unchanged; they still count toward an iterable's required length.
         columns : mapping of str to ModelColumn or mapping of type or None to mappings
             Columns to update and their projections. Null values overwrite
             existing values, including null defaults for missing attributes.

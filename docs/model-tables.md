@@ -37,6 +37,12 @@ Missing required attributes raise `AttributeError`. Defaults follow
 or passed to a converter. A non-None default is passed to the converter.
 Empty input retains the declared columns and dtypes.
 
+A `None` input object is ignored during projection, retaining its row with
+missing values. It does not read attributes, apply defaults, or invoke converters.
+During updates, a `None` object leaves the row's existing values unchanged.
+This differs from a real object's attribute whose value is `None`: that value
+is projected as a null.
+
 ### Choose a dtype and converter
 
 Choose a dtype that can represent your values without loss. Boolean, integer,
@@ -220,6 +226,7 @@ above. An empty positional update is a no-op.
 
 | Situation | Result |
 | --- | --- |
+| An input object is None | Retain a missing row during creation; leave the row unchanged during updates. |
 | A declared attribute is missing | Read using `ModelColumn.default`, or raise if no default was supplied. |
 | A projection produces None | Write a null, replacing any earlier value. |
 | An existing column is omitted from the projection | Leave that column unchanged. |

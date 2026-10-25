@@ -56,6 +56,38 @@ def test_empty_input_retains_union_schema_and_empty_maps_retain_rows():
     assert table.shape == (2, 0)
 
 
+@pytest.mark.parametrize("typed", [False, True])
+def test_none_models_retain_rows_without_reading_attributes_or_defaults(typed):
+    calls = []
+
+    def convert(value):
+        calls.append(value)
+        return value
+
+    columns = {
+        "number": ModelColumn("value", dtype="Int64", converter=convert),
+        "default": ModelColumn("absent", default=7, dtype="Int64"),
+    }
+    if typed:
+        columns = {Direct: columns}
+    models = [None, Direct(value=3), None, Direct(value=None), None]
+    table = ModelTableAccessor.from_models(iter(models), columns=columns)
+    expected = pd.DataFrame(
+        {
+            "number": pd.array([None, 3, None, None, None], dtype="Int64"),
+            "default": pd.array([None, 7, None, 7, None], dtype="Int64"),
+        }
+    )
+    pd.testing.assert_frame_equal(table, expected)
+    assert calls == [3]
+    missing = ModelTableAccessor.from_models([None, None], columns=columns)
+    assert missing.shape == (2, 2)
+    assert missing.isna().all().all()
+    assert missing.dtypes.astype(str).tolist() == ["Int64", "Int64"]
+    assert calls == [3]
+    assert ModelTableAccessor.from_models([None, None], columns={}).shape == (2, 0)
+
+
 @pytest.mark.parametrize(
     ("left", "right"),
     [
@@ -195,7 +227,7 @@ def test_updates_distinguish_unmapped_cells_from_projected_nulls(inplace):
     columns = column_maps()
     columns[Direct]["added"] = ModelColumn("value", dtype="Int64")
     result = ModelTableAccessor(table).update_from_models(
-        {-1: Stored(text=None), 0: Direct(value=5), 2: Stored(text="6")},
+        {-1: Stored(text=None), 0: Direct(value=5), 1: None, 2: Stored(text="6")},
         columns=columns,
         inplace=inplace,
     )
@@ -213,13 +245,13 @@ def test_updates_distinguish_unmapped_cells_from_projected_nulls(inplace):
 
 
 def test_full_sequence_and_positional_mapping_agree_with_unused_destinations():
-    models = [Direct(value=3), Stored(text="4")]
+    models = [None, Direct(value=3), Stored(text="4"), None]
     columns = column_maps() | {object: {"unused": ModelColumn("value", dtype="Int64")}}
-    table = pd.DataFrame(index=[9, 9])
+    table = pd.DataFrame(index=[9, 9, 1, 1])
     accessor = ModelTableAccessor(table)
     result = accessor.update_from_models(iter(models), columns=columns)
     reversed_positions = accessor.update_from_models(
-        {1: models[1], 0: models[0]}, columns=columns
+        {3: models[3], 2: models[2], 1: models[1], 0: models[0]}, columns=columns
     )
     expected = ModelTableAccessor.from_models(models, columns=columns)
     expected.index = table.index
