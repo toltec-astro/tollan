@@ -23,7 +23,7 @@ readme
 | CLI | Add commands, help, logging, and configuration options. | {doc}`cli` |
 | Analyses and results | Apply configured calculations and inspect their results and producing settings. | {doc}`analyses` |
 | Pipelines | Run configured steps and inspect execution results. | {doc}`pipelines` |
-| External execution | Declare where workloads run, request execution, and resolve a job's resources and placement. | {doc}`execution` |
+| External execution | Declare where workloads run, then run, follow and cancel jobs locally, on Slurm, or from Dagster. | {doc}`execution` |
 | Artifacts and visualization | Select data for persistence or exchange; construct and display figures. | {doc}`artifacts` |
 | Databases | Manage connections and transactions; define shared column and actor conventions. | {doc}`databases` |
 | Utilities and plotting | Work with files, YAML, units, logging, and figures. | {doc}`utilities` |

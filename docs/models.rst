@@ -122,7 +122,7 @@ specifications, and construct or display visualizations.
 External execution
 ------------------
 
-Use :doc:`execution` to declare execution profiles and to resolve job specs.
+Use :doc:`execution` to declare execution profiles, resolve job specs and run jobs.
 
 .. autopydantic_model:: tollan.execution.ExecutionPolicyConfig
    :class-doc-from: class
@@ -152,6 +152,15 @@ Use :doc:`execution` to declare execution profiles and to resolve job specs.
    :class-doc-from: class
 
 .. autopydantic_model:: tollan.execution.JobSpec
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.SubmissionReceipt
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.JobStatus
+   :class-doc-from: class
+
+.. autopydantic_model:: tollan.execution.SupervisionOutcome
    :class-doc-from: class
 
 File locations

@@ -15,7 +15,7 @@ under the first profile that selects the workload::
     ...                 {
     ...                     "kind": "local",
     ...                     "name": "laptop",
-    ...                     "workloads": "reduce_.*",
+    ...                     "workloads": "transform_.*",
     ...                     "job_records_path": "/tmp/jobs",
     ...                     "threads": 2,
     ...                 }
@@ -23,7 +23,7 @@ under the first profile that selects the workload::
     ...         }
     ...     }
     ... )
-    >>> request = ExecutionRequest(workload="reduce_obs")
+    >>> request = ExecutionRequest(workload="transform_csv")
     >>> spec = ExecutionPolicy(rc).resolve(request)
     >>> spec.profile.name, spec.as_environ()["OMP_NUM_THREADS"]
     ('laptop', '2')

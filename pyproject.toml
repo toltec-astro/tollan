@@ -50,6 +50,10 @@ dependencies = [
   "tzlocal>=5",
 ]
 
+[project.optional-dependencies]
+# Run supervised jobs from Dagster assets (tollan.execution.dagster).
+dagster = ["dagster>=1.13"]
+
 [dependency-groups]
 test = [
   "pyarrow",
@@ -61,6 +65,7 @@ test = [
   "ruff",
   "pre-commit",
   "ty",
+  "dagster>=1.13",
 ]
 
 dev = [
@@ -72,6 +77,7 @@ dev = [
 ]
 
 docs = [
+  "dagster>=1.13",
   "myst-parser",
   "sphinx",
   "sphinx-astropy[confv2]",
@@ -138,6 +144,10 @@ xfail_strict = "true"
 filterwarnings = [
   "error",
   "ignore:Consolidated metadata is currently not part in the Zarr format 3:zarr.errors.ZarrUserWarning",
+  # Dagster 1.13's open_pipes_session reads its own deprecated context.run_id and
+  # calls its preview PipesMessageReader.expected_writer_count.
+  "ignore:AssetExecutionContext.run_id is deprecated:DeprecationWarning",
+  "ignore:Function `PipesMessageReader.expected_writer_count` is currently in preview",
 ]
 
 [tool.ty]

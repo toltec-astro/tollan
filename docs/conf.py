@@ -141,6 +141,7 @@ _REFERENCE_ALIASES = {
     "ArgsKwargs": "pydantic_core.ArgsKwargs",
     "ValidationInfo": "pydantic.ValidationInfo",
     "ConfigDict": "pydantic.ConfigDict",
+    "datetime": "datetime.datetime",
     # The field renderer requests a class; Pydantic documents this alias as data.
     "pydantic.types.JsonValue": "pydantic.types.JsonValue",
 }
@@ -156,6 +157,14 @@ _REFERENCE_URLS = {
     "dash_mantine_components.Container.Container": "https://www.dash-mantine-components.com/components/container",
     "typer.models.OptionInfo": "https://typer.tiangolo.com/reference/parameters/",
     "yaml.dumper.SafeDumper": "https://pyyaml.org/wiki/PyYAMLDocumentation#dumper",
+    # Dagster publishes no Sphinx inventory; link its API reference pages.
+    "dg.AssetExecutionContext": "https://docs.dagster.io/api/dagster/execution",
+    "dg.OpExecutionContext": "https://docs.dagster.io/api/dagster/execution",
+    "dg.PipesClientCompletedInvocation": "https://docs.dagster.io/api/dagster/pipes",
+    "dagster._core.pipes.client.PipesClient": "https://docs.dagster.io/api/dagster/pipes",
+    "dagster._config.pythonic_config.resource.ConfigurableResource": (
+        "https://docs.dagster.io/api/dagster/resources"
+    ),
 }
 
 _REFERENCE_URLS.update(

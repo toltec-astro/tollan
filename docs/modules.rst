@@ -119,9 +119,9 @@ External execution
 ------------------
 
 .. automodapi:: tollan.execution
-   :skip: ExecutionPolicyConfig, ExecutionProfile, ExecutionProfileBase, ExecutionRequest, JobSpec, LocalProfile, ResourceLimits, ResourceRequest, Resources, SlurmProfile
+   :skip: ExecutionPolicyConfig, ExecutionProfile, ExecutionProfileBase, ExecutionRequest, JobSpec, JobStatus, LocalProfile, ResourceLimits, ResourceRequest, Resources, SlurmProfile, SubmissionReceipt, SupervisionOutcome
 
-See :doc:`models` for the profile, resource and job-spec fields.
+See :doc:`models` for the profile, resource, job-spec, status and outcome fields.
 
 .. autodata:: tollan.execution.policy.ExecutionProfile
    :no-value:
@@ -131,6 +131,9 @@ See :doc:`models` for the profile, resource and job-spec fields.
 
 .. autodata:: tollan.execution.policy.TimeLimitQuantity
    :no-value:
+
+.. automodapi:: tollan.execution.dagster
+   :no-inheritance-diagram:
 
 .. _database-resources:
 

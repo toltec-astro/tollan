@@ -3,7 +3,8 @@
 Run long computations outside the process that decides to run them: as a local
 process while you develop, or on compute nodes through a batch scheduler such as
 Slurm. Your deployment declares where workloads run and which resources they
-may use; your application requests a workload and receives its job spec.
+may use; your application requests a workload, receives its job spec, and runs
+the job through a job record that any of your processes can follow.
 
 | Task | API |
 | --- | --- |
@@ -11,6 +12,10 @@ may use; your application requests a workload and receives its job spec.
 | State what a computation needs | `ExecutionRequest` in your configuration |
 | Turn a request into a job spec | `ExecutionPolicy.resolve(request)` |
 | Keep a job's settings with the job | `JobSpec.model_dump_yaml()`, `JobSpec.model_validate_yaml()` |
+| Run a job and wait for its outcome | `JobRecord.create()`, `JobRecord.submit()`, `supervise_job()` |
+| Follow or cancel a job from another process | `JobRecord.open()`, `JobRecord.status()`, `cancel_job()` |
+| Recover an unresolved submission | `JobRecord.reconcile()` |
+| Run jobs from Dagster assets | `tollan.execution.dagster.PipesJobClient` |
 
 ## Declare execution profiles
 
@@ -35,7 +40,7 @@ execution:
   profiles:
   - kind: slurm
     name: cluster
-    workloads: {includes: [reduce_obs, make_map]}
+    workloads: {includes: [transform, render]}
     job_records_path: /shared/jobs
     host: login.example.org
     partition: cpu
@@ -83,16 +88,16 @@ deployment or a user can change the request without changing code:
 from tollan.config import FrozenBaseModel
 from tollan.execution import ExecutionRequest
 
-class MakeMapConfig(FrozenBaseModel):
-    pixel_size: float = 1.0
-    execution: ExecutionRequest = ExecutionRequest(workload="make_map")
+class RenderConfig(FrozenBaseModel):
+    dpi: int = 150
+    execution: ExecutionRequest = ExecutionRequest(workload="render")
 
-config = MakeMapConfig()
+config = RenderConfig()
 print(config.execution.workload, config.execution.resources.cpus)
 ```
 
 ```{testoutput}
-make_map None
+render None
 ```
 
 Unset resources keep the selected profile's `resources_default`.
@@ -110,7 +115,7 @@ spec = policy.resolve(config.execution)
 print(spec.profile.name, spec.resources.cpus, spec.resources.memory)
 print(spec.as_environ()["OMP_NUM_THREADS"])
 
-local = policy.resolve(ExecutionRequest(workload="calibrate"))
+local = policy.resolve(ExecutionRequest(workload="summarize"))
 print(local.profile.name, local.resources)
 ```
 
@@ -144,7 +149,7 @@ profile excludes. Local profiles accept only `threads`.
 ```{testcode}
 request = ExecutionRequest.model_validate(
     {
-        "workload": "reduce_obs",
+        "workload": "transform",
         "resources": {"cpus": 8, "memory": "32 GiB"},
         "nodes": ["cpu2", "cpu3"],
     }
@@ -153,7 +158,7 @@ spec = policy.resolve(request)
 print(spec.resources.cpus, spec.resources.memory)
 print(spec.profile.select_nodes(spec.request, ["cpu1", "cpu2", "cpu3"]))
 
-for workload in ("reduce_obs", "calibrate"):
+for workload in ("transform", "summarize"):
     try:
         policy.resolve(
             ExecutionRequest(workload=workload, resources={"cpus": 32})
@@ -165,8 +170,8 @@ for workload in ("reduce_obs", "calibrate"):
 ```{testoutput}
 8 32.0 Gibyte
 ['cpu2']
-rejected: reduce_obs
-rejected: calibrate
+rejected: transform
+rejected: summarize
 ```
 
 `SlurmProfile.select_nodes` applies both selections to a list of the
@@ -174,9 +179,9 @@ partition's nodes.
 
 ### Keep the job spec with the job
 
-Store the job spec with the job, so later work on that job uses the settings it
-was resolved with, even after the deployment's policy changes. The job spec
-round-trips through YAML, including the kind of its profile:
+A job record stores the job spec with the job, so later work on that job uses the
+settings it was resolved with, even after the deployment's policy changes. The
+job spec round-trips through YAML, including the kind of its profile:
 
 ```{testcode}
 from tollan.execution import JobSpec
@@ -184,3 +189,209 @@ from tollan.execution import JobSpec
 kept = spec.model_dump_yaml(mode="json")
 assert JobSpec.model_validate_yaml(kept) == spec
 ```
+
+## Run a job
+
+A **job record** is a directory named by a key beneath the profile's
+`job_records_path`. It keeps the job spec, the command, the job script, the
+submission receipt, the observed status history and the job's output, so any
+process with access to it can follow the job. Create a record, submit it with
+the scheduler for its profile, and supervise it until it finishes:
+
+```{testcode}
+import sys
+import tempfile
+
+from tollan.execution import JobRecord, get_scheduler, supervise_job
+
+jobs_dir = tempfile.mkdtemp()
+local_rc = RuntimeContext()
+local_rc.update_default_config(
+    {
+        "execution": {
+            "profiles": [
+                {
+                    "kind": "local",
+                    "name": "laptop",
+                    "workloads": ".*",
+                    "job_records_path": jobs_dir,
+                }
+            ]
+        }
+    }
+)
+spec = ExecutionPolicy(local_rc).resolve(ExecutionRequest(workload="transform"))
+record = JobRecord.create(
+    spec, key="transform-1", command=[sys.executable, "-c", "print('transformed')"]
+)
+scheduler = get_scheduler(spec.profile)
+record.submit(scheduler)
+outcome = supervise_job(record, scheduler, poll_interval=0.1)
+print(outcome.kind, outcome.status.exit_code)
+print((record.path / "output.log").read_text().strip())
+```
+
+```{testoutput}
+succeeded 0
+transformed
+```
+
+The key names the record and must be a `SafeName`; a second record with the
+same key raises `FileExistsError`. Submission is once-only: submitting again
+returns the first receipt. A local job runs detached, so it continues when
+your process exits.
+
+`supervise_job()` polls the job's status and returns an outcome:
+
+| `outcome.kind` | Meaning |
+| --- | --- |
+| `succeeded` | The job completed with exit status 0 and passed your `check`, if given. |
+| `failed` | The job failed, completed with a nonzero exit status, or failed `check`. |
+| `canceled` | The job was canceled. |
+| `unresolved` | The job's state stayed unknown, or the scheduler unreachable, beyond `unknown_grace`. |
+
+Supervision never submits or cancels a job. Pass `check` to inspect the job's
+results before accepting it, and `on_status` to receive each status change.
+
+### Follow a job from another process
+
+Open the record from any process that can read it, for example after a
+restart, and observe or supervise the job again:
+
+```{testcode}
+same = JobRecord.open(record.path)
+print(same.receipt == record.receipt, same.status(scheduler).state)
+print(same.history[-1].state)
+```
+
+```{testoutput}
+True completed
+completed
+```
+
+Stopping the process that supervises a job does not stop the job. To run the
+same work again, create a record with a new key.
+
+### Cancel a job
+
+`cancel_job()` records the cancellation request, asks the scheduler to stop
+the job and waits for a terminal state:
+
+```{testcode}
+from tollan.execution import cancel_job
+
+waiting = JobRecord.create(
+    spec,
+    key="transform-2",
+    command=[sys.executable, "-c", "import time; time.sleep(60)"],
+)
+waiting.submit(scheduler)
+outcome = cancel_job(waiting, scheduler, timeout=30, poll_interval=0.1)
+print(outcome.kind, outcome.status.state)
+```
+
+```{testoutput}
+canceled canceled
+```
+
+If no terminal state appears within `timeout`, the outcome is
+`cancel_requested`.
+
+```{testcleanup}
+import shutil
+
+shutil.rmtree(jobs_dir)
+```
+
+### Recover an unresolved submission
+
+If a process stops after it began submitting a job but before it recorded the
+receipt, the record is unresolved: `record.is_unresolved` is True, and
+`submit()` raises `SubmissionUnresolvedError` rather than risk a second job.
+From a process that is not still submitting, call `reconcile()`:
+
+```python
+receipt = record.reconcile(scheduler)
+if receipt is None:
+    receipt = record.submit(scheduler)
+```
+
+`reconcile()` records the job the scheduler reports for the record, or confirms
+that none was submitted so you can submit again.
+
+## Run jobs on Slurm
+
+For a Slurm profile, `get_scheduler()` runs the Slurm commands on `host`
+through `ssh`, or on the local host when `host` is unset. `ssh` comes from
+`PATH` and runs without prompting, so configure host aliases, users and keys in
+your SSH configuration. The job records directory must be visible at the same
+path on the local host, the submission host and the compute nodes.
+
+```python
+spec = policy.resolve(ExecutionRequest(workload="transform"))
+record = JobRecord.create(spec, key="transform-1", command=["python", "-m", "mytool"])
+scheduler = get_scheduler(spec.profile)
+record.submit(scheduler)
+outcome = supervise_job(record, scheduler)
+```
+
+Each job is one task on one node. Submission names the job after its key, runs
+it in the record directory and writes its output to `output.log`; it uses the
+profile's partition, account and quality of service, the job's resources, and
+excludes the partition nodes that the node selections leave out. A rejected
+submission leaves the record unresolved. Status comes from Slurm accounting, or
+from the queue while accounting has no entry yet. `SshTransport` and
+`LocalTransport` raise `TransportError` when a command cannot run and
+`SchedulerCommandError` when it fails; neither is a job state.
+
+## Run jobs from Dagster
+
+Install the `dagster` extra (`pip install "tollan[dagster]"`) and add a
+`PipesJobClient` resource. In an asset, resolve the job spec and run the job;
+the client submits it, supervises it and returns the results that the external
+process reports through [Dagster Pipes](https://docs.dagster.io/guides/build/external-pipelines):
+
+```python
+import dagster as dg
+
+from tollan.execution import ExecutionRequest
+from tollan.execution.dagster import PipesJobClient
+
+
+@dg.asset(partitions_def=dg.DailyPartitionsDefinition("2026-01-01"), pool="cluster")
+def table(context: dg.AssetExecutionContext, client: PipesJobClient):
+    spec = policy.resolve(ExecutionRequest(workload="transform"))
+    invocation = client.run(
+        context=context,
+        spec=spec,
+        key=f"table-{context.partition_key}",
+        command=["python", "-m", "mytool.transform", context.partition_key],
+    )
+    return invocation.get_materialize_result()
+
+
+defs = dg.Definitions(assets=[table], resources={"client": PipesJobClient()})
+```
+
+The external process reports through `dagster-pipes`:
+
+```python
+from dagster_pipes import open_dagster_pipes
+
+with open_dagster_pipes() as pipes:
+    pipes.report_asset_materialization(metadata={"rows": 3})
+```
+
+- The job record keeps the Pipes context and messages. A run that finds an
+  existing record for its key reattaches to that job instead of submitting
+  again, and reads every message. Derive the key from the work, such as the
+  asset and partition; use a new key to compute the work again.
+- The run reports results only after the external process closes its messages.
+- Canceling the run cancels the job. Other interruptions of the run leave the
+  job running for a later run to reattach.
+- A job that fails fails the step, and Dagster's retry policy decides about
+  retries. A job whose submission or state is unresolved fails the step without
+  retries.
+- Use Dagster [concurrency pools](https://docs.dagster.io/guides/operate/managing-concurrency)
+  to limit how many jobs runs submit at once; Slurm enforces the cluster's
+  capacity across all users.

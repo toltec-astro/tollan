@@ -22,5 +22,5 @@ type SafeNamePath = Annotated[
 ]
 """``/``-separated SafeName components, with an optional ``qualifier:`` prefix.
 
-Examples are ``ql``, ``taco/ql`` and ``unity:taco/ql``.
+Examples are ``reports``, ``reports/2024`` and ``mirror:reports/2024``.
 """

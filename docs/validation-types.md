@@ -168,8 +168,8 @@ namespaces: `SafeName` components separated by `/`, with an optional
 
 | Annotation | Accepts | Rejects |
 | --- | --- | --- |
-| `SafeName` | `cpu1`, `reduce_obs`, `login.example.org` | `.hidden`, `-p`, `a/b`, `a b`, `taco:ql` |
-| `SafeNamePath` | `ql`, `taco/ql`, `taco:ql`, `unity:taco/ql` | `/ql`, `ql/`, `taco//ql`, `taco/../ql`, `a:b:c` |
+| `SafeName` | `cpu1`, `transform`, `login.example.org` | `.hidden`, `-p`, `a/b`, `a b`, `mirror:reports` |
+| `SafeNamePath` | `reports`, `reports/2024`, `mirror:reports`, `mirror:reports/2024` | `/reports`, `reports/`, `reports//2024`, `reports/../2024`, `a:b:c` |
 
 ```{testcode}
 from tollan.config import FrozenBaseModel
@@ -179,8 +179,8 @@ class Placement(FrozenBaseModel):
     name: SafeName
     namespace: SafeNamePath
 
-placement = Placement(name="ql-main", namespace="unity:taco/ql")
-assert placement.namespace == "unity:taco/ql"
+placement = Placement(name="report-v2", namespace="mirror:reports/2024")
+assert placement.namespace == "mirror:reports/2024"
 ```
 
 ## Quantities

@@ -21,7 +21,7 @@ RESOURCES = {"cpus": 4, "memory": "8 GiB", "time_limit": "1 h", "threads": 2}
 CLUSTER = {
     "kind": "slurm",
     "name": "cluster",
-    "workloads": {"pattern": "reduce_.*|make_map"},
+    "workloads": {"pattern": "transform|render"},
     "job_records_path": "/shared/jobs",
     "env": {"OMP_NUM_THREADS": 99, "SITE": "hpc"},
     "host": "login.example.org",
@@ -125,7 +125,7 @@ def test_local_records_path_resolves_against_the_root_path(tmp_path):
 
 def test_policy_composes_through_configuration_sources():
     policy = make_policy({"profiles": [LAPTOP]})
-    assert isinstance(policy.resolve(request("reduce_obs")).profile, LocalProfile)
+    assert isinstance(policy.resolve(request("transform")).profile, LocalProfile)
 
 
 # Workload selection
@@ -133,24 +133,24 @@ def test_policy_composes_through_configuration_sources():
 
 def test_first_profile_selecting_the_workload_runs_it():
     policy = make_policy()
-    assert policy.resolve(request("make_map")).profile.name == "cluster"
-    assert policy.resolve(request("calibrate")).profile.name == "laptop"
+    assert policy.resolve(request("render")).profile.name == "cluster"
+    assert policy.resolve(request("summarize")).profile.name == "laptop"
     reordered = make_policy({"profiles": [LAPTOP, CLUSTER]})
-    assert reordered.resolve(request("make_map")).profile.name == "laptop"
+    assert reordered.resolve(request("render")).profile.name == "laptop"
 
 
 def test_workloads_no_profile_selects_are_rejected():
     policy = make_policy({"profiles": [CLUSTER]})
     with pytest.raises(ValueError, match="No execution profile selects workload"):
-        policy.resolve(request("calibrate"))
+        policy.resolve(request("summarize"))
 
 
 # Slurm resolution
 
 
 def test_slurm_resolution_applies_profile_defaults():
-    spec = make_policy().resolve(request("make_map"))
-    assert spec.request == request("make_map")
+    spec = make_policy().resolve(request("render"))
+    assert spec.request == request("render")
     assert spec.profile.job_records_path == PurePosixPath("/shared/jobs")
     resources = slurm_resources(spec)
     assert resources.cpus == 4
@@ -161,7 +161,7 @@ def test_slurm_resolution_applies_profile_defaults():
 
 def test_requested_resources_replace_defaults_within_the_maximum():
     spec = make_policy().resolve(
-        request("reduce_obs", cpus=8, memory="32 GiB", time_limit="2 d")
+        request("transform", cpus=8, memory="32 GiB", time_limit="2 d")
     )
     resources = slurm_resources(spec)
     assert resources.cpus == 8
@@ -181,7 +181,7 @@ def test_requested_resources_replace_defaults_within_the_maximum():
 )
 def test_requests_never_exceed_the_profile(requested, match):
     with pytest.raises(ValueError, match=match):
-        make_policy().resolve(request("reduce_obs", **requested))
+        make_policy().resolve(request("transform", **requested))
 
 
 @pytest.mark.parametrize(
@@ -194,13 +194,13 @@ def test_requests_never_exceed_the_profile(requested, match):
     ],
 )
 def test_requested_nodes_only_narrow_the_profile_selection(requested, selected):
-    spec = make_policy().resolve(request("reduce_obs", nodes=requested))
+    spec = make_policy().resolve(request("transform", nodes=requested))
     assert isinstance(spec.profile, SlurmProfile)
     assert spec.profile.select_nodes(spec.request, PARTITION_NODES) == selected
 
 
 def test_thread_limits_take_precedence_over_the_profile_environment():
-    spec = make_policy().resolve(request("reduce_obs", threads=3))
+    spec = make_policy().resolve(request("transform", threads=3))
     assert spec.as_environ()["SITE"] == "hpc"
     for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS"):
         assert spec.as_environ()[name] == "3"
@@ -209,7 +209,7 @@ def test_thread_limits_take_precedence_over_the_profile_environment():
 def test_unset_threads_leave_threading_to_the_external_process():
     resources = RESOURCES | {"threads": None}
     policy = make_policy({"profiles": [CLUSTER | {"resources_default": resources}]})
-    spec = policy.resolve(request("reduce_obs"))
+    spec = policy.resolve(request("transform"))
     assert slurm_resources(spec).threads is None
     assert spec.as_environ() == {"OMP_NUM_THREADS": "99", "SITE": "hpc"}
 
@@ -219,8 +219,8 @@ def test_unset_threads_leave_threading_to_the_external_process():
 
 def test_local_jobs_set_threads_only_when_given():
     policy = make_policy()
-    assert policy.resolve(request("calibrate")).as_environ() == {}
-    spec = policy.resolve(request("calibrate", threads=4))
+    assert policy.resolve(request("summarize")).as_environ() == {}
+    spec = policy.resolve(request("summarize", threads=4))
     assert spec.resources is None
     assert spec.as_environ()["OMP_NUM_THREADS"] == "4"
 
@@ -230,7 +230,7 @@ def test_local_jobs_set_threads_only_when_given():
 )
 def test_local_profiles_accept_only_thread_requests(requested):
     with pytest.raises(ValueError, match="accepts only threads"):
-        make_policy().resolve(request("calibrate", **requested))
+        make_policy().resolve(request("summarize", **requested))
 
 
 def test_resolution_contacts_no_scheduler(monkeypatch):
@@ -239,14 +239,14 @@ def test_resolution_contacts_no_scheduler(monkeypatch):
 
     monkeypatch.setattr("subprocess.run", fail)
     monkeypatch.setattr("subprocess.Popen", fail)
-    make_policy().resolve(request("reduce_obs"))
+    make_policy().resolve(request("transform"))
 
 
 # Job spec retention
 
 
 @pytest.mark.parametrize(
-    ("workload", "kind"), [("reduce_obs", SlurmProfile), ("calibrate", LocalProfile)]
+    ("workload", "kind"), [("transform", SlurmProfile), ("summarize", LocalProfile)]
 )
 def test_job_specs_round_trip_through_yaml(workload, kind):
     spec = make_policy().resolve(request(workload, threads=1))
@@ -256,7 +256,7 @@ def test_job_specs_round_trip_through_yaml(workload, kind):
 
 
 def test_a_kept_job_spec_ignores_later_policy_changes():
-    kept = make_policy().resolve(request("reduce_obs")).model_dump_yaml(mode="json")
+    kept = make_policy().resolve(request("transform")).model_dump_yaml(mode="json")
     narrowed = make_policy(
         {
             "profiles": [
@@ -276,18 +276,18 @@ def test_a_kept_job_spec_ignores_later_policy_changes():
             ]
         }
     )
-    assert slurm_resources(narrowed.resolve(request("reduce_obs"))).cpus == 1
+    assert slurm_resources(narrowed.resolve(request("transform"))).cpus == 1
     assert slurm_resources(JobSpec.model_validate_yaml(kept)).cpus == 4
 
 
 def test_applications_embed_the_request_in_their_configuration():
-    class MakeMapConfig(FrozenBaseModel):
-        pixel_size: float = 1.0
-        execution: ExecutionRequest = ExecutionRequest(workload="make_map")
+    class RenderConfig(FrozenBaseModel):
+        dpi: int = 150
+        execution: ExecutionRequest = ExecutionRequest(workload="render")
 
-    config = MakeMapConfig.model_validate(
-        {"execution": {"workload": "make_map", "resources": {"cpus": 8}}}
+    config = RenderConfig.model_validate(
+        {"execution": {"workload": "render", "resources": {"cpus": 8}}}
     )
     spec = make_policy().resolve(config.execution)
     assert slurm_resources(spec).cpus == 8
-    assert MakeMapConfig().execution.resources == ResourceRequest()
+    assert RenderConfig().execution.resources == ResourceRequest()
