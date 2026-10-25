@@ -495,11 +495,16 @@ def _assign_projected_columns(table, updates):
                 full_order = (
                     slice(None) if np.all(np.diff(rows) > 0) else np.argsort(rows)
                 )
-            table[name] = values.array[full_order]
+            table[name] = pd.Series(
+                values.array[full_order],
+                index=table.index,
+                dtype=values.dtype,
+                copy=False,
+            )
         else:
             column = pd.Series(None, index=table.index, dtype=values.dtype)
             column.iloc[rows] = values.array
-            table[name] = column.array
+            table[name] = column
 
 
 def _comparison_number(value, *, complex_values=False):

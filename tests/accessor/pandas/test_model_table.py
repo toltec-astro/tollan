@@ -115,6 +115,29 @@ def test_partial_update_adds_nullable_columns():
     assert pd.isna(result["counter"].iloc[2])
 
 
+@pytest.mark.parametrize("positions", [[0, 1, 2], [2, 0, 1], [2, 0]])
+def test_update_preserves_object_dtype_and_string_identity(positions):
+    values = [f"source-{position}" for position in range(3)]
+    table = pd.DataFrame(
+        {"existing": pd.Series([None] * 3, index=[8, 8, 2], dtype=object)}
+    )
+    ModelTableAccessor(table).update_from_models(
+        {position: SimpleNamespace(value=values[position]) for position in positions},
+        columns={
+            "existing": ModelColumn("value", dtype=object),
+            "added": ModelColumn("value", dtype=object),
+        },
+        inplace=True,
+    )
+    for name in ("existing", "added"):
+        assert table[name].dtype == object
+        for position in range(3):
+            if position in positions:
+                assert table[name].iloc[position] is values[position]
+            else:
+                assert pd.isna(table[name].iloc[position])
+
+
 @pytest.mark.parametrize("inplace", [False, True])
 @pytest.mark.parametrize(
     ("dtype", "value"),
