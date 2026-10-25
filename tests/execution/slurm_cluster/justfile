@@ -1,0 +1,29 @@
+# Docker Slurm cluster for the live tollan.execution tests.
+# Run from this directory: just up, just test, just down.
+
+# Shared directory for job records and the cluster's SSH key and configuration.
+shared := env("TOLLAN_SLURM_SHARED", "/tmp/tollan-slurm")
+
+# Show available commands
+list:
+    @just --list
+
+# Build and start the cluster; wait until its nodes are idle.
+up:
+    mkdir -p {{shared}}/ssh
+    test -f {{shared}}/ssh/id_ed25519 || ssh-keygen -q -t ed25519 -N "" -f {{shared}}/ssh/id_ed25519
+    printf 'Host tollan-slurm\n  HostName 127.0.0.1\n  Port 2222\n  User tester\n  IdentityFile %s/ssh/id_ed25519\n  StrictHostKeyChecking no\n  UserKnownHostsFile /dev/null\n  LogLevel ERROR\n' {{shared}} > {{shared}}/ssh/config
+    TOLLAN_SLURM_SHARED={{shared}} docker compose up -d --build
+    for i in $(seq 1 60); do ssh -F {{shared}}/ssh/config tollan-slurm sinfo -h -o %T 2>/dev/null | grep -q idle && exit 0; sleep 2; done; echo "Slurm cluster did not become ready" >&2; exit 1
+
+# Run the live tests against the running cluster.
+test:
+    cd ../../.. && TOLLAN_SLURM_SHARED={{shared}} uv run --locked pytest tests/execution/test_slurm_live.py
+
+# Open a shell on the cluster's submission host.
+shell:
+    ssh -F {{shared}}/ssh/config tollan-slurm
+
+# Stop and remove the cluster's containers.
+down:
+    TOLLAN_SLURM_SHARED={{shared}} docker compose down

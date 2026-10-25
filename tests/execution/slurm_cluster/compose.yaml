@@ -1,0 +1,29 @@
+# Slurm test cluster for tollan.execution live tests: a controller with
+# accounting and SSH access, and two compute nodes. Every container mounts the
+# shared directory at the same path, as a site's shared storage would be.
+# Start it with `just up` from this directory.
+x-node: &node
+  build: .
+  image: tollan-slurm-test
+  environment:
+    SHARED: ${TOLLAN_SLURM_SHARED:-/tmp/tollan-slurm}
+  volumes:
+    - ${TOLLAN_SLURM_SHARED:-/tmp/tollan-slurm}:${TOLLAN_SLURM_SHARED:-/tmp/tollan-slurm}
+
+services:
+  slurmctl:
+    <<: *node
+    hostname: slurmctl
+    command: controller
+    ports:
+      - "127.0.0.1:2222:22"
+  c1:
+    <<: *node
+    hostname: c1
+    command: compute
+    depends_on: [slurmctl]
+  c2:
+    <<: *node
+    hostname: c2
+    command: compute
+    depends_on: [slurmctl]

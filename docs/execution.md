@@ -344,6 +344,31 @@ from the queue while accounting has no entry yet. `SshTransport` and
 `LocalTransport` raise `TransportError` when a command cannot run and
 `SchedulerCommandError` when it fails; neither is a job state.
 
+### Try jobs on a local Slurm cluster
+
+A Tollan checkout includes a small Slurm cluster in Docker for trying Slurm
+profiles and running the live Slurm tests. It has a submission host reached over
+SSH, Slurm accounting, two compute nodes `c1` and `c2` in partition `cpu`, and
+account `group`. Every container mounts the shared directory
+`/tmp/tollan-slurm` at the same path; set `TOLLAN_SLURM_SHARED` to use another.
+With Docker running:
+
+```bash
+cd tests/execution/slurm_cluster
+just up      # build and start the cluster, then wait for idle nodes
+just test    # run tests/execution/test_slurm_live.py against it
+just shell   # open a shell on the submission host
+just down    # stop the cluster
+```
+
+`just up` writes an SSH configuration for host `tollan-slurm` to
+`/tmp/tollan-slurm/ssh/config`. To reach the cluster from your own code, use a
+profile with `host: tollan-slurm`, `partition: cpu`, `account: group` and a
+`job_records_path` inside `/tmp/tollan-slurm`, and add that configuration to
+your SSH configuration, for example with
+`Include /tmp/tollan-slurm/ssh/config`. The live tests are skipped unless
+`TOLLAN_SLURM_SHARED` is set.
+
 ## Run jobs from Dagster
 
 Install the `dagster` extra (`pip install "tollan[dagster]"`) and add a
