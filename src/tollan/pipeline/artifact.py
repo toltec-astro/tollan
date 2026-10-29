@@ -48,10 +48,13 @@ class ArtifactFile:
         Destination that was successfully written.
     format : str
         Representation identifier, such as ``html``, ``png``, or ``zarr``.
+    name : str or None, optional
+        Artifact label supplied by its producer, independent of its filename.
     """
 
     path: Path
     format: str
+    name: str | None = None
 
 
 class ArtifactSpec[DataT](FrozenBaseModel):

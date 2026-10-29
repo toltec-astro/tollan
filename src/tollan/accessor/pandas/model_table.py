@@ -403,16 +403,16 @@ def _column_dtype(dtype):
     return pd.api.types.pandas_dtype(object if dtype is None else dtype)
 
 
-_projection_maps_adapter = TypeAdapter(
+_validate_projection_maps = TypeAdapter(
     Mapping[type | None, Mapping[str, ModelColumn]], config=ConfigDict(strict=True)
-)
+).validate_python
 
 
 def _prepare_projections(columns):
     """Normalize projection choices and check their shared destination schema."""
     if not columns or isinstance(next(iter(columns)), str):
         columns = {None: columns}
-    columns = _projection_maps_adapter.validate_python(columns)
+    columns = _validate_projection_maps(columns)
     schema = {}
     owners = {}
     for key, mapping in columns.items():

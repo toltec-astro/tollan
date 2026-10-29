@@ -253,7 +253,10 @@ class PlotlyViz(VizBase[go.Figure]):
         if not self.save:
             return []
         return [
-            self.save_plotly(path.with_name(f"{path.name}.{fmt}"), data)
+            dataclasses.replace(
+                self.save_plotly(path.with_name(f"{path.name}.{fmt}"), data),
+                name=self.alias or type(self).__name__,
+            )
             for fmt in self.save_formats
         ]
 

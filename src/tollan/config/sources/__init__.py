@@ -65,7 +65,7 @@ type ConfigSource = Annotated[
 
 # Matches any numbered config file: 00_base.yaml, 10_site.env, 99_anything.yml
 _DIR_FILE_PATTERN = re.compile(r"^(?P<order>\d+)(_.*)?(?:\.ya?ml|\.env)$")
-_SOURCE_PATH_ADAPTER = TypeAdapter(_ConfigSourcePath)
+_validate_config_source_path = TypeAdapter(_ConfigSourcePath).validate_python
 
 
 def _detect_source_format(path: Path) -> ConfigSourceFormat | None:
@@ -159,7 +159,7 @@ class ConfigSourceList(BaseModel):
             if (info.context or {}).get("config_source_root_path") is not None:
                 # Resolve before directory discovery; absolute entries prevent
                 # applying a relative root again during file-source validation.
-                path = _SOURCE_PATH_ADAPTER.validate_python(
+                path = _validate_config_source_path(
                     path, context=info.context
                 ).absolute()
             if path.is_dir():
