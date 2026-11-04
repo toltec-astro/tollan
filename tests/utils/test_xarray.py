@@ -30,7 +30,9 @@ def test_reduction_accepts_selected_and_normalized_values() -> None:
     assert list(median) == ["voltage"]
     assert median.voltage.dims == ("sample",)
     np.testing.assert_allclose(median.voltage.compute(), [1, 3, 3])
-    np.testing.assert_allclose(mad.voltage.compute(), np.array([0, 1, 0]) * 1.4826)
+    np.testing.assert_allclose(
+        mad.voltage.compute(), np.array([0, 1, 0]) * 1.482602218505602
+    )
     assert mad.voltage.attrs["units"] == ""
     np.testing.assert_array_equal(measurements.voltage, values)
 
@@ -51,7 +53,7 @@ def test_reduce_median_mad_retains_units_coordinates_and_nan_behavior(dim: str) 
     expected_median = np.median(values, axis=axis)
     expected_mad = (
         np.median(abs(values - np.expand_dims(expected_median, axis=axis)), axis=axis)
-        * 1.4826
+        * 1.482602218505602
     )
     for reduced, expected in [(median, expected_median), (mad, expected_mad)]:
         assert isinstance(reduced.signal.data, da.Array)
@@ -70,7 +72,7 @@ def test_reduce_median_mad_unnamed_dataarray_uses_standard_variable_name() -> No
     assert isinstance(median.data.data, da.Array)
     assert isinstance(mad.data.data, da.Array)
     assert median.data.compute().item() == 2.0
-    assert mad.data.compute().item() == 1.4826
+    assert mad.data.compute().item() == 1.482602218505602
     assert median.data.u.unit is None
 
 
@@ -89,7 +91,7 @@ def test_reduction_defers_source_reads_and_shares_them_between_outputs() -> None
     result_median, result_mad = dask.compute(median, mad, scheduler="synchronous")
     assert reads == ["read"]
     assert result_median.signal.item() == 2.0
-    assert result_mad.signal.item() == 1.4826
+    assert result_mad.signal.item() == 1.482602218505602
 
 
 def test_missing_dimension_is_rejected_before_source_reads() -> None:
@@ -139,7 +141,10 @@ def test_mixed_dtypes_match_numpy_before_and_after_computing(
     for name, data in source.data_vars.items():
         array = data.values
         center = np.median(array, axis=-1)
-        scatter = np.median(abs(array - np.expand_dims(center, -1)), axis=-1) * 1.4826
+        scatter = (
+            np.median(abs(array - np.expand_dims(center, -1)), axis=-1)
+            * 1.482602218505602
+        )
         for lazy, actual, expected in zip(
             (median, mad), computed, (center, scatter), strict=True
         ):
@@ -169,3 +174,12 @@ def test_dataset_variables_keep_independent_units_and_shared_metadata() -> None:
     assert median.voltage.item() == 2.0
     assert median.temperature.item() == 20.0
     assert mad.temperature.item() == pytest.approx(mad.voltage.item() * 10.0)
+
+
+def test_scaled_mad_matches_astropy_without_rounded_normalization():
+    from astropy.stats import mad_std
+
+    values = np.array([[0.0, 1.0, 2.0, 8.0], [1e12, 2e12, 4e12, 9e12]])
+    source = xr.DataArray(values, dims=("channel", "sample"), name="signal")
+    _, scatter = reduce_median_mad(source, dim="sample")
+    np.testing.assert_array_equal(scatter.signal.compute(), mad_std(values, axis=-1))

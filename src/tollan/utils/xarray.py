@@ -36,7 +36,8 @@ def reduce_median_mad(
         Median of each participating variable along ``dim``. An unnamed DataArray
         uses the variable name ``data``.
     mad_std : xarray.Dataset
-        Median absolute deviation from ``median``, multiplied by 1.4826.
+        Median absolute deviation from ``median``, multiplied by 1.482602218505602
+        (the Gaussian consistency factor).
         Describes scatter among samples, not uncertainty in the median.
 
         Both outputs are lazy, including for NumPy input. Names and dataset/variable
@@ -68,7 +69,7 @@ def reduce_median_mad(
     >>> median, mad_std = reduce_median_mad(values, dim="sample")
     >>> median.signal.compute().item()
     2.0
-    >>> mad_std.signal.compute().item()
+    >>> round(mad_std.signal.compute().item(), 4)
     1.4826
     >>> mad_std.signal.u.unit
     Unit("V")
@@ -94,7 +95,8 @@ def reduce_median_mad(
         )
 
     center = median(data)
-    scatter = median(abs(data - center)) * 1.4826
+    # 1 / Phi^-1(3/4), matching astropy.stats.mad_std without rounding.
+    scatter = median(abs(data - center)) * 1.482602218505602
     scatter.attrs = dict(data.attrs)
     for name in scatter.data_vars:
         scatter[name].attrs = dict(data[name].attrs)

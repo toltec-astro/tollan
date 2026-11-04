@@ -170,7 +170,7 @@ along one dimension. It returns two Datasets:
 | Output | Meaning |
 | --- | --- |
 | `median` | Median of each variable carrying `dim`. |
-| `mad_std` | Median absolute deviation from the median, multiplied by 1.4826; scatter among samples, not uncertainty in the median. |
+| `mad_std` | Median absolute deviation from the median, multiplied by 1.482602218505602; scatter among samples, not uncertainty in the median. |
 
 Dataset and variable attributes, including units, are retained, along with the
 participating variables' coordinates that do not depend on `dim`. NaNs propagate
@@ -188,7 +188,7 @@ values = xr.DataArray(
 median, scatter = reduce_median_mad(values, dim="sample")
 median, scatter = dask.compute(median, scatter)
 assert median.signal.item() == 2.0
-assert scatter.signal.item() == 1.4826
+assert scatter.signal.item() == 1.482602218505602
 assert scatter.signal.u.unit == u.V
 ```
 
