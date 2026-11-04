@@ -21,18 +21,18 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from pathlib import Path
+
+    import dash_mantine_components as dmc
+    from dash import dcc, html
 from dataclasses import dataclass, field
 from functools import cached_property
 from typing import Any, Literal, TypedDict, cast, get_args
 from wsgiref.simple_server import make_server
 
 import click
-import dash_mantine_components as dmc
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import Dash, dcc, html
-from flask import Flask
 from plotly.subplots import make_subplots as _make_subplots
 from pydantic import Field
 
@@ -966,6 +966,9 @@ class ShowInDash:
         - Tabbed body section (dmc.Tabs) with one tab per data item
         - Each tab displays either a Plotly figure or formatted YAML
         """
+        # Figure construction and export do not need a Dash application.
+        import dash_mantine_components as dmc  # noqa: PLC0415
+
         # Create header with title
         header = dmc.Paper(
             dmc.Title(self.title_text or "Show in Dash", order=3),
@@ -1030,6 +1033,7 @@ class ShowInDash:
         dcc.Graph or html.Pre
             Dash component displaying the data.
         """
+        from dash import dcc, html  # noqa: PLC0415 -- display-only dependency
 
         def _is_figure_like(data):
             if isinstance(data, go.Figure):
@@ -1089,6 +1093,10 @@ def show_in_dash(
     ...     title_text='Dashboard'
     ... )
     """
+    import dash_mantine_components as dmc  # noqa: PLC0415
+    from dash import Dash  # noqa: PLC0415
+    from flask import Flask  # noqa: PLC0415
+
     server_app = Flask(__name__)
     host = host or "localhost"
     port = 8050 if port is None else port
