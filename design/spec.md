@@ -677,6 +677,19 @@ Applications repeatedly need common operations that belong to no particular
 domain. Supporting utilities provide these operations in one reusable place,
 so application components do not maintain separate implementations.
 
+#### File locations and item paths
+
+Applications can retain item paths separately from their storage location.
+They combine the two when they need a resolved resource location.
+
+- SubPath fields describe literal descendant paths independently of configuration
+  roots and filesystem access.
+- FileLoc owns resolved local and remote locations. Joining literal path parts
+  returns a FileLoc while retaining the base's scheme, authority, query and
+  fragment. Existing base-path encoding is preserved; new filename characters
+  are encoded as path data.
+- Joining leaves the base unchanged and does not open or check resources.
+
 #### Keyed registries
 
 Components publish named capabilities for later lookup without replacing

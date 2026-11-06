@@ -6,6 +6,7 @@ application framework. See the [API reference](modules.rst) for full signatures.
 | Task | Module / entry point |
 | --- | --- |
 | Describe a local or remote location | `tollan.utils.fileloc.fileloc` |
+| Combine a storage location with an item path | `FileLoc.joinpath` |
 | Open input or create output directories | `tollan.utils.file` |
 | Merge nested settings | `tollan.utils.dict.rupdate` |
 | Register unique keys for later lookup | `tollan.utils.registry.Registry` |
@@ -33,6 +34,46 @@ assert source.path.as_posix() == "/data/sample.nc"
 A remote `path` is a decoded path on that host, not a local copy. Use
 `FileLocField` in Pydantic models when local paths should inherit the
 [validation root](validation-types.md#paths-and-file-locations).
+
+## Join item paths to a location
+
+Use {meth}`~tollan.utils.fileloc.FileLoc.joinpath` to combine a location with
+literal path parts. It preserves the base's scheme and host, and encodes filename
+characters such as `%`, `#`, `?` and spaces. Pass path text, not encoded URI text.
+
+Declare item paths with `SubPath` when they must stay beneath the supplied
+location. The field retains a relative path without applying a configuration
+root or accessing the filesystem:
+
+```{testcode}
+from tollan.config import FrozenBaseModel
+from tollan.config.types import SubPath
+from tollan.utils.fileloc import fileloc
+
+class Item(FrozenBaseModel):
+    path: SubPath
+
+item = Item(path="step%3Afit/result#1.txt")
+root = fileloc("archive:/data/run")
+source = root.joinpath(item.path)
+assert source.as_rsync_arg() == "archive:/data/run/step%3Afit/result#1.txt"
+assert source.url == "file://archive/data/run/step%253Afit/result%231.txt"
+
+mirror = fileloc("https://example.org/copied")
+assert mirror.joinpath(item.path).url == (
+    "https://example.org/copied/step%253Afit/result%231.txt"
+)
+assert item.model_dump(mode="json", round_trip=True) == {
+    "path": "step%3Afit/result#1.txt"
+}
+```
+
+`joinpath()` treats the base as a directory and returns a new `FileLoc` without
+opening a resource. It uses POSIX path semantics, so an absolute path part
+replaces the base path; a `SubPath` field excludes that case and parent traversal.
+The base's query and fragment are retained.
+
+## Open files and prepare directories
 
 | I/O task | Helper | Effect |
 | --- | --- | --- |

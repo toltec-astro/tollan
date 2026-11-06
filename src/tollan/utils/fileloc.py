@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import pathlib
+import posixpath
 import re
 import urllib.parse
 from functools import cached_property
-from pathlib import Path
+from pathlib import Path, PurePath, PurePosixPath
 from typing import TYPE_CHECKING, Annotated, Any, overload
 
 from pydantic import (
@@ -511,6 +512,43 @@ class FileLoc(RootModel[FileLocData]):
             Original path before resolution, or None if not set
         """
         return self.root.path
+
+    def joinpath(self, *path_segments: str | PurePath) -> FileLoc:
+        """Join literal path parts to this location.
+
+        Parameters
+        ----------
+        *path_segments : str or pathlib.PurePath
+            Path parts to join with POSIX path semantics. An absolute part
+            replaces the base path. Filename characters, including ``%``, ``#``
+            and ``?``, are treated literally, not as URI syntax. Use ``SubPath``
+            fields when item paths must be descendants of their location.
+
+        Returns
+        -------
+        FileLoc
+            New location with the joined path and the same scheme, authority,
+            query and fragment. Existing base-path escapes are retained. This
+            location is unchanged; no resource is opened or checked.
+
+        Examples
+        --------
+        >>> root = fileloc("archive:/data")
+        >>> source = root.joinpath("step%3Afit", "result#1.txt")
+        >>> source.url
+        'file://archive/data/step%253Afit/result%231.txt'
+        >>> source.as_rsync_arg()
+        'archive:/data/step%3Afit/result#1.txt'
+        """
+        url = self.root.url_resolved
+        path = posixpath.join(
+            url.path or "/",
+            *(
+                urllib.parse.quote(PurePosixPath(part).as_posix(), safe="/")
+                for part in path_segments
+            ),
+        )
+        return fileloc(_url_replace(url, path=path))
 
     def is_remote(self) -> bool:
         """Return True for remote file locations and HTTP/HTTPS resources.
