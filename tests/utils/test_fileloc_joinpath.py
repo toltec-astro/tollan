@@ -28,7 +28,8 @@ def test_join_subpath_retains_location_and_literal_filename(base):
     original = root.url
     result = root.joinpath(item.path)
     assert result.path == Path("/data/run/step%3Afit/café #1?.txt")
-    assert result.url == original + "/step%253Afit/caf%C3%A9%20%231%3F.txt"
+    encoded_name = "caf%C3%A9%20%231%3F.txt"  # codespell:ignore caf
+    assert result.url == original + "/step%253Afit/" + encoded_name
     assert result.scheme == root.scheme
     assert result.host == root.host
     assert result.is_local() == root.is_local()

@@ -104,11 +104,11 @@ def test_explicit_column_declarations_are_validated_at_construction(columns):
 
 def test_column_mapper_accepts_rule_lists_without_coercing_controls():
     rules = {"name_rules": [[".+", r"\g<0>"]], "type_rules": [ScalarColumnRule()]}
-    mapper = ModelColumnMapper(**rules)
+    mapper = ModelColumnMapper.model_validate(rules)
     assert isinstance(mapper.name_rules, tuple)
     assert isinstance(mapper.name_rules[0], tuple)
     with pytest.raises(ValidationError, match="valid boolean"):
-        ModelColumnMapper(**rules, include_computed="false")
+        ModelColumnMapper.model_validate({**rules, "include_computed": "false"})
 
 
 @pytest.mark.parametrize(

@@ -161,7 +161,9 @@ print(spec.profile.select_nodes(spec.request, ["cpu1", "cpu2", "cpu3"]))
 for workload in ("transform", "summarize"):
     try:
         policy.resolve(
-            ExecutionRequest(workload=workload, resources={"cpus": 32})
+            ExecutionRequest.model_validate(
+                {"workload": workload, "resources": {"cpus": 32}}
+            )
         )
     except ValueError:
         print("rejected:", workload)

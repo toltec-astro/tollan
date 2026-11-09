@@ -263,6 +263,7 @@ contributes an alias; duplicate aliases are removed in rule order. The first
 matching type rule determines each alias's representation.
 
 ```{testcode}
+import astropy.units as u
 from astropy.time import Time
 from pydantic import BaseModel
 from tollan.config.types import TimeQuantityField, UnixTimeField
@@ -279,12 +280,12 @@ mapper = ModelColumnMapper(
     name_rules=[(r".+", r"\g<0>")],
     type_rules=[
         TimeColumnRule(format="mjd"),
-        QuantityColumnRule(physical_type="time", unit="s"),
+        QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
         ScalarColumnRule(),
     ],
 )
 reading_columns = mapper(Reading)
-reading = Reading(channel=1, timestamp=Time(60000, format="mjd"), duration="2 s")
+reading = Reading(channel=1, timestamp=Time(60000, format="mjd"), duration=2 * u.s)
 readings = ModelTableAccessor.from_models([reading], columns=reading_columns)
 assert list(readings) == ["channel", "timestamp_mjd", "duration_s"]
 assert readings.timestamp_mjd.tolist() == [60000]
@@ -302,7 +303,7 @@ declarations again; keeping the mapper instance alone does not reuse that result
 Scalar rules include primitive scalar fields and enum values. Quantity rules
 include fields with the specified physical type and append the chosen unit to
 the column name. Time rules append the requested format and preserve each time
-value's scale. `SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg")` produces
+value's scale. `SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg)` produces
 angular columns plus a frame-name column; values must provide those attributes.
 Nested objects and arrays require explicit declarations.
 

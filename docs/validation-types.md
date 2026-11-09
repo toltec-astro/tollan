@@ -53,6 +53,26 @@ serialization_schema = Observation.model_json_schema(mode="serialization")
 assert validation_schema["required"] == ["path", "wavelength", "start", "target"]
 ```
 
+Pass raw input, such as parsed YAML or strings that a field type converts,
+through `model_validate()`, as above. Call the model constructor with values that
+already have the field types; type checkers then check the arguments. Both run
+the same validation:
+
+```{testcode}
+import astropy.units as u
+from astropy.coordinates import SkyCoord
+from astropy.time import Time
+
+typed = Observation(
+    path=Path("/data/observation.nc"),
+    wavelength=1.1 * u.mm,
+    start=Time("2026-01-01T00:00:00"),
+    target=SkyCoord(ra=10.6847083 * u.deg, dec=41.26875 * u.deg),
+)
+assert typed.path == observation.path
+assert typed.wavelength == observation.wavelength
+```
+
 ## Paths and file locations
 
 | Annotation | Result and checks |
@@ -93,14 +113,14 @@ from tollan.config.types import SubPath, SubPathOrRoot
 class StoreSettings(FrozenBaseModel):
     subpath: SubPath
 
-settings = StoreSettings(subpath="./instrument//raw/")
+settings = StoreSettings.model_validate({"subpath": "./instrument//raw/"})
 assert settings.subpath == PurePosixPath("instrument/raw")
 assert Path("/data") / settings.subpath == Path("/data/instrument/raw")
 
 class SearchSettings(FrozenBaseModel):
     subpaths: tuple[SubPathOrRoot, ...]
 
-search = SearchSettings(subpaths=(".", "tel"))
+search = SearchSettings.model_validate({"subpaths": (".", "tel")})
 assert search.subpaths == (PurePosixPath("."), PurePosixPath("tel"))
 ```
 
@@ -131,7 +151,7 @@ from tollan.config.types import StringSelector
 class SelectionSettings(FrozenBaseModel):
     names: StringSelector
 
-selection = SelectionSettings(names=["raw", "reduced"])
+selection = SelectionSettings.model_validate({"names": ["raw", "reduced"]})
 assert selection.names.matches("raw")
 assert not selection.names.matches("raw/scan")
 assert selection.names.select(iter(["reduced", "other", "raw", "raw"])) == [
@@ -146,7 +166,8 @@ assert selection.names.select(["raw", "raw/scan", "draw"]) == ["raw", "raw/scan"
 assert SelectionSettings.model_validate_json(selection.model_dump_json()) == selection
 assert selection.model_dump(mode="json") == {"names": {"pattern": "raw(/.*)?"}}
 
-pattern = SelectionSettings(names={"excludes": ["raw"]}).names.as_regex()
+excluding = SelectionSettings.model_validate({"names": {"excludes": ["raw"]}})
+pattern = excluding.names.as_regex()
 assert pattern.fullmatch("raw") is None
 assert pattern.fullmatch("raw/scan") is not None
 ```

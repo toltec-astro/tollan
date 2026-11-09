@@ -20,16 +20,20 @@ from tollan.accessor.pandas.model_table import ModelTableAccessor
     ],
 )
 def test_mixed_enum_bits(expression, positions):
-    first = Flag("First", {"a": 1, "b": 2})
-    second = Flag("Second", {"a": 1})
+    class First(Flag):
+        a = 1
+        b = 2
+
+    class Second(Flag):
+        a = 1
 
     class Queries(ModelTableAccessor):
-        _query_namespace = ModelTableAccessor._query_namespace | {"First": first}
+        _query_namespace = ModelTableAccessor._query_namespace | {"First": First}
 
     table = pd.DataFrame(
         {
             "data_kind": pd.Series(
-                [first.a, second.a, first.a | first.b, None, first(0)], dtype=object
+                [First.a, Second.a, First.a | First.b, None, First(0)], dtype=object
             ),
         }
     )
@@ -43,12 +47,16 @@ def test_mixed_enum_bits(expression, positions):
 
 @pytest.mark.parametrize("predicate", ["bits_any_set", "bits_all_set"])
 def test_intflag_equal_values_keep_their_namespaces(predicate):
-    first = IntFlag("First", {"a": 1})
-    second = IntFlag("Second", {"a": 1})
-    assert first.a == second.a
+    class First(IntFlag):
+        a = 1
+
+    class Second(IntFlag):
+        a = 1
+
+    assert First.a == Second.a
 
     class Queries(ModelTableAccessor):
-        _query_namespace = ModelTableAccessor._query_namespace | {"First": first}
+        _query_namespace = ModelTableAccessor._query_namespace | {"First": First}
 
-    table = pd.DataFrame({"value": pd.Series([first.a, second.a, None], dtype=object)})
+    table = pd.DataFrame({"value": pd.Series([First.a, Second.a, None], dtype=object)})
     assert Queries(table).query(f"{predicate}(value, First.a)").index.tolist() == [0]

@@ -27,8 +27,12 @@ def test_integer_predicates_preserve_nullable_masks(
         [0, 1, 2, 3, None], dtype="Int64", index=[7, 7, 1, 2, 3], name="flags"
     )
     if use_enum_mask:
-        flags = Flag("Flags", {"a": 1, "b": 2})
-        mask = flags(mask)
+
+        class Flags(Flag):
+            a = 1
+            b = 2
+
+        mask = Flags(mask)
     pd.testing.assert_series_equal(
         predicate(values, mask),
         pd.Series(expected, index=values.index, name="flags", dtype="boolean"),
@@ -68,11 +72,14 @@ def _above(values, threshold):
 
 @pytest.mark.parametrize("entrypoint", ["standalone", "accessor"])
 def test_query_custom_namespace_is_not_mutated_and_columns_win(entrypoint):
-    flags = Flag("Flags", {"a": 1, "b": 2})
-    namespace = MappingProxyType({"Flags": flags, "limit": 30, "above": _above})
+    class Flags(Flag):
+        a = 1
+        b = 2
+
+    namespace = MappingProxyType({"Flags": Flags, "limit": 30, "above": _above})
     table = pd.DataFrame(
         {
-            "flags": pd.Series([flags.a, flags.b, flags(3), None], dtype=object),
+            "flags": pd.Series([Flags.a, Flags.b, Flags(3), None], dtype=object),
             "exposure": [60, 30, 20, 0],
             "tags": [["science"], ["engineering"], [], None],
         }
@@ -99,7 +106,7 @@ def test_query_custom_namespace_is_not_mutated_and_columns_win(entrypoint):
             table.iloc[[0]],
         )
     pd.testing.assert_frame_equal(table, before)
-    assert dict(namespace) == {"Flags": flags, "limit": 30, "above": _above}
+    assert dict(namespace) == {"Flags": Flags, "limit": 30, "above": _above}
     table["limit"] = [100, 0, 0, 0]
     table["contains"] = [0, 1, 1, 0]
     pd.testing.assert_frame_equal(

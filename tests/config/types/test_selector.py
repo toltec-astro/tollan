@@ -185,25 +185,25 @@ def test_field_works_with_ordinary_models_and_type_adapter():
 
     adapter = TypeAdapter(StringSelector)
     selector = adapter.validate_python(["raw"])
-    assert Model(names=["raw"]).names == selector
+    assert Model.model_validate({"names": ["raw"]}).names == selector
     assert adapter.validate_json('["raw"]') == selector
     assert adapter.validate_json(adapter.dump_json(selector)) == selector
     assert StringSelector.model_validate(selector) is selector
     with pytest.raises(ValidationError):
-        Model(names=[1])
+        Model.model_validate({"names": [1]})
 
 
 @pytest.mark.spec("runtime-context-and-component-settings")
 def test_selector_and_declared_defaults_follow_frozen_config_contract():
     class Defaults(FrozenBaseModel):
-        names: StringSelector = Field(default={"excludes": []})
+        names: StringSelector = Field(default={"excludes": []})  # ty: ignore[invalid-assignment]
 
     assert Defaults().names.matches("anything")
-    selector = Settings(names=["raw"]).names
+    selector = Settings.model_validate({"names": ["raw"]}).names
     with pytest.raises(ValidationError, match="frozen"):
-        selector.root = {"excludes": []}
+        selector.root = {"excludes": []}  # ty: ignore[invalid-assignment]
     with pytest.raises(ValidationError, match="frozen"):
-        selector.root.includes = []
+        selector.root.includes = []  # ty: ignore[invalid-assignment]
 
 
 def test_json_schema_distinguishes_input_shorthand_from_normalized_output():

@@ -206,11 +206,11 @@ def test_contains_declaration_is_validated_and_frozen():
     assert constraint == Contains.model_validate({"value": "science"})
     assert hash(constraint) == hash(Contains(value="science"))
     with pytest.raises(ValidationError, match="frozen_instance"):
-        constraint.value = "engineering"
+        constraint.value = "engineering"  # ty: ignore[invalid-assignment]
     with pytest.raises(ValidationError, match="value"):
         Contains(value=[])
     with pytest.raises(ValidationError, match="extra_forbidden"):
-        Contains(value="science", extra=True)
+        Contains.model_validate({"value": "science", "extra": True})
     mapper = RecordRuleMapper[int].model_validate(
         {"rules": [({"tags": {"value": "science"}}, 1)], "default": 0}
     )

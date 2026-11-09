@@ -219,9 +219,9 @@ def test_name_rule_changes_base_names_before_conversion_not_attribute_paths():
 
     mapper = ModelColumnMapper(
         type_rules=[
-            QuantityColumnRule(physical_type="time", unit="s"),
+            QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
         model_path="metadata",
@@ -264,7 +264,7 @@ def test_name_rule_precedes_time_and_coordinate_suffixes():
         name_rules=[(r".+", r"header_\g<0>")],
         type_rules=[
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
         ],
     )
     columns = mapper(Sample)
@@ -457,10 +457,10 @@ def test_scientific_columns_use_explicit_units_and_preserve_metadata():
     columns = ModelColumnMapper(
         name_rules=[(r".+", r"\g<0>")],
         type_rules=[
-            QuantityColumnRule(physical_type="time", unit="s"),
-            QuantityColumnRule(physical_type="frequency", unit="Hz"),
+            QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
+            QuantityColumnRule(physical_type=u.physical.frequency, unit=u.Hz),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
     )(Metadata, default=None)
@@ -495,9 +495,9 @@ def test_quantity_rule_rejects_incompatible_values_and_arrays():
     column = ModelColumnMapper(
         name_rules=[(r".+", r"\g<0>")],
         type_rules=[
-            QuantityColumnRule(physical_type="time", unit="s"),
+            QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
     )(model)
@@ -526,9 +526,9 @@ def test_quantity_physical_types_survive_aliases_and_field_metadata(annotation):
     columns = ModelColumnMapper(
         name_rules=[(r".+", r"\g<0>")],
         type_rules=[
-            QuantityColumnRule(physical_type="time", unit=u.s),
+            QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
     )(model)
@@ -549,9 +549,9 @@ def test_quantity_without_matching_column_declaration_is_not_projected(annotatio
         ModelColumnMapper(
             name_rules=[(r".+", r"\g<0>")],
             type_rules=[
-                QuantityColumnRule(physical_type="time", unit="s"),
+                QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
                 TimeColumnRule(format="mjd"),
-                SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+                SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
                 ScalarColumnRule(),
             ],
         )(model)
@@ -574,10 +574,10 @@ def test_quantity_rules_and_field_selection_compose():
     mapper = ModelColumnMapper(
         name_rules=[(r".+", r"\g<0>")],
         type_rules=[
-            QuantityColumnRule(physical_type="time", unit="s"),
-            QuantityColumnRule(physical_type="frequency", unit="Hz"),
+            QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
+            QuantityColumnRule(physical_type=u.physical.frequency, unit=u.Hz),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
     )
@@ -590,9 +590,9 @@ def test_quantity_rules_and_field_selection_compose():
         mapper(
             Sample,
             type_rules=[
-                QuantityColumnRule(physical_type="frequency", unit="kHz"),
+                QuantityColumnRule(physical_type=u.physical.frequency, unit=u.kHz),
                 TimeColumnRule(format="mjd"),
-                SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+                SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
                 ScalarColumnRule(),
             ],
         )
@@ -606,7 +606,7 @@ def test_quantity_rules_and_field_selection_compose():
                 Sample,
                 type_rules=[
                     TimeColumnRule(format="mjd"),
-                    SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+                    SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
                     ScalarColumnRule(),
                 ],
                 name_rules=[(r"duration", "duration")],
@@ -694,7 +694,7 @@ def test_coordinate_unit_is_configurable_without_changing_frame_or_units():
         type_rules=[
             SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.rad),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
     )(Position)
@@ -711,11 +711,11 @@ def test_mapper_overrides_are_isolated_from_caller_settings_and_previous_columns
     class Duration(BaseModel):
         value: TimeQuantityField
 
-    rule = QuantityColumnRule(physical_type="time", unit="s")
+    rule = QuantityColumnRule(physical_type=u.physical.time, unit=u.s)
     rules = [rule]
     mapper = ModelColumnMapper(name_rules=[(r".+", r"\g<0>")], type_rules=rules)
     columns_seconds = mapper(Duration)
-    rules[0] = QuantityColumnRule(physical_type="time", unit="min")
+    rules[0] = QuantityColumnRule(physical_type=u.physical.time, unit=u.min)
     assert mapper.type_rules == (rule,)
     assert rule.unit == u.s
     columns_minutes = mapper(Duration, type_rules=rules)
@@ -740,9 +740,9 @@ def test_name_rules_select_computed_fields_and_preserve_annotation_metadata():
         name_rules=[(r".+", r"\g<0>")],
         include_computed=True,
         type_rules=[
-            QuantityColumnRule(physical_type="time", unit="s"),
+            QuantityColumnRule(physical_type=u.physical.time, unit=u.s),
             TimeColumnRule(format="mjd"),
-            SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg"),
+            SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg),
             ScalarColumnRule(),
         ],
     )
@@ -756,7 +756,7 @@ def test_name_rules_select_computed_fields_and_preserve_annotation_metadata():
 def test_skycoord_columns_do_not_silently_replace_an_unsupported_frame_with_nulls():
     columns = ModelColumnMapper(
         name_rules=[(r".+", r"\g<0>")],
-        type_rules=[SkyCoordColumnRule(attrs=["ra", "dec"], unit="deg")],
+        type_rules=[SkyCoordColumnRule(attrs=["ra", "dec"], unit=u.deg)],
     )(create_model("Position", target=(SkyCoordField, ...)), default=None)
     galactic = SkyCoord(l=10 * u.deg, b=20 * u.deg, frame="galactic")
     with pytest.raises(AttributeError, match="ra"):

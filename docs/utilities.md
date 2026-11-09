@@ -53,7 +53,7 @@ from tollan.utils.fileloc import fileloc
 class Item(FrozenBaseModel):
     path: SubPath
 
-item = Item(path="step%3Afit/result#1.txt")
+item = Item.model_validate({"path": "step%3Afit/result#1.txt"})
 root = fileloc("archive:/data/run")
 source = root.joinpath(item.path)
 assert source.as_rsync_arg() == "archive:/data/run/step%3Afit/result#1.txt"
