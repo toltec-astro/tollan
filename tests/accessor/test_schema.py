@@ -214,6 +214,7 @@ class TestMissingSentinel:
         assert repr(MISSING) == "MISSING"
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("path", ["", "/", ".", "..", "/absolute", "a/../b"])
 def test_subpath_mapping_rejects_non_descendants(path):
     from pydantic import TypeAdapter
@@ -227,6 +228,7 @@ def test_subpath_mapping_rejects_non_descendants(path):
         SubpathMapping.path(("valid", path))
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("path", ["a/b", "a//b", "a/./b", "./a/b/"])
 def test_subpath_mapping_and_field_share_normalization(path):
     from pydantic import TypeAdapter
@@ -246,6 +248,7 @@ def test_subpath_mapping_rejects_duplicate_normalized_candidates():
         SubpathMapping.path(("a/b", "a/./b"))
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_subpath_mapping_nested_validation_and_json_roundtrip():
     from pydantic import TypeAdapter, ValidationError
 

@@ -24,6 +24,7 @@ def test_location_factories(location):
     assert hash(factory("first")) == hash(NameMapping([("first", location)]))
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_same_name_in_different_locations_is_distinct():
     mapping = NameMapping([("count", FieldLocation.dim), ("count", FieldLocation.attr)])
     assert mapping.names == ("count", "count")

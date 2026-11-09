@@ -82,6 +82,7 @@ def test_limits_require_positive_values_of_the_right_kind(resources_max, field):
     assert {e["loc"][-1] for e in error.value.errors()} == {field}
 
 
+@pytest.mark.spec("placement-policy")
 def test_slurm_profile_defaults_must_fit_its_maximum():
     resources = {"cpus": 32, "memory": "8 GiB", "time_limit": "1 h"}
     with pytest.raises(ValidationError, match=r"exceeds resources_max: \['cpus'\]"):
@@ -123,6 +124,7 @@ def test_local_records_path_resolves_against_the_root_path(tmp_path):
     assert profile.job_records_path == (tmp_path / "jobs").resolve()
 
 
+@pytest.mark.spec("placement-policy")
 def test_policy_composes_through_configuration_sources():
     policy = make_policy({"profiles": [LAPTOP]})
     assert isinstance(policy.resolve(request("transform")).profile, LocalProfile)
@@ -131,6 +133,7 @@ def test_policy_composes_through_configuration_sources():
 # Workload selection
 
 
+@pytest.mark.spec("placement-policy")
 def test_first_profile_selecting_the_workload_runs_it():
     policy = make_policy()
     assert policy.resolve(request("render")).profile.name == "cluster"
@@ -139,6 +142,7 @@ def test_first_profile_selecting_the_workload_runs_it():
     assert reordered.resolve(request("render")).profile.name == "laptop"
 
 
+@pytest.mark.spec("placement-policy")
 def test_workloads_no_profile_selects_are_rejected():
     policy = make_policy({"profiles": [CLUSTER]})
     with pytest.raises(ValueError, match="No execution profile selects workload"):
@@ -148,6 +152,7 @@ def test_workloads_no_profile_selects_are_rejected():
 # Slurm resolution
 
 
+@pytest.mark.spec("placement-policy")
 def test_slurm_resolution_applies_profile_defaults():
     spec = make_policy().resolve(request("render"))
     assert spec.request == request("render")
@@ -159,6 +164,7 @@ def test_slurm_resolution_applies_profile_defaults():
     assert spec.profile.select_nodes(spec.request, PARTITION_NODES) == ["cpu1", "cpu2"]
 
 
+@pytest.mark.spec("placement-policy")
 def test_requested_resources_replace_defaults_within_the_maximum():
     spec = make_policy().resolve(
         request("transform", cpus=8, memory="32 GiB", time_limit="2 d")
@@ -170,6 +176,7 @@ def test_requested_resources_replace_defaults_within_the_maximum():
     assert resources.threads == 2
 
 
+@pytest.mark.spec("placement-policy")
 @pytest.mark.parametrize(
     ("requested", "match"),
     [
@@ -184,6 +191,7 @@ def test_requests_never_exceed_the_profile(requested, match):
         make_policy().resolve(request("transform", **requested))
 
 
+@pytest.mark.spec("placement-policy")
 @pytest.mark.parametrize(
     ("requested", "selected"),
     [
@@ -199,6 +207,7 @@ def test_requested_nodes_only_narrow_the_profile_selection(requested, selected):
     assert spec.profile.select_nodes(spec.request, PARTITION_NODES) == selected
 
 
+@pytest.mark.spec("placement-policy")
 def test_thread_limits_take_precedence_over_the_profile_environment():
     spec = make_policy().resolve(request("transform", threads=3))
     assert spec.as_environ()["SITE"] == "hpc"
@@ -206,6 +215,7 @@ def test_thread_limits_take_precedence_over_the_profile_environment():
         assert spec.as_environ()[name] == "3"
 
 
+@pytest.mark.spec("placement-policy")
 def test_unset_threads_leave_threading_to_the_external_process():
     resources = RESOURCES | {"threads": None}
     policy = make_policy({"profiles": [CLUSTER | {"resources_default": resources}]})
@@ -217,6 +227,7 @@ def test_unset_threads_leave_threading_to_the_external_process():
 # Local resolution
 
 
+@pytest.mark.spec("placement-policy")
 def test_local_jobs_set_threads_only_when_given():
     policy = make_policy()
     assert policy.resolve(request("summarize")).as_environ() == {}
@@ -225,6 +236,7 @@ def test_local_jobs_set_threads_only_when_given():
     assert spec.as_environ()["OMP_NUM_THREADS"] == "4"
 
 
+@pytest.mark.spec("placement-policy")
 @pytest.mark.parametrize(
     "requested", [{"cpus": 2}, {"memory": "1 GiB"}, {"nodes": ["cpu1"]}]
 )
@@ -233,6 +245,7 @@ def test_local_profiles_accept_only_thread_requests(requested):
         make_policy().resolve(request("summarize", **requested))
 
 
+@pytest.mark.spec("placement-policy")
 def test_resolution_contacts_no_scheduler(monkeypatch):
     def fail(*args, **kwargs):
         raise AssertionError
@@ -255,6 +268,7 @@ def test_job_specs_round_trip_through_yaml(workload, kind):
     assert restored == spec
 
 
+@pytest.mark.spec("placement-policy")
 def test_a_kept_job_spec_ignores_later_policy_changes():
     kept = make_policy().resolve(request("transform")).model_dump_yaml(mode="json")
     narrowed = make_policy(
@@ -280,6 +294,7 @@ def test_a_kept_job_spec_ignores_later_policy_changes():
     assert slurm_resources(JobSpec.model_validate_yaml(kept)).cpus == 4
 
 
+@pytest.mark.spec("placement-policy")
 def test_applications_embed_the_request_in_their_configuration():
     class RenderConfig(FrozenBaseModel):
         dpi: int = 150

@@ -11,6 +11,7 @@ from typer.testing import CliRunner
 from tollan.utils.typer import MultiOption, TollanTyper, create_cli
 
 
+@pytest.mark.spec("command-line-applications")
 @pytest.mark.parametrize("factory", [TollanTyper, create_cli])
 def test_python_names_and_explicit_aliases(factory):
     app = factory()
@@ -77,6 +78,7 @@ def test_shared_callback_does_not_change_plain_typer():
     assert typer.main.get_command_name("inspect_config") == "inspect-config"
 
 
+@pytest.mark.spec("command-line-applications")
 @pytest.mark.parametrize("embedded", [False, True])
 @pytest.mark.parametrize(
     ("args", "expected"),
@@ -212,6 +214,7 @@ def test_embedded_group_options_and_log_level_validation():
     assert "--help_all" not in root_help.stdout
 
 
+@pytest.mark.spec("command-line-applications")
 @pytest.mark.parametrize("rich_markup_mode", [None, "rich"])
 @pytest.mark.parametrize("depth", [0, 1, 2])
 def test_help_all_only_immediate_children(rich_markup_mode, depth):
@@ -352,6 +355,7 @@ class TestCreateCli:
 
         assert isinstance(app, typer.Typer)
 
+    @pytest.mark.spec("command-line-applications")
     def test_create_app_with_version(self):
         """Test creating app with custom version."""
         app = create_cli(version="1.2.3")
@@ -465,6 +469,7 @@ class TestCreateCli:
         assert "cmd1" in result.stdout
         assert "cmd2" in result.stdout
 
+    @pytest.mark.spec("command-line-applications")
     def test_help_all_option(self):
         """Test --help_all option shows detailed help for all commands."""
         app = create_cli()
@@ -489,6 +494,7 @@ class TestCreateCli:
         assert "Command: app cmd1" in result.stdout
         assert "First command with arg" in result.stdout
 
+    @pytest.mark.spec("command-line-applications")
     def test_log_level_option(self):
         """Test --log_level option is available."""
         app = create_cli()

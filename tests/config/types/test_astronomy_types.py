@@ -28,6 +28,7 @@ from tollan.config.types.quantity import get_physical_type_from_quantity_type
 class TestFrozenBaseModel:
     """Test FrozenBaseModel functionality."""
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_frozen_model(self):
         """Test that model is frozen after creation."""
 
@@ -41,6 +42,7 @@ class TestFrozenBaseModel:
         with pytest.raises(ValidationError):
             model.value = 100  # ty: ignore[invalid-assignment]
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_yaml_roundtrip(self):
         """Test YAML serialization and deserialization."""
 
@@ -108,6 +110,7 @@ class TestTimeFields:
         assert isinstance(config.start_time, Time)
         assert config.duration == 3600.0
 
+    @pytest.mark.spec("scientific-value-types")
     @pytest.mark.parametrize(
         ("field_type", "raw", "serialized", "output_format"),
         [
@@ -176,6 +179,7 @@ class TestTimeFields:
         values = adapter.validate_python([0.0])
         assert isinstance(values[0], Time)
 
+    @pytest.mark.spec("scientific-value-types")
     def test_string_time_roundtrip_normalizes_scale_to_utc(self):
         """String serialization preserves the instant for non-UTC inputs."""
         adapter = TypeAdapter(IsoTimeField)
@@ -183,6 +187,7 @@ class TestTimeFields:
         loaded = adapter.validate_json(adapter.dump_json(value))
         assert (loaded - value).to_value(u.s) == pytest.approx(0, abs=1e-9)
 
+    @pytest.mark.spec("scientific-value-types")
     @pytest.mark.parametrize("field_type", [TimeField, IsoTimeField])
     @pytest.mark.parametrize("scale", ["utc", "tai"])
     @pytest.mark.parametrize("precision", [0, 3, 9])
@@ -281,6 +286,7 @@ class TestQuantityFields:
         assert config.focal_length.value == 10.0
         assert isinstance(config.field_of_view, u.Quantity)
 
+    @pytest.mark.spec("scientific-value-types")
     def test_quantity_json_roundtrip_and_schema(self):
         """Quantity metadata owns parsing, serialization, and both schemas."""
         adapter = TypeAdapter(LengthQuantityField)
@@ -388,6 +394,7 @@ class TestSkyCoordField:
         assert model.target.ra.deg == pytest.approx(10.6847083, rel=0, abs=1e-10)
         assert model.target.dec.deg == pytest.approx(41.26875, rel=0, abs=1e-10)
 
+    @pytest.mark.spec("scientific-value-types")
     def test_skycoord_named_source_roundtrip(self, monkeypatch):
         """Source names resolve and remain names through JSON serialization."""
 
@@ -445,6 +452,7 @@ class TestSkyCoordField:
         assert isinstance(config.target, SkyCoord)
         assert config.duration == 1800.0
 
+    @pytest.mark.spec("scientific-value-types")
     def test_skycoord_json_roundtrip_and_schema(self):
         """Coordinates serialize canonically without mutating Astropy objects."""
         adapter = TypeAdapter(SkyCoordField)
@@ -466,6 +474,7 @@ class TestSkyCoordField:
         assert first is not second
         assert first.separation(second).to_value(u.arcsec) == pytest.approx(0)
 
+    @pytest.mark.spec("scientific-value-types")
     @pytest.mark.parametrize(
         ("ra", "dec"),
         [

@@ -17,6 +17,7 @@ class Item(BaseModel):
     path: SubPath
 
 
+@pytest.mark.spec("file-locations-and-item-paths")
 @pytest.mark.parametrize(
     "base",
     ["file:///data/run", "archive:/data/run", "https://example.org/data/run"],
@@ -34,6 +35,7 @@ def test_join_subpath_retains_location_and_literal_filename(base):
     assert root.url == original
 
 
+@pytest.mark.spec("file-locations-and-item-paths")
 def test_join_preserves_encoded_base_and_other_url_components():
     root = fileloc("https://user:pass@example.org:8443//data%2Fone?q=a%26b#c%23d")
     result = root.joinpath("step:fit", PurePosixPath("result%23.nc"))
@@ -43,6 +45,7 @@ def test_join_preserves_encoded_base_and_other_url_components():
     )
 
 
+@pytest.mark.spec("file-locations-and-item-paths")
 def test_join_uses_path_semantics_without_changing_the_authority():
     root = fileloc("archive:/data/run/")
     assert root.joinpath("plots", "result.png").url == (
@@ -53,6 +56,7 @@ def test_join_uses_path_semantics_without_changing_the_authority():
     )
 
 
+@pytest.mark.spec("file-locations-and-item-paths")
 def test_subpath_document_relocates_with_its_payload(tmp_path):
     original = tmp_path / "original"
     payload = original / "step%3Afit/result#1.txt"

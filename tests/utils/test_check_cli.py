@@ -7,6 +7,7 @@ from tollan.cli import app
 from tollan.config import RuntimeContext
 
 
+@pytest.mark.spec("configuration-integration")
 @pytest.mark.parametrize("repeated", [False, True])
 def test_check_config_paths_and_env_paths(tmp_path, monkeypatch, repeated):
     config_dir = tmp_path / "config.d"
@@ -69,6 +70,7 @@ def test_check_without_paths_passes_none(monkeypatch):
     ]
 
 
+@pytest.mark.spec("configuration-integration")
 def test_check_mixed_config_paths(tmp_path, monkeypatch):
     yaml = tmp_path / "defaults.yaml"
     yaml.write_text("workers: 4\n_env: {HOST: localhost}\n")

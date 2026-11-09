@@ -268,20 +268,24 @@ class TestContextKey:
         step = AddStep()
         assert step.context_key == AddStep.context_key
 
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_different_steps_have_different_keys(self):
         assert AddStep.context_key != MultiplyStep.context_key
 
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_alias(self):
         step = AddStep(alias="pass2")
         assert step.context_key != AddStep.context_key
         assert "AddStep" in step.context_key
         assert "pass2" in step.context_key
 
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_alias_does_not_change_original(self):
         key_before = AddStep.context_key
         AddStep(alias="x")
         assert AddStep.context_key == key_before
 
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_alias_does_not_overwrite_another_producers_primary_context(self):
         class Producer(AddStep):
             pass
@@ -307,11 +311,13 @@ class TestContextKey:
 
 
 class TestStepConstruction:
+    @pytest.mark.spec("steps-and-configuration")
     @pytest.mark.parametrize("kwargs", [{"value": "3.0"}, {"enabled": "false"}])
     def test_config_rejects_coercion(self, kwargs):
         with pytest.raises(ValidationError):
             AddStep(**kwargs)
 
+    @pytest.mark.spec("steps-and-configuration")
     @pytest.mark.parametrize("use_factory", [False, True])
     def test_config_validates_declared_defaults(self, use_factory):
         class InvalidConfig(StepConfig):
@@ -324,6 +330,7 @@ class TestStepConstruction:
         with pytest.raises(ValidationError, match="greater than or equal to 0"):
             InvalidConfig()
 
+    @pytest.mark.spec("steps-and-configuration")
     def test_config_uses_frozen_yaml_model(self):
         config = AddStep(value=3.0).config
         assert isinstance(config, FrozenBaseModel)
@@ -401,6 +408,7 @@ class TestStepConstruction:
 
 
 class TestStepExecution:
+    @pytest.mark.spec("invocation-contexts")
     @pytest.mark.parametrize("make_data", [make_dataset, make_datatree])
     def test_run_stores_results_and_configuration(self, make_data):
         dt = make_data()
@@ -414,6 +422,7 @@ class TestStepExecution:
         assert ctx.data.result == pytest.approx(5.0)
         assert ctx.config is step.config
 
+    @pytest.mark.spec("steps-and-configuration")
     def test_return_context_flag(self):
         dt = make_datatree()
         result_data, ctx = AddStep(value=2.0)(dt, return_context=True)
@@ -428,6 +437,7 @@ class TestStepExecution:
         assert dt.attrs["total"] == 11.0
         assert AddStep.get_context(dt).completed
 
+    @pytest.mark.spec("invocation-contexts")
     def test_failing_step_not_completed(self):
         dt = make_datatree()
         FailingStep()(dt)
@@ -435,6 +445,7 @@ class TestStepExecution:
         assert ctx.completed is False
         assert ctx.failures == [StepFailure(message="Operation failed.")]
 
+    @pytest.mark.spec("invocation-contexts", "context-identity-and-serialization")
     def test_structured_failures_and_fresh_context_on_repeat(self):
         dt = make_datatree()
         step = CorrectStep()
@@ -474,6 +485,7 @@ class TestStepExecution:
         assert not failed.completed
         assert len(failed.failures) == 2
 
+    @pytest.mark.spec("invocation-contexts")
     @pytest.mark.parametrize("n_failures", [0, 2])
     def test_completion_is_set_after_run_from_recorded_failures(
         self, monkeypatch, n_failures
@@ -494,6 +506,7 @@ class TestStepExecution:
         assert context.completed is (n_failures == 0)
         assert len(context.failures) == n_failures
 
+    @pytest.mark.spec("invocation-contexts")
     @pytest.mark.parametrize("exception", [KeyboardInterrupt(), SystemExit(2)])
     def test_process_control_propagates_without_a_failure_record(
         self, monkeypatch, exception
@@ -511,6 +524,7 @@ class TestStepExecution:
         assert not context.completed
         assert context.failures == []
 
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_second_call_replaces_context(self):
         dt = make_datatree()
         AddStep(value=1.0)(dt)
@@ -552,6 +566,7 @@ class TestCrossStepContextAccess:
 
 
 class TestAlias:
+    @pytest.mark.spec("context-identity-and-serialization")
     @pytest.mark.parametrize("step_cls", [AddStep, AddChild, AddSibling])
     @pytest.mark.parametrize("alias", [None, "repeat"])
     def test_shared_context_keeps_producer_and_pickles(self, step_cls, alias):
@@ -567,6 +582,7 @@ class TestAlias:
         assert restored.make_step().context_key == step.context_key
         assert restored.model_dump() == context.model_dump()
 
+    @pytest.mark.spec("context-identity-and-serialization")
     @pytest.mark.parametrize("decoded", [False, True])
     def test_contexts_restore_with_their_producer_and_alias(self, decoded):
         data = make_dataset()
@@ -595,6 +611,7 @@ class TestAlias:
             context.completed = False
             assert not get_pipeline_contexts(data)[step].completed
 
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_alias_runs_independently_and_lookup_is_explicit(self):
         dt = make_datatree()
         primary = AddStep(value=1)
@@ -616,6 +633,7 @@ class TestAlias:
 
 
 class TestContextRestoration:
+    @pytest.mark.spec("context-identity-and-serialization")
     def test_json_context_in_netcdf_attribute(self, tmp_path):
         source = make_dataset()
         step = AddStep(value=3, alias="export")
@@ -675,6 +693,9 @@ class TestStepFailure:
 
 
 class TestSequentialPipeline:
+    @pytest.mark.spec(
+        "sequential-execution-and-failure-handling", "steps-and-configuration"
+    )
     def test_runs_steps_in_order(self):
         dt = make_datatree()
         dt.attrs["total"] = 10.0
@@ -685,6 +706,7 @@ class TestSequentialPipeline:
         assert result is dt
         assert dt.attrs["total"] == pytest.approx(23.0)
 
+    @pytest.mark.spec("sequential-execution-and-failure-handling")
     def test_incomplete_operation_does_not_stop_later_operations(self):
         dt = make_datatree()
         dt.attrs["total"] = 10.0
@@ -698,6 +720,7 @@ class TestSequentialPipeline:
         assert not FailingStep.get_context(dt).completed
         assert MultiplyStep.get_context(dt).completed
 
+    @pytest.mark.spec("sequential-execution-and-failure-handling")
     @pytest.mark.parametrize(
         ("correction", "enabled", "required", "selected"),
         [
@@ -744,6 +767,9 @@ class TestSequentialPipeline:
         assert AddStep.get_context(dt).completed
         assert dt.attrs["total"] == 11.0
 
+    @pytest.mark.spec(
+        "sequential-execution-and-failure-handling", "invocation-contexts"
+    )
     def test_exception_stops_with_live_incomplete_context_and_partial_data(self):
         dt = make_datatree()
         pipeline = SequentialPipeline(steps=[RaisingStep(), AddStep()])
@@ -770,6 +796,7 @@ class TestSequentialPipeline:
         assert dt.attrs["partial"]
         assert not AddStep.has_context(dt)
 
+    @pytest.mark.spec("sequential-execution-and-failure-handling")
     @pytest.mark.parametrize("already_run", [False, True])
     def test_skips_disabled_step_without_clearing_prior_context(self, already_run):
         dt = make_datatree()

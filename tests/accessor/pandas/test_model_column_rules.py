@@ -27,6 +27,7 @@ class Reading(BaseModel):
     label: str
 
 
+@pytest.mark.spec("model-tables")
 def test_explicit_columns_follow_aliases_and_copy_containers_without_reading_early():
     class Entry(BaseModel):
         tags: list[str] | None

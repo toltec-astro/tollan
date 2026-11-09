@@ -56,10 +56,26 @@ def wait_until(record, states, timeout=20):
     raise TimeoutError(msg)
 
 
+def wait_until_group_exits(pgid, timeout=20):
+    # macOS reports EPERM while an exiting group still holds unreaped members.
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            os.killpg(pgid, 0)
+        except ProcessLookupError:
+            return
+        except PermissionError:
+            pass
+        time.sleep(0.05)
+    msg = f"Process group {pgid} still exists"
+    raise TimeoutError(msg)
+
+
 def output(record):
     return (record.path / JobRecord.output_filename).read_text()
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_a_successful_job_completes_with_its_output_and_environment(spec):
     code = "import os; print(os.environ['GREETING'], os.environ['OMP_NUM_THREADS'])"
     record = JobRecord.create(spec, key="job-1", command=python(code))
@@ -70,6 +86,7 @@ def test_a_successful_job_completes_with_its_output_and_environment(spec):
     assert output(record) == "hello 2\n"
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_a_failing_job_reports_its_exit_status(spec):
     record = JobRecord.create(spec, key="job-1", command=python("raise SystemExit(3)"))
     record.submit(SCHEDULER)
@@ -77,6 +94,7 @@ def test_a_failing_job_reports_its_exit_status(spec):
     assert (status.state, status.exit_code) == (JobState.failed, 3)
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_a_canceled_job_stops_and_reports_cancellation(spec):
     record = JobRecord.create(
         spec, key="job-1", command=python("import time; time.sleep(60)")
@@ -87,10 +105,10 @@ def test_a_canceled_job_stops_and_reports_cancellation(spec):
     status = wait_until(record, {JobState.canceled, JobState.failed})
     assert status.state == JobState.canceled
     assert status.exit_code is None
-    with pytest.raises(ProcessLookupError):
-        os.killpg(int(receipt.native_id), 0)
+    wait_until_group_exits(int(receipt.native_id))
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_another_process_follows_a_job_it_did_not_submit(spec):
     record = JobRecord.create(
         spec, key="job-1", command=python("import time; time.sleep(0.5)")
@@ -120,6 +138,7 @@ def test_another_process_follows_a_job_it_did_not_submit(spec):
     assert [s.state for s in record.history][-1] == JobState.completed
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_reconciliation_finds_a_started_job_without_a_receipt(spec):
     record = JobRecord.create(spec, key="job-1", command=python("pass"))
     receipt = record.submit(SCHEDULER)
@@ -133,6 +152,7 @@ def test_reconciliation_finds_a_started_job_without_a_receipt(spec):
     assert found.native_id == receipt.native_id
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_reconciliation_without_a_started_job_allows_submission(spec):
     record = JobRecord.create(spec, key="job-1", command=python("pass"))
     intent = record.path / JobRecord.intent_filename

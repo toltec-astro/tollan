@@ -17,21 +17,19 @@ readme
 
 | Domain | What you can do | Guide |
 | --- | --- | --- |
-| Data access | Map names and expose typed views over supported containers. | {doc}`schema-mapping-accessors`, {doc}`data-adapters` |
-| Model tables | Project object attributes, enrich rows, and query a pandas table. | {doc}`model-tables` |
-| Configuration | Load settings, validate values, and configure components. | {doc}`configuration`, {doc}`validation-types` |
-| CLI | Add commands, help, logging, and configuration options. | {doc}`cli` |
+| Data access and representation | Map names, expose typed views over supported containers, and build and query model tables. | {doc}`schema-mapping-accessors`, {doc}`data-adapters`, {doc}`model-tables` |
+| Application configuration | Load settings, validate values, and configure components. | {doc}`configuration`, {doc}`validation-types` |
+| Command-line applications | Add commands, help, logging, and configuration options. | {doc}`cli` |
 | Analyses and results | Apply configured calculations and inspect their results and producing settings. | {doc}`analyses` |
-| Pipelines | Run configured steps and inspect execution results. | {doc}`pipelines` |
+| Steps and pipelines | Run configured steps and inspect execution results. | {doc}`pipelines` |
 | External execution | Declare where workloads run, then run, follow and cancel jobs locally, on Slurm, or from Dagster. | {doc}`execution` |
 | Artifacts and visualization | Select data for persistence or exchange; construct and display figures. | {doc}`artifacts` |
-| Databases | Manage connections and transactions; define shared column and actor conventions. | {doc}`databases` |
-| Utilities and plotting | Work with files, YAML, units, logging, and figures. | {doc}`utilities` |
-| Generic classes | Bind schemas, mappers, and models to subclasses. | {doc}`generic-runtime-bindings` |
+| Database resources | Manage connections and transactions; define shared column and actor conventions. | {doc}`databases` |
+| Supporting utilities | Work with files, YAML, units, logging, and figures; bind schemas, mappers, and models to subclasses. | {doc}`utilities`, {doc}`generic-runtime-bindings` |
 
 ```{toctree}
 :maxdepth: 1
-:caption: Data access
+:caption: Data access and representation
 
 schema-mapping-accessors
 data-adapters
@@ -44,16 +42,40 @@ model-tables
 
 configuration
 validation-types
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Command-line applications
+
 cli
 ```
 
 ```{toctree}
 :maxdepth: 1
-:caption: Analysis and execution
+:caption: Analyses and results
 
 analyses
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Steps and pipelines
+
 pipelines
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: External execution
+
 execution
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Artifacts and visualization
+
 artifacts
 ```
 
@@ -69,6 +91,13 @@ databases
 :caption: Supporting utilities
 
 utilities
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: For developers
+
+extending-mappers
 ```
 
 ```{toctree}

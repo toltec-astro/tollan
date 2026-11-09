@@ -105,6 +105,7 @@ def test_requested_nodes_narrow_the_excluded_complement(tmp_path, fake):
     assert "--exclude=cpu1,cpu3" in fake.calls[-1]
 
 
+@pytest.mark.spec("placement-policy")
 def test_an_empty_node_selection_is_not_submitted(tmp_path, fake):
     fake.reply("sinfo", stdout="cpu1\ncpu2\ncpu3\n")
     record = JobRecord.create(
@@ -116,6 +117,7 @@ def test_an_empty_node_selection_is_not_submitted(tmp_path, fake):
     assert record.is_unresolved
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_a_rejected_submission_leaves_the_record_unresolved(tmp_path, fake):
     fake.reply("sinfo", stdout="cpu1\n")
     fake.reply("sbatch", exit=1, stderr="sbatch: error: invalid partition\n")
@@ -129,6 +131,7 @@ def test_a_rejected_submission_leaves_the_record_unresolved(tmp_path, fake):
 # Status and cancellation
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 @pytest.mark.parametrize(
     ("native", "exit_code", "expected"),
     [
@@ -154,6 +157,7 @@ def test_accounting_states_map_to_job_states(
     assert status.native_state == native.split()[0]
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_queued_jobs_missing_from_accounting_are_read_from_the_queue(tmp_path, fake):
     fake.reply("sbatch", stdout="1234\n")
     record = make_record(tmp_path, nodes={"excludes": []})
@@ -182,6 +186,7 @@ def test_cluster_qualified_jobs_are_queried_and_canceled_on_their_cluster(
 # Reconciliation
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_reconciliation_matches_the_key_and_record_directory(tmp_path, fake):
     record = make_record(tmp_path, nodes={"excludes": []})
     since = datetime(2026, 1, 2, 12, tzinfo=UTC)
@@ -200,6 +205,7 @@ def test_reconciliation_matches_the_key_and_record_directory(tmp_path, fake):
 # Transports
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_missing_scheduler_commands_are_transport_failures(tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", str(tmp_path))
     with pytest.raises(TransportError, match="Could not run sinfo"):
@@ -221,6 +227,7 @@ def test_ssh_runs_quoted_commands_on_the_host(fake):
     assert fake.calls[0][7:] == ["login", "printf '%s|' 'a b' c"]
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_ssh_distinguishes_connection_failures_from_command_failures(fake):
     transport = SshTransport("login")
     with pytest.raises(SchedulerCommandError) as error:
@@ -231,6 +238,7 @@ def test_ssh_distinguishes_connection_failures_from_command_failures(fake):
         transport.run(["sacct"])
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_commands_that_do_not_finish_in_time_are_transport_failures(fake):
     fake.reply("ssh", sleep=5)
     with pytest.raises(TransportError, match="timed out"):

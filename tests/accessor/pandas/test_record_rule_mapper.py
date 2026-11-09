@@ -44,6 +44,7 @@ def test_generic_result_type_validates_default():
         RecordRuleMapper[int](rules=(), default="invalid")
 
 
+@pytest.mark.spec("model-tables")
 def test_rule_order_unconstrained_and_null_values():
     table = pd.DataFrame(
         {
@@ -107,6 +108,7 @@ def test_shared_constraints_compared_once(monkeypatch):
     assert calls.count(("ext", "nc")) == 1
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("null", [None, float("nan"), pd.NA, pd.NaT])
 def test_scalar_and_table_matching_agree(null):
     mapper = RecordRuleMapper(
@@ -132,6 +134,7 @@ def test_scalar_and_table_matching_agree(null):
     assert RecordRuleMapper(rules=[({}, "all")], default=None)({}) == "all"
 
 
+@pytest.mark.spec("model-tables")
 def test_mapper_reuses_snapshotted_rules_and_preserves_enum_values():
     class Kind(Enum):
         ready = "ready"
@@ -166,6 +169,7 @@ def test_scalar_results_are_returned_without_invoking_or_copying():
         assert mapper({"number": i}) is value
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("override", [None, pd.NA, 0, "", object()])
 def test_call_default_override_preserves_matches_and_configured_default(override):
     configured = object()
@@ -189,6 +193,7 @@ def test_call_default_override_preserves_matches_and_configured_default(override
     pd.testing.assert_frame_equal(table, before)
 
 
+@pytest.mark.spec("model-tables")
 def test_default_override_with_no_rules():
     mapper = RecordRuleMapper(rules=[], default="unknown")
     assert mapper({}, default=None) is None
@@ -212,6 +217,7 @@ def test_contains_declaration_is_validated_and_frozen():
     assert mapper.rules == (({"tags": constraint}, 1),)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("collection", [list, tuple, set, frozenset, np.asarray])
 def test_contains_scalar_and_batch_matching_agree(collection):
     class Reader:
@@ -256,6 +262,7 @@ def test_contains_scalar_and_batch_matching_agree(collection):
     assert mapper.map_table(table.iloc[:0]) == []
 
 
+@pytest.mark.spec("model-tables")
 def test_contains_combines_with_null_rules_and_preserves_first_match():
     mapper = RecordRuleMapper(
         rules=[

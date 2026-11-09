@@ -33,6 +33,7 @@ def source():
     return xr.Dataset(coords={"sample": [10, 20, 30]}, attrs={"sample": 99})
 
 
+@pytest.mark.spec("schemas-and-mappings")
 @pytest.mark.parametrize("wrap", [lambda ds: ds, lambda ds: ds["sample"]])
 def test_coordinate_and_dimension_are_ambiguous(wrap):
     source = wrap(xr.Dataset(coords={"sample": [10, 20, 30]}))
@@ -40,6 +41,7 @@ def test_coordinate_and_dimension_are_ambiguous(wrap):
         make_mapper(NameMapping(("sample", "fallback")), source)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 @pytest.mark.parametrize(
     "location", [FieldLocation.attr, FieldLocation.var, FieldLocation.dim]
 )
@@ -88,12 +90,14 @@ def test_mixed_candidates_preserve_order(source, candidates, expected, location)
     assert mapper.mapped_fields[mapper.schema.field].location is location
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_ambiguous_candidate_is_not_skipped(source):
     source.attrs["fallback"] = 42
     with pytest.raises(ValueError, match="Ambiguous field 'sample'"):
         make_mapper(NameMapping(("sample", "fallback")), source)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_inferred_location_stays_fixed_across_sources():
     mapping = NameMapping("version", resolve_value=True)
     mapper = make_mapper(mapping, xr.Dataset(attrs={"version": 1}))
@@ -115,6 +119,7 @@ def test_inferred_location_stays_fixed_across_sources():
         mapper.get_scalar(source, mapping)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_variable_mapping_does_not_fall_back_to_attribute():
     mapping = NameMapping.var("value")
     mapper = make_mapper(mapping, xr.Dataset({"value": xr.DataArray(1)}))

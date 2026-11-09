@@ -84,6 +84,7 @@ def native_case(request, tmp_path):
             yield kind, source, FileMapper.from_data_source(source)
 
 
+@pytest.mark.spec("backend-adapters", "lazy-data-and-resource-ownership")
 def test_native_variable_does_not_read_values(native_case, monkeypatch):
     kind, source, mapper = native_case
 
@@ -127,6 +128,7 @@ def test_backend_aliases_read_the_same_native_fields(native_case):
         get_native(source, mapper.schema.label)
 
 
+@pytest.mark.spec("backend-adapters")
 @pytest.mark.parametrize("method", ["get_value", "get_value_or_default"])
 def test_value_read_returns_native_values(native_case, method):
     _, source, mapper = native_case
@@ -232,6 +234,7 @@ def test_defaults_follow_current_attribute_presence(native_case):
     assert mapper.get_str(source, field) == "present"
 
 
+@pytest.mark.spec("lazy-data-and-resource-ownership")
 @pytest.mark.parametrize(
     ("shape", "dtype", "error"),
     [
@@ -300,6 +303,7 @@ def test_netcdf_scalar_mask_and_string_encoding(tmp_path):
         assert mapper.get_str(source, mapper.schema.chars, encoding="latin-1") == "café"
 
 
+@pytest.mark.spec("backend-adapters")
 def test_native_return_types(tmp_path):
     array = xr.Dataset({"signal": ("sample", [1, 2])})
     array_mapper = ArrayMapper.from_data_source(array)

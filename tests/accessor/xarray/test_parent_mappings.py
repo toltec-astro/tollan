@@ -45,6 +45,7 @@ def tree():
     )
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_parent_lookup_all_locations_is_lazy(tree):
     mapper = ResultsMapper.from_data_source(tree)
     schema = mapper.schema
@@ -79,6 +80,7 @@ def test_parent_is_selected_before_child_candidates(tree):
     assert mapper.mapped_fields[mapper.schema.signal].parent_path == "preferred"
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_reads_do_not_reresolve_parent(tree):
     mapper = ResultsMapper.from_data_source(tree)
     other = xr.DataTree.from_dict({"preferred": tree["fallback"].to_dataset()})

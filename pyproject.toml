@@ -57,6 +57,7 @@ dagster = ["dagster>=1.13"]
 [dependency-groups]
 test = [
   "pyarrow",
+  "scipy",  # netCDF3 writer used by the pipeline file round-trip tests
   "pytest",
   "pytest-doctestplus",
   "pytest-remotedata",
@@ -138,6 +139,9 @@ addopts = [
   "--strict-markers",
   "-p no:legacypath",
   "-p no:cacheprovider",
+  # Trace contract tests to design/spec.md sections (tollan.testing.spec_trace).
+  "-p tollan.testing.spec_trace",
+  "-p pytester",
 ]
 log_cli_level = "INFO"
 xfail_strict = "true"

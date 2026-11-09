@@ -12,6 +12,7 @@ from astropy import units as u
 from tollan.utils.xarray import reduce_median_mad
 
 
+@pytest.mark.spec("robust-summaries-of-labeled-arrays")
 def test_reduction_accepts_selected_and_normalized_values() -> None:
     values = np.array([[1, 2, 3], [2, 8, 6], [10, 20, 30]], dtype=float)
     measurements = xr.Dataset(
@@ -37,6 +38,7 @@ def test_reduction_accepts_selected_and_normalized_values() -> None:
     np.testing.assert_array_equal(measurements.voltage, values)
 
 
+@pytest.mark.spec("robust-summaries-of-labeled-arrays")
 @pytest.mark.parametrize("dim", ["row", "sample"])
 def test_reduce_median_mad_retains_units_coordinates_and_nan_behavior(dim: str) -> None:
     values = np.array([[1.0, 2.0, np.nan], [2.0, 4.0, 8.0], [3.0, 6.0, 9.0]])
@@ -76,6 +78,7 @@ def test_reduce_median_mad_unnamed_dataarray_uses_standard_variable_name() -> No
     assert median.data.u.unit is None
 
 
+@pytest.mark.spec("robust-summaries-of-labeled-arrays")
 def test_reduction_defers_source_reads_and_shares_them_between_outputs() -> None:
     reads = []
 
@@ -94,6 +97,7 @@ def test_reduction_defers_source_reads_and_shares_them_between_outputs() -> None
     assert result_mad.signal.item() == 1.482602218505602
 
 
+@pytest.mark.spec("robust-summaries-of-labeled-arrays")
 def test_missing_dimension_is_rejected_before_source_reads() -> None:
     @dask.delayed
     def unreadable():
@@ -153,6 +157,7 @@ def test_mixed_dtypes_match_numpy_before_and_after_computing(
             np.testing.assert_array_equal(actual[name], expected)
 
 
+@pytest.mark.spec("robust-summaries-of-labeled-arrays")
 def test_dataset_variables_keep_independent_units_and_shared_metadata() -> None:
     source = xr.Dataset(
         {
@@ -176,6 +181,7 @@ def test_dataset_variables_keep_independent_units_and_shared_metadata() -> None:
     assert mad.temperature.item() == pytest.approx(mad.voltage.item() * 10.0)
 
 
+@pytest.mark.spec("robust-summaries-of-labeled-arrays")
 def test_scaled_mad_matches_astropy_without_rounded_normalization():
     from astropy.stats import mad_std
 

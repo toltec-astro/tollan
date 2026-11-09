@@ -353,8 +353,7 @@ Existing handlers retain their settings and resources. Related runtimes share
 file caches, but reloading one does not replace another's already loaded
 configuration; reload that runtime too when it needs the new values.
 
-For a file that must be read on every load, use
-`source.enable_cache(enabled=False)`. For a temporary validation context, prefer
+For a temporary validation context, prefer
 `rc.with_config(validation_context=...)` when scopes may overlap.
 
 

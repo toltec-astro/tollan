@@ -61,6 +61,7 @@ class TestConfigHandlerAutoInference:
                 def prepare_runtime_config_data(cls, config_data):
                     return config_data
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_multiple_handlers_independent(self):
         """Test multiple handlers get correct independent inference."""
 
@@ -119,6 +120,7 @@ class TestConfigHandlerAutoInference:
                 def prepare_runtime_config_data(cls, config_data):
                     return config_data
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_inheritance_chain(self):
         """Test inference works through inheritance chain."""
 
@@ -200,6 +202,7 @@ class TestSubConfigKeyTransformerAutoInference:
             ):
                 subconfig_key = "manual_key"  # Should be disallowed
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_multiple_transformers_independent(self):
         """Test multiple transformers get correct independent inference."""
 

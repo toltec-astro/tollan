@@ -13,6 +13,7 @@ from tollan.config.sources.yaml import YamlConfigSource
 from tollan.config.types import AbsAnyPath
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize("kind", ["dictionary", "yaml", "explicit", "nested"])
 def test_settings_keys_have_the_same_meaning_across_sources(tmp_path, kind):
     settings: dict[str | int, Any] = {
@@ -33,6 +34,9 @@ def test_settings_keys_have_the_same_meaning_across_sources(tmp_path, kind):
     assert runtime.config_dict["name"] == settings["name"]
 
 
+@pytest.mark.spec(
+    "runtime-context-and-component-settings", "configuration-sources-and-precedence"
+)
 def test_variant_preserves_tier_precedence_and_runtime_info():
     rc = RuntimeContext(
         config_sources=[
@@ -62,6 +66,7 @@ def test_variant_preserves_tier_precedence_and_runtime_info():
         assert variant._get_tier(tier).source is not rc._get_tier(tier).source
 
 
+@pytest.mark.spec("runtime-context-and-component-settings")
 def test_updates_to_either_runtime_preserve_the_other():
     rc = RuntimeContext()
     rc.set_override_config({"items": [{"values": [1]}]})
@@ -76,6 +81,7 @@ def test_updates_to_either_runtime_preserve_the_other():
     assert variant.config_dict["items"] == [{"values": [1, 2]}]
 
 
+@pytest.mark.spec("runtime-context-and-component-settings")
 def test_variant_context_is_independent_and_merges_nested_values():
     rc = RuntimeContext().with_config(
         validation_context={"info": {"items": [{"value": 1}]}, "retained": True}
@@ -92,6 +98,7 @@ def test_variant_context_is_independent_and_merges_nested_values():
     assert "temporary" not in variant.runtime_info.validation_context
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_variants_reuse_file_reads_and_reload_is_explicit(tmp_path, monkeypatch):
     path = tmp_path / "source.yaml"
     path.write_text("value: 1\n")
@@ -117,6 +124,7 @@ def test_variants_reuse_file_reads_and_reload_is_explicit(tmp_path, monkeypatch)
     assert calls == [path, path]
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_nested_sources_remerge_per_context_and_reuse_file_reads(tmp_path, monkeypatch):
     path = tmp_path / "base.yaml"
     path.write_text("value: 1\n")
@@ -148,20 +156,6 @@ def test_nested_sources_remerge_per_context_and_reuse_file_reads(tmp_path, monke
     assert variant.config_sources[1] is rc.config_sources[1]
     assert rc.reload()["value"] == 1
     assert calls == [path, path]
-
-
-def test_variant_preserves_disabled_file_cache(tmp_path):
-    path = tmp_path / "config.yaml"
-    path.write_text("value: 1\n")
-    source = YamlConfigSource(order=0, source=path)
-    source.enable_cache(enabled=False)
-    rc = RuntimeContext(config_sources=[source])
-    assert rc.config_dict["value"] == 1
-    path.write_text("value: 2\n")
-    assert rc.with_config().config_dict["value"] == 2
-    assert rc.config_dict["value"] == 1
-    path.write_text("value: 3\n")
-    assert rc.with_config().config_dict["value"] == 3
 
 
 def test_with_config_retains_runtime_subclass_and_validation_context(tmp_path):

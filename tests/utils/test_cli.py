@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import pytest
+
 from tollan.utils.cli import dict_from_cli_args, split_cli_args
 
 
 class TestDictFromCliArgs:
     """Tests for dict_from_cli_args function."""
 
+    @pytest.mark.spec("configuration-integration")
     def test_basic_nested_dict(self):
         """Test creating nested dict from CLI args."""
         args = ["--a.b.c", "value"]

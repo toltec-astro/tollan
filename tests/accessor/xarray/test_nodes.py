@@ -35,6 +35,7 @@ def tree():
     )
 
 
+@pytest.mark.spec("backend-adapters", "lazy-data-and-resource-ownership")
 def test_relative_paths_survive_detaching_without_loading(tree):
     schema = TreeMapper.schema
     for scope in (tree["scope"], tree["scope"].copy(deep=False)):
@@ -52,6 +53,7 @@ def test_relative_paths_survive_detaching_without_loading(tree):
             mapper.get_scalar(scope, schema.result)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_candidates_are_resolved_once_and_reads_use_supplied_source(tree):
     schema = TreeMapper.schema
     scope = tree["scope/analysis"]
@@ -69,6 +71,7 @@ def test_candidates_are_resolved_once_and_reads_use_supplied_source(tree):
     assert resolved.get_node(other, schema.result) is other["analysis/spectrum"]
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_variables_cannot_satisfy_path_mapping():
     source = xr.DataTree.from_dict(
         {"analysis": xr.Dataset({"spectrum": ("sample", [1, 2])})}
@@ -93,6 +96,7 @@ def test_flat_sources_have_no_implicit_nodes(source):
         mapper.get_node(source, mapper.schema.current)
 
 
+@pytest.mark.spec("lazy-data-and-resource-ownership")
 def test_node_defaults_and_capture_do_not_load_arrays(tree):
     @dataclass
     class CaptureSchema(Schema):
@@ -108,6 +112,7 @@ def test_node_defaults_and_capture_do_not_load_arrays(tree):
     assert mapper.get_value_or_default(tree, field) is tree["scope"]
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_node_and_attribute_with_same_name_require_location():
     @dataclass
     class AmbiguousSchema(Schema):

@@ -36,6 +36,7 @@ class TestUnitsAccessor:
         da = xr.DataArray([1, 2, 3])
         assert da.u.unit is None
 
+    @pytest.mark.spec("units-and-table-conversion")
     def test_unit_with_units(self):
         """Test unit property returns Astropy Unit when units are set."""
         da = xr.DataArray([1, 2, 3])
@@ -103,6 +104,7 @@ class TestSetUnits:
         assert "units" not in da_no_units.attrs
         assert da.attrs["units"] == "km"  # Original unchanged
 
+    @pytest.mark.spec("units-and-table-conversion")
     def test_set_preserves_data_reference(self):
         """Test that setting units creates shallow copy (same .data reference)."""
         da = xr.DataArray([1, 2, 3])
@@ -184,6 +186,7 @@ class TestQuantityProperty:
         da = xr.DataArray([1, 2, 3])
         assert da.u.quantity is da
 
+    @pytest.mark.spec("units-and-table-conversion")
     @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.complex128])
     def test_quantity_with_units_shares_storage(self, dtype):
         """Unit attachment presents compatible arrays without copying values."""
@@ -204,6 +207,7 @@ class TestQuantityProperty:
         with pytest.raises(ValueError):
             _ = da.u.quantity
 
+    @pytest.mark.spec("units-and-table-conversion")
     def test_quantity_preserves_dask_laziness(self):
         """Attaching a unit builds a lazy graph that computes to Quantity."""
         import dask.array as da
@@ -345,6 +349,7 @@ class TestUnitConversion:
 class TestDaskSupport:
     """Test lazy evaluation with Dask arrays."""
 
+    @pytest.mark.spec("units-and-table-conversion")
     def test_set_preserves_dask(self):
         """Test that setting units preserves Dask arrays."""
         import dask.array as da

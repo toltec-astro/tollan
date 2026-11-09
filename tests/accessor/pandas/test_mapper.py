@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 class TestDataFrameMapper:
     """Test DataFrameMapper for pandas.DataFrame."""
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_ambiguous_name_rejected(self):
         @dataclass
         class TestSchema(Schema):
@@ -32,6 +33,7 @@ class TestDataFrameMapper:
         with pytest.raises(ValueError, match="Ambiguous field 'field'.*attr, var"):
             TestMapper.from_data_source(df)
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_column_location_does_not_switch_to_attribute(self):
         @dataclass
         class TestSchema(Schema):
@@ -76,6 +78,7 @@ class TestDataFrameMapper:
 
         assert isinstance(mapper, DataFrameMapper)
 
+    @pytest.mark.spec("backend-adapters")
     def test_read_column_values(self):
         """Read column values as numpy arrays."""
         df = pd.DataFrame({"temp": [25.0, 26.0, 27.0]})
@@ -110,6 +113,7 @@ class TestDataFrameMapper:
 
         assert value == "metadata_value"
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_explicit_attribute_with_same_named_column(self):
         """The schema chooses which namespace to read."""
         df = pd.DataFrame({"field": [1, 2, 3]})

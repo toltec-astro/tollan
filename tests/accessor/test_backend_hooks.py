@@ -50,6 +50,7 @@ def source():
     return {"attrs": {"value": 11}, "vars": {"value": 22}, "dims": {"value": 3}}
 
 
+@pytest.mark.spec("backend-adapters")
 def test_base_dispatches_to_backend_hooks(source):
     mapper = LocatedMapper.from_data_source(source)
     schema = mapper.schema
@@ -68,6 +69,7 @@ def test_base_dispatches_to_backend_hooks(source):
     assert mapper.mapped_fields[schema.dim].value == 3
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_dimension_read_uses_current_source_not_capture(source):
     mapper = LocatedMapper.from_data_source(source)
     current = {"attrs": {}, "vars": {}, "dims": {"value": 4}}
@@ -76,6 +78,7 @@ def test_dimension_read_uses_current_source_not_capture(source):
     assert mapper.mapped_fields[mapper.schema.dim].value == 3
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_missing_dimension_does_not_use_other_locations(source):
     mapper = LocatedMapper.from_data_source(source)
     source = {"attrs": {"value": 11}, "vars": {"value": 22}, "dims": {}}

@@ -23,6 +23,7 @@ from tollan.db import SqlaDB
 from tollan.db.func import create_datetime, utcnow
 
 
+@pytest.mark.spec("connections-and-transactions")
 def test_transactions_commit_rollback_and_close():
     with SqlaDB.from_url("sqlite://") as db:
         with db.session_context() as first:
@@ -43,6 +44,7 @@ def test_transactions_commit_rollback_and_close():
         assert not last.in_transaction()
 
 
+@pytest.mark.spec("connections-and-transactions")
 def test_explicit_commit_can_be_followed_by_more_work():
     with SqlaDB.from_url("sqlite://") as db:
         with db.session_context() as session:
@@ -56,6 +58,7 @@ def test_explicit_commit_can_be_followed_by_more_work():
             ).all() == [1, 2]
 
 
+@pytest.mark.spec("connections-and-transactions")
 def test_nested_contexts_have_distinct_sessions_and_detach_objects():
     class Base(DeclarativeBase):
         pass
@@ -95,6 +98,7 @@ def test_same_models_can_query_two_databases_independently():
             assert source_session.scalar(select(Reading.value)) == 1
 
 
+@pytest.mark.spec("batch-writes-and-query-helpers")
 @pytest.mark.parametrize(
     ("dialect", "expected"),
     [
@@ -107,6 +111,7 @@ def test_utcnow_preserves_dialect_expressions(dialect, expected):
     assert str(utcnow().compile(dialect=dialect)) == expected
 
 
+@pytest.mark.spec("schema-conventions")
 def test_utcnow_default_populates_omitted_timestamp_and_preserves_explicit_value():
     metadata = MetaData()
     reading = Table(
@@ -130,6 +135,7 @@ def test_utcnow_default_populates_omitted_timestamp_and_preserves_explicit_value
     assert timestamps[1] == explicit
 
 
+@pytest.mark.spec("connections-and-transactions")
 def test_owned_and_borrowed_engine_lifetimes():
     disposed = []
     with SqlaDB.from_url("sqlite://") as owner:
@@ -145,6 +151,7 @@ def test_owned_and_borrowed_engine_lifetimes():
     assert disposed == [owner.engine]
 
 
+@pytest.mark.spec("connections-and-transactions")
 def test_borrowed_metadata_and_explicit_reflection():
     engine = create_engine("sqlite://")
     connected = []
@@ -166,6 +173,7 @@ def test_borrowed_metadata_and_explicit_reflection():
         engine.dispose()
 
 
+@pytest.mark.spec("batch-writes-and-query-helpers")
 def test_sqlite_portable_query_functions_on_existing_pool():
     engine = create_engine("sqlite://")
     try:
@@ -192,6 +200,7 @@ def test_sqlite_portable_query_functions_on_existing_pool():
     )
 
 
+@pytest.mark.spec("batch-writes-and-query-helpers")
 @pytest.mark.parametrize("function", ["bit_and", "bit_or"])
 @pytest.mark.parametrize(
     "values", ["select null as value", "select 3 as value union all select null"]

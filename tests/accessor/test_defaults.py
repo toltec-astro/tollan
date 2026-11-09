@@ -132,6 +132,7 @@ def test_existing_field_read_errors_are_not_replaced_by_defaults(
     assert caught.value is error
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_defaults_and_lazy_resolution_do_not_read_variable_values(monkeypatch):
     field = NameMapping.var("value")
     source = xr.Dataset({"value": xr.DataArray(1)})
@@ -158,6 +159,7 @@ def test_shape_and_dimension_getters_do_not_use_defaults():
         mapper.get_dim(source, field)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 @pytest.mark.parametrize("has_version", [True, False])
 def test_eager_resolution_uses_source_then_default_without_changing_later(has_version):
     version = NameMapping.attr("version", resolve_value=True)

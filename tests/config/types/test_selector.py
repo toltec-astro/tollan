@@ -40,6 +40,7 @@ def test_select_preserves_candidate_order_and_duplicates(value, expected):
     assert [name for name in candidates if pattern.fullmatch(name)] == expected
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_exact_items_have_no_pattern_or_path_semantics():
     selector = StringSelector.model_validate([".", "*", "a/b", "", " x ", "[ab]"])
 
@@ -54,6 +55,7 @@ def test_exact_items_have_no_pattern_or_path_semantics():
     ]
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_regex_is_fullmatch_and_retains_python_regex_semantics():
     selector = StringSelector.model_validate({"pattern": "raw"})
     assert selector.select(["raw", "raw/a", "draw", "RAW", "raw\n"]) == ["raw"]
@@ -115,6 +117,7 @@ def test_regex_export_retains_an_existing_pattern_and_flags():
     assert selector.as_regex() is pattern
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_string_shorthand_is_regex_not_an_exact_name():
     assert StringSelector.model_validate(".").select([".", "x", "xx"]) == [".", "x"]
     assert StringSelector.model_validate(["."]).select([".", "x", "xx"]) == ["."]
@@ -154,6 +157,7 @@ def test_invalid_forms_are_rejected_by_the_field(value):
         Settings.model_validate({"names": value})
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize(
     "value",
     [
@@ -189,6 +193,7 @@ def test_field_works_with_ordinary_models_and_type_adapter():
         Model(names=[1])
 
 
+@pytest.mark.spec("runtime-context-and-component-settings")
 def test_selector_and_declared_defaults_follow_frozen_config_contract():
     class Defaults(FrozenBaseModel):
         names: StringSelector = Field(default={"excludes": []})

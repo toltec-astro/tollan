@@ -21,6 +21,7 @@ def _group(order, sources, **kwargs):
     )
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize(
     ("mappings", "expected"),
     [
@@ -73,6 +74,7 @@ def test_grouping_does_not_change_merge_or_mutate_sources(mappings, expected):
     assert mappings == original
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_disabled_group_skips_descendants_and_retains_condition_logging(tmp_path):
     missing = YamlConfigSource(order=0, source=tmp_path / "missing.yaml")
     sources = ConfigSourceList(
@@ -93,6 +95,7 @@ def test_disabled_group_skips_descendants_and_retains_condition_logging(tmp_path
         sources.load({"selected": True})
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_yaml_includes_patch_preceding_group_and_reuse_reads(tmp_path, monkeypatch):
     base = tmp_path / "base.yaml"
     base.write_text("items: [{values: [0]}]\n")
@@ -137,12 +140,8 @@ def test_yaml_includes_patch_preceding_group_and_reuse_reads(tmp_path, monkeypat
     assert reads == [base, recipe, included] * 2
     assert variant.config_dict["items"] == [{"values": [0, 1, 2]}]
 
-    rc.config_sources.enable_cache(enabled=False)
-    for _ in range(2):
-        assert rc.with_config().config_dict["items"] == [{"values": [0, 3]}]
-    assert reads == [base, recipe, included] * 4
 
-
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_nested_env_reads_and_interpolation_are_cached(tmp_path, monkeypatch):
     path = tmp_path / "settings.env"
     path.write_text("VALUE=${TOLLAN_NESTED_TEST_VALUE}\n")
@@ -165,6 +164,7 @@ def test_nested_env_reads_and_interpolation_are_cached(tmp_path, monkeypatch):
     assert reads == [path, path]
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_runtime_defaults_and_overrides_keep_their_precedence():
     a = DictConfigSource(order=0, source={"items": {"[]": ["a"]}})
     b = DictConfigSource(order=1, source={"items": {"[]": ["b"]}})

@@ -92,9 +92,9 @@ from tollan.config.types import SubPath, SubPathOrRoot
 class StoreSettings(FrozenBaseModel):
     subpath: SubPath
 
-settings = StoreSettings(subpath="./toltec//tcs/")
-assert settings.subpath == PurePosixPath("toltec/tcs")
-assert Path("/data_lmt") / settings.subpath == Path("/data_lmt/toltec/tcs")
+settings = StoreSettings(subpath="./instrument//raw/")
+assert settings.subpath == PurePosixPath("instrument/raw")
+assert Path("/data") / settings.subpath == Path("/data/instrument/raw")
 
 class SearchSettings(FrozenBaseModel):
     subpaths: tuple[SubPathOrRoot, ...]

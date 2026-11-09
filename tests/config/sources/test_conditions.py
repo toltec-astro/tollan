@@ -51,57 +51,57 @@ def test_source_list_logs_condition_result_and_context(workers, status, debug_me
     assert f"context={{'workers': {workers}}}" in message
 
 
-@pytest.mark.parametrize("roach", range(13))
-@pytest.mark.parametrize("file_suffix", ["vnasweep", "targsweep", "tune"])
-def test_recipe_condition_truth_table(roach, file_suffix):
-    context = {"roach": roach, "file_suffix": file_suffix}
-    # Includes the conditions in taco_recipes/scripts/kids/
-    # tolteca_config.d/10_kids_override.yaml, plus language combinations.
+@pytest.mark.parametrize("channel", range(13))
+@pytest.mark.parametrize("kind", ["survey", "target", "tuning"])
+def test_recipe_condition_truth_table(channel, kind):
+    context = {"channel": channel, "kind": kind}
+    # Conditions an application recipe uses, plus language combinations.
     cases = [
         (None, True),
-        ("roach >= 7", roach >= 7),
+        ("channel >= 7", channel >= 7),
         (
-            'roach >= 7 & file_suffix in ["targsweep", "tune"]',
-            roach >= 7 and file_suffix in {"targsweep", "tune"},
+            'channel >= 7 & kind in ["target", "tuning"]',
+            channel >= 7 and kind in {"target", "tuning"},
         ),
-        ('file_suffix == "vnasweep"', file_suffix == "vnasweep"),
-        ('file_suffix == "targsweep"', file_suffix == "targsweep"),
-        ('file_suffix == "tune"', file_suffix == "tune"),
-        ('roach >= 7 | file_suffix == "tune"', roach >= 7 or file_suffix == "tune"),
-        ('file_suffix not in ["tune"]', file_suffix != "tune"),
+        ('kind == "survey"', kind == "survey"),
+        ('kind == "target"', kind == "target"),
+        ('kind == "tuning"', kind == "tuning"),
+        ('channel >= 7 | kind == "tuning"', channel >= 7 or kind == "tuning"),
+        ('kind not in ["tuning"]', kind != "tuning"),
         (
-            '~(roach < 7 | file_suffix == "vnasweep")',
-            not (roach < 7 or file_suffix == "vnasweep"),
+            '~(channel < 7 | kind == "survey")',
+            not (channel < 7 or kind == "survey"),
         ),
-        ("0 <= roach < 7", 0 <= roach < 7),
+        ("0 <= channel < 7", 0 <= channel < 7),
         (
-            'roach >= 7 and file_suffix in ["targsweep", "tune"]',
-            roach >= 7 and file_suffix in {"targsweep", "tune"},
+            'channel >= 7 and kind in ["target", "tuning"]',
+            channel >= 7 and kind in {"target", "tuning"},
         ),
-        ("roach >= 0 | missing > 0", False),
+        ("channel >= 0 | missing > 0", False),
     ]
     for expression, expected in cases:
         source = DictConfigSource(order=0, source={}, enable_if=expression)
         assert source.is_enabled_for(context) is expected, expression
 
 
-@pytest.mark.parametrize("context", [None, {}, {"file_suffix": "tune"}])
+@pytest.mark.parametrize("context", [None, {}, {"kind": "tuning"}])
 def test_missing_context_or_variable_disables_source(context):
-    source = DictConfigSource(order=0, source={}, enable_if="roach >= 7")
+    source = DictConfigSource(order=0, source={}, enable_if="channel >= 7")
     assert source.is_enabled_for(context) is False
 
 
 def test_disabled_source_does_not_evaluate_invalid_condition():
-    source = DictConfigSource(order=0, source={}, enabled=False, enable_if="roach >")
-    assert source.is_enabled_for({"roach": 8}) is False
+    source = DictConfigSource(order=0, source={}, enabled=False, enable_if="channel >")
+    assert source.is_enabled_for({"channel": 8}) is False
 
 
 def test_malformed_condition_propagates_query_error():
-    source = DictConfigSource(order=0, source={}, enable_if="roach >")
+    source = DictConfigSource(order=0, source={}, enable_if="channel >")
     with pytest.raises(SyntaxError):
-        source.is_enabled_for({"roach": 8})
+        source.is_enabled_for({"channel": 8})
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_membership_and_precedence_control_merged_settings():
     sources = ConfigSourceList(
         data=[
@@ -109,10 +109,10 @@ def test_membership_and_precedence_control_merged_settings():
             DictConfigSource(
                 order=1,
                 source={"snr_min": 3},
-                enable_if='roach >= 7 & file_suffix in ["targsweep", "tune"]',
+                enable_if='channel >= 7 & kind in ["target", "tuning"]',
             ),
         ]
     )
-    assert sources.load({"roach": 8, "file_suffix": "tune"}) == {"snr_min": 3}
-    assert sources.load({"roach": 0, "file_suffix": "tune"}) == {"snr_min": 5}
-    assert sources.load({"roach": 8, "file_suffix": "vnasweep"}) == {"snr_min": 5}
+    assert sources.load({"channel": 8, "kind": "tuning"}) == {"snr_min": 3}
+    assert sources.load({"channel": 0, "kind": "tuning"}) == {"snr_min": 5}
+    assert sources.load({"channel": 8, "kind": "survey"}) == {"snr_min": 5}

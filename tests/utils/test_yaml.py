@@ -44,6 +44,7 @@ class TestYamlDumper:
         loaded = yaml_loads(result)
         assert loaded == data
 
+    @pytest.mark.spec("scientific-value-types")
     @pytest.mark.parametrize("scale", ["utc", "tai"])
     @pytest.mark.parametrize("precision", [0, 3, 9])
     @pytest.mark.parametrize("subformat", ["date", "date_hms"])

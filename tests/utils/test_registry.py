@@ -9,6 +9,7 @@ import pytest
 from tollan.utils.registry import Registry, RegistryView
 
 
+@pytest.mark.spec("keyed-registries")
 def test_initial_entries_are_copied_and_protected_from_reregistration():
     value = object()
     entries = {"builtin": value}
@@ -22,6 +23,7 @@ def test_initial_entries_are_copied_and_protected_from_reregistration():
     assert list(registry.view) == ["builtin", "extension"]
 
 
+@pytest.mark.spec("keyed-registries")
 def test_mapping_lookup_and_registration_order():
     registry = Registry[str, int]()
     assert isinstance(registry, Mapping)
@@ -40,6 +42,7 @@ def test_mapping_lookup_and_registration_order():
         registry["absent"]
 
 
+@pytest.mark.spec("keyed-registries")
 @pytest.mark.parametrize("same_object", [False, True])
 def test_duplicate_key_preserves_existing_registration(same_object):
     registry = Registry[str, object]()
@@ -62,6 +65,7 @@ def test_hashable_keys_and_independent_registries(key):
     assert key not in other
 
 
+@pytest.mark.spec("keyed-registries")
 @pytest.mark.parametrize("read_only_view", [False, True])
 def test_mutable_mapping_operations_are_not_available(read_only_view):
     registry = Registry[str, int]()
@@ -76,6 +80,7 @@ def test_mutable_mapping_operations_are_not_available(read_only_view):
     assert dict(registry) == {"entry": 1}
 
 
+@pytest.mark.spec("keyed-registries")
 def test_read_only_view_tracks_registrations_without_copying_values():
     registry = Registry[str, list[int]]()
     view = registry.view

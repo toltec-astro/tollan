@@ -111,6 +111,7 @@ def test_column_mapper_leaves_other_types_explicit(annotation):
     )(model) | {"value": ModelColumn("value")} == {"value": ModelColumn("value")}
 
 
+@pytest.mark.spec("model-tables")
 def test_column_mapper_uses_input_field_names_without_evaluation():
     def unexpected(*args, **kwargs):
         pytest.fail("Column declaration evaluated a model value")
@@ -150,6 +151,7 @@ def test_column_mapper_uses_input_field_names_without_evaluation():
     }
 
 
+@pytest.mark.spec("model-tables")
 def test_name_rules_run_only_during_declaration(monkeypatch):
     class Sample(Reading):
         label: str
@@ -234,6 +236,7 @@ def test_name_rule_changes_base_names_before_conversion_not_attribute_paths():
     )
 
 
+@pytest.mark.spec("model-tables")
 def test_name_rule_is_reusable_under_different_model_paths():
     mapper = ModelColumnMapper(
         type_rules=[ScalarColumnRule()], name_rules=[(r"(.+)", r"file_\1")]
@@ -366,6 +369,7 @@ def test_mapper_replacement_keeps_default_objects_without_serializing_them():
     assert column.read(SimpleNamespace()) == 42
 
 
+@pytest.mark.spec("model-tables")
 def test_generated_columns_keep_missing_and_null_distinct():
     columns = ModelColumnMapper(
         name_rules=[(r".+", r"\g<0>")],
@@ -436,6 +440,7 @@ def test_string_enum_column_uses_value_not_member_name():
     assert pd.isna(table["state"].iloc[2])
 
 
+@pytest.mark.spec("model-tables")
 def test_scientific_columns_use_explicit_units_and_preserve_metadata():
     class Metadata(BaseModel):
         t0: UnixTimeField
@@ -649,6 +654,7 @@ def test_invalid_mapper_settings_fail_at_construction_and_replacement(options, m
         )(Reading, **options)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("time_format", ["mjd", "jd", "unix", "isot", "datetime"])
 @pytest.mark.parametrize("scale", ["utc", "tai"])
 def test_time_format_preserves_native_scale_without_mutating_metadata(
@@ -781,6 +787,7 @@ def test_model_column_is_a_small_declaration():
     assert column.dtype is None
 
 
+@pytest.mark.spec("model-tables")
 def test_flat_projection_of_mixed_models_preserves_order_and_nulls():
     models = [
         Measurement(label="a", reading=Reading(value=2**60 + 1)),
@@ -807,6 +814,7 @@ def test_flat_projection_of_mixed_models_preserves_order_and_nulls():
     assert first.reading.value == 2**60 + 1
 
 
+@pytest.mark.spec("model-tables")
 def test_projection_reads_attributes_without_model_dump_or_serializers(monkeypatch):
     calls = []
 

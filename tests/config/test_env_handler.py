@@ -10,6 +10,9 @@ from tollan.config import EnvHandler, RuntimeConfig, RuntimeContext
 from tollan.config.sources import EnvFileConfigSource
 
 
+@pytest.mark.spec(
+    "configuration-sources-and-precedence", "runtime-context-and-component-settings"
+)
 @pytest.mark.parametrize("namespace", ["_env", "process", "process.env", ""])
 def test_handler_reads_selected_namespace_and_keeps_snapshot(tmp_path, namespace):
     path = tmp_path / "settings.env"
@@ -30,6 +33,7 @@ def test_handler_reads_selected_namespace_and_keeps_snapshot(tmp_path, namespace
     assert dict(os.environ) == environ
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_handler_uses_merged_values_and_converts_without_mutating_runtime(tmp_path):
     config = tmp_path / "settings.yaml"
     config.write_text("_env: {PORT: 8000, YAML_ONLY: true}\nother: ignored\n")

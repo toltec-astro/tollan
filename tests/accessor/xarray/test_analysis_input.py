@@ -15,6 +15,7 @@ from tollan.accessor.xarray import (
 )
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 @pytest.mark.parametrize("kind", ["dataset", "named_array", "unnamed_array"])
 def test_direct_input_and_prepared_scope_share_arrays(kind):
     values = da.arange(12, chunks=4)
@@ -53,6 +54,7 @@ class SamplesView(AnalysisInputView[SamplesMapper]):
     pass
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 @pytest.mark.parametrize("path", ["samples", "_input"])
 def test_existing_scope_selects_declared_input_without_restructuring(path):
     source = xr.Dataset({"signal": ("time", da.arange(12, chunks=4))})
@@ -82,6 +84,7 @@ def test_existing_scope_selects_declared_input_without_restructuring(path):
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 @pytest.mark.parametrize("construct", [AnalysisInputView, prepare_analysis_input_view])
 def test_invalid_tree_is_not_wrapped_or_restructured(construct):
     tree = xr.DataTree(dataset=xr.Dataset({"signal": ("time", [1, 2])}))
@@ -91,6 +94,7 @@ def test_invalid_tree_is_not_wrapped_or_restructured(construct):
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 @pytest.mark.parametrize("construct", [AnalysisInputView, prepare_analysis_input_view])
 def test_missing_input_is_not_created(construct):
     tree = xr.DataTree()

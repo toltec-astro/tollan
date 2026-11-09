@@ -28,6 +28,7 @@ def column_maps():
     }
 
 
+@pytest.mark.spec("model-tables")
 def test_mixed_projection_preserves_order_and_uses_each_reader_once():
     calls = []
 
@@ -88,6 +89,7 @@ def test_none_models_retain_rows_without_reading_attributes_or_defaults(typed):
     assert ModelTableAccessor.from_models([None, None], columns={}).shape == (2, 0)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize(
     ("left", "right"),
     [
@@ -112,6 +114,7 @@ def test_dtype_conflicts_fail_before_consuming_models(left, right):
         )
 
 
+@pytest.mark.spec("model-tables")
 def test_conflicting_unused_map_does_not_mutate_destination():
     table = pd.DataFrame({"number": pd.array([4], dtype="Int64")})
     before = table.copy()
@@ -124,6 +127,7 @@ def test_conflicting_unused_map_does_not_mutate_destination():
     pd.testing.assert_frame_equal(table, before)
 
 
+@pytest.mark.spec("model-tables")
 def test_dispatch_requires_exact_type_without_subclass_fallback():
     class Child(Direct):
         pass
@@ -161,6 +165,7 @@ def test_plain_mapping_and_fallback_have_identical_projection_and_update_semanti
     )
 
 
+@pytest.mark.spec("model-tables")
 def test_exact_projection_replaces_fallback_including_an_empty_projection():
     class Child(Direct):
         pass
@@ -197,6 +202,7 @@ def test_exact_projection_replaces_fallback_including_an_empty_projection():
     assert result.fallback_only.tolist() == [9, 9, 8]
 
 
+@pytest.mark.spec("model-tables")
 def test_unused_fallback_participates_in_schema_validation():
     def models():
         pytest.fail("Consumed input before checking fallback dtype")
@@ -212,6 +218,7 @@ def test_unused_fallback_participates_in_schema_validation():
         )
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("inplace", [False, True])
 def test_updates_distinguish_unmapped_cells_from_projected_nulls(inplace):
     table = pd.DataFrame(
@@ -308,6 +315,7 @@ def test_shared_extension_storage_preserves_values_and_nulls(dtype, value):
     pd.testing.assert_frame_equal(result, expected.iloc[::-1].reset_index(drop=True))
 
 
+@pytest.mark.spec("model-tables")
 def test_nonnullable_storage_is_kept_when_all_rows_map_and_rejected_otherwise():
     columns = {
         Direct: {"number": ModelColumn("value", dtype="int64")},

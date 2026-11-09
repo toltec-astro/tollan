@@ -65,6 +65,9 @@ nitpick_ignore = [
     ("py:obj", "tollan.accessor.pandas.model_table.QuantityColumnRule.all fields"),
     ("py:obj", "tollan.execution.policy.Resources.all fields"),
     ("py:obj", "tollan.execution.policy.SlurmProfile.all fields"),
+    # Dash Mantine Components publishes no Sphinx inventory; the Plotly display
+    # helpers import it only for type checking.
+    ("py:class", "dmc.Container"),
 ]
 
 # Sphinx's legacy renderer links type parameters as if they were classes.

@@ -11,6 +11,7 @@ from tollan.config import ConfigSourceFormat, EnvHandler, RuntimeContext
 from tollan.utils.typer import TollanTyper, create_cli
 
 
+@pytest.mark.spec("configuration-integration")
 def test_command_controls_runtime_construction_and_additional_options(tmp_path):
     app = TollanTyper()
     seen = []
@@ -85,6 +86,7 @@ def test_variadic_inputs_after_separator_remain_untouched(tmp_path):
     assert len(seen) == 1
 
 
+@pytest.mark.spec("configuration-integration")
 def test_loading_policy_is_passed_at_runtime_construction(tmp_path):
     app = create_cli()
     seen = []
@@ -108,6 +110,7 @@ def test_loading_policy_is_passed_at_runtime_construction(tmp_path):
     assert "_env" not in seen[0]
 
 
+@pytest.mark.spec("configuration-integration")
 @pytest.mark.parametrize("forward", [False, True])
 def test_unconsumed_arguments_are_only_used_when_explicitly_forwarded(forward):
     app = TollanTyper()

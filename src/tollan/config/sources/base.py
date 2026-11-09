@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any
 
 import pandas as pd
-from pydantic import BaseModel, PrivateAttr
+from pydantic import BaseModel
 
 from ...utils.log import logger
 from ..types.path import _path_metadata
@@ -133,16 +133,6 @@ class ConfigSourceBase(BaseModel):
             return False
         return not result.empty
 
-    def enable_cache(self, *, enabled: bool = True) -> None:
-        """Configure cached reads, if the source has any.
-
-        Parameters
-        ----------
-        enabled : bool, optional
-            Reuse file read results, by default True. Dictionary sources have
-            no read cache. This base implementation does nothing.
-        """
-
     def invalidate_cache(self) -> None:
         """Clear cached reads, if the source has any."""
 
@@ -169,11 +159,9 @@ class FileConfigSourceBase(ConfigSourceBase):
 
     Subclasses implement `_read` to return a dictionary or a source list.
     `load` checks source conditions on every call and reuses the parsed data
-    until `invalidate_cache` is called or caching is disabled. Source lists
+    until `invalidate_cache` is called. Source lists
     are evaluated with the current context on each load.
     """
-
-    _cache_enabled: bool = PrivateAttr(default=True)
 
     @cached_property
     def _data(self) -> DictConfigT | ConfigSourceList:
@@ -214,24 +202,11 @@ class FileConfigSourceBase(ConfigSourceBase):
         if not self.is_enabled_for(context):
             msg = f"Source '{self.name}' is not enabled for context: {context}"
             raise ValueError(msg)
-        return self._data if self._cache_enabled else self._read()
-
-    def enable_cache(self, *, enabled: bool = True) -> None:
-        """Enable or disable reuse of parsed file data.
-
-        Parameters
-        ----------
-        enabled : bool, optional
-            Whether to cache parsed data, by default True. False discards any
-            cached data and makes each enabled load read the file again.
-        """
-        self._cache_enabled = enabled
-        if not enabled:
-            self.invalidate_cache()
+        return self._data
 
     def invalidate_cache(self) -> None:
         """Discard parsed data so the next enabled load rereads the file.
 
-        Does not read the file immediately or change the cache setting.
+        Does not read the file immediately.
         """
         self.__dict__.pop("_data", None)

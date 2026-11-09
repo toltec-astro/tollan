@@ -24,6 +24,7 @@ def dataset():
     )
 
 
+@pytest.mark.spec("units-and-table-conversion")
 def test_projection_preserves_columns_units_and_metadata(dataset):
     table = dataset_to_qtable(dataset, dim="row")
     assert table.colnames == list(dataset.data_vars)
@@ -38,6 +39,7 @@ def test_projection_preserves_columns_units_and_metadata(dataset):
     assert dataset.attrs["observer"] == "example"
 
 
+@pytest.mark.spec("units-and-table-conversion")
 def test_independently_editable_projection_preserves_source(dataset):
     before = dataset.copy(deep=True)
     table = dataset_to_qtable(dataset, dim="row", copy=True)
@@ -91,6 +93,7 @@ def test_invalid_units_are_not_silently_dropped(dataset):
         dataset_to_qtable(dataset, dim="row")
 
 
+@pytest.mark.spec("units-and-table-conversion")
 @pytest.mark.parametrize("indices", [[1, 2], [0, 2], [], [0, 1, 2, 3]])
 def test_selection_retains_original_row_order_and_units(dataset, indices):
     mask = xr.DataArray(np.isin(np.arange(4), indices), dims="row")
@@ -123,6 +126,7 @@ def test_invalid_masks_raise(dataset, mask):
         select_table_rows(dataset, mask, dim="row")
 
 
+@pytest.mark.spec("units-and-table-conversion", "lazy-data-and-resource-ownership")
 def test_lazy_selection_and_projection_only_read_requested_payload():
     reads = []
 

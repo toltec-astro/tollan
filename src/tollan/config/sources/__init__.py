@@ -279,67 +279,15 @@ class ConfigSourceList(BaseModel):
                     f"with context={context}",
                 )
 
-    def enable_cache(
-        self,
-        predicate: Callable[[ConfigSource], bool] | None = None,
-        exclude: Callable[[ConfigSource], bool] | None = None,
-        *,
-        enabled: bool = True,
-    ) -> None:
-        """Configure read caching for the contained sources.
+    def invalidate_cache(self) -> None:
+        """Clear cached reads of all sources, including nested contents.
 
-        Parameters
-        ----------
-        predicate : callable, optional
-            Select sources to cache. By default, select all sources.
-        exclude : callable, optional
-            Exclude sources from caching, taking precedence over predicate.
-        enabled : bool, optional
-            Set False to disable caching for all sources.
-
-        Notes
-        -----
-        Selection applies to this list's immediate sources. A nested list
-        forwards its selected state to its contents. Dictionary sources have
-        no read cache. Disabling a file source's cache clears its saved read.
+        The next load reads each enabled file source again. A source shared
+        with another list is refreshed for that list too.
 
         Examples
         --------
-        Select cached sources by name, format, or order. These calls configure
-        caching without reading the files:
-
-        >>> sources = ConfigSourceList(data=[
-        ...     YamlConfigSource(order=0, name="base", source=Path("base.yaml")),
-        ...     EnvFileConfigSource(order=1, name="env", source=Path(".env")),
-        ... ])
-        >>> sources.enable_cache(exclude=lambda s: s.name == "env")
-        >>> sources.enable_cache(lambda s: isinstance(s, YamlConfigSource))
-        >>> sources.enable_cache(lambda s: s.order == 0)
-        >>> sources.enable_cache(enabled=False)  # Read files on every load.
-        """
-        for source in self:
-            selected = (
-                enabled
-                and (exclude is None or not exclude(source))
-                and (predicate is None or predicate(source))
-            )
-            source.enable_cache(enabled=selected)
-
-    def invalidate_cache(
-        self,
-        predicate: Callable[[ConfigSource], bool] | None = None,
-    ) -> None:
-        """Clear cached reads for selected sources, including nested contents.
-
-        Parameters
-        ----------
-        predicate : callable, optional
-            Select immediate sources to invalidate. By default, invalidate all.
-            Selecting a nested list invalidates all its contained source reads.
-
-        Examples
-        --------
-        Refresh a changed file by selecting its source:
+        Refresh a changed file:
 
         >>> from tempfile import TemporaryDirectory
         >>> with TemporaryDirectory() as directory:
@@ -351,20 +299,14 @@ class ConfigSourceList(BaseModel):
         ...     print(sources.load()["limit"])
         ...     _ = path.write_text("limit: 20")
         ...     print(sources.load()["limit"])
-        ...     sources.invalidate_cache(lambda s: s.name == "base")
+        ...     sources.invalidate_cache()
         ...     print(sources.load()["limit"])
         10
         10
         20
-
-        Select by order, or clear all source caches:
-
-        >>> sources.invalidate_cache(lambda s: s.order == 0)
-        >>> sources.invalidate_cache()
         """
         for source in self:
-            if predicate is None or predicate(source):
-                source.invalidate_cache()
+            source.invalidate_cache()
 
     @overload
     def get(

@@ -21,6 +21,7 @@ class Measurements(ModelTableAccessor):
     }
 
 
+@pytest.mark.spec("model-tables")
 def test_mixed_duck_types_only_read_declared_attributes():
     class Reading(BaseModel):
         channel: int
@@ -46,11 +47,12 @@ def test_mixed_duck_types_only_read_declared_attributes():
     )
 
 
+@pytest.mark.spec("model-tables")
 def test_paths_are_duck_typed_and_defaults_are_explicit():
     table = ModelTableAccessor.from_models(
-        [SimpleNamespace(meta=SimpleNamespace(obsnum=3), kind=2), object()],
+        [SimpleNamespace(meta=SimpleNamespace(number=3), kind=2), object()],
         columns={
-            "obsnum": ModelColumn("meta.obsnum", default=None, dtype="Int64"),
+            "number": ModelColumn("meta.number", default=None, dtype="Int64"),
             "data_kind": ModelColumn("kind", default=None, dtype="Int64"),
         },
     )
@@ -78,6 +80,7 @@ def test_projection_requires_explicit_columns():
         ModelTableAccessor(pd.DataFrame()).update_from_models([])  # ty: ignore[no-matching-overload]
 
 
+@pytest.mark.spec("model-tables")
 def test_multiple_passes_overwrite_nulls_and_preserve_unrelated_data():
     table = Measurements.from_models(
         [
@@ -104,6 +107,7 @@ def test_multiple_passes_overwrite_nulls_and_preserve_unrelated_data():
     assert updated["channel"].dtype == "Int64"
 
 
+@pytest.mark.spec("model-tables")
 def test_partial_update_adds_nullable_columns():
     table = pd.DataFrame({"source": ["a", "b", "c"]}, index=[7, 7, 2])
     result = ModelTableAccessor(table).update_from_models(
@@ -204,6 +208,7 @@ def test_update_keeps_nested_objects_as_individual_cells(inplace):
     assert pd.isna(updated["added"].iloc[1])
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("positions", [[-1, 1], [8], [-3]])
 @pytest.mark.parametrize("inplace", [False, True])
 def test_invalid_updates_leave_input_unchanged(positions, inplace):
@@ -230,6 +235,7 @@ def test_empty_update_and_empty_table():
     )
 
 
+@pytest.mark.spec("model-tables")
 def test_no_large_integer_rounding():
     table = ModelTableAccessor.from_models(
         [SimpleNamespace(value=2**63 + 1), SimpleNamespace(value=None)],
@@ -269,6 +275,7 @@ def test_sequence_length_is_checked_before_projection(count, inplace, as_iterato
     pd.testing.assert_frame_equal(table, before)
 
 
+@pytest.mark.spec("model-tables")
 def test_full_sequence_and_position_mapping_agree():
     table = pd.DataFrame({"channel": pd.array([1, 2], dtype="Int64")}, index=[8, 8])
     models = [SimpleNamespace(channel=5), SimpleNamespace(channel=7)]
@@ -348,6 +355,7 @@ def test_positional_assignment_preserves_mixed_columns_and_large_integers():
     pd.testing.assert_index_equal(result.index, table.index)
 
 
+@pytest.mark.spec("model-tables")
 def test_mapping_uses_positions_not_labels_or_mapping_order():
     table = pd.DataFrame({"channel": [1, 2, 3]}, index=[1, 0, 0])
     result = Measurements(table).update_from_models(
@@ -381,6 +389,7 @@ def test_mapping_values_are_single_objects_not_batches():
     assert table["channel"].tolist() == [1, 2]
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("as_mapping", [False, True])
 def test_inplace_updates_without_copying_table(monkeypatch, as_mapping):
     table = pd.DataFrame({"channel": pd.array([1, 2], dtype="Int64")}, index=[8, 8])
@@ -415,6 +424,7 @@ def test_inplace_projection_failure_leaves_table_unchanged():
     assert table["channel"].tolist() == [1, 2]
 
 
+@pytest.mark.spec("model-tables")
 def test_inplace_partial_update_overwrites_nulls_and_keeps_other_rows():
     table = Measurements.from_models(
         [
@@ -435,6 +445,7 @@ def test_inplace_partial_update_overwrites_nulls_and_keeps_other_rows():
     assert table["amplitude"].dtype == "Float64"
 
 
+@pytest.mark.spec("model-tables")
 def test_default_update_preserves_input_on_assignment_failure():
     table = pd.DataFrame(
         {

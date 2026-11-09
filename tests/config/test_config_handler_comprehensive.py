@@ -10,7 +10,12 @@ from typing import Any, Literal
 import pytest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from tollan.config import ConfigHandler, RuntimeContext, SubConfigKeyTransformer
+from tollan.config import (
+    ConfigHandler,
+    RuntimeConfig,
+    RuntimeContext,
+    SubConfigKeyTransformer,
+)
 from tollan.config.types import AbsAnyPath
 
 
@@ -56,6 +61,7 @@ class TestConfigHandlerBasics:
         assert not hasattr(handler, "runtime_config")
         assert handler.runtime_info is runtime.config.runtime_info
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_runtime_info_is_captured_before_first_access(self, runtime):
         handler = DomainHandler(runtime)
         info = runtime.runtime_info
@@ -67,6 +73,7 @@ class TestConfigHandlerBasics:
         assert other.runtime_info.cmd == "later invocation"
         assert handler.runtime_info.config_sources is runtime.config_sources
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_runtime_info_retains_context_after_runtime_scope_exits(self, runtime):
         with runtime.set_context({"observation": 42}):
             handler = DomainHandler(runtime)
@@ -74,15 +81,36 @@ class TestConfigHandlerBasics:
         assert handler.runtime_info.validation_context == {"observation": 42}
         assert handler.recreate().runtime_info.validation_context == {}
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_config_is_stable_before_first_access(self, runtime):
         handler = DomainHandler(runtime)
         runtime.update_override_config({"domain": {"value": "later"}})
         assert handler.config.value == "original"
         assert handler.recreate().config.value == "later"
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_invalid_config_fails_at_construction(self):
         with pytest.raises(ValidationError, match="value"):
             DomainHandler(RuntimeContext())
+
+    @pytest.mark.parametrize("extra", [{}, {"other": {}}])
+    def test_declared_section_is_found_beside_unrelated_extras(self, extra):
+        class AppConfig(RuntimeConfig):
+            domain: DomainConfig
+
+        class AppDomainHandler(
+            SubConfigKeyTransformer[Literal["domain"]],
+            ConfigHandler[DomainConfig, RuntimeContext[Any]],
+        ):
+            pass
+
+        sections = {"domain": {"value": "configured", "limit": 3}, **extra}
+        runtime = RuntimeContext[AppConfig](
+            config_sources=[{"format": "dict", "source": sections, "order": 0}]
+        )
+        handler = AppDomainHandler(runtime)
+        assert handler.config.value == "configured"
+        assert handler.config.limit == 3
 
     def test_handler_must_implement_prepare_config_data(self):
         class BadHandler(ConfigHandler[DomainConfig]):
@@ -131,6 +159,7 @@ class TestConfigHandlerBasics:
 
 
 class TestConfigHandlerVariants:
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_domain_overrides_and_defaults(self, runtime):
         handler = DomainHandler(runtime)
         original_config = runtime.config
@@ -154,6 +183,7 @@ class TestConfigHandlerVariants:
             assert other._rc.config_dict["other_domain"] == {"enabled": True}
         assert "other_domain" not in runtime.config_dict
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_nested_scopes_are_independent(self, runtime):
         handler = DomainHandler(runtime)
         resource = handler.resource
@@ -165,6 +195,7 @@ class TestConfigHandlerVariants:
             assert outer.config.value == "outer"
         assert handler.resource is resource
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_variant_validation_failure_does_not_change_parent(self, runtime):
         handler = DomainHandler(runtime)
         config = runtime.config
@@ -176,6 +207,7 @@ class TestConfigHandlerVariants:
         assert runtime.config is config
         assert handler.config.limit == 10
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_exception_in_scope_does_not_change_parent(self, runtime):
         handler = DomainHandler(runtime)
         config = runtime.config
@@ -198,6 +230,7 @@ class TestConfigHandlerVariants:
             assert other.config == DomainConfig(value="later", limit=30)
         assert handler.config.value == "original"
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_raw_paths_are_revalidated_with_variant_context(self, tmp_path):
         class Config(BaseModel):
             path: AbsAnyPath

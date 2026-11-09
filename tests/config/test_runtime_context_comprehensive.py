@@ -39,6 +39,7 @@ class TestRuntimeContextBasics:
         assert rc.config_dict["app"] == "test"
         assert rc.config_dict["version"] == "1.0"
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     @pytest.mark.parametrize("settings", [{}, {"app": "test", "name": "application"}])
     def test_create_with_settings_dictionary(self, settings):
         rc = RuntimeContext(settings)
@@ -46,6 +47,7 @@ class TestRuntimeContextBasics:
             assert rc.config_dict[key] == value
         assert isinstance(rc.config, RuntimeConfig)
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_create_with_multiple_sources(self):
         """Test creating RuntimeContext with multiple sources."""
         rc = RuntimeContext(
@@ -91,6 +93,7 @@ class TestRuntimeContextBasics:
 class TestRuntimeContextCLI:
     """Test RuntimeContext.from_cli factory method."""
 
+    @pytest.mark.spec("configuration-integration")
     def test_from_cli_with_cli_args_only(self):
         """Test from_cli with only CLI args."""
         rc = RuntimeContext.from_cli(
@@ -100,6 +103,7 @@ class TestRuntimeContextCLI:
         assert rc.config_dict["debug"] is True
         assert rc.config_dict["server"]["port"] == 8080
 
+    @pytest.mark.spec("configuration-integration")
     def test_from_cli_with_nested_keys(self):
         """Test from_cli parses nested keys correctly."""
         rc = RuntimeContext.from_cli(
@@ -114,6 +118,7 @@ class TestRuntimeContextCLI:
         # Should work, just has empty config
         assert rc.config_dict is not None
 
+    @pytest.mark.spec("configuration-integration")
     def test_from_cli_with_env_files(self, tmp_path):
         """Test from_cli loads env files into config dict."""
         env_file = tmp_path / "config.env"
@@ -186,6 +191,7 @@ class TestRuntimeContextCLI:
 class TestRuntimeContextSetContext:
     """Test RuntimeContext.set_context context manager."""
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_set_context_temporary_override(self):
         """Test set_context temporarily overrides context."""
         rc = RuntimeContext(
@@ -248,6 +254,7 @@ class TestRuntimeContextSetContext:
 class TestRuntimeContextTierManipulation:
     """Test RuntimeContext tier manipulation methods."""
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_update_override_config(self):
         """Test update_override_config adds to override tier."""
         rc = RuntimeContext(
@@ -286,6 +293,7 @@ class TestRuntimeContextTierManipulation:
         assert rc.config_dict["override"] == "value2"
         assert rc.config_dict["new"] == "value"
 
+    @pytest.mark.spec("runtime-context-and-component-settings")
     def test_update_default_config(self):
         """Test update_default_config adds to default tier."""
         rc = RuntimeContext(
@@ -333,6 +341,7 @@ class TestRuntimeContextReload:
         assert config2 is not config1
         assert config2 == config1  # But same content
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_reload_with_modified_source(self):
         """Test reload invalidates caches and forces fresh load."""
         rc = RuntimeContext(

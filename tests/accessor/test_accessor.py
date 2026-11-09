@@ -168,6 +168,7 @@ class TestAccessorBaseValidation:
 
         assert validate_called == [True]
 
+    @pytest.mark.spec("accessors-and-views")
     def test_validation_can_raise(self):
         """_validate() can raise ValueError for invalid data."""
 
@@ -269,6 +270,7 @@ class TestAccessorBaseAsXarrayAccessor:
 class TestAccessorBaseAsView:
     """Test AccessorBase used as data view."""
 
+    @pytest.mark.spec("accessors-and-views")
     def test_view_pattern_with_mapper(self):
         """AccessorBase can be used as view accepting mapper."""
 

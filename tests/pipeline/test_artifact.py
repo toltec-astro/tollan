@@ -26,6 +26,7 @@ class TextSpec(ArtifactSpec[str]):
         return str(value)
 
 
+@pytest.mark.spec("artifact-retention-and-composition")
 def test_typed_lookup_aliases_and_replacement():
     default = TextSpec()
     second = TextSpec(alias="second")
@@ -59,6 +60,9 @@ def test_typed_lookup_aliases_and_replacement():
     assert ArtifactContext(entries.values())[second] is other
 
 
+@pytest.mark.spec(
+    "artifact-data-and-specifications", "artifact-retention-and-composition"
+)
 def test_construction_retains_payload_and_effective_spec():
     configured = SignalArtifacts(
         save_formats=["json"], signal=SignalViz(line_width=3.0)
@@ -78,6 +82,7 @@ def test_construction_retains_payload_and_effective_spec():
     assert retained[SignalViz].spec is artifact.spec
 
 
+@pytest.mark.spec("use-artifacts-in-a-step")
 def test_resolved_config_roundtrip_and_invocation_isolation():
     config = SignalPlotConfig(artifacts=SignalArtifacts(save_formats=["json"]))
     restored = SignalPlotConfig.model_validate_json(config.model_dump_json())
@@ -102,6 +107,7 @@ def test_resolved_config_roundtrip_and_invocation_isolation():
     assert not reopened.artifacts
 
 
+@pytest.mark.spec("context-identity-and-serialization")
 def test_pickle_restores_figures_and_specs_without_running_step(tmp_path):
     source = xr.Dataset({"signal": ("sample", [1.0, 2.0, 3.0])})
     _, context = SignalPlot(artifacts=SignalArtifacts(save_formats=["json"]))(
@@ -132,6 +138,7 @@ print(files[0].path.name)
     assert (tmp_path / "signal.json").is_file()
 
 
+@pytest.mark.spec("export-and-display")
 def test_eager_and_deferred_exports_use_same_effective_specs(tmp_path):
     source = xr.Dataset({"signal": ("sample", [1.0, 2.0, 3.0])})
     _, context = SignalPlot(
@@ -148,6 +155,7 @@ def test_eager_and_deferred_exports_use_same_effective_specs(tmp_path):
         )
 
 
+@pytest.mark.spec("export-and-display")
 def test_export_failure_retains_figures_and_records_step_exception(tmp_path):
     occupied = tmp_path / "file"
     occupied.write_text("occupied")

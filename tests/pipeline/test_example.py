@@ -32,6 +32,7 @@ def source():
     return xr.Dataset({"signal": ("sample", [1.0, 2.0])})
 
 
+@pytest.mark.spec("concepts-and-responsibilities")
 @pytest.mark.parametrize("lazy", [False, True])
 def test_numerical_computation_preserves_inputs_and_backend(lazy):
     values = np.array([1.0, 2.0])
@@ -56,6 +57,7 @@ def test_numerical_computation_preserves_inputs_and_backend(lazy):
     np.testing.assert_array_equal(values, [1.0, 2.0])
 
 
+@pytest.mark.spec("reusable-step-computations")
 def test_direct_run_leaves_lifecycle_to_caller(source):
     context = ScaleContext(step_cls=Scale, config=ScaleConfig(factor=3.0))
     tree = xr.DataTree.from_dict({"raw": source})
@@ -69,6 +71,7 @@ def test_direct_run_leaves_lifecycle_to_caller(source):
     assert context.failures == []
 
 
+@pytest.mark.spec("sequential-execution-and-failure-handling")
 @pytest.mark.parametrize("has_context", [False, True])
 def test_missing_result_records_failure_and_allows_later_step(
     source, tmp_path, has_context
@@ -89,6 +92,7 @@ def test_missing_result_records_failure_and_allows_later_step(
     assert Scale.get_context(tree).completed
 
 
+@pytest.mark.spec("sequential-execution-and-failure-handling")
 def test_writer_accepts_available_partial_result_and_overwrites(source, tmp_path):
     tree = xr.DataTree.from_dict({"raw": source})
     _, context = Scale()(tree, return_context=True)
@@ -105,6 +109,7 @@ def test_writer_accepts_available_partial_result_and_overwrites(source, tmp_path
         assert saved.signal.values.tolist() == [2.0, 4.0]
 
 
+@pytest.mark.spec("invocation-contexts")
 def test_lazy_computation_failure_belongs_to_writer(tmp_path):
     @dask.delayed
     def unavailable_signal():
@@ -141,6 +146,7 @@ def test_lazy_computation_failure_belongs_to_writer(tmp_path):
     assert scale_context.failures == []
 
 
+@pytest.mark.spec("context-identity-and-serialization")
 @pytest.mark.parametrize("alias", [None, "diagnostic"])
 def test_context_supports_diagnostics_in_another_process(source, alias):
     tree = xr.DataTree.from_dict({"raw": source})

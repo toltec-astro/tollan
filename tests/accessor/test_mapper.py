@@ -62,6 +62,7 @@ class TestMapperCreation:
 class TestFieldResolution:
     """Test field resolution logic."""
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_resolve_field_found(self):
         """Resolve field that exists."""
         data = {"temperature": 25.0}
@@ -121,6 +122,7 @@ class TestFieldResolution:
 class TestValueRetrieval:
     """Test value retrieval methods."""
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_get_value_reads_without_caching(self):
         """Get an ordinary value without retaining it in the mapper."""
         data = {"temp": 25.0}
@@ -151,6 +153,7 @@ class TestValueRetrieval:
         assert value == 25.0
         assert mapped_field.value is MISSING
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_get_value_reads_each_supplied_data_source(self):
         """An ordinary mapping reads the source supplied to each call."""
         source_a = {"temp": 25.0}
@@ -177,6 +180,7 @@ class TestValueRetrieval:
         assert mapper.get_value(source_b, mapper.schema.temp) == 30.0
         assert mapper.mapped_fields[mapper.schema.temp].value is MISSING
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_get_value_eager(self):
         """A resolution value remains mapper state, not a source-read cache."""
         source_a = {"temp": 25.0}

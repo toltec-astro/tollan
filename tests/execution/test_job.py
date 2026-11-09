@@ -52,6 +52,7 @@ def spec(tmp_path):
 # Identity and contents
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_records_are_created_once_per_key(spec, tmp_path):
     record = JobRecord.create(spec, key="job-1", command=COMMAND)
     assert record.path == tmp_path / "jobs" / "job-1"
@@ -59,6 +60,7 @@ def test_records_are_created_once_per_key(spec, tmp_path):
         JobRecord.create(spec, key="job-1", command=COMMAND)
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_an_opened_record_keeps_its_spec_and_command(spec):
     record = JobRecord.create(spec, key="job-1", command=COMMAND)
     opened = JobRecord.open(record.path)
@@ -125,6 +127,7 @@ def test_environment_names_must_be_shell_identifiers(tmp_path):
 # Once-only submission
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_repeated_submission_returns_the_first_receipt(spec):
     scheduler = RecordingScheduler()
     record = JobRecord.create(spec, key="job-1", command=COMMAND)
@@ -134,6 +137,7 @@ def test_repeated_submission_returns_the_first_receipt(spec):
     assert scheduler.submitted == ["job-1"]
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_concurrent_submissions_submit_once(spec):
     scheduler = RecordingScheduler()
     record = JobRecord.create(spec, key="job-1", command=COMMAND)
@@ -154,6 +158,7 @@ def test_concurrent_submissions_submit_once(spec):
     assert record.receipt in outcomes
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_a_failed_submission_leaves_the_record_unresolved(spec):
     record = JobRecord.create(spec, key="job-1", command=COMMAND)
     with pytest.raises(OSError, match="lost"):
@@ -179,6 +184,7 @@ def make_unresolved(spec):
     return record
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_reconciliation_records_the_job_found(spec):
     record = make_unresolved(spec)
     found = SubmissionReceipt(native_id="77")
@@ -187,6 +193,7 @@ def test_reconciliation_records_the_job_found(spec):
     assert not record.is_unresolved
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_reconciliation_without_a_job_allows_submission_again(spec):
     record = make_unresolved(spec)
     scheduler = RecordingScheduler()
@@ -220,6 +227,7 @@ def test_reconciliation_of_a_submitted_record_returns_its_receipt(spec):
 # Observation and cancellation
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_status_history_records_each_change_once(spec):
     queued = JobStatus(state=JobState.queued)
     running = JobStatus(state=JobState.running)
@@ -234,6 +242,7 @@ def test_status_history_records_each_change_once(spec):
     assert history[-1] == done
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_states_report_whether_the_job_finished():
     assert {state for state in JobState if state.is_terminal} == {
         JobState.completed,

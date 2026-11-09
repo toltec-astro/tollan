@@ -20,6 +20,7 @@ from tollan.config.types import (
 )
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_path_root_context_and_json_roundtrip(tmp_path: Path) -> None:
     """Relative inputs resolve against context and serialize as JSON strings."""
     data_file = tmp_path / "data.nc"
@@ -130,22 +131,28 @@ def test_typed_path_expands_home_before_filesystem_checks(
     assert result == target
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("annotation", [SubPath, SubPathOrRoot])
 def test_subpath_in_strict_model_and_json_roundtrip(tmp_path, annotation):
     class StoreSettings(FrozenBaseModel):
         subpath: annotation
 
-    for value in ("toltec/tcs", PurePosixPath("toltec/tcs"), Path("toltec/tcs")):
+    for value in (
+        "instrument/raw",
+        PurePosixPath("instrument/raw"),
+        Path("instrument/raw"),
+    ):
         model = StoreSettings.model_validate(
             {"subpath": value}, context={"root_path": tmp_path}
         )
         assert isinstance(model.subpath, PurePosixPath)
-        assert model.subpath == PurePosixPath("toltec/tcs")
-        assert tmp_path / model.subpath == tmp_path / "toltec/tcs"
+        assert model.subpath == PurePosixPath("instrument/raw")
+        assert tmp_path / model.subpath == tmp_path / "instrument/raw"
         assert StoreSettings.model_validate_json(model.model_dump_json()) == model
     assert TypeAdapter(annotation).json_schema() == {"format": "path", "type": "string"}
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("value", ["", ".", "./", PurePosixPath("."), Path()])
 def test_root_inclusive_subpath_in_strict_model(tmp_path, value):
     class StoreSettings(FrozenBaseModel):
@@ -160,6 +167,7 @@ def test_root_inclusive_subpath_in_strict_model(tmp_path, value):
     assert StoreSettings.model_validate_json(model.model_dump_json()) == model
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize(
     "value", ["", ".", "./", "..", "../raw", "a/../b", "a/..", "/raw", "//data/raw"]
 )
@@ -189,6 +197,7 @@ def test_subpath_rejects_invalid_input_types(value, annotation):
     assert exc_info.value.errors()[0]["type"] == "path_type"
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("annotation", [SubPath, SubPathOrRoot])
 def test_subpath_normalizes_without_filesystem_access(monkeypatch, annotation):
     def unexpected(*args, **kwargs):
@@ -201,6 +210,7 @@ def test_subpath_normalizes_without_filesystem_access(monkeypatch, annotation):
     assert adapter.validate_python("~/raw") == PurePosixPath("~/raw")
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_host_path_in_strict_model_and_json_roundtrip(tmp_path):
     class JobSettings(FrozenBaseModel):
         path: HostPath
@@ -213,12 +223,14 @@ def test_host_path_in_strict_model_and_json_roundtrip(tmp_path):
     assert JobSettings.model_validate_json(model.model_dump_json()) == model
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("value", ["relative/jobs", "/shared/../jobs", ""])
 def test_host_path_is_absolute_without_parent_traversal(value):
     with pytest.raises(ValidationError, match="Expected an absolute path"):
         TypeAdapter(HostPath).validate_python(value)
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_host_path_is_not_resolved_on_the_validating_host(tmp_path):
     link = tmp_path / "link"
     link.symlink_to(tmp_path)

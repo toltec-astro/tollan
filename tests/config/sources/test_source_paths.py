@@ -16,6 +16,7 @@ from tollan.config.sources import (
 from tollan.config.types import AnyPath, FileLocField
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize("source_cls", [YamlConfigSource, EnvFileConfigSource])
 def test_file_source_field_uses_context_without_opening(tmp_path, source_cls):
     source = source_cls.model_validate(
@@ -28,6 +29,7 @@ def test_file_source_field_uses_context_without_opening(tmp_path, source_cls):
     assert source.source == tmp_path / "missing.file"
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize("source_cls", [YamlConfigSource, EnvFileConfigSource])
 def test_file_source_does_not_use_application_root(tmp_path, source_cls):
     source = source_cls.model_validate(
@@ -37,6 +39,7 @@ def test_file_source_does_not_use_application_root(tmp_path, source_cls):
     assert source.source == Path("settings.yaml")
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_source_loading_and_setting_paths_have_independent_roots(tmp_path):
     source_root = tmp_path / "configuration"
     source_root.mkdir()
@@ -62,6 +65,7 @@ def test_source_loading_and_setting_paths_have_independent_roots(tmp_path):
     ) == Path("data.nc")
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_nested_lists_keep_path_and_namespace_context(tmp_path):
     declarations = [
         {
@@ -98,6 +102,7 @@ def test_nested_lists_keep_path_and_namespace_context(tmp_path):
     assert context == original_context
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize("relative_root", [False, True])
 @pytest.mark.parametrize("form", ["file", "directory", "nested_directory"])
 def test_resolver_roots_path_shorthand(tmp_path, monkeypatch, relative_root, form):
@@ -121,6 +126,7 @@ def test_resolver_roots_path_shorthand(tmp_path, monkeypatch, relative_root, for
     assert sources.load() == {"value": 1}
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_reused_sources_keep_paths_and_cached_reads(tmp_path):
     path = tmp_path / "settings.yaml"
     path.write_text("value: 1\n")

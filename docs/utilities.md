@@ -142,6 +142,35 @@ assert not hasattr(lookup, "register")
 The {class}`~tollan.utils.registry.RegistryView` is read-only, but does not freeze
 the registered values. Subclass it to add typed properties for known entries.
 
+## Trace tests to a specification
+
+Use the {mod}`tollan.testing.spec_trace` pytest plugin to show which
+requirement each test protects. Enable it in the pytest configuration, then
+cite the specification sections a test protects:
+
+```toml
+[tool.pytest.ini_options]
+addopts = ["-p tollan.testing.spec_trace"]
+# spec_path = "design/spec.md"  # the default
+```
+
+```python
+import pytest
+
+pytestmark = pytest.mark.spec("configuration-sources-and-precedence")
+
+
+@pytest.mark.spec("read-values", "value-types")
+def test_read(): ...
+```
+
+A section name is the heading text in lowercase with hyphens, for example
+`Read values` becomes `read-values`; the document title is not a section.
+Collection fails when a test cites a section that the specification does not
+have, so a removed or renamed requirement cannot leave tests that protect
+nothing. Run `pytest --spec_report` to list the tests per section, the
+sections without a test, and the number of tests that cite no section.
+
 ## Read and write YAML
 
 | Input / output | Call |

@@ -27,6 +27,7 @@ with warnings.catch_warnings():
 class TestNetCDF4Mapper:
     """Test NetCDF4Mapper for netCDF4.Dataset."""
 
+    @pytest.mark.spec("schemas-and-mappings")
     @pytest.mark.parametrize("name", ["close", "x"])
     def test_ambiguous_name_rejected(self, temp_netcdf, name):
         mapping = NameMapping(name)
@@ -44,6 +45,7 @@ class TestNetCDF4Mapper:
         ):
             TestMapper.from_data_source(ds)
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_resolved_attribute_does_not_switch_to_variable(self, temp_netcdf):
         @dataclass
         class TestSchema(Schema):
@@ -123,6 +125,7 @@ class TestNetCDF4Mapper:
 
             assert isinstance(mapper, NetCDF4Mapper)
 
+    @pytest.mark.spec("backend-adapters")
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_variable(self, temp_netcdf):
         """Read variable values."""
@@ -142,6 +145,7 @@ class TestNetCDF4Mapper:
             assert isinstance(value, np.ndarray)
             np.testing.assert_allclose(value, [25.0, 26.0, 27.0])
 
+    @pytest.mark.spec("backend-adapters")
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_attrs(self, temp_netcdf):
         """Read values from Dataset attributes."""
@@ -160,6 +164,7 @@ class TestNetCDF4Mapper:
 
             assert value == "metadata_value"
 
+    @pytest.mark.spec("backend-adapters")
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_dimension_size(
         self,
@@ -210,6 +215,7 @@ class TestNetCDF4Mapper:
                 [10, 20, 30],
             )
 
+    @pytest.mark.spec("schemas-and-mappings")
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_explicit_attribute_with_same_named_variable_and_api_member(
         self, temp_netcdf
@@ -230,6 +236,7 @@ class TestNetCDF4Mapper:
             assert callable(ds.close)
             assert mapper.get_value(ds, mapper.schema.collision) == "attribute_value"
 
+    @pytest.mark.spec("backend-adapters")
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_preserves_mask(self, temp_netcdf):
         """Native variable reads preserve netCDF4 fill-value masking."""
@@ -250,6 +257,7 @@ class TestNetCDF4Mapper:
             np.testing.assert_array_equal(value.mask, [False, True, False])
             np.testing.assert_allclose(value.compressed(), [1.0, 3.0])
 
+    @pytest.mark.spec("backend-adapters")
     @pytest.mark.filterwarnings("ignore:numpy.ndarray size changed:RuntimeWarning")
     def test_read_preserves_automatic_scaling(self, temp_netcdf):
         """Native variable reads retain scale-factor and offset decoding."""

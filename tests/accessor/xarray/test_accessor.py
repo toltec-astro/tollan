@@ -351,6 +351,7 @@ class TestXarrayAccessorBaseResolution:
         assert isinstance(data_source, xr.Dataset)
         assert data_source.equals(dt.ds)
 
+    @pytest.mark.spec("accessors-and-views")
     def test_custom_resolution(self):
         """Custom resolution can override data_source property."""
 
@@ -698,6 +699,7 @@ class TestXarrayAccessorBaseValidation:
 
         assert len(validation_called) == 1
 
+    @pytest.mark.spec("accessors-and-views")
     def test_validation_can_raise(self):
         """_validate can raise errors."""
 
@@ -853,6 +855,7 @@ class TestNetCDFFileIO:
         assert view.result_values.tolist() == [1.0, 2.0, 3.0]
 
 
+@pytest.mark.spec("backend-adapters")
 def test_conversions_use_selected_node_without_changing_layout():
     root = xr.DataTree.from_dict(
         {

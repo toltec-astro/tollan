@@ -493,6 +493,7 @@ class TestFileLocComparison:
 class TestFileLocIntegration:
     """Integration tests for complete workflows."""
 
+    @pytest.mark.spec("file-locations-and-item-paths")
     def test_local_file_workflow(self, tmp_path):
         """Test complete workflow with local file."""
         # Create FileLoc
@@ -509,6 +510,7 @@ class TestFileLocIntegration:
         rsync_arg = fl.as_rsync_arg()
         assert rsync_arg == str(test_file)
 
+    @pytest.mark.spec("file-locations-and-item-paths")
     def test_remote_file_workflow(self):
         """Test complete workflow with remote file."""
         # Create FileLoc
@@ -575,6 +577,7 @@ class TestFileLocIntegration:
         assert "/project" in cfg.output_file.url
 
 
+@pytest.mark.spec("file-locations-and-item-paths")
 @pytest.mark.parametrize(
     ("url", "host", "path"),
     [

@@ -15,6 +15,7 @@ class Representation(BaseModel):
     physical_type: PhysicalTypeField
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize(("unit", "name"), [("deg", "angle"), ("m / s", "speed")])
 def test_astropy_declarations_work_without_arbitrary_types_config(unit, name):
     result = Representation.model_validate({"unit": unit, "physical_type": name})
@@ -72,6 +73,7 @@ def test_invalid_inputs_raise_validation_errors(annotation, value):
         TypeAdapter(annotation).validate_python(value)
 
 
+@pytest.mark.spec("runtime-context-and-component-settings")
 def test_invalid_default_is_validated():
     class InvalidDefault(Representation):
         unit: UnitField = "invalid unit"  # ty: ignore[invalid-assignment] -- invalid default under test.
@@ -81,6 +83,7 @@ def test_invalid_default_is_validated():
     assert exc.value.errors()[0]["loc"] == ("unit",)
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_unnamed_physical_type_cannot_produce_unrestorable_json():
     physical_type = u.get_physical_type(u.m**37)
     adapter = TypeAdapter(PhysicalTypeField)

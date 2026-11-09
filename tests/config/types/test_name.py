@@ -8,11 +8,13 @@ from pydantic import TypeAdapter, ValidationError
 from tollan.config.types import SafeName, SafeNamePath
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("value", ["cpu1", "transform", "login.example.org", "a-b"])
 def test_safe_name_accepts_identifiers(value):
     assert TypeAdapter(SafeName).validate_python(value) == value
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize(
     "value",
     ["", ".hidden", "-flag", "_x", "..", "a/b", "a b", "mirror:reports", "café"],
@@ -22,6 +24,7 @@ def test_safe_name_rejects_unsafe_names(value):
         TypeAdapter(SafeName).validate_python(value)
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize(
     "value",
     [
@@ -36,6 +39,7 @@ def test_safe_name_path_accepts_qualified_paths(value):
     assert TypeAdapter(SafeNamePath).validate_python(value) == value
 
 
+@pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize(
     "value",
     [

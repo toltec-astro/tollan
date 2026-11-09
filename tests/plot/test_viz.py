@@ -22,6 +22,7 @@ from tollan.plot.plotly import (
 )
 
 
+@pytest.mark.spec("export-and-display")
 def test_html_and_json_export_without_reconstruction(tmp_path, monkeypatch):
     viz = SignalViz(save_formats=["html", "json"])
     figure = viz(np.array([1.0, 3.0, 2.0]))
@@ -55,6 +56,7 @@ def test_html_fragment_and_animation_settings(tmp_path):
     assert "Plotly.addFrames(" in saved
 
 
+@pytest.mark.spec("export-and-display")
 @pytest.mark.parametrize("fmt", ["png", "jpg", "jpeg", "webp", "pdf", "svg"])
 def test_image_export_uses_configured_renderer_options(fmt, tmp_path, monkeypatch):
     writer = Mock()
@@ -69,6 +71,7 @@ def test_image_export_uses_configured_renderer_options(fmt, tmp_path, monkeypatc
     assert receipt.format == fmt
 
 
+@pytest.mark.spec("export-and-display")
 def test_renderer_failure_propagates(tmp_path, monkeypatch):
     monkeypatch.setattr(
         go.Figure, "write_image", Mock(side_effect=RuntimeError("renderer failed"))
@@ -92,6 +95,7 @@ def test_invalid_or_disabled_export_does_not_create_destination(tmp_path):
         PlotlyFigExportImage(width=0)
 
 
+@pytest.mark.spec("export-and-display")
 def test_embed_layout_and_display_same_figure(monkeypatch):
     figure = go.Figure(go.Scatter(y=[1, 2]))
     display = PlotlyFigShowInDash(host="127.0.0.1", port=0)

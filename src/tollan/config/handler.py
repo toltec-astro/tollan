@@ -488,14 +488,12 @@ class SubConfigKeyTransformer[KeyT: LiteralString]:
         dict
             Subconfig data dict
         """
-        # Extract the subkey from extra fields
-        # RuntimeConfig uses extra="allow", so extra fields are in __pydantic_extra__
-        if (
-            hasattr(runtime_config, "__pydantic_extra__")
-            and runtime_config.__pydantic_extra__
-        ):
-            return runtime_config.__pydantic_extra__.get(cls.subconfig_key, {})
-        # Fallback: try getattr (for regular fields)
+        # A supplied extra section takes precedence; a declared field is the
+        # fallback. Test membership of the requested key, not whether any extra
+        # field exists, so unrelated extra sections never hide a declared one.
+        extra = runtime_config.model_extra or {}
+        if cls.subconfig_key in extra:
+            return extra[cls.subconfig_key]
         return getattr(runtime_config, cls.subconfig_key, {})
 
     @classmethod

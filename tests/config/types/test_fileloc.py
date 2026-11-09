@@ -65,6 +65,7 @@ def test_no_root_uses_native_fileloc_validation():
     assert location.root.path == Path("data.nc")
 
 
+@pytest.mark.spec("scientific-value-types")
 def test_nested_json_roundtrip_keeps_parent_settings(tmp_path):
     model = Locations.model_validate(
         {"configured": ["data.nc"], "plain": "other.nc"},

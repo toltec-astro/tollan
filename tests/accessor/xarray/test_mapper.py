@@ -38,6 +38,7 @@ class SourceAccessor(XarrayAccessorBase[SourceMapper]):
     """Select payloads before calling the shared mapper."""
 
 
+@pytest.mark.spec("backend-adapters")
 @pytest.mark.parametrize("size", [0, 3])
 @pytest.mark.parametrize("source_kind", ["dataset", "dataarray", "wrapped", "tree"])
 def test_dimension_without_coordinate(size, source_kind):
@@ -77,6 +78,7 @@ def test_dimension_without_coordinate(size, source_kind):
         mapper.get_dim(source, mapper.schema.signal)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 def test_dimension_and_coordinate_reads_are_distinct():
     """A coordinate's values and a same-named attribute do not affect its size."""
     ds = xr.Dataset(coords={"sample": [10, 20, 30]})
@@ -167,6 +169,7 @@ class TestXarrayMapper:
 
         assert isinstance(mapper, XarrayMapper)
 
+    @pytest.mark.spec("backend-adapters")
     def test_read_data_variable(self):
         """Read data variable values as numpy array."""
         ds = xr.Dataset({"temp": (["x"], [25.0, 26.0, 27.0])})
@@ -237,6 +240,7 @@ class TestXarrayMapper:
         with pytest.raises(KeyError, match="Field not found"):
             mapper.get_value(ds, mapper.schema.pressure)
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_has_var(self):
         """Test has_arr checks for data variables and coordinates."""
         ds = xr.Dataset(
@@ -265,6 +269,7 @@ class TestXarrayMapper:
         # Missing fields should return False
         assert not mapper.has_arr(ds, mapper.schema.missing)
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_has_attr(self):
         """Test has_attr checks for attributes only."""
         ds = xr.Dataset(
@@ -671,6 +676,7 @@ class TestXarrayMapper:
 class TestXarraySourceContract:
     """Test the common Dataset, DataArray, and DataTree source contract."""
 
+    @pytest.mark.spec("backend-adapters")
     def test_dataarray_payload_coordinates_and_attrs(self):
         """A DataArray exposes its payload, coordinates, and attributes."""
         source = xr.DataArray(
@@ -712,6 +718,7 @@ class TestXarraySourceContract:
 
         assert mapper.get_arr(source, mapper.schema.data) is source
 
+    @pytest.mark.spec("backend-adapters")
     def test_datatree_uses_only_current_node(self):
         """The accessor selects the DataTree node before mapper operations."""
         source = xr.DataTree(
@@ -755,6 +762,7 @@ class TestXarraySourceContract:
             child.ds["child_only"],
         )
 
+    @pytest.mark.spec("schemas-and-mappings")
     def test_array_mapping_does_not_switch_to_same_named_attribute(self):
         """All reads honor the location selected by the mapping."""
         source = xr.DataArray(
@@ -771,6 +779,7 @@ class TestXarraySourceContract:
         assert not mapper.has_attr(source, mapper.schema.signal)
         assert mapper.get_arr(source, mapper.schema.signal) is source
 
+    @pytest.mark.spec("lazy-data-and-resource-ownership")
     def test_get_var_is_lazy_and_get_value_materializes(self):
         """Mapper resolution and labeled reads preserve Dask laziness."""
         computed: list[bool] = []
@@ -812,6 +821,7 @@ class TestXarraySourceContract:
         assert mapper.get_scalar(source, mapper.schema.count) == 42
         assert isinstance(source["count"].data, da.Array)
 
+    @pytest.mark.spec("lazy-data-and-resource-ownership")
     def test_get_scalar_rejects_array_before_computing(self):
         @delayed
         def values():
@@ -825,6 +835,7 @@ class TestXarraySourceContract:
             mapper.get_scalar(source, mapper.schema.signal)
 
 
+@pytest.mark.spec("schemas-and-mappings")
 @pytest.mark.parametrize("layout", ["same", "subset", "extension"])
 def test_batch_mapper_reads_compatible_sources(layout):
     reference = xr.Dataset(

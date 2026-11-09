@@ -3,6 +3,7 @@
 import pickle
 from dataclasses import dataclass, replace
 from pathlib import PurePosixPath
+from typing import Literal
 
 import dask.array as da
 import numpy as np
@@ -10,6 +11,7 @@ import pytest
 import xarray as xr
 from pydantic import ConfigDict, Field
 
+from docs.examples.artifact_example import SignalViz
 from tollan.accessor import AccessorBase, Mapping, NameMapping, SubpathMapping
 from tollan.accessor.xarray import (
     Analysis,
@@ -21,7 +23,8 @@ from tollan.accessor.xarray import (
     XarrayMapper,
     ensure_analysis_scope,
 )
-from tollan.pipeline import Step, StepConfig, StepContext
+from tollan.config import ConfigHandler, RuntimeContext, SubConfigKeyTransformer
+from tollan.pipeline import ArtifactContext, Step, StepConfig, StepContext
 
 
 @dataclass
@@ -81,11 +84,10 @@ class SampleAnalysis(SampleInput[SampleMapper]):
         return (mapper.schema.sample_subpath,)
 
     def _compute_result(self, data, *, mapper, **kwargs):
-        return {
-            mapper.schema.sample_subpath: data.data_source.isel(
-                time=slice(None, None, self.step)
-            )
-        }
+        return {mapper.schema.sample_subpath: self.make_sample(data.data_source)}
+
+    def make_sample(self, data):
+        return data.isel(time=slice(None, None, self.step))
 
 
 class SampleView(AnalysisView[SampleMapper, SampleAnalysis]):
@@ -115,6 +117,75 @@ class SampleStep(Step[SampleStepConfig, SampleStepContext]):
         context.data = SampleView(context.config.analysis(data))
 
 
+class SampleHandler(
+    SubConfigKeyTransformer[Literal["sample"]],
+    ConfigHandler[SampleAnalysis],
+):
+    pass
+
+
+@pytest.mark.spec("computation-and-producing-configuration")
+def test_installed_results_keep_producing_configuration_after_settings_change(
+    source,
+):
+    rc = RuntimeContext()
+    rc.update_default_config({"sample": {"step": 3}})
+    tree = ensure_analysis_scope(source)
+    SampleHandler(rc).config(tree)
+    rc.update_override_config({"sample": {"step": 4}})
+    view = SampleView(tree)
+    assert view.sample_analysis == SampleAnalysis(step=3)
+    assert view.sample["values"].values.tolist() == [0, 3, 6, 9]
+
+    SampleHandler(rc).config(tree)
+    view = SampleView(tree)
+    assert view.sample_analysis == SampleAnalysis(step=4)
+    assert view.sample["values"].values.tolist() == [0, 4, 8]
+
+
+@pytest.mark.spec("computation-and-producing-configuration")
+def test_step_record_is_separate_from_producing_configuration(source):
+    tree = ensure_analysis_scope(source)
+    SampleStep(analysis=SampleAnalysis(step=3))(tree)
+    SampleAnalysis(step=4)(tree)
+    assert SampleView(tree).sample_analysis == SampleAnalysis(step=4)
+    context = SampleStep.get_context(tree)
+    assert context.completed
+    assert context.config.analysis == SampleAnalysis(step=3)
+
+
+@pytest.mark.spec("reusable-analysis-computations")
+def test_middle_level_computation_returns_standalone_result(source):
+    original = source.copy()
+    analysis = SampleAnalysis(step=3)
+    standalone = analysis.make_sample(source)
+    assert isinstance(standalone, xr.Dataset)
+    assert source.identical(original)
+    installed = SampleView(analysis(ensure_analysis_scope(source))).sample
+    xr.testing.assert_equal(standalone, installed)
+
+
+@pytest.mark.spec("visualization-construction")
+def test_visualization_consumes_result_view_without_recomputation(source, monkeypatch):
+    tree = ensure_analysis_scope(source)
+    SampleAnalysis(step=3)(tree)
+    before = tree.copy(deep=True)
+
+    def unexpected_computation(*args, **kwargs):
+        pytest.fail("Constructing a figure must not recompute the analysis")
+
+    monkeypatch.setattr(SampleAnalysis, "_compute_result", unexpected_computation)
+    spec = SignalViz(line_width=3.0)
+    figure = spec(SampleView(tree).sample["values"].values)
+    assert list(figure.data[0].y) == [0, 3, 6, 9]
+    assert figure.data[0].line.width == 3.0
+    artifacts = ArtifactContext()
+    artifacts.add(spec, figure)
+    assert artifacts[SignalViz].data is figure
+    xr.testing.assert_identical(tree, before)
+
+
+@pytest.mark.spec("context-identity-and-serialization")
 def test_pickled_context_exposes_analysis_results_without_recomputation(
     source, monkeypatch
 ):
@@ -137,6 +208,7 @@ def test_pickled_context_exposes_analysis_results_without_recomputation(
     assert received.data.sample["values"].values.tolist() == [0, 3, 6, 9]
 
 
+@pytest.mark.spec("result-views")
 def test_view_exposes_producing_configuration_with_supplied_mapper(source):
     tree = SampleAnalysis(step=3)(source)
     mapper = SampleMapper.from_data_source(tree)
@@ -228,6 +300,7 @@ def source():
     )
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_promotion_preserves_lazy_input_and_independent_coordinates(source):
     tree = SampleAnalysis()(source)
     assert not tree.dataset.variables
@@ -268,6 +341,7 @@ def test_explicit_input_view_and_contextual_mapper(source, monkeypatch):
     assert first["_input"].dataset["values"].data is source["values"].data
 
 
+@pytest.mark.spec("result-reuse-and-replacement")
 def test_recompute_replaces_grid_and_dependents_preserving_siblings(source):
     analysis = SampleAnalysis()
     tree = analysis(source)
@@ -288,6 +362,7 @@ def test_recompute_replaces_grid_and_dependents_preserving_siblings(source):
     assert "dependent" not in forced["example.sample"].children
 
 
+@pytest.mark.spec("inputs-and-output-scopes", "result-reuse-and-replacement")
 @pytest.mark.parametrize("partial_payload", ["children", "scalar", "array"])
 def test_analyses_share_scope_and_replace_only_their_complete_namespace(
     source, partial_payload
@@ -342,6 +417,7 @@ def test_analyses_share_scope_and_replace_only_their_complete_namespace(
     assert scope["run_number"].item() == 42
 
 
+@pytest.mark.spec("result-views")
 def test_local_scope_and_detached_namespace_views(source):
     tree = xr.DataTree.from_dict({"measurements/one/_input": source})
     result = SampleAnalysis()(tree, parent_namespace="measurements/one")
@@ -361,6 +437,7 @@ def test_local_scope_and_detached_namespace_views(source):
     assert detached.attrs["example.sample.analysis"] == '{"step":2}'
 
 
+@pytest.mark.spec("result-views")
 def test_reopened_namespace_restores_producing_configuration(
     source, tmp_path, monkeypatch
 ):
@@ -381,6 +458,7 @@ def test_reopened_namespace_restores_producing_configuration(
         assert restored.step == 3
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_invalid_tree_scopes_raise_without_restructuring(source):
     tree = xr.DataTree(dataset=source)
     tree["other"] = xr.DataTree(dataset=xr.Dataset({"other": ("time", np.ones(12))}))
@@ -443,6 +521,7 @@ def test_scope_promotion_preserves_container_type_and_marker(source, kind):
     assert arr.data is source["values"].data
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_scope_selection_and_unmarked_input_are_identity_operations(source):
     from tollan.accessor.xarray import ensure_analysis_scope, unwrap_analysis_scope
 
@@ -455,6 +534,7 @@ def test_scope_selection_and_unmarked_input_are_identity_operations(source):
     assert "example.sample" in tree["blocks/0"].children
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_scope_rejects_inherited_coordinates_and_missing_paths():
     from tollan.accessor.xarray import ensure_analysis_scope
 
@@ -467,6 +547,7 @@ def test_scope_rejects_inherited_coordinates_and_missing_paths():
         ensure_analysis_scope(tree, parent_namespace="missing")
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 @pytest.mark.parametrize(
     "ancestor",
     [
@@ -502,6 +583,7 @@ def test_scope_rejects_coordinate_context_while_view_remains_readable(
     assert SampleView.from_namespace(node).data_source is node
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_scope_allows_uninherited_scalar_data_in_ancestors(source):
     from tollan.accessor.xarray import ensure_analysis_scope
 
@@ -514,6 +596,7 @@ def test_scope_allows_uninherited_scalar_data_in_ancestors(source):
     assert SampleView(node).sample.sizes["time"] == 6
 
 
+@pytest.mark.spec("result-reuse-and-replacement")
 @pytest.mark.parametrize("existing_result", [False, True])
 def test_failed_computation_leaves_existing_tree_unchanged(source, existing_result):
     tree = xr.DataTree.from_dict({"_input": source})
@@ -525,6 +608,7 @@ def test_failed_computation_leaves_existing_tree_unchanged(source, existing_resu
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_multiple_outputs_have_independent_coordinates(source):
     # Output fields are declared by the concrete schema, not invented at runtime.
     @dataclass
@@ -551,6 +635,7 @@ def test_multiple_outputs_have_independent_coordinates(source):
     assert not tree["example.sample"].dataset.variables
 
 
+@pytest.mark.spec("result-reuse-and-replacement")
 @pytest.mark.parametrize(
     ("namespace", "input_subpath"),
     [("_input", "_input"), ("_input/analysis", "_input"), ("_input", "_input/data")],
@@ -617,6 +702,7 @@ def test_unwrap_validates_generated_scope_marker(source):
         unwrap_analysis_scope(scope)
 
 
+@pytest.mark.spec("accessors-and-views")
 def test_new_view_reads_replaced_results_and_producing_config(source):
     first = SampleAnalysis(step=2)
     tree = first(source)
@@ -633,6 +719,7 @@ def test_new_view_reads_replaced_results_and_producing_config(source):
     assert new_view.sample.sizes["time"] == 4
 
 
+@pytest.mark.spec("result-reuse-and-replacement")
 def test_configuration_comparison_uses_model_values(source):
     analysis = SampleAnalysis()
     tree = analysis(source)
@@ -663,6 +750,7 @@ def test_view_namespace_candidates_resolve_on_parent_scope(source, monkeypatch):
     assert view.sample_analysis == SampleAnalysis()
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_installing_result_preserves_payload_metadata(source):
     key = "example.sample.analysis"
     source["values"].attrs[key] = "original variable metadata"
@@ -676,6 +764,7 @@ def test_installing_result_preserves_payload_metadata(source):
     assert view.sample_analysis == SampleAnalysis()
 
 
+@pytest.mark.spec("result-views")
 @pytest.mark.parametrize("select_parent", [False, True])
 def test_view_readability_does_not_require_a_writable_scope(select_parent):
     payload = xr.Dataset(
@@ -694,6 +783,7 @@ def test_view_readability_does_not_require_a_writable_scope(select_parent):
     assert make_view(supplied).data_source is tree["example.sample"]
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 @pytest.mark.parametrize(
     ("first", "second"),
     [("sample", "sample"), ("sample", "sample/child"), ("sample/child", "sample")],
@@ -739,6 +829,7 @@ def test_overlapping_outputs_fail_before_computation_or_reuse(
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_installation_rejects_inherited_dimension_without_altering_tree(
     source, monkeypatch
 ):
@@ -764,6 +855,7 @@ def test_installation_rejects_inherited_dimension_without_altering_tree(
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("inputs-and-output-scopes")
 def test_namespace_creation_allows_scalar_data_in_parent(source, monkeypatch):
     from dataclasses import replace
 
@@ -862,6 +954,7 @@ def test_namespace_helper_rejects_variable_paths_without_changing_tree(namespace
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("result-reuse-and-replacement")
 def test_failed_computation_leaves_no_prepared_namespace(source, monkeypatch):
     from dataclasses import replace
 
@@ -877,6 +970,7 @@ def test_failed_computation_leaves_no_prepared_namespace(source, monkeypatch):
     assert "diagnostics" not in tree.children
 
 
+@pytest.mark.spec("result-reuse-and-replacement")
 @pytest.mark.parametrize("mismatch", ["extra", "replaced"])
 def test_computed_output_mismatch_leaves_existing_results_unchanged(source, mismatch):
     class UndeclaredOutputAnalysis(SampleAnalysis):
@@ -938,6 +1032,7 @@ def test_unregistered_output_declaration_fails_before_computation(source):
     xr.testing.assert_identical(tree, before)
 
 
+@pytest.mark.spec("accessors-and-views")
 @pytest.mark.parametrize("source_kind", ["scope", "namespace", "detached"])
 @pytest.mark.parametrize("supply_mapper", [False, True])
 def test_view_keeps_single_mapper_and_readonly_source_protocol(
@@ -1036,6 +1131,7 @@ def test_scope_and_namespace_mappers_share_output_mappings(source):
         )
 
 
+@pytest.mark.spec("accessors-and-views")
 def test_missing_namespace_does_not_resolve_outputs_from_scope(monkeypatch):
     schema = replace(
         SampleMapper.schema,

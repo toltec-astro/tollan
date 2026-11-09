@@ -28,9 +28,11 @@ from tollan.execution import (
 )
 
 SHARED = os.environ.get("TOLLAN_SLURM_SHARED")
-pytestmark = pytest.mark.skipif(
-    SHARED is None, reason="Set TOLLAN_SLURM_SHARED to run live Slurm tests."
-)
+pytestmark = [
+    pytest.mark.skipif(
+        SHARED is None, reason="Set TOLLAN_SLURM_SHARED to run live Slurm tests."
+    ),
+]
 
 
 @pytest.fixture(autouse=True)
@@ -92,6 +94,7 @@ def wait_for(record, scheduler, states, timeout=60):
     return status
 
 
+@pytest.mark.spec("placement-policy")
 def test_a_job_runs_with_its_resources_and_environment(records_path):
     command = [
         "sh",
@@ -114,6 +117,7 @@ def test_a_job_runs_with_its_resources_and_environment(records_path):
     assert record.read_exit_status() == 0
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_a_failing_job_reports_its_exit_status(records_path):
     record, scheduler = submit(records_path, ["sh", "-c", "exit 3"])
     outcome = supervise_job(record, scheduler, poll_interval=0.5)
@@ -122,6 +126,7 @@ def test_a_failing_job_reports_its_exit_status(records_path):
     assert (outcome.status.exit_code, outcome.status.native_state) == (3, "FAILED")
 
 
+@pytest.mark.spec("supervision")
 def test_canceling_a_running_job_is_confirmed(records_path):
     record, scheduler = submit(records_path, ["sleep", "300"])
     wait_for(record, scheduler, {JobState.running})
@@ -134,6 +139,7 @@ def test_canceling_a_running_job_is_confirmed(records_path):
     )
 
 
+@pytest.mark.spec("placement-policy")
 @pytest.mark.parametrize(
     ("profile_nodes", "request_nodes", "host"),
     [({"excludes": ["c1"]}, None, "c2"), ({"excludes": []}, ["c1"], "c1")],
@@ -148,6 +154,7 @@ def test_node_selections_place_the_job(
     assert output(record) == [host]
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_reconciliation_finds_a_job_whose_receipt_was_lost(records_path):
     record, scheduler = submit(records_path, ["sleep", "300"])
     receipt = record.receipt
@@ -162,6 +169,7 @@ def test_reconciliation_finds_a_job_whose_receipt_was_lost(records_path):
     cancel_job(record, scheduler, timeout=60, poll_interval=0.5)
 
 
+@pytest.mark.spec("job-records-and-schedulers")
 def test_an_unknown_job_id_is_unknown(records_path):
     record, scheduler = submit(records_path, ["true"])
     status = scheduler.get_status(record, SubmissionReceipt(native_id="999999"))
@@ -169,6 +177,7 @@ def test_an_unknown_job_id_is_unknown(records_path):
     supervise_job(record, scheduler, poll_interval=0.5)
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_a_dagster_asset_runs_a_job_on_the_cluster(records_path):
     dg = pytest.importorskip("dagster")
     from tollan.execution.dagster import PipesJobClient

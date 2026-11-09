@@ -13,6 +13,7 @@ from tollan.config.sources import (
 )
 
 
+@pytest.mark.spec("configuration-integration")
 def test_cli_groups_and_runtime_tier_precedence(tmp_path):
     config = tmp_path / "settings.yaml"
     config.write_text("_env: {value: yaml}\nyaml_only: true\n")
@@ -49,6 +50,7 @@ def test_cli_groups_and_runtime_tier_precedence(tmp_path):
     )
 
 
+@pytest.mark.spec("configuration-integration")
 @pytest.mark.parametrize(
     ("keyword", "suffix", "line"),
     [
@@ -97,6 +99,7 @@ def test_more_than_99_env_files(tmp_path):
     )
 
 
+@pytest.mark.spec("configuration-integration")
 def test_config_paths_apply_list_patches_across_directories_and_files(tmp_path):
     first = tmp_path / "first.d"
     second = tmp_path / "second.d"
@@ -111,6 +114,7 @@ def test_config_paths_apply_list_patches_across_directories_and_files(tmp_path):
     assert rc.config_dict["items"] == ["base", "first", "second", "last"]
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_cli_path_groups_share_reads_and_preserve_conditional_includes(
     tmp_path, monkeypatch
 ):
@@ -160,10 +164,6 @@ def test_cli_path_groups_share_reads_and_preserve_conditional_includes(
     assert variant.reload()["_env"]["TOLLAN_GROUP_VALUE"] == "second"
     assert Counter(reads) == Counter([base, recipe, included, env] * 2)
     assert rc.config_dict is original
-    rc.config_sources.enable_cache(enabled=False)
-    for _ in range(2):
-        assert variant.with_config().config_dict["items"] == ["base", "extra"]
-    assert Counter(reads) == Counter([base, recipe, included, env] * 4)
 
     # Dotenv values belong to the runtime; this factory does not export them.
     import os
@@ -193,6 +193,7 @@ def test_cli_group_filtering_logs_skipped_sources(tmp_path):
     assert any("env_paths: skipping yaml" in message for message in messages)
 
 
+@pytest.mark.spec("configuration-integration")
 def test_mixed_config_paths_and_yaml_env_overrides(tmp_path):
     directory = tmp_path / "config.d"
     directory.mkdir()
@@ -227,6 +228,7 @@ def test_explicit_env_includes_in_yaml_only_mode(tmp_path, namespace):
     assert values["VALUE"] == "text"
 
 
+@pytest.mark.spec("configuration-integration")
 @pytest.mark.parametrize("keyword", ["config_paths", "env_paths"])
 def test_bare_dotenv_path(tmp_path, keyword):
     path = tmp_path / ".env"
@@ -238,6 +240,7 @@ def test_bare_dotenv_path(tmp_path, keyword):
     assert rc.config_dict["_env"] == {"VALUE": "text"}
 
 
+@pytest.mark.spec("configuration-integration")
 @pytest.mark.parametrize(
     ("formats", "keys"),
     [
@@ -255,6 +258,7 @@ def test_config_format_selection(tmp_path, formats, keys):
     assert set(rc.config_dict) - {"runtime_info"} == keys
 
 
+@pytest.mark.spec("configuration-integration")
 @pytest.mark.parametrize("namespace", ["_env", "process", None])
 def test_cli_namespace_applies_to_paths_and_nested_includes(tmp_path, namespace):
     (tmp_path / "direct.env").write_text("DIRECT=text\n")

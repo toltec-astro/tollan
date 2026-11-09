@@ -82,6 +82,7 @@ class TestConfigSourceListBasics:
         config = sources.load()
         assert config["key"] == "value"
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_create_with_multiple_sources(self):
         """Test creating ConfigSourceList with multiple sources."""
         sources = ConfigSourceList.model_validate(
@@ -97,6 +98,7 @@ class TestConfigSourceListBasics:
         assert config["b"] == 3  # Higher order overrides
         assert config["c"] == 4
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     @pytest.mark.parametrize("orders", [(2, 0, 1), ("10", "2", "1"), (10, "2", 1)])
     def test_sources_sorted_by_order(self, orders):
         """Sort by validated integer orders, not raw input values."""
@@ -166,6 +168,7 @@ class TestConfigSourceListBasics:
 class TestConfigSourceListConditionalLoading:
     """Test ConfigSourceList enable_if conditional loading."""
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_enable_if_with_matching_context(self):
         """Test source loads when enable_if matches context."""
         sources = ConfigSourceList.model_validate(
@@ -186,6 +189,7 @@ class TestConfigSourceListConditionalLoading:
         assert config["base"] is True
         assert config["dev"] is True
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_enable_if_with_non_matching_context(self):
         """Test source skipped when enable_if doesn't match."""
         sources = ConfigSourceList.model_validate(
@@ -253,6 +257,7 @@ class TestConfigSourceListConditionalLoading:
 class TestConfigSourceListCaching:
     """Test ConfigSourceList caching functionality."""
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_top_level_list_patches_do_not_mutate_sources(self):
         base = DictConfigSource(order=0, source={"values": [1, 2]})
         patch = DictConfigSource(
@@ -274,6 +279,7 @@ class TestConfigSourceListCaching:
         changed["values"].append(4)
         assert sources.load(context={"patched": True}) == {"values": [9, 2, 3]}
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_nested_list_patches_do_not_mutate_sources(self):
         base = DictConfigSource(order=0, source={"items": [{"values": [1]}]})
         patch = DictConfigSource(
@@ -306,41 +312,14 @@ class TestConfigSourceListCaching:
             sources.append(YamlConfigSource(order=order, name=name, source=path))
         return ConfigSourceList(data=sources)
 
-    def test_enable_cache_all_sources(self, file_sources):
-        file_sources.enable_cache()
+    @pytest.mark.spec("configuration-sources-and-precedence")
+    def test_file_reads_are_cached_until_invalidated(self, file_sources):
         assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
         for source in file_sources:
             source.source.write_text(f"{source.name}: 2\n")
         assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
-
-    @pytest.mark.parametrize(
-        "selection",
-        [
-            {"exclude": lambda s: s.name == "b"},
-            {"predicate": lambda s: s.name in {"a", "c"}},
-        ],
-    )
-    def test_enable_cache_selection(self, file_sources, selection):
-        file_sources.enable_cache(**selection)
-        assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
-        for source in file_sources:
-            source.source.write_text(f"{source.name}: 2\n")
-        assert file_sources.load() == {"a": 1, "b": 2, "c": 1}
-
-    @pytest.mark.parametrize(
-        ("predicate", "expected"),
-        [
-            (None, {"a": 2, "b": 2, "c": 2}),
-            (lambda s: s.name == "a", {"a": 2, "b": 1, "c": 1}),
-            (lambda s: s.order == 0, {"a": 2, "b": 1, "c": 1}),
-        ],
-    )
-    def test_invalidate_cache_selection(self, file_sources, predicate, expected):
-        assert file_sources.load() == {"a": 1, "b": 1, "c": 1}
-        for source in file_sources:
-            source.source.write_text(f"{source.name}: 2\n")
-        file_sources.invalidate_cache(predicate=predicate)
-        assert file_sources.load() == expected
+        file_sources.invalidate_cache()
+        assert file_sources.load() == {"a": 2, "b": 2, "c": 2}
 
 
 class TestConfigSourceListGet:
@@ -498,6 +477,7 @@ class TestDictConfigSource:
 class TestEnvFileConfigSource:
     """Test EnvFileConfigSource."""
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_envfile_source_basic(self, tmp_path):
         """Test EnvFileConfigSource loads .env file."""
         env_file = tmp_path / ".env"
@@ -604,6 +584,7 @@ class TestResolveConfigSourcesEnvFiles:
         assert env_srcs[1].source == d / "10_site.env"
         assert csl.load() == {"_env": {"A": "1", "B": "2"}}
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_directory_mixed_yaml_and_env(self, tmp_path):
         """Directory with mixed yaml and env files resolves both formats."""
         d = tmp_path / "env.d"
@@ -692,6 +673,7 @@ database:
 class TestListConfigSource:
     """Test ListConfigSource for nested source lists."""
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_list_source_accepts_settings_dictionary(self):
         source = ListConfigSource(order=0, source={"nested": {"enabled": True}})
         assert source.load() == {"nested": {"enabled": True}}
@@ -719,6 +701,7 @@ class TestListConfigSource:
         assert config["outer"] is True
         assert config["nested"] is True
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     def test_list_source_merging(self):
         """Test ListConfigSource merges with other sources."""
         nested_sources = ConfigSourceList.model_validate(
@@ -748,6 +731,7 @@ class TestListConfigSource:
 class TestResolveConfigSourcesFunction:
     """Test resolve_config_sources() wrapper function."""
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     @pytest.mark.parametrize(
         "validate", [ConfigSourceList.model_validate, resolve_config_sources]
     )
@@ -842,6 +826,7 @@ class TestResolveConfigSourcesFunction:
         with pytest.raises(ValueError, match="below minimum allowed order"):
             resolve_config_sources(group.source, order_min=0)
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     @pytest.mark.parametrize(
         "value",
         [
@@ -858,6 +843,7 @@ class TestResolveConfigSourcesFunction:
             resolve_config_sources({"data": [{"source": settings}]}).load() == settings
         )
 
+    @pytest.mark.spec("configuration-sources-and-precedence")
     @pytest.mark.parametrize(
         "validate", [ConfigSourceList.model_validate, resolve_config_sources]
     )

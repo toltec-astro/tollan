@@ -13,8 +13,6 @@ interfaces that separate those decisions from reusable operations.
 - Each domain defines its own contracts and the handoffs needed for its workflows.
 - Data access and application configuration are independent entry paths. Analyses
   and execution combine them; callers may use each domain independently.
-- Wrapping a borrowed source does not transfer responsibility for its resources
-  to Tollan.
 - Configuration, execution state, and scientific results are distinct objects
   with distinct lifetimes.
 
@@ -26,9 +24,6 @@ Analyses and steps separate complete workflows from reusable computations:
 | Middle | Adapt domain inputs, apply settings, combine computations, and assemble results through the domain's data interchange contract. |
 | Low | Compute from numerical inputs and explicit parameters, independently of configuration models, views, mappers, output namespaces, and invocation contexts. |
 
-- Method binding follows the data interchange protocol. A middle-level method
-  may use instance-owned settings or receive settings and context explicitly as
-  a classmethod. Both serve the same API level.
 - Low-level computations preserve inputs and do not consult mutable class state.
 - Concrete components define their input and result contracts. They may delegate
   computation to existing analyses or utilities; the levels do not require
@@ -72,13 +67,25 @@ an intended mode of operation, not an exception.
   modifications to that source.
 - A view accesses the bound source and content below it. It does not search
   parents or siblings for data.
-- A view may expose a descendant of its source through a subview. It caches
-  that subview to avoid constructing it on each access.
+- A view may expose a descendant of its source through a subview.
 - A view assumes that its bound source remains valid for its lifetime. It does
   not detect source changes, refresh cached state, or rebind itself. The component
   that changes the source is responsible for managing affected view lifetimes.
 - The concrete accessor defines compatibility validation and the operations that
   require additional validation.
+- A resolved mapper, and an accessor or view built on it, can be pickled with its
+  source, so that [invocation contexts](#context-identity-and-serialization)
+  that reference data through views can be transported. Restoring uses the
+  recorded bindings and does not resolve the mappings against the source again.
+
+#### Lazy data and resource ownership
+
+- Lazy access lets callers select data and defer computation without loading the
+  entire source. Resource ownership defines who keeps that work executable.
+- Tollan does not trigger computation or fetch all source data when the requested
+  operation does not require it.
+- Wrapping a borrowed source or engine does not transfer responsibility for its
+  resources to Tollan.
 
 #### Backend adapters
 
@@ -90,73 +97,6 @@ an intended mode of operation, not an exception.
 - Container conversion preserves the selected data's meaning. Its contract states
   whether the result is independently editable and whether conversion requires
   evaluating deferred data.
-
-#### Model tables
-
-- Model tables collect selected object attributes into a mutable, flat workspace
-  for filtering and incremental enrichment. They do not require a shared model
-  class or reconstruct the input objects.
-
-##### Attribute projection
-
-- Applications declare attribute paths, output representations, and query
-  vocabulary. Projection reads only the declared attributes and preserves input
-  row order. It does not serialize the input objects.
-- Projection selects one attribute mapping per object. An exact-type entry
-  takes precedence over a fallback mapping without merging the two. An explicit
-  empty entry projects nothing. A shared mapping is the fallback-only case.
-  All choices must agree on each shared destination's normalized dtype,
-  including unused fallbacks; conflicts fail before values are projected.
-  Readers, converters and missing-attribute defaults remain projection-specific.
-- Column projection rejects boolean, integer, floating-point and complex storage
-  that changes converted values or replaces nulls with values. Converters own
-  intentional value changes; storage must not add truncation, overflow or
-  precision loss.
-
-##### Incremental enrichment
-
-- Different projections may populate the same destination column from different
-  attributes and conversions. Sharing a destination does not require merging
-  the input projections or making their readers identical.
-- Enrichment updates explicitly addressed rows, preserves unrelated information,
-  and lets new null values replace earlier values. It does not synchronize changes
-  back to the objects used for projection.
-- Missing-attribute fallbacks belong to the input projection. They do not fill
-  untouched rows. Omitting a destination preserves its existing values; projecting
-  a null replaces them. This also applies to destinations omitted by a selected
-  type-specific projection.
-- Existing destination columns retain their storage types. Incompatible writes
-  raise rather than silently widening storage to arbitrary objects. Newly added
-  columns use their declared types and represent untouched rows as missing.
-- Copying and in-place enrichment are explicit choices. In-place assignment is
-  not transactional; an assignment failure can leave earlier columns updated.
-
-##### Reusable projection declarations
-
-- Annotation-based declarations prepare column mappings without reading object
-  values. The resulting projections are reusable across batches; actual reads
-  remain duck-typed after the applicable projection is selected.
-- Known incompatible annotations can fail declaration before any objects are
-  read. Annotations do not replace checks on the projected values.
-
-##### Ordered record rules
-
-- Reusable ordered rules classify records from scalar and collection-valued
-  fields, producing one result per record.
-- Generic result types constrain rule values at declaration. The unmatched
-  default may be null independently of the rule-value type.
-- Record values come from mapping keys or object attributes. Batch evaluation
-  reads table columns with the same matching semantics.
-- The first matching partial mapping wins. Unmatched records receive the
-  configured default; per-call overrides do not mutate the mapper.
-- Missing fields cannot satisfy constraints. Nulls match an explicit null
-  constraint.
-- Plain constraints test scalar equality. Explicit collection-membership
-  constraints test exact elements; they do not interpret substrings or patterns.
-  Missing, null and empty collections do not match. Non-null noncollection
-  values raise rather than being treated as unmatched collections.
-- Scalar and column-wise evaluation agree and preserve result objects without
-  modifying inputs.
 
 #### Units and table conversion
 
@@ -175,12 +115,30 @@ an intended mode of operation, not an exception.
   Edits to that table must not alter the source; establishing this independence
   may require copying all selected data.
 
-#### Lazy data and resource ownership
+#### Model tables
 
-- Lazy access lets callers select data and defer computation without loading the
-  entire source. Resource ownership defines who keeps that work executable.
-- Tollan does not trigger computation or fetch all source data when the requested
-  operation does not require it.
+- Model tables collect selected object attributes into a mutable, flat table
+  for filtering and incremental enrichment. They need no shared model class and
+  never serialize or reconstruct the input objects.
+- Applications declare attribute paths, output representations and query
+  vocabulary. Projection reads only the declared attributes and preserves input
+  row order. Declarations generated from annotations read no object values and
+  are reusable across batches; reads stay duck-typed.
+- Each object uses exactly one projection. Projections of different object types
+  may fill one column; all projections that write a column agree on its type,
+  and a conflict fails before any value is read.
+- Column storage never changes converted values: no truncation, overflow,
+  precision loss, or null replaced by a value. Converters own intentional
+  changes.
+- Enrichment updates explicitly addressed rows and keeps the columns a
+  projection omits. Changes are not synchronized back to the objects. Copying
+  and in-place enrichment are explicit choices; in-place assignment is not
+  transactional.
+- Ordered record rules classify each record, from mapping keys or object
+  attributes, into one result: the first matching rule wins, and unmatched
+  records get the default, which a call may override without changing the
+  rules. Batch evaluation over table columns gives the same results as record
+  evaluation and modifies no input. A missing field never matches.
 
 #### Read and inspect scientific data
 
@@ -210,6 +168,10 @@ component typed settings before it uses them.
   and validate declared defaults and default-factory results. Different validation
   or mutation protocols require explicit exceptions.
 - Validated settings support YAML persistence.
+- Callers can inspect declared defaults without instantiating a configured
+  component or executing code that generates a default value.
+- The application supplies evaluation context before constructing components
+  whose settings depend on it.
 - Subsequent runtime changes do not alter an existing component's settings.
   Recreating the component captures settings from the updated runtime.
 
@@ -222,18 +184,20 @@ component typed settings before it uses them.
   source list. Invalid collections do not fall back to settings. Settings that
   contain `data` can be supplied through an explicit dictionary source.
 - Source composition defines the order in which settings override earlier values.
-- Each source list has independent ordering. Resolver order bounds constrain
-  immediate entries only; a nested list contributes at its enclosing source's
-  position. Reusing validated sources must not change this rule.
-- Relative source-file references resolve against a supplied base directory or
-  the working directory. References in a YAML source list resolve against that
-  file's directory, including references inside inline nested lists. Validation
-  must not open referenced files or rewrite paths inside settings dictionaries.
-  The source-file root and the application-value root are independent validation
-  settings; neither substitutes for the other.
+  Each source list has independent ordering; a nested list contributes at its
+  enclosing source's position.
+- Relative file references resolve against a supplied base directory or the
+  working directory; references inside a YAML source list resolve against that
+  file's directory. Validation opens no referenced file and does not rewrite
+  paths inside settings.
 - Evaluation context supplies values used to select or evaluate settings.
-- Callers can refresh settings from external sources separately from evaluating
-  settings for a particular input.
+- Evaluating settings for another input, including through a runtime variant,
+  reuses the sources' earlier reads. Only an explicit refresh reads external
+  sources again.
+- Environment values come from dotenv files and from the `_env` section of the
+  configuration. They are validated as strings and returned as a new mapping,
+  which the caller merges with the process environment; reading them never
+  changes the process environment.
 
 #### Scientific value types
 
@@ -242,15 +206,21 @@ component typed settings before it uses them.
 - A field serializer produces the representation used to restore the validated
   value. The representation need not preserve the original input syntax.
 - Relative descendant paths follow one lexical contract in configuration fields
-  and subtree mappings. Validation does not require a containing root to exist,
-  performs no filesystem access, and does not establish symlink containment.
-- Descendant paths use POSIX syntax and normalize redundant separators and
-  current-directory components. They exclude rooted paths and parent traversal.
-  The root itself is excluded unless the declaration permits searching the
-  containing directory as well as its descendants.
+  and subtree mappings: POSIX syntax, with redundant separators and
+  current-directory components removed; rooted paths and parent traversal are
+  rejected. The root itself is accepted only where a declaration also searches
+  the containing directory. Validation needs no existing root, accesses no
+  filesystem and does not check symlink containment.
+- A string selector chooses names by exact inclusion, exact exclusion or a
+  regular expression that must match the whole name. A plain string is a
+  pattern and a list is an inclusion list. An empty inclusion list selects
+  nothing; an empty exclusion list selects everything. Selection normalizes no
+  string.
+- A safe name is a restricted identifier usable in file names, scheduler job
+  names and record keys. A safe name path joins safe names with `/` and may
+  start with one `qualifier:` prefix. A host path names an absolute path on a
+  given host.
 - Time serialization preserves precision independently of display settings.
-- Callers can inspect declared defaults without instantiating a configured
-  component or executing code that generates a default value.
 
 ### Command-line applications
 
@@ -274,9 +244,8 @@ application can concentrate on its commands and their behavior.
 - **Handoff:** application arguments and selected sources → runtime → configured
   component → application callback.
 - CLI arguments enter the runtime through
-  [configuration integration](#configuration-integration).
-- The application supplies evaluation context before constructing components
-  whose settings depend on it.
+  [configuration integration](#configuration-integration). Evaluation context
+  follows [runtime context and component settings](#runtime-context-and-component-settings).
 
 
 ### Analyses and results
@@ -294,6 +263,8 @@ application that scheduled the calculation.
   its output scope.
 - Installed results retain the configuration used to produce them. Later changes
   to application settings do not change that recorded configuration.
+- When a step invokes the analysis, the step records its execution separately
+  from the analysis's producing configuration.
 - Deferred execution follows
   [lazy data and resource ownership](#lazy-data-and-resource-ownership).
 
@@ -301,12 +272,10 @@ application that scheduled the calculation.
 
 - Reusable computations let callers calculate with the same analysis settings
   without preparing an output namespace or running the complete workflow.
-- The [three API levels](#concepts-and-responsibilities) apply to analyses:
-  the high level prepares inputs and an output scope; the middle level adapts
-  domain inputs and configuration to computations and assembles their results.
-- Result integration is also a middle-level responsibility. The shared analysis
-  base validates, reuses, and installs results with their producing configuration.
-  A focused computation can instead return a standalone result.
+- At the middle [API level](#concepts-and-responsibilities), an analysis also
+  integrates results: the shared analysis base validates, reuses, and installs
+  them with their producing configuration. A focused computation can instead
+  return a standalone result.
 
 #### Result views
 
@@ -346,9 +315,8 @@ application that scheduled the calculation.
 
 - **Handoff:** selected input view and settings → analysis output scope → result view.
 - The caller selects inputs and an output scope as defined under
-  [inputs and output scopes](#inputs-and-output-scopes).
-- If a step invokes the analysis, the step records execution separately from the
-  analysis's producing configuration.
+  [inputs and output scopes](#inputs-and-output-scopes). Step invocation follows
+  [computation and producing configuration](#computation-and-producing-configuration).
 
 
 ### Steps and pipelines
@@ -373,11 +341,8 @@ by a directed acyclic graph (DAG).
 
 - A step operation can run with caller-supplied working data and invocation
   context, independently of the complete invocation lifecycle.
-- The [three API levels](#concepts-and-responsibilities) apply to steps:
-  the high level owns context creation and outcome recording; the middle level
-  selects inputs, combines computations, installs results, and publishes payloads.
-- The middle-level operation receives configuration through its invocation
-  context. Direct calls need no configured step instance; the caller owns context
+- At the middle [API level](#concepts-and-responsibilities), the operation
+  receives configuration through its invocation context. Direct calls need no configured step instance; the caller owns context
   attachment, completion, and exception recording. The operation can record
   failures explicitly.
 - Steps that select or publish existing results need no numerical API of their
@@ -390,7 +355,8 @@ by a directed acyclic graph (DAG).
   its published payload.
 - An invocation record is available while the operation runs and after it ends.
 - The context records settings, completion, failures, and any published payload.
-  A payload may reference existing data through a view.
+  A payload may reference existing data through a view. Each invocation starts
+  with a fresh [artifact context](#artifact-retention-and-composition).
 - Normal return marks an invocation complete only when it has no recorded
   failures. An unhandled operation error is recorded and propagated to the caller.
 - User interruption and process termination propagate without being classified
@@ -443,49 +409,42 @@ by a directed acyclic graph (DAG).
 
 Applications run long computations outside the process that decides to run
 them: on compute nodes through a batch scheduler, or as a local process during
-development. The deciding process may be a long-running orchestration service or
-a script, and it may stop and restart while the computation continues. External
-execution separates where a computation may run, how a submitted job is tracked,
-and how a process waits for its outcome. The application owns workloads,
-external-process commands, scientific settings and result validation. The
-deployment owns site values. Tollan owns placement validation and the job
-lifecycle. An orchestration framework can supervise jobs through an optional
-integration; the job lifecycle does not depend on one.
-
-An execution driver schedules steps within one process (see
-[steps and pipelines](#steps-and-pipelines)); an external process may run such a
-pipeline.
+development. The deciding process, a service or a script, may stop and restart
+while the computation continues. The application owns workloads,
+external-process commands, scientific settings and result validation; the
+deployment owns site values; Tollan owns placement validation and the job
+lifecycle. An optional integration lets an orchestration framework supervise
+jobs; the lifecycle does not depend on it. An external process may itself run a
+[pipeline](#steps-and-pipelines).
 
 #### Placement policy
 
-- A placement policy lets a deployment decide where workloads run and which
-  resources they use, independently of the code that requests them.
+- A placement policy lets a deployment decide where workloads run and with
+  which resources, independently of the code that requests them.
 - An execution profile states, for the workloads it selects, one place to run
-  jobs and the policy there. A local profile runs jobs on the orchestration
-  host. A batch-scheduler profile fixes the submission host, partition, account
-  and quality of service, the selection of eligible nodes, default resources,
-  and the maximum resources of one job. Each profile names the location of its
-  job records and the environment of its external processes.
-- An execution request states what an application needs for one job: the
-  workload name, requested resources and a node selection. Applications include
-  it in their own configuration, beside the settings of the computation.
-- Resolution maps the request's workload to the first profile, in declared
-  order, whose workload selection matches it, and combines that profile with
-  the request into a job spec. Requested resources replace the profile's
-  defaults within its maximum; a local profile accepts only a thread limit.
-  Resolution rejects workloads no profile selects and requests the profile does
-  not accept. It does not contact a scheduler.
-- A requested node selection is combined with the profile's, so it never widens
-  placement. The scheduler applies the combined selection at submission; an
-  empty selection fails there.
-- A thread limit for numerical libraries is optional. When set, it does not
-  exceed the job's CPUs and the external process receives it; when unset, the
-  external process chooses its own threading.
-- A job spec is the request together with the profile that runs it, as
-  configured at resolution. A job runs one task on one node; its resources,
-  thread limit and node selection follow from the job spec. Only resolution
-  creates job specs. A job keeps the job spec it was submitted with;
-  reattachment and recovery reuse it rather than resolving current policy.
+  jobs and its policy. A local profile runs jobs on the orchestration host. A
+  batch-scheduler profile holds the site's submission values, eligible nodes,
+  and the default and maximum resources of one job. Each profile names the
+  location of its job records and the environment of its external processes.
+- An execution request states what one job needs: the workload name, resources
+  and a node selection. Applications embed it in their own configuration.
+- Resolution selects the first profile, in declared order, whose workload
+  selection matches, and combines it with the request into a job spec. Requested
+  resources replace the defaults within the maximum; a local profile accepts only
+  a thread limit. Resolution rejects unselected workloads and unaccepted
+  requests, and contacts no scheduler.
+- A requested node selection only narrows the profile's. The scheduler applies
+  the combined selection at submission, where an empty selection fails.
+- An optional thread limit for numerical libraries does not exceed the job's
+  CPUs and reaches the external process; without it, the process chooses its
+  own threading.
+- A job spec, created only by resolution, is the request with the profile as
+  configured at resolution. A job runs one task on one node, with the resources,
+  thread limit and node selection of its spec. A job keeps the spec it was
+  submitted with; reattachment and recovery never resolve the
+  current policy again.
+- Switching a workload between a local and a batch-scheduler profile changes no
+  application code.
 - Policy settings follow the
   [configuration-model contract](#runtime-context-and-component-settings) and
   compose through [configuration sources](#configuration-sources-and-precedence).
@@ -493,75 +452,62 @@ pipeline.
 #### Job records and schedulers
 
 - A job record keeps the durable state of one job, so that any process with
-  access to it can submit, observe, reattach to or cancel that job.
-- A caller-supplied key identifies a job record within its storage location. The
-  record holds the job spec, the external-process command and environment, the
-  submission receipt with the scheduler's native job ID, and the observed state
-  history.
+  access to it can submit, observe, reattach to or cancel the job. A
+  caller-supplied key identifies it within its storage location. It holds the
+  job spec, the command and environment, the submission receipt with the
+  scheduler's native job ID, and the observed state history.
 - Records of batch-scheduler jobs reside on storage visible at the same path to
   the orchestration host, the submission host and the compute nodes.
-- Submission is once-only for a record. A repeated submission returns the
-  existing receipt. A record whose submission began without producing a receipt
-  is unresolved: further submission fails and requires reconciliation; it does
-  not create another job.
-- Reconciliation asks the scheduler for jobs carrying the record key. It records
-  the receipt of the job found, or confirms that none was submitted and allows
-  submission again.
-- A scheduler submits job records, reports job states and cancels jobs. Job
-  states are queued, running, completed, failed, canceled and unknown. A
-  terminal state carries the exit status when the scheduler reports one.
-- Unknown means the scheduler has no information about the job. It is distinct
-  from failure and from completion.
+- Submission is once-only. A repeated submission returns the existing receipt.
+  A submission that began without producing a receipt leaves the record
+  unresolved: further submission fails until reconciliation, which asks the
+  scheduler for jobs carrying the record key and either records the receipt
+  found or confirms that none exists and allows submission again.
+- A scheduler submits, reports states and cancels. Job states are queued,
+  running, completed, failed, canceled and unknown; a terminal state carries the
+  exit status when reported. Unknown means the scheduler has no information; it
+  is neither failure nor completion.
 - A transport carries scheduler commands to the submission host, locally or over
-  SSH. A transport failure is reported as such, never as a job state.
-- The local scheduler records the external process's exit status in the job
-  record, so a new process can reattach to a local job as to a batch job.
-- Reattachment continues an existing job. Recomputation creates a new job record.
+  SSH; a transport failure is reported as such, never as a job state.
+- A new process can reattach to a local job as to a batch job, including after
+  the job ends.
+- Reattachment continues an existing job; recomputation creates a new record.
 
 #### Supervision
 
-- Supervision lets a process wait for a job's outcome and act on it, whether that
-  process submitted the job or reattached to it.
-- A supervisor observes job states at a bounded interval. A job succeeds only
-  when the scheduler reports completion with a zero exit status and the
-  application's result check accepts the job record.
-- An unknown state may persist for a bounded grace period. Beyond it,
-  supervision reports the job unresolved and retains its record; it does not
-  resubmit.
-- Explicit cancellation requests termination from the scheduler and confirms a
-  terminal state within a bound. Supervision reports a requested cancellation
-  separately from a confirmed one. Loss or termination of the supervising process
-  does not cancel the job.
+- Supervision lets a process wait for a job's outcome and act on it, whether it
+  submitted the job or reattached to it. It observes states at a bounded
+  interval.
+- A job succeeds only when the scheduler reports completion with exit status
+  zero and the application's result check accepts the record.
+- An unknown state may persist for a bounded grace period; beyond it, supervision
+  reports the job unresolved, keeps the record and does not resubmit.
+- Explicit cancellation requests termination and confirms a terminal state
+  within a bound; a requested cancellation is reported separately from a
+  confirmed one. Loss of the supervising process does not cancel the job.
 - A new job for the same work starts only after the earlier job is terminal or
   canceled. One owner decides each retry: the supervisor, the orchestration
   framework or the scheduler.
 
 #### Orchestration integration
 
-- The orchestration integration lets Dagster assets run external processes as
-  supervised jobs, with Dagster's reporting and admission.
-- The integration follows the Dagster Pipes protocol: the orchestration process
-  passes context to the external process and reads its messages and logs. Both
-  persist in the job record, so a later orchestration process can reattach and
-  still read every message.
-- The orchestration process reports a materialization only after reading the
-  external process's complete messages.
-- Forward termination applies only to explicit run cancellation. Interruption of
-  the orchestration process for any other reason leaves the job running for
-  reattachment.
-- Admission limits use Dagster concurrency pools. The scheduler enforces shared
+- The optional integration lets Dagster assets run external processes as
+  supervised jobs under Dagster Pipes, with Dagster's reporting and admission.
+  Without it, the other layers are fully usable.
+- A later orchestration process can reattach to the job and read every message
+  and log of the external process. A materialization is reported only after the
+  complete messages are read.
+- Only explicit run cancellation terminates the job; any other interruption of
+  the orchestration process leaves it running for reattachment.
+- Admission limits use Dagster concurrency pools; the scheduler enforces shared
   cluster capacity across all submitters.
-- The integration is optional. Without it, placement policy, job records,
-  schedulers and supervision are fully usable.
 
 #### Run a computation on an external scheduler
 
 - **Handoff:** deployment policy and execution request → job spec → job record →
   submission → supervised outcome → application result check.
-- The application supplies the execution request, external-process command and
-  result check. The deployment supplies the execution profiles.
-- Selecting a workload with a local profile or a batch-scheduler profile runs
-  the same workload without changing application code.
+- The application supplies the execution request, command and result check; the
+  deployment supplies the execution profiles.
 
 ### Artifacts and visualization
 
@@ -615,8 +561,9 @@ into useful bundles. Visualization is one category of data consumption.
   effective specifications → persistence or exchange for subsequent consumption.
 - A step retains selected data in its invocation's artifact context. Its typed
   payload remains separately available for downstream computations.
-- Each invocation receives a fresh artifact context. Configuration records retain
-  artifact settings and omit live objects. Transport of live artifacts follows
+- Step configuration records artifact specifications, not live artifact data,
+  as defined under [artifact data and specifications](#artifact-data-and-specifications).
+  Transport of live artifacts follows
   [context identity and serialization](#context-identity-and-serialization).
 
 ### Database resources
@@ -630,7 +577,9 @@ applications own their domain schema, queries, and connection policy.
 - A database resource manages connection and transaction lifetimes and provides
   access to table metadata across repeated operations.
 - A resource created from a URL owns its engine. A resource wrapping an existing
-  engine borrows it; closing the wrapper must not dispose the borrowed engine.
+  engine borrows it, as defined under
+  [lazy data and resource ownership](#lazy-data-and-resource-ownership); closing
+  the wrapper must not dispose the borrowed engine.
 - Each session context creates a fresh session, commits pending work on successful
   exit, rolls it back on error, and closes it in either case. Explicit commits are
   not rolled back by a later failure.
@@ -662,14 +611,14 @@ applications own their domain schema, queries, and connection policy.
 
 #### Batch writes and query helpers
 
-- Shared database operations support prepared row batches and commonly needed
-  expressions without taking over application validation or transactions.
-- SQLite batch upsert uses an explicitly supplied transaction. Applications
-  prepare relationship handling and actor attribution before writing.
-- SQLite resources provide integer bitwise aggregates without application setup.
-  NULL inputs require explicit handling; aggregates must not silently discard them.
-- Shared SQL expressions support database-generated timestamps and date/time
-  queries. Timestamp ownership follows [schema conventions](#schema-conventions).
+- Shared operations write prepared row batches and supply common expressions
+  without taking over application validation or transactions.
+- SQLite batch upsert uses an explicitly supplied transaction; applications
+  prepare relationships and actor attribution first.
+- SQLite resources provide integer bitwise aggregates without setup; NULL inputs
+  need explicit handling and are never silently discarded.
+- Shared SQL expressions cover database-generated timestamps and date and time
+  queries, following [schema conventions](#schema-conventions).
 
 ### Supporting utilities
 
@@ -682,13 +631,24 @@ so application components do not maintain separate implementations.
 Applications can retain item paths separately from their storage location.
 They combine the two when they need a resolved resource location.
 
-- SubPath fields describe literal descendant paths independently of configuration
-  roots and filesystem access.
-- FileLoc owns resolved local and remote locations. Joining literal path parts
-  returns a FileLoc while retaining the base's scheme, authority, query and
-  fragment. Existing base-path encoding is preserved; new filename characters
-  are encoded as path data.
-- Joining leaves the base unchanged and does not open or check resources.
+- Item paths are relative descendant paths, following the lexical rule under
+  [scientific value types](#scientific-value-types), independently of
+  configuration roots and filesystem access.
+- A file location owns a resolved local or remote location. Joining literal path
+  parts returns a new location under the same base: the base is unchanged, its
+  scheme, authority, query and fragment are retained, and no resource is opened
+  or checked.
+
+#### Robust summaries of labeled arrays
+
+- A reduction summarizes the samples along one dimension of labeled arrays as
+  the median and the median absolute deviation scaled by the Gaussian
+  consistency factor (1 / Φ⁻¹(3/4)), with the same precision as Astropy's
+  `mad_std`. The scatter describes the samples, not the uncertainty of the
+  median.
+- Attributes, units and coordinates independent of the dimension are retained;
+  NaNs propagate. Dimension membership is checked when called, and the numerical
+  work stays lazy.
 
 #### Keyed registries
 
@@ -706,6 +666,20 @@ duplicate detection; the registering component owns entry validation.
 - Automatic registration must use the same insertion operation as explicit
   registration. Domain-specific matching, inheritance, and schema rebuilding
   remain outside the keyed registry.
+
+#### Specification traceability
+
+- Packages trace their contract tests to the sections of their specification,
+  so a removed or renamed requirement surfaces as a collection error instead of
+  tests that protect nothing.
+- A section name is the heading text in lowercase with hyphens. The document
+  title is not a section; two headings with the same name are an error.
+- Each contract test cites one or more sections on the test itself. Collection
+  fails when a test cites a section the specification does not have, when a
+  citation names no section, or when a citation is placed on a module or class.
+  Uncited tests run normally and protect no requirement.
+- A report lists the tests per section, the sections without a test and the
+  number of uncited tests. The specification path is configurable.
 
 #### Runtime generic bindings
 

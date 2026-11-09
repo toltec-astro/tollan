@@ -64,6 +64,7 @@ class TestResolveGenericBindings:
         assert bindings.is_resolved
         assert bindings.unresolved == ()
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_indirect_reordered_and_nested_substitution(self):
         class Pair[LeftT, OtherT]:
             pass
@@ -77,6 +78,7 @@ class TestResolveGenericBindings:
         bindings = resolve_generic_bindings(Concrete, Pair)
         assert bindings.resolved_types == (str, list[int])
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_partial_specialization_remains_unresolved(self):
         class Pair[LeftT, OtherT]:
             pass
@@ -97,6 +99,7 @@ class TestResolveGenericBindings:
             str,
         )
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_unrelated_generic_arguments_are_ignored(self):
         class Target[ValueT]:
             pass
@@ -138,6 +141,7 @@ class TestResolveGenericBindings:
         bindings = resolve_generic_bindings(Concrete, Required)
         assert bindings.unresolved == ("ValueT",)
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_consistent_diamond_is_accepted(self):
         class Target[ValueT]:
             pass
@@ -153,6 +157,7 @@ class TestResolveGenericBindings:
 
         assert resolve_generic_bindings(Diamond, Target).resolved_types == (int,)
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_conflicting_diamond_is_rejected(self):
         class Target[ValueT]:
             pass
@@ -209,6 +214,7 @@ class TestResolveConcreteGenericBindings:
         assert bindings is not None
         assert bindings["ValueT"] is RuntimeValue
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_intermediate_defers_but_bare_subclass_fails(self):
         class Target[ValueT]:
             pass
@@ -268,6 +274,7 @@ class TestResolveConcreteGenericBindings:
 class TestPydanticGenericBindings:
     """Resolve model specializations and their inherited runtime bindings."""
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_specialization_and_named_subclass(self):
         class Model[ValueT](BaseModel):
             value: ValueT
@@ -278,6 +285,7 @@ class TestPydanticGenericBindings:
         for cls in (Model[int], Concrete):
             assert resolve_generic_bindings(cls, Model).resolved_types == (int,)
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_partial_reordered_and_nested_models(self):
         class Item[ValueT](BaseModel):
             value: ValueT
@@ -354,6 +362,7 @@ class TestPydanticGenericBindings:
                 Bare, Required, ValueT=GenericBindingRequirement("value_cls")
             )
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_diamond_paths(self):
         class Model[ValueT](BaseModel):
             pass
@@ -377,6 +386,7 @@ class TestPydanticGenericBindings:
         with pytest.raises(TypeError, match="Conflicting .*Model bindings"):
             resolve_generic_bindings(Conflicting, Model)
 
+    @pytest.mark.spec("runtime-generic-bindings")
     def test_pydantic_subclass_hook(self):
         class Model[ValueT: BaseModel](BaseModel):
             value_cls: ClassVar[type[BaseModel]]

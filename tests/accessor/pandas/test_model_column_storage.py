@@ -24,6 +24,7 @@ def project(values, dtype, **kwargs):
     )["number"]
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["int64", "Int64", "int64[pyarrow]"])
 def test_integer_storage_rejects_fractional_values(dtype):
     with pytest.raises(TypeError):
@@ -32,12 +33,14 @@ def test_integer_storage_rejects_fractional_values(dtype):
     assert project([1.5], dtype, converter=round).tolist() == [2]
 
 
+@pytest.mark.spec("model-tables")
 def test_numeric_text_requires_explicit_conversion():
     with pytest.raises(TypeError, match="exactly"):
         project(["3"], "int64")
     assert project(["3"], "int64", converter=int).tolist() == [3]
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["int8", "Int8", "int8[pyarrow]"])
 @pytest.mark.parametrize("value", [-129, 128, np.int64(128)])
 def test_integer_storage_rejects_overflow(dtype, value):
@@ -45,6 +48,7 @@ def test_integer_storage_rejects_overflow(dtype, value):
         project([value], dtype)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["uint64", "UInt64", "uint64[pyarrow]"])
 def test_unsigned_storage_checks_sign_and_preserves_large_integers(dtype):
     assert int(project([2**64 - 1], dtype).iloc[0]) == 2**64 - 1
@@ -52,6 +56,7 @@ def test_unsigned_storage_checks_sign_and_preserves_large_integers(dtype):
         project([-1], dtype)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["float64", "Float64", "float64[pyarrow]"])
 @pytest.mark.parametrize("value_type", [int, np.int64, np.uint64])
 def test_float_storage_does_not_round_large_integers(dtype, value_type):
@@ -60,6 +65,7 @@ def test_float_storage_does_not_round_large_integers(dtype, value_type):
     assert project([value_type(2**50)], dtype).iloc[0] == float(2**50)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["float32", "Float32", "float32[pyarrow]"])
 @pytest.mark.parametrize("value", [1.1, 1e300, 1e-300])
 def test_float_storage_rejects_precision_loss_overflow_and_underflow(dtype, value):
@@ -67,6 +73,7 @@ def test_float_storage_rejects_precision_loss_overflow_and_underflow(dtype, valu
         project([value], dtype)
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", [np.longdouble, np.clongdouble, "complex64"])
 def test_numpy_extended_and_complex_storage_cannot_hide_precision_loss(dtype):
     with pytest.raises(TypeError, match="exactly"):
@@ -74,12 +81,14 @@ def test_numpy_extended_and_complex_storage_cannot_hide_precision_loss(dtype):
     assert project([2], dtype).iloc[0] == 2
 
 
+@pytest.mark.spec("model-tables")
 def test_complex_storage_checks_both_components():
     assert project([1.5 + 2j], "complex64").iloc[0] == 1.5 + 2j
     with pytest.raises(TypeError, match="exactly"):
         project([1.5 + 1.1j], "complex64")
 
 
+@pytest.mark.spec("model-tables")
 def test_explicit_float_conversion_owns_precision_and_runs_once():
     calls = []
 
@@ -105,6 +114,7 @@ def test_nulls_defaults_and_empty_columns(dtype):
         )
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["bool", "boolean", "bool[pyarrow]"])
 def test_boolean_storage_does_not_turn_arbitrary_values_into_true(dtype):
     with pytest.raises((TypeError, ValueError)):
@@ -112,12 +122,14 @@ def test_boolean_storage_does_not_turn_arbitrary_values_into_true(dtype):
     assert project([True, False], dtype).tolist() == [True, False]
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("value", [None, np.nan])
 def test_nonnullable_boolean_storage_does_not_replace_nulls(value):
     with pytest.raises(TypeError, match="exactly"):
         project([value], "bool")
 
 
+@pytest.mark.spec("model-tables")
 @pytest.mark.parametrize("dtype", ["float64", "Float64", "float64[pyarrow]"])
 def test_nan_and_infinity_are_preserved(dtype):
     result = project([np.nan, np.inf, -np.inf, -0.0], dtype)
@@ -154,6 +166,7 @@ def make_mapper(column, **kwargs):
     )
 
 
+@pytest.mark.spec("model-tables")
 def test_mapper_checks_actual_attribute_not_matched_field():
     with pytest.raises(TypeError, match="label.*numeric dtype"):
         make_mapper(ModelColumn("label", dtype="Int64"))(Reading)
@@ -166,6 +179,7 @@ def test_mapper_checks_actual_attribute_not_matched_field():
     )
 
 
+@pytest.mark.spec("model-tables")
 def test_mapper_checks_converter_output_instead_of_input_annotation():
     def convert(value: str) -> int:
         return len(value)
@@ -189,6 +203,7 @@ def test_mapper_checks_converter_output_instead_of_input_annotation():
         )(Reading)
 
 
+@pytest.mark.spec("model-tables")
 def test_annotations_do_not_replace_runtime_storage_check():
     def convert(value: float) -> int:
         return round(value)
@@ -211,6 +226,7 @@ def test_mapper_checks_callable_instance_return_annotation():
         make_mapper(ModelColumn("value", dtype="int64", converter=Convert()))(Reading)
 
 
+@pytest.mark.spec("model-tables")
 def test_unknown_annotations_and_duck_paths_still_get_checked():
     def convert(value: Any) -> Any:
         return value

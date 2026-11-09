@@ -20,6 +20,7 @@ class TestMultiOption:
         """Provide a CLI runner."""
         return CliRunner()
 
+    @pytest.mark.spec("command-line-applications")
     def test_basic_multi_option(self, runner):
         """Test basic multi-option with string values."""
         app = TollanTyper()
@@ -128,6 +129,7 @@ class TestMultiOption:
             "does not exist" in result.output
         )
 
+    @pytest.mark.spec("command-line-applications")
     def test_multi_option_stops_at_next_option(self, runner):
         """Test that multi-option stops consuming at next option."""
         app = TollanTyper()
@@ -226,6 +228,7 @@ class TestMultiOption:
             if expected_code == 0:
                 assert result.stdout == "['a', 'b']\n"
 
+    @pytest.mark.spec("command-line-applications")
     def test_multiple_multi_options(self, runner):
         """Test command with multiple multi-options."""
         app = TollanTyper()
@@ -252,6 +255,7 @@ class TestMultiOption:
         assert "Values1: ['a', 'b']" in result.stdout
         assert "Values2: ['c', 'd']" in result.stdout
 
+    @pytest.mark.spec("command-line-applications")
     def test_multi_option_repeated_merged(self, runner):
         """Test that repeated multi-option specifications are merged."""
         app = TollanTyper()

@@ -56,6 +56,7 @@ def supervise(record, statuses, **kwargs):
     return outcome, scheduler
 
 
+@pytest.mark.spec("supervision")
 def test_a_completed_job_with_exit_status_zero_succeeds(record):
     observed = []
     outcome, _ = supervise(
@@ -66,6 +67,7 @@ def test_a_completed_job_with_exit_status_zero_succeeds(record):
     assert [status.state for status in observed] == ["queued", "running", "completed"]
 
 
+@pytest.mark.spec("supervision")
 @pytest.mark.parametrize(
     ("status", "kind"),
     [
@@ -81,6 +83,7 @@ def test_other_terminal_states_do_not_succeed(record, status, kind):
     assert outcome.status == status
 
 
+@pytest.mark.spec("supervision")
 def test_the_result_check_decides_a_completed_job(record):
     checked = []
 
@@ -96,6 +99,7 @@ def test_the_result_check_decides_a_completed_job(record):
     assert outcome.kind == SupervisionOutcomeKind.succeeded
 
 
+@pytest.mark.spec("supervision")
 def test_an_unknown_state_beyond_the_grace_period_is_unresolved(record):
     outcome, scheduler = supervise(record, [RUNNING, UNKNOWN])
     assert outcome.kind == SupervisionOutcomeKind.unresolved
@@ -105,11 +109,13 @@ def test_an_unknown_state_beyond_the_grace_period_is_unresolved(record):
     assert record.receipt is not None
 
 
+@pytest.mark.spec("supervision")
 def test_an_unknown_state_within_the_grace_period_is_tolerated(record):
     outcome, _ = supervise(record, [UNKNOWN, UNKNOWN, RUNNING, UNKNOWN, COMPLETED])
     assert outcome.kind == SupervisionOutcomeKind.succeeded
 
 
+@pytest.mark.spec("job-records-and-schedulers", "supervision")
 def test_an_unreachable_scheduler_is_not_a_job_state(record):
     lost = TransportError("ssh to login failed")
     outcome, _ = supervise(record, [RUNNING, lost, COMPLETED])
@@ -120,6 +126,7 @@ def test_an_unreachable_scheduler_is_not_a_job_state(record):
     assert "ssh to login failed" in outcome.message
 
 
+@pytest.mark.spec("supervision")
 def test_cancellation_reports_an_unconfirmed_request(record):
     scheduler = RecordingScheduler(statuses=[RUNNING])
     receipt = record.submit(scheduler)
@@ -130,6 +137,7 @@ def test_cancellation_reports_an_unconfirmed_request(record):
     assert record.cancel_requested
 
 
+@pytest.mark.spec("supervision")
 def test_stopping_the_supervisor_leaves_a_local_job_running(tmp_path, record):
     command = [sys.executable, "-c", "import time; time.sleep(1)"]
     job = JobRecord.create(record.spec, key="job-2", command=command)
@@ -148,6 +156,7 @@ def test_stopping_the_supervisor_leaves_a_local_job_running(tmp_path, record):
     assert outcome.kind == SupervisionOutcomeKind.succeeded
 
 
+@pytest.mark.spec("supervision")
 def test_canceling_a_local_job_confirms_its_termination(record):
     command = [sys.executable, "-c", "import time; time.sleep(60)"]
     job = JobRecord.create(record.spec, key="job-2", command=command)

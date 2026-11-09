@@ -72,6 +72,7 @@ def test_manual_runtime_config_cls_disallowed():
             runtime_config_cls = Config2  # pyright: ignore[reportAssignmentType] # Not allowed!
 
 
+@pytest.mark.spec("runtime-generic-bindings")
 def test_nested_runtime_config_inheritance():
     """Test that inference works through inheritance chains."""
 

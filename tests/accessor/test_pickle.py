@@ -37,6 +37,7 @@ class SignalMapper(XarrayMapper[SignalSchema]):
     pass
 
 
+@pytest.mark.spec("accessors-and-views")
 def test_pickle_keeps_field_bindings_defaults_and_shared_nodes(monkeypatch):
     tree = xr.DataTree.from_dict(
         {"fallback": xr.Dataset({"actual": ("sample", [2.0, 4.0])})}

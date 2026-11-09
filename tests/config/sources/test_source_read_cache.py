@@ -11,6 +11,7 @@ from tollan.config.sources import (
 )
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_file_cache_checks_conditions_on_every_load(tmp_path):
     path = tmp_path / "config.yaml"
     source = YamlConfigSource(order=0, source=path, enable_if="selected")
@@ -39,21 +40,7 @@ def test_empty_file_result_is_cached_but_failed_reads_are_not(tmp_path):
     assert source.load() == {"value": 1}
 
 
-def test_disabling_cache_discards_previous_read(tmp_path):
-    path = tmp_path / "config.yaml"
-    path.write_text("value: 1\n")
-    source = YamlConfigSource(order=0, source=path)
-    assert source.load() == {"value": 1}
-    source.enable_cache(enabled=False)
-    path.write_text("value: 2\n")
-    assert source.load() == {"value": 2}
-    source.enable_cache()
-    path.write_text("value: 3\n")
-    assert source.load() == {"value": 3}
-    path.write_text("value: 4\n")
-    assert source.load() == {"value": 3}
-
-
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize("namespace", ["_env", "custom", None])
 def test_env_interpolation_is_refreshed_with_file_read(
     tmp_path, monkeypatch, namespace
@@ -77,7 +64,6 @@ def test_env_interpolation_is_refreshed_with_file_read(
 def test_dictionary_source_has_no_read_cache():
     source = DictConfigSource(order=0, source={"value": 1})
     sources = ConfigSourceList(data=[source])
-    sources.enable_cache()
     assert sources.load() == {"value": 1}
     source.source["value"] = 2
     assert sources.load() == {"value": 2}
@@ -85,7 +71,8 @@ def test_dictionary_source_has_no_read_cache():
     assert source.load() is source.source
 
 
-def test_nested_lists_delegate_cache_controls_to_shared_sources(tmp_path):
+@pytest.mark.spec("configuration-sources-and-precedence")
+def test_nested_list_invalidation_refreshes_shared_sources(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text("value: 1\n")
     file = YamlConfigSource(order=0, source=path)
@@ -96,14 +83,12 @@ def test_nested_lists_delegate_cache_controls_to_shared_sources(tmp_path):
     assert sources.load() == {"value": 1}
     path.write_text("value: 2\n")
     assert other.load() == {"value": 1}
-    sources.invalidate_cache(predicate=lambda s: s is group)
+    sources.invalidate_cache()
     assert other.load() == {"value": 2}
     assert sources.load() == {"value": 2}
-    sources.enable_cache(enabled=False)
-    path.write_text("value: 3\n")
-    assert other.load() == sources.load() == {"value": 3}
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_list_patch_does_not_modify_cached_file_data(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text("items: [{values: [1]}]\n")

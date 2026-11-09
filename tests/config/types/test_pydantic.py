@@ -10,6 +10,7 @@ from tollan.config import FrozenBaseModel
 from tollan.config.types import FieldDefaults
 
 
+@pytest.mark.spec("runtime-context-and-component-settings")
 def test_field_defaults_preserves_required_and_factory_semantics():
     calls = []
 

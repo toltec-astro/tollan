@@ -191,6 +191,12 @@ Database resources
    :members:
 
 
+Testing
+-------
+
+.. automodapi:: tollan.testing.spec_trace
+   :no-inheritance-diagram:
+
 Utilities
 ---------
 

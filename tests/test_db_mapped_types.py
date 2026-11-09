@@ -24,6 +24,7 @@ from tollan.db.mapped_types import (
 from tollan.db.orm import ActorBase, AuditMixin, batch_upsert
 
 
+@pytest.mark.spec("schema-conventions")
 def test_conventions_and_model_local_label_uniqueness():
     class Base(DeclarativeBase):
         pass
@@ -68,6 +69,7 @@ def test_conventions_and_model_local_label_uniqueness():
     assert all(column.comment for column in Device.__table__.c)
 
 
+@pytest.mark.spec("schema-conventions", "batch-writes-and-query-helpers")
 def test_timestamp_defaults_explicit_values_and_bulk_upsert():
     class Base(DeclarativeBase):
         pass
@@ -142,6 +144,7 @@ def test_timestamp_defaults_explicit_values_and_bulk_upsert():
                 )
 
 
+@pytest.mark.spec("schema-conventions")
 def test_uuid_generation_import_and_event_timestamp():
     class Base(DeclarativeBase):
         pass
@@ -186,6 +189,7 @@ def test_uuid_generation_import_and_event_timestamp():
             assert local.uid == generated_uid and local.observed_at == observed_at
 
 
+@pytest.mark.spec("schema-conventions")
 @pytest.mark.parametrize("as_string", [True, False])
 def test_foreign_key_target_and_explicit_actions(as_string):
     class Base(DeclarativeBase):
@@ -221,6 +225,7 @@ def test_foreign_key_target_and_explicit_actions(as_string):
             assert session.get_one(Reading, "sensor").value == 42
 
 
+@pytest.mark.spec("actors-and-attribution")
 def test_actor_and_audit_mixins_use_application_registry():
     for index in range(2):
 
@@ -240,7 +245,7 @@ def test_actor_and_audit_mixins_use_application_registry():
                 actor = Actor(
                     uid=UUID(int=index),
                     name="site",
-                    meta={"hostname": "taco", "timezone": "America/Mexico_City"},
+                    meta={"hostname": "site-host", "timezone": "America/Mexico_City"},
                 )
                 product = Product(created_by=actor, updated_by=actor)
                 session.add(product)

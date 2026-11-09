@@ -59,6 +59,7 @@ def external(rows=3):
     return [sys.executable, "-c", EXTERNAL, str(rows)]
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_a_local_job_reports_its_materialization(tmp_path):
     spec = make_spec(tmp_path, kind="local")
     result = materialize(spec, external())
@@ -70,6 +71,7 @@ def test_a_local_job_reports_its_materialization(tmp_path):
     assert (record.path / "pipes_messages.jsonl").exists()
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_a_later_run_reattaches_and_reads_every_message(tmp_path):
     spec = make_spec(tmp_path, kind="local")
     first = materialize(spec, external())
@@ -81,6 +83,7 @@ def test_a_later_run_reattaches_and_reads_every_message(tmp_path):
     assert JobRecord.open(record.path).receipt == receipt
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_a_failing_job_fails_the_run(tmp_path):
     spec = make_spec(tmp_path, kind="local")
     result = materialize(spec, [sys.executable, "-c", "raise SystemExit(2)"])
@@ -89,6 +92,7 @@ def test_a_failing_job_fails_the_run(tmp_path):
     assert "exit status 2" in failure.step_failure_data.error.message
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_a_slurm_job_reports_its_materialization(tmp_path, fake):
     spec = make_spec(
         tmp_path,
@@ -124,6 +128,7 @@ def wait_for(record, state, timeout=20):
         time.sleep(0.05)
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_an_interrupted_run_leaves_its_job_running(tmp_path, monkeypatch):
     spec = make_spec(tmp_path, kind="local")
     contexts = []
@@ -135,6 +140,7 @@ def test_an_interrupted_run_leaves_its_job_running(tmp_path, monkeypatch):
     wait_for(record, JobState.completed)
 
 
+@pytest.mark.spec("orchestration-integration")
 def test_a_canceled_run_cancels_its_job(tmp_path, monkeypatch):
     spec = make_spec(tmp_path, kind="local")
     contexts = []

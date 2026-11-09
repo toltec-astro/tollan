@@ -8,6 +8,7 @@ from tollan.config import RuntimeContext
 from tollan.config.sources import YamlConfigSource
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_yaml_list_conditions_remerge_without_mutating_cached_sources(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text("""
@@ -21,6 +22,7 @@ def test_yaml_list_conditions_remerge_without_mutating_cached_sources(tmp_path):
     assert source.load({"workers": 8}) == {"items": [{"values": [1, 2]}]}
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 @pytest.mark.parametrize("from_file", [False, True])
 def test_nested_lists_have_local_explicit_and_implicit_orders(tmp_path, from_file):
     document = """
@@ -43,6 +45,7 @@ def test_nested_lists_have_local_explicit_and_implicit_orders(tmp_path, from_fil
     assert rc.config_dict["extra"] == "last"
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_relative_includes_nested_lists_and_envfiles(tmp_path, monkeypatch):
     directory = tmp_path / "config"
     directory.mkdir()
@@ -69,6 +72,7 @@ def test_relative_includes_nested_lists_and_envfiles(tmp_path, monkeypatch):
     }
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_disabled_include_does_not_open_missing_file(tmp_path):
     path = tmp_path / "config.yaml"
     path.write_text("- source: missing.yaml\n  enable_if: workers >= 4\n")
@@ -78,6 +82,7 @@ def test_disabled_include_does_not_open_missing_file(tmp_path):
         source.load({"workers": 8})
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_variants_share_recipe_and_include_reads_until_reload(tmp_path, monkeypatch):
     path = tmp_path / "config.yaml"
     included = tmp_path / "included.yaml"
@@ -108,18 +113,21 @@ def test_variants_share_recipe_and_include_reads_until_reload(tmp_path, monkeypa
     assert variant.config_dict["value"] == 1
 
 
-def test_disabling_recipe_cache_rereads_includes(tmp_path):
+@pytest.mark.spec("configuration-sources-and-precedence")
+def test_invalidating_recipe_cache_rereads_includes(tmp_path):
     path = tmp_path / "config.yaml"
     included = tmp_path / "included.yaml"
     path.write_text("- source: included.yaml\n")
     included.write_text("value: 1\n")
     source = YamlConfigSource(order=0, source=path)
     assert source.load() == {"value": 1}
-    source.enable_cache(enabled=False)
     included.write_text("value: 2\n")
+    assert source.load() == {"value": 1}
+    source.invalidate_cache()
     assert source.load() == {"value": 2}
 
 
+@pytest.mark.spec("configuration-sources-and-precedence")
 def test_numbered_directory_combines_mappings_and_conditional_lists(tmp_path):
     (tmp_path / "00_base.yaml").write_text("value: base\nretained: true\n")
     (tmp_path / "10_overrides.yaml").write_text("""
