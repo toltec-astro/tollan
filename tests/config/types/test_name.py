@@ -5,7 +5,32 @@ from __future__ import annotations
 import pytest
 from pydantic import TypeAdapter, ValidationError
 
-from tollan.config.types import SafeName, SafeNamePath
+from tollan.config.types import PathSegment, SafeName, SafeNamePath
+
+
+@pytest.mark.spec("scientific-value-types")
+@pytest.mark.parametrize(
+    "value",
+    [
+        "report.ecsv",
+        " report 1 ",
+        "café",
+        "mirror:main",
+        ".hidden",
+        "_x",
+        "-flag",
+        "...",
+    ],
+)
+def test_path_segment_preserves_spelling(value):
+    assert TypeAdapter(PathSegment).validate_python(value) == value
+
+
+@pytest.mark.spec("scientific-value-types")
+@pytest.mark.parametrize("value", ["", ".", "..", "a/b", "a\\b", "a\x00b"])
+def test_path_segment_rejects_invalid_segments(value):
+    with pytest.raises(ValidationError):
+        TypeAdapter(PathSegment).validate_python(value)
 
 
 @pytest.mark.spec("scientific-value-types")

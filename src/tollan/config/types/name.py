@@ -4,9 +4,23 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from pydantic import StringConstraints
+from pydantic import AfterValidator, StringConstraints
 
-__all__ = ["SafeName", "SafeNamePath"]
+__all__ = ["PathSegment", "SafeName", "SafeNamePath"]
+
+
+def _validate_path_segment(value: str) -> str:
+    if not value or value in {".", ".."} or any(c in value for c in "/\\\x00"):
+        msg = f"Expected one path segment: {value!r}"
+        raise ValueError(msg)
+    return value
+
+
+type PathSegment = Annotated[str, AfterValidator(_validate_path_segment)]
+"""One nonempty file or directory name, excluding dot references, separators and NUL.
+
+Preserves spelling, including spaces, Unicode, colons and leading punctuation.
+"""
 
 _SAFE_NAME = r"[A-Za-z0-9][A-Za-z0-9_.-]*"
 

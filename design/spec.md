@@ -208,14 +208,18 @@ component typed settings before it uses them.
 - Relative descendant paths follow one lexical contract in configuration fields
   and subtree mappings: POSIX syntax, with redundant separators and
   current-directory components removed; rooted paths and parent traversal are
-  rejected. The root itself is accepted only where a declaration also searches
-  the containing directory. Validation needs no existing root, accesses no
-  filesystem and does not check symlink containment.
+  rejected. Backslashes and NUL are rejected. The root itself is accepted only
+  where a declaration also searches the containing directory. Validation needs
+  no existing root, accesses no filesystem and does not check symlink containment.
 - A string selector chooses names by exact inclusion, exact exclusion or a
   regular expression that must match the whole name. A plain string is a
   pattern and a list is an inclusion list. An empty inclusion list selects
   nothing; an empty exclusion list selects everything. Selection normalizes no
   string.
+- A path segment is one nonempty string without `/`, `\`, NUL or the dot
+  references `.` and `..`. Its spelling is preserved, including spaces, Unicode,
+  colons and leading punctuation. Application-specific reserved names remain
+  application policy.
 - A safe name is a restricted identifier usable in file names, scheduler job
   names and record keys. A safe name path joins safe names with `/` and may
   start with one `qualifier:` prefix. A host path names an absolute path on a

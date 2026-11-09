@@ -79,8 +79,9 @@ of that kind; `"new"` requires a nonexistent path with an existing parent.
 
 Use `SubPath` for a location to be joined beneath a root later. It accepts nested
 paths, but rejects the root itself (`""` or `"."`), absolute paths, and parent
-traversal. Paths use `/` separators; redundant separators and `.` components are
-removed. It does not expand `~` or resolve symlinks.
+traversal. Backslashes and NUL are rejected. Paths use `/` separators; redundant
+separators and `.` components are removed. It does not expand `~` or resolve
+symlinks.
 Use `SubPathOrRoot` when the containing directory itself is also an allowed
 location; `""`, `"."`, and `"./"` all normalize to `PurePosixPath(".")`.
 
@@ -159,28 +160,38 @@ For APIs that take a compiled regex, use `as_regex()` and evaluate it with
 
 ## Names
 
-Use `SafeName` for names that become keys, filenames, command arguments, job
-names or host names. It accepts ASCII letters, digits, `_`, `.` and `-`, and must
-start with a letter or digit, so it never names a hidden file, a dot reference
+Use `PathSegment` for one file or directory name whose spelling must be
+preserved. It accepts spaces, Unicode, colons and leading punctuation. It rejects
+empty strings, the dot references `.` and `..`, and any name containing `/`, `\`
+or NUL. It performs no path normalization or filesystem checks.
+
+Use `SafeName` for restricted identifiers used as keys, filenames, command
+arguments, job names or host names. It accepts ASCII letters, digits, `_`, `.` and
+`-`, and must start with a letter or digit, so it never names a hidden file, a dot reference
 or a command-line option. Use `SafeNamePath` for hierarchical names such as
 namespaces: `SafeName` components separated by `/`, with an optional
 `qualifier:` prefix.
 
 | Annotation | Accepts | Rejects |
 | --- | --- | --- |
+| `PathSegment` | `report 1.txt`, `café`, `mirror:main`, `.hidden` | empty string, `.`, `..`, `a/b`, `a\b`, NUL |
 | `SafeName` | `cpu1`, `transform`, `login.example.org` | `.hidden`, `-p`, `a/b`, `a b`, `mirror:reports` |
 | `SafeNamePath` | `reports`, `reports/2024`, `mirror:reports`, `mirror:reports/2024` | `/reports`, `reports/`, `reports//2024`, `reports/../2024`, `a:b:c` |
 
 ```{testcode}
 from tollan.config import FrozenBaseModel
-from tollan.config.types import SafeName, SafeNamePath
+from tollan.config.types import PathSegment, SafeName, SafeNamePath
 
 class Placement(FrozenBaseModel):
     name: SafeName
     namespace: SafeNamePath
+    filename: PathSegment
 
-placement = Placement(name="report-v2", namespace="mirror:reports/2024")
+placement = Placement(
+    name="report-v2", namespace="mirror:reports/2024", filename="café 1.txt"
+)
 assert placement.namespace == "mirror:reports/2024"
+assert placement.filename == "café 1.txt"
 ```
 
 ## Quantities

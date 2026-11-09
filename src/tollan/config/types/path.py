@@ -127,6 +127,9 @@ def _validate_subpath(
     path: PurePosixPath, *, allow_root: bool = False
 ) -> PurePosixPath:
     """Require a relative path without parent traversal."""
+    if "\\" in str(path) or "\x00" in str(path):
+        msg = "Subpaths must not contain backslashes or NUL"
+        raise ValueError(msg)
     if path.anchor or ".." in path.parts or (not path.parts and not allow_root):
         expected = "relative subpath" if allow_root else "relative descendant path"
         msg = f"Expected a {expected}, got {str(path)!r}"
@@ -140,9 +143,9 @@ type SubPath = Annotated[
 """A relative POSIX descendant path without parent traversal.
 
 Accepts strings and PurePosixPath objects, including in strict models. Redundant
-separators and ``.`` components are removed. The containing directory itself
-is not a descendant. No validation-context root_path, user expansion, filesystem
-checks, or symlink resolution is applied.
+separators and ``.`` components are removed. Backslashes and NUL are rejected.
+The containing directory itself is not a descendant. No validation-context
+root_path, user expansion, filesystem checks, or symlink resolution is applied.
 """
 
 

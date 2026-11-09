@@ -199,6 +199,20 @@ def test_subpath_rejects_invalid_input_types(value, annotation):
 
 @pytest.mark.spec("scientific-value-types")
 @pytest.mark.parametrize("annotation", [SubPath, SubPathOrRoot])
+@pytest.mark.parametrize("value", ["a\\b", "a\x00b"])
+def test_subpath_rejects_backslash_and_nul(annotation, value):
+    import json
+
+    adapter = TypeAdapter(annotation)
+    for data in (value, PurePosixPath(value)):
+        with pytest.raises(ValidationError, match="backslashes or NUL"):
+            adapter.validate_python(data)
+    with pytest.raises(ValidationError, match="backslashes or NUL"):
+        adapter.validate_json(json.dumps(value))
+
+
+@pytest.mark.spec("scientific-value-types")
+@pytest.mark.parametrize("annotation", [SubPath, SubPathOrRoot])
 def test_subpath_normalizes_without_filesystem_access(monkeypatch, annotation):
     def unexpected(*args, **kwargs):
         pytest.fail("Relative subpath validation must not consult the filesystem")

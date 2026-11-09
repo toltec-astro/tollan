@@ -7,13 +7,13 @@ These types validate configuration values and Astropy objects, including:
 - SkyCoord fields for celestial coordinates
 - Enhanced Path types with resolution and existence validation
 - String selection by exact values or regular expressions
-- Names safe as keys, filenames and identifiers
+- Names and filename components
 """
 
 from __future__ import annotations
 
 from .fileloc import FileLocField
-from .name import SafeName, SafeNamePath
+from .name import PathSegment, SafeName, SafeNamePath
 from .path import (
     AbsAnyPath,
     AbsDirectoryPath,
@@ -53,6 +53,7 @@ __all__ = [
     "HostPath",
     "IsoTimeField",
     "LengthQuantityField",
+    "PathSegment",
     "PhysicalTypeField",
     "QuantityField",
     "SafeName",

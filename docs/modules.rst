@@ -74,6 +74,9 @@ The annotation aliases are described in :doc:`validation-types`.
 .. autodata:: tollan.config.types.path.HostPath
    :no-value:
 
+.. autodata:: tollan.config.types.name.PathSegment
+   :no-value:
+
 .. autodata:: tollan.config.types.name.SafeName
    :no-value:
 
