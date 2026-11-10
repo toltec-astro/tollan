@@ -41,7 +41,7 @@ dependencies = [
   "matplotlib",
   "plotly",
   "wrapt",
-  "netcdf4",
+  "netcdf4>=1.7.5",  # Correct NumPy ndarray declaration (Unidata/netcdf4-python#1471).
   "xarray",
   "zarr",
   "dask",

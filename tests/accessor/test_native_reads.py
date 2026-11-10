@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-import warnings
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, assert_type
 
 import dask.array as da
+import netCDF4 as nc  # noqa: N813
 import numpy as np
 import pandas as pd
 import pytest
@@ -21,10 +21,6 @@ from tollan.accessor.xarray import XarrayMapper
 if TYPE_CHECKING:
     from tollan.accessor import Mapping
     from tollan.accessor.xarray.units import QDataArray
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-    import netCDF4 as nc  # noqa: N813
 
 
 @dataclass
