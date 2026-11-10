@@ -38,5 +38,9 @@ database resources and supporting utilities. Zhiyuan Ma
 - QA: `just qa`. Documentation: `just doc-build` (strict, nitpicky) and
   `just doc-test` (executes the guide examples).
 - Performance: `just benchmark-save` and `just benchmark-check <baseline>`.
-- Follow the workspace rules and the `design-records`, `workflow-contract-audit`
-  and `agent-technical-writing` skills. Do not copy their text here.
+- Follow the `tolteca-coding-guideline` skill for names, terms and docstrings,
+  and the `design-records`, `workflow-contract-audit` and
+  `agent-technical-writing` skills. The skills are in
+  [`tolteca_agent`](https://github.com/toltec-astro/tolteca_helpdesk/tree/main/src/tolteca_agent/data/skills).
+  In the TolTECA development workspace, also follow its workspace rules. Do not
+  copy their text here.
