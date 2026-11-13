@@ -12,7 +12,8 @@ such a marker would cite every test in it.
 test cites and the number of uncited tests.
 
 The ``spec_path`` configuration value names the specification, relative to
-the pytest root directory. The default is ``design/spec.md``.
+the pytest root directory: one document, or a folder with an ``index.md`` and
+one document per domain. The default is ``design/spec.md``.
 """
 
 from __future__ import annotations
@@ -28,7 +29,9 @@ if TYPE_CHECKING:
 __all__ = ["read_sections", "section_name"]
 
 SPEC_PATH_DEFAULT = "design/spec.md"
+SPEC_INDEX_NAME = "index.md"
 _SECTION_HEADING = re.compile(r"^#{2,6}\s+(.+?)\s*$")
+_DOMAIN_HEADING = re.compile(r"^#{1,6}\s+(.+?)\s*$")
 
 
 def section_name(heading: str) -> str:
@@ -59,28 +62,42 @@ def read_sections(path: Path) -> list[str]:
     Parameters
     ----------
     path : Path
-        The specification. Headings of level two and below are sections; the
-        document title is not.
+        The specification document, or a specification folder. In a document,
+        headings of level two and below are sections; the document title is
+        not. A folder holds ``index.md`` and one document per domain: the
+        index title is not a section, and each domain document's title is.
 
     Returns
     -------
     list of str
-        Section names in document order.
+        Section names in document order. A folder lists ``index.md`` first,
+        then the domain documents in filename order.
 
     Raises
     ------
     ValueError
         If two headings have the same section name.
     """
+    if not path.is_dir():
+        documents = [(path, _SECTION_HEADING)]
+    else:
+        index = path / SPEC_INDEX_NAME
+        documents = [(index, _SECTION_HEADING)] if index.is_file() else []
+        documents += [
+            (p, _DOMAIN_HEADING)
+            for p in sorted(path.glob("*.md"))
+            if p.name != SPEC_INDEX_NAME
+        ]
     sections: list[str] = []
-    for line in path.read_text().splitlines():
-        if not (m := _SECTION_HEADING.match(line)):
-            continue
-        name = section_name(m.group(1))
-        if name in sections:
-            msg = f"{path}: two sections are named {name!r}"
-            raise ValueError(msg)
-        sections.append(name)
+    for document, heading in documents:
+        for line in document.read_text().splitlines():
+            if not (m := heading.match(line)):
+                continue
+            name = section_name(m.group(1))
+            if name in sections:
+                msg = f"{document}: two sections are named {name!r}"
+                raise ValueError(msg)
+            sections.append(name)
     return sections
 
 

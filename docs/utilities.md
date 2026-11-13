@@ -157,8 +157,6 @@ addopts = ["-p tollan.testing.spec_trace"]
 ```python
 import pytest
 
-pytestmark = pytest.mark.spec("configuration-sources-and-precedence")
-
 
 @pytest.mark.spec("read-values", "value-types")
 def test_read(): ...
@@ -166,6 +164,13 @@ def test_read(): ...
 
 A section name is the heading text in lowercase with hyphens, for example
 `Read values` becomes `read-values`; the document title is not a section.
+Cite sections on each test: a `spec` marker on a module or class fails
+collection.
+
+A specification with several domains can be a folder instead of one document:
+set `spec_path = "design/spec"` for a folder that holds `index.md` and one
+document per domain. The title of each domain document is a section, the
+index title is not, and section names must be unique across the folder.
 Collection fails when a test cites a section that the specification does not
 have, so a removed or renamed requirement cannot leave tests that protect
 nothing. Run `pytest --spec_report` to list the tests per section, the

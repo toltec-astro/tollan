@@ -678,6 +678,9 @@ duplicate detection; the registering component owns entry validation.
   tests that protect nothing.
 - A section name is the heading text in lowercase with hyphens. The document
   title is not a section; two headings with the same name are an error.
+- A specification is one document, or a folder with an index and one document
+  per domain. In a folder, the index title is not a section, each domain
+  document's title is, and section names are unique across the folder.
 - Each contract test cites one or more sections on the test itself. Collection
   fails when a test cites a section the specification does not have, when a
   citation names no section, or when a citation is placed on a module or class.

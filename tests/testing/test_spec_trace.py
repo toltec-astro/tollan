@@ -31,6 +31,44 @@ def test_duplicate_section_names_are_rejected(tmp_path):
         read_sections(spec)
 
 
+def _write_folder(root, domains):
+    spec = root / "spec"
+    spec.mkdir(parents=True)
+    (spec / "index.md").write_text("# Package specification\n\n## Purpose\n")
+    for name, text in domains.items():
+        (spec / f"{name}.md").write_text(text)
+    return spec
+
+
+@pytest.mark.spec("specification-traceability")
+def test_folder_sections_include_domain_titles_but_not_the_index_title(tmp_path):
+    spec = _write_folder(
+        tmp_path,
+        {
+            "values": "# Value types\n\n## Units\n",
+            "access": "# Data access\n\n## Read values\n",
+        },
+    )
+    (spec / "notes.txt").write_text("# Not a domain\n")
+    assert read_sections(spec) == [
+        "purpose",
+        "data-access",
+        "read-values",
+        "value-types",
+        "units",
+    ]
+
+
+@pytest.mark.spec("specification-traceability")
+def test_duplicate_section_names_across_folder_documents_are_rejected(tmp_path):
+    spec = _write_folder(
+        tmp_path,
+        {"access": "# Data access\n\n## Units\n", "values": "# Units\n"},
+    )
+    with pytest.raises(ValueError, match="units"):
+        read_sections(spec)
+
+
 def _run(pytester, *args):
     return pytester.runpytest_subprocess(
         "-p", "tollan.testing.spec_trace", "-p", "no:cacheprovider", *args
@@ -122,6 +160,28 @@ def test_specification_path_is_configurable(pytester):
         import pytest
 
         @pytest.mark.spec("data-access")
+        def test_access():
+            pass
+        """
+    )
+    _run(pytester).assert_outcomes(passed=1)
+
+
+@pytest.mark.spec("specification-traceability")
+def test_specification_folder_is_configurable(pytester):
+    pytester.makefile(
+        ".md",
+        **{
+            "design/spec/index": "# Package specification\n\n## Purpose\n",
+            "design/spec/access": "# Data access\n\n## Read values\n",
+        },
+    )
+    pytester.makeini("[pytest]\nspec_path = design/spec\n")
+    pytester.makepyfile(
+        test_cited="""
+        import pytest
+
+        @pytest.mark.spec("data-access", "read-values")
         def test_access():
             pass
         """
