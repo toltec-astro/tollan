@@ -62,6 +62,7 @@ test = [
   "pytest-doctestplus",
   "pytest-remotedata",
   "pytest-benchmark",
+  "pytest-xdist",
   "coverage",
   "ruff",
   "pre-commit",
@@ -138,7 +139,6 @@ addopts = [
   "--strict-config",
   "--strict-markers",
   "-p no:legacypath",
-  "-p no:cacheprovider",
   # Trace contract tests to design/spec.md sections (tollan.testing.spec_trace).
   "-p tollan.testing.spec_trace",
   "-p pytester",
@@ -257,6 +257,8 @@ convention = "numpy"
 [tool.coverage.run]
 branch = true
 parallel = true
+# Measure the pytest-xdist worker processes that just qa and just coverage start.
+patch = ["subprocess"]
 source = ["src/tollan"]
 omit = ["*/tests/*", "*/test_*", "*/_version.py", "*/conftest.py"]
 

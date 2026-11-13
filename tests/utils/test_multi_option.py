@@ -123,7 +123,10 @@ class TestMultiOption:
             pass
 
         nonexistent = tmp_path / "nonexistent.txt"
-        result = runner.invoke(app, ["--files", str(nonexistent)])
+        # A wide terminal keeps the message on one line for any temporary path.
+        result = runner.invoke(
+            app, ["--files", str(nonexistent)], env={"COLUMNS": "1000"}
+        )
         assert result.exit_code != 0
         assert ("does not exist" in result.stdout) or (
             "does not exist" in result.output

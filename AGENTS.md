@@ -35,9 +35,8 @@ database resources and supporting utilities. Zhiyuan Ma
   itself, only when its assertions stay within those sections. Tests of a single
   object's documented semantics or of the implementation stay uncited.
   `--spec_report` lists tests per section.
-- QA: `just qa`. Documentation: `just doc-build` (strict, nitpicky) and
-  `just doc-test` (executes the guide examples).
-- Performance: `just benchmark-save` and `just benchmark-check <baseline>`.
+- QA: `just qa` must pass before handoff. `just --list` shows the other
+  recipes (tests, documentation, benchmarks).
 - Follow the `tolteca-coding-guideline` skill for names, terms and docstrings,
   and the `design-records`, `workflow-contract-audit` and
   `agent-technical-writing` skills. The skills are in

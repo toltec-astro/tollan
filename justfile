@@ -15,8 +15,12 @@ rebuild-lockfiles:
 # Run all the formatting, linting, and testing commands
 qa:
     uv run --locked pre-commit run --all-files
-    uv run --locked coverage run -m pytest
+    uv run --locked coverage run -m pytest -n auto
     just doc-test
+
+# Run the tests in parallel, without coverage
+test *args:
+    uv run --locked pytest -n auto {{args}}
 
 # Save a local baseline before changing a hot path.
 # Keep Python, dependencies, and machine comparable; saved results are ignored.
@@ -29,7 +33,7 @@ benchmark-check baseline:
 
 # Run tests with coverage
 coverage:
-    uv run --locked coverage run -m pytest
+    uv run --locked coverage run -m pytest -n auto
     uv run --locked coverage combine
     uv run --locked coverage report -m
     uv run --locked coverage html
@@ -64,11 +68,17 @@ clean:
 # Build the docs
 doc-build:
     rm -rf docs/api docs/_build
-    uv run --locked --group docs sphinx-build -M html docs docs/_build -E -a -n -W --keep-going -T
+    uv run --locked --group docs sphinx-build -M html docs docs/_build -E -a -n -W --keep-going -T -j auto
 
 # Render first, then execute examples in a fresh process using the same doctrees.
 # This also avoids autodoc's annotation mutations affecting Pydantic examples.
 doc-test: doc-build
+    uv run --locked --group docs sphinx-build -M doctest docs docs/_build -n -W --keep-going -T
+
+# Rebuild only the changed pages and execute their examples, for use while editing.
+# Warnings in unchanged pages are not reported again; just doc-test is the gate.
+doc-update:
+    uv run --locked --group docs sphinx-build -M html docs docs/_build -n -W --keep-going -T
     uv run --locked --group docs sphinx-build -M doctest docs docs/_build -n -W --keep-going -T
 
 # Serve docs locally with live reload
