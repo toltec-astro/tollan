@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
   "pydantic",
   "pyyaml",
-  "typer",
+  "typer>=0.29",
   "typing-extensions",
   "typing-inspection",
   "click",

@@ -7,7 +7,8 @@ in Typer commands, with automatic type conversion via Typer's built-in system.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, cast, override
+from functools import cache
+from typing import TYPE_CHECKING, Annotated, Any, Literal, cast, override
 
 from rich.console import Console
 from rich.rule import Rule
@@ -67,7 +68,6 @@ def create_cli(version: str = "dev", **kwargs) -> typer.Typer:
 
 def _help_all_callback(
     ctx: typer.Context,
-    param: typer.core.TyperOption,
     value: bool,  # noqa: FBT001
 ) -> None:
     """Show full help for this group and its immediate children, then exit."""
@@ -101,7 +101,6 @@ def _help_all_callback(
 
 def _reset_logger_callback(
     ctx: typer.Context,
-    param: typer.core.TyperOption,
     value: str | None,
 ) -> None:
     """Apply an explicit log level, or initialize INFO without an inherited level."""
@@ -144,6 +143,44 @@ def _preserve_option_names(
             param.secondary_opts = [f"--no_{param.name}"]
 
 
+@cache
+def _group_options() -> tuple[Any, ...]:
+    """Build the group help and logging options with Typer's public API."""
+    # Typer converts the declarations as it does for any command, so the
+    # options follow its types, help rendering and callback conventions.
+    app = typer.Typer(add_completion=False)
+
+    @app.command()
+    def _options(
+        *,
+        help_all: Annotated[
+            bool,
+            typer.Option(
+                "--help_all",
+                show_default=False,
+                callback=_help_all_callback,
+                help=_help_all_callback.__doc__,
+                is_eager=True,
+                expose_value=False,
+            ),
+        ] = False,
+        log_level: Annotated[
+            Literal["DEBUG", "INFO", "WARNING"] | None,
+            typer.Option(
+                "--log_level",
+                show_default="inherited, otherwise INFO",
+                callback=_reset_logger_callback,
+                help="Set the log level, overriding an ancestor's setting.",
+                is_eager=True,
+                expose_value=False,
+            ),
+        ] = None,
+    ) -> None:
+        pass
+
+    return tuple(typer.main.get_command(app).params)
+
+
 class _Group(typer.core.TyperGroup):
     """Tollan group with Python names, multi-options, help, and logging."""
 
@@ -158,36 +195,7 @@ class _Group(typer.core.TyperGroup):
         Both options are handled internally, not passed to group callbacks.
         An omitted log level inherits an ancestor's setting, falling back to INFO.
         """
-        params = list(super().get_params(ctx))
-        params.extend(
-            [
-                typer.core.TyperOption(
-                    param_decls=["--help_all"],
-                    type=bool,
-                    is_flag=True,
-                    show_default=False,
-                    callback=_help_all_callback,
-                    help=_help_all_callback.__doc__,
-                    is_eager=True,
-                    expose_value=False,
-                ),
-                typer.core.TyperOption(
-                    param_decls=["--log_level"],
-                    # Let Typer build its own choice type, not external Click's.
-                    type=typer.main.get_click_type(
-                        annotation=Literal["DEBUG", "INFO", "WARNING"],
-                        parameter_info=OptionInfo(),
-                    ),
-                    default=None,
-                    show_default="inherited, otherwise INFO",
-                    callback=_reset_logger_callback,
-                    help="Set the log level, overriding an ancestor's setting.",
-                    is_eager=True,
-                    expose_value=False,
-                ),
-            ]
-        )
-        return params
+        return [*super().get_params(ctx), *_group_options()]
 
     @override
     def parse_args(self, ctx: Any, args: list[str]) -> list[str]:
